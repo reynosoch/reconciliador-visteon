@@ -1,0 +1,3418 @@
+==== ARCHIVO: Dashboard.jsx ====
+import React, { useMemo, useState } from "react";
+
+const datosIniciales = [
+{
+pn: "VPTBFF-17C272-AC",
+almacen: 6040,
+piso: 211,
+dsv: 15520,
+qad: 111284,
+costo: 37.12,
+responsable: "Almacén",
+},
+{
+pn: "VPRUAF-20B326-AE",
+almacen: 4200,
+piso: 180,
+dsv: 2300,
+qad: 18774,
+costo: 126.62,
+responsable: "Piso",
+},
+{
+pn: "P760110D-FE0000",
+almacen: 1200,
+piso: 0,
+dsv: 850,
+qad: 141508,
+costo: 15.0,
+responsable: "Almacén",
+},
+{
+pn: "P611002B-FBBX00",
+almacen: 200000,
+piso: 1500,
+dsv: 0,
+qad: 6535000,
+costo: 0.2016,
+responsable: "Piso",
+},
+{
+pn: "VPT7UF-10849-AD",
+almacen: 6200,
+piso: 400,
+dsv: 3200,
+qad: 5805,
+costo: 157.91,
+responsable: "Almacén",
+},
+{
+pn: "VPTASF-10849-JE",
+almacen: 1800,
+piso: 120,
+dsv: 700,
+qad: 1252,
+costo: 321.18,
+responsable: "Piso",
+},
+{
+pn: "P701126D-FA0000",
+almacen: 180000,
+piso: 3000,
+dsv: 1000,
+qad: 37739,
+costo: 2.09,
+responsable: "Almacén",
+},
+{
+pn: "VPTASF-14E510-AA",
+almacen: 8000,
+piso: 700,
+dsv: 1200,
+qad: 1408,
+costo: 44.88,
+responsable: "Piso",
+},
+{
+pn: "VPRLXF-14A608-AB",
+almacen: 220000,
+piso: 1200,
+dsv: 3500,
+qad: 0,
+costo: 3.0,
+responsable: "Almacén",
+},
+{
+pn: "VPSBFF-17C272-EB",
+almacen: 3000,
+piso: 100,
+dsv: 1200,
+qad: 18125,
+costo: 42.16,
+responsable: "Almacén",
+},
+{
+pn: "VPNF6F-10849-AS",
+almacen: 1000,
+piso: 50,
+dsv: 200,
+qad: 3903,
+costo: 182.53,
+responsable: "Piso",
+},
+{
+pn: "VPJL1F-17C272-AB",
+almacen: 4000,
+piso: 300,
+dsv: 500,
+qad: 25593,
+costo: 22.88,
+responsable: "Almacén",
+},
+{
+pn: "P760769D-FM0000",
+almacen: 1000,
+piso: 0,
+dsv: 300,
+qad: 131857,
+costo: 3.64,
+responsable: "Almacén",
+},
+{
+pn: "P900100A-AA0000",
+almacen: 0,
+piso: 850,
+dsv: 120,
+qad: 0,
+costo: 75.0,
+responsable: "Piso",
+},
+{
+pn: "VPSBFF-17C272-AE",
+almacen: 2500,
+piso: 200,
+dsv: 600,
+qad: 17094,
+costo: 32.88,
+responsable: "Almacén",
+},
+];
+
+function dinero(valor) {
+return new Intl.NumberFormat("en-US", {
+style: "currency",
+currency: "USD",
+maximumFractionDigits: 0,
+}).format(valor);
+}
+
+function numero(valor) {
+return new Intl.NumberFormat("en-US").format(Math.round(valor));
+}
+
+function App() {
+const [datos] = useState(datosIniciales);
+
+const [filtroArea, setFiltroArea] = useState("TODOS");
+const [filtroEspecial, setFiltroEspecial] = useState("TODOS");
+const [busqueda, setBusqueda] = useState("");
+const [orden, setOrden] = useState("PERDIDA_USD");
+const [mostrarArchivos, setMostrarArchivos] = useState(false);
+
+const datosCalculados = useMemo(() => {
+return datos.map((item) => {
+const fisicoPlanta = item.almacen + item.piso;
+const fisicoTotal = fisicoPlanta + item.dsv;
+
+const qadPlanta = item.qad - 0;
+
+const varPlanta = fisicoPlanta - qadPlanta;
+const deltaTotal = fisicoTotal - item.qad;
+
+return {
+...item,
+fisicoPlanta,
+fisicoTotal,
+varPlanta,
+varPlantaUsd: varPlanta * item.costo,
+deltaTotal,
+deltaTotalUsd: deltaTotal * item.costo,
+};
+});
+}, [datos]);
+
+const datosFiltrados = useMemo(() => {
+let resultado = [...datosCalculados];
+
+if (filtroArea !== "TODOS") {
+resultado = resultado.filter(
+(item) => item.responsable === filtroArea
+);
+}
+
+if (busqueda.trim() !== "") {
+resultado = resultado.filter((item) =>
+item.pn.toLowerCase().includes(busqueda.toLowerCase())
+);
+}
+
+if (filtroEspecial === "QAD_0") {
+resultado = resultado.filter(
+(item) => item.qad === 0 && item.fisicoTotal > 0
+);
+}
+
+if (filtroEspecial === "FISICO_0") {
+resultado = resultado.filter(
+(item) => item.fisicoTotal === 0 && item.qad > 0
+);
+}
+
+if (filtroEspecial === "PERDIDAS") {
+resultado = resultado.filter((item) => item.deltaTotalUsd < 0);
+}
+
+if (filtroEspecial === "GANANCIAS") {
+resultado = resultado.filter((item) => item.deltaTotalUsd > 0);
+}
+
+resultado.sort((a, b) => {
+if (orden === "PERDIDA_USD") {
+return a.deltaTotalUsd - b.deltaTotalUsd;
+}
+
+if (orden === "GANANCIA_USD") {
+return b.deltaTotalUsd - a.deltaTotalUsd;
+}
+
+if (orden === "PERDIDA_PZAS") {
+return a.deltaTotal - b.deltaTotal;
+}
+
+if (orden === "GANANCIA_PZAS") {
+return b.deltaTotal - a.deltaTotal;
+}
+
+return 0;
+});
+
+return resultado;
+}, [
+datosCalculados,
+filtroArea,
+filtroEspecial,
+busqueda,
+orden,
+]);
+
+const metricas = useMemo(() => {
+const fisico4Wall = datosCalculados.reduce(
+(total, item) => total + item.fisicoPlanta,
+0
+);
+
+const fisicoDsv = datosCalculados.reduce(
+(total, item) => total + item.dsv,
+0
+);
+
+const fisicoTotal = fisico4Wall + fisicoDsv;
+
+const qadTotal = datosCalculados.reduce(
+(total, item) => total + item.qad,
+0
+);
+
+const varPlanta = fisico4Wall - qadTotal;
+
+const deltaTotal = fisicoTotal - qadTotal;
+
+const perdida = datosCalculados
+.filter((item) => item.deltaTotalUsd < 0)
+.reduce((total, item) => total + item.deltaTotalUsd, 0);
+
+const ganancia = datosCalculados
+.filter((item) => item.deltaTotalUsd > 0)
+.reduce((total, item) => total + item.deltaTotalUsd, 0);
+
+return {
+fisico4Wall,
+fisicoDsv,
+fisicoTotal,
+qadTotal,
+varPlanta,
+deltaTotal,
+perdida,
+ganancia,
+};
+}, [datosCalculados]);
+
+const topPerdida = [...datosCalculados]
+.filter((item) => item.deltaTotalUsd < 0)
+.sort((a, b) => a.deltaTotalUsd - b.deltaTotalUsd)[0];
+
+const topGanancia = [...datosCalculados]
+.filter((item) => item.deltaTotalUsd > 0)
+.sort((a, b) => b.deltaTotalUsd - a.deltaTotalUsd)[0];
+
+const qadsEnCero = datosCalculados.filter(
+(item) => item.qad === 0 && item.fisicoTotal > 0
+).length;
+
+const fisicosEnCero = datosCalculados.filter(
+(item) => item.fisicoTotal === 0 && item.qad > 0
+).length;
+
+return (
+<div className="dashboard">
+
+{/* HEADER */}
+
+<header className="header">
+<div>
+<div className="brand">
+VISTEON <span>|</span> RECONCILIADOR
+</div>
+
+<div className="subtitle">
+Control de inventario físico vs QAD
+</div>
+</div>
+
+<div className="headerRight">
+
+<div className="status">
+<span className="statusDot"></span>
+Datos sincronizados
+</div>
+
+<div className="fileDropdown">
+
+<button
+onClick={() => setMostrarArchivos(!mostrarArchivos)}
+>
+3 Archivos Procesados
+<span>⌄</span>
+</button>
+
+{mostrarArchivos && (
+<div className="fileMenu">
+
+<div>
+<strong>QAD</strong>
+<span>Congelado QAD</span>
+</div>
+
+<div>
+<strong>4Wall</strong>
+<span>Escaneos físicos</span>
+</div>
+
+<div>
+<strong>DSV</strong>
+<span>Inventario externo</span>
+</div>
+
+</div>
+)}
+
+</div>
+
+</div>
+</header>
+
+
+<main className="container">
+
+{/* TITULO */}
+
+<section className="intro">
+
+<div>
+<p className="eyebrow">CENTRO DE CONTROL</p>
+
+<h1>
+Conciliación de inventario
+</h1>
+
+<p>
+Identifica las principales discrepancias y
+focaliza las acciones inmediatas del inventario.
+</p>
+</div>
+
+<div className="fecha">
+<span>ÚLTIMO CORTE</span>
+<strong>17 SEP 2026</strong>
+</div>
+
+</section>
+
+
+{/* METRICAS PRINCIPALES */}
+
+<section className="metrics">
+
+<div className="metricCard">
+
+<div className="metricHeader">
+<span>VAR PLANTA</span>
+<span className="metricIcon">Δ</span>
+</div>
+
+<strong className={metricas.varPlanta < 0 ? "negative" : "positive"}>
+{numero(metricas.varPlanta)} pzas
+</strong>
+
+<small>
+4Wall vs QAD
+</small>
+
+</div>
+
+
+<div className="metricCard">
+
+<div className="metricHeader">
+<span>VAR PLANTA USD</span>
+<span className="metricIcon">$</span>
+</div>
+
+<strong className={metricas.varPlanta < 0 ? "negative" : "positive"}>
+{dinero(
+metricas.varPlanta *
+(
+datosCalculados.reduce(
+(sum, item) => sum + item.costo,
+0
+) /
+datosCalculados.length
+)
+)}
+</strong>
+
+<small>
+Impacto económico estimado
+</small>
+
+</div>
+
+
+<div className="metricCard">
+
+<div className="metricHeader">
+<span>INVENTARIO FÍSICO TOTAL</span>
+<span className="metricIcon">◉</span>
+</div>
+
+<strong>
+{numero(metricas.fisicoTotal)}
+</strong>
+
+<small>
+4Wall {numero(metricas.fisico4Wall)} + DSV{" "}
+{numero(metricas.fisicoDsv)}
+</small>
+
+</div>
+
+
+<div className="metricCard alertCard">
+
+<div className="metricHeader">
+<span>CASOS CRÍTICOS</span>
+<span className="metricIcon">!</span>
+</div>
+
+<strong>
+{qadsEnCero + fisicosEnCero}
+</strong>
+
+<small>
+Requieren investigación
+</small>
+
+</div>
+
+</section>
+
+
+{/* ACCIONES INMEDIATAS */}
+
+<section className="actionsSection">
+
+<div className="sectionTitle">
+
+<div>
+<p className="eyebrow">ACCIÓN INMEDIATA</p>
+
+<h2>
+¿Qué tenemos que investigar?
+</h2>
+</div>
+
+<span className="sectionHint">
+Casos detectados automáticamente
+</span>
+
+</div>
+
+
+<div className="actionGrid">
+
+<button
+className="actionCard danger"
+onClick={() => {
+setFiltroEspecial("PERDIDAS");
+setOrden("PERDIDA_USD");
+}}
+>
+
+<div className="actionTop">
+<span className="actionIcon">↓</span>
+<span>PÉRDIDA USD</span>
+</div>
+
+<strong>
+{topPerdida
+? dinero(Math.abs(topPerdida.deltaTotalUsd))
+: "$0"}
+</strong>
+
+<p>
+{topPerdida
+? topPerdida.pn
+: "Sin discrepancias"}
+</p>
+
+<small>
+Ver números de parte →
+</small>
+
+</button>
+
+
+<button
+className="actionCard positiveCard"
+onClick={() => {
+setFiltroEspecial("GANANCIAS");
+setOrden("GANANCIA_USD");
+}}
+>
+
+<div className="actionTop">
+<span className="actionIcon">↑</span>
+<span>GANANCIA USD</span>
+</div>
+
+<strong>
+{topGanancia
+? dinero(topGanancia.deltaTotalUsd)
+: "$0"}
+</strong>
+
+<p>
+{topGanancia
+? topGanancia.pn
+: "Sin discrepancias"}
+</p>
+
+<small>
+Ver números de parte →
+</small>
+
+</button>
+
+
+<button
+className="actionCard warning"
+onClick={() => setFiltroEspecial("QAD_0")}
+>
+
+<div className="actionTop">
+<span className="actionIcon">0</span>
+<span>QAD = 0 / FÍSICO &gt; 0</span>
+</div>
+
+<strong>
+{qadsEnCero}
+</strong>
+
+<p>
+Hay físico que QAD no registra
+</p>
+
+<small>
+Investigar registros →
+</small>
+
+</button>
+
+
+<button
+className="actionCard neutralCard"
+onClick={() => setFiltroEspecial("FISICO_0")}
+>
+
+<div className="actionTop">
+<span className="actionIcon">0</span>
+<span>FÍSICO = 0 / QAD &gt; 0</span>
+</div>
+
+<strong>
+{fisicosEnCero}
+</strong>
+
+<p>
+QAD tiene inventario sin escaneo
+</p>
+
+<small>
+Investigar faltantes →
+</small>
+
+</button>
+
+</div>
+
+</section>
+
+
+{/* FILTROS */}
+
+<section className="filtersSection">
+
+<div className="filterRow">
+
+<div className="filterGroup">
+
+<label>ÁREA</label>
+
+<div className="filterButtons">
+
+{["TODOS", "Almacén", "Piso"].map((area) => (
+<button
+key={area}
+className={
+filtroArea === area ? "active" : ""
+}
+onClick={() => setFiltroArea(area)}
+>
+{area}
+</button>
+))}
+
+</div>
+
+</div>
+
+
+<div className="filterGroup">
+
+<label>ORDENAR POR</label>
+
+<select
+value={orden}
+onChange={(e) => setOrden(e.target.value)}
+>
+
+<option value="PERDIDA_USD">
+Mayor pérdida USD
+</option>
+
+<option value="GANANCIA_USD">
+Mayor ganancia USD
+</option>
+
+<option value="PERDIDA_PZAS">
+Mayor pérdida piezas
+</option>
+
+<option value="GANANCIA_PZAS">
+Mayor ganancia piezas
+</option>
+
+</select>
+
+</div>
+
+
+<div className="search">
+
+<label>BUSCAR PN</label>
+
+<input
+type="text"
+placeholder="Ej. VPTBFF..."
+value={busqueda}
+onChange={(e) => setBusqueda(e.target.value)}
+/>
+
+</div>
+
+</div>
+
+</section>
+
+
+{/* TABLA */}
+
+<section className="tableSection">
+
+<div className="tableHeader">
+
+<div>
+<p className="eyebrow">DETALLE</p>
+
+<h2>
+Números de parte
+</h2>
+</div>
+
+<span>
+{datosFiltrados.length} registros
+</span>
+
+</div>
+
+
+<div className="tableContainer">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>NÚMERO DE PARTE</th>
+
+<th>4WALL</th>
+
+<th>DSV</th>
+
+<th>QAD</th>
+
+<th>VAR PLANTA</th>
+
+<th>VAR USD</th>
+
+<th>DELTA TOTAL</th>
+
+<th>ACCIÓN</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+{datosFiltrados.map((item) => {
+
+const alerta =
+item.qad === 0 && item.fisicoTotal > 0
+? "QAD 0"
+: item.fisicoTotal === 0 &&
+item.qad > 0
+? "FÍSICO 0"
+: "";
+
+return (
+
+<tr key={item.pn}>
+
+<td>
+
+<div className="pnCell">
+
+<strong>
+{item.pn}
+</strong>
+
+{alerta && (
+<span className="tag">
+{alerta}
+</span>
+)}
+
+</div>
+
+</td>
+
+
+<td>
+{numero(item.fisicoPlanta)}
+</td>
+
+
+<td>
+{numero(item.dsv)}
+</td>
+
+
+<td>
+{numero(item.qad)}
+</td>
+
+
+<td>
+
+<span
+className={
+item.varPlanta < 0
+? "negative"
+: "positive"
+}
+>
+{item.varPlanta > 0 ? "+" : ""}
+{numero(item.varPlanta)}
+</span>
+
+</td>
+
+
+<td>
+
+<span
+className={
+item.varPlantaUsd < 0
+? "negative"
+: "positive"
+}
+>
+{item.varPlantaUsd > 0 ? "+" : ""}
+{dinero(item.varPlantaUsd)}
+</span>
+
+</td>
+
+
+<td>
+
+<span
+className={
+item.deltaTotalUsd < 0
+? "negative"
+: "positive"
+}
+>
+{item.deltaTotal > 0 ? "+" : ""}
+{numero(item.deltaTotal)}
+</span>
+
+</td>
+
+
+<td>
+
+<button
+className="investigate"
+onClick={() =>
+alert(
+`Investigar ${item.pn}\n\n` +
+`4Wall: ${numero(item.fisicoPlanta)}\n` +
+`DSV: ${numero(item.dsv)}\n` +
+`QAD: ${numero(item.qad)}\n` +
+`Var Planta: ${numero(item.varPlanta)} piezas\n` +
+`Var Planta USD: ${dinero(item.varPlantaUsd)}`
+)
+}
+>
+Investigar
+</button>
+
+</td>
+
+</tr>
+
+);
+})}
+
+</tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+{/* PIE */}
+
+<footer>
+
+<span>
+Visteon Reconciliador
+</span>
+
+<span>
+QAD + 4Wall + DSV
+</span>
+
+</footer>
+
+</main>
+
+
+<style>{`
+
+* {
+box-sizing: border-box;
+}
+
+body {
+margin: 0;
+font-family: Inter, Arial, sans-serif;
+background: #07090d;
+color: #f4f6f8;
+}
+
+button,
+input,
+select {
+font: inherit;
+}
+
+button {
+cursor: pointer;
+}
+
+.dashboard {
+min-height: 100vh;
+background:
+radial-gradient(
+circle at 80% 0%,
+rgba(30, 55, 70, .25),
+transparent 30%
+),
+#07090d;
+}
+
+.header {
+height: 76px;
+padding: 0 42px;
+border-bottom: 1px solid #20252d;
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: rgba(7, 9, 13, .94);
+}
+
+.brand {
+font-size: 18px;
+font-weight: 800;
+letter-spacing: .08em;
+}
+
+.brand span {
+opacity: .3;
+margin: 0 8px;
+}
+
+.subtitle {
+margin-top: 5px;
+font-size: 12px;
+color: #737b86;
+}
+
+.headerRight {
+display: flex;
+gap: 18px;
+align-items: center;
+}
+
+.status {
+color: #8c959f;
+font-size: 12px;
+}
+
+.statusDot {
+display: inline-block;
+width: 7px;
+height: 7px;
+border-radius: 50%;
+background: #58c38a;
+margin-right: 7px;
+}
+
+.fileDropdown {
+position: relative;
+}
+
+.fileDropdown button {
+background: #11151b;
+color: #dce0e5;
+border: 1px solid #282e37;
+padding: 9px 13px;
+border-radius: 7px;
+}
+
+.fileDropdown button span {
+margin-left: 10px;
+}
+
+.fileMenu {
+position: absolute;
+right: 0;
+top: 44px;
+width: 245px;
+background: #10141a;
+border: 1px solid #292f38;
+border-radius: 8px;
+z-index: 10;
+box-shadow: 0 18px 45px rgba(0,0,0,.45);
+}
+
+.fileMenu div {
+padding: 13px 15px;
+border-bottom: 1px solid #20252d;
+}
+
+.fileMenu div:last-child {
+border-bottom: none;
+}
+
+.fileMenu strong {
+display: block;
+font-size: 12px;
+}
+
+.fileMenu span {
+display: block;
+margin-top: 4px;
+color: #737b86;
+font-size: 11px;
+}
+
+.container {
+max-width: 1450px;
+margin: auto;
+padding: 38px 42px 50px;
+}
+
+.intro {
+display: flex;
+justify-content: space-between;
+align-items: end;
+margin-bottom: 30px;
+}
+
+.eyebrow {
+color: #737c87;
+font-size: 10px;
+font-weight: 800;
+letter-spacing: .14em;
+margin: 0 0 7px;
+}
+
+h1 {
+font-size: 30px;
+margin: 0;
+letter-spacing: -.03em;
+}
+
+h2 {
+margin: 0;
+font-size: 20px;
+}
+
+.intro p:not(.eyebrow) {
+color: #747d88;
+font-size: 13px;
+margin-top: 9px;
+}
+
+.fecha {
+text-align: right;
+}
+
+.fecha span {
+display: block;
+color: #68717c;
+font-size: 9px;
+letter-spacing: .12em;
+}
+
+.fecha strong {
+display: block;
+margin-top: 5px;
+font-size: 13px;
+}
+
+.metrics {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 13px;
+}
+
+.metricCard {
+background: #0e1217;
+border: 1px solid #20262e;
+border-radius: 9px;
+padding: 19px;
+min-height: 145px;
+}
+
+.metricHeader {
+display: flex;
+justify-content: space-between;
+color: #707985;
+font-size: 10px;
+font-weight: 800;
+letter-spacing: .08em;
+}
+
+.metricIcon {
+opacity: .6;
+}
+
+.metricCard strong {
+display: block;
+font-size: 28px;
+margin-top: 21px;
+letter-spacing: -.04em;
+}
+
+.metricCard small {
+color: #68717b;
+font-size: 11px;
+display: block;
+margin-top: 7px;
+}
+
+.alertCard {
+border-color: #493c26;
+}
+
+.negative {
+color: #e37b7b;
+}
+
+.positive {
+color: #70c899;
+}
+
+.actionsSection {
+margin-top: 38px;
+}
+
+.sectionTitle {
+display: flex;
+align-items: end;
+justify-content: space-between;
+margin-bottom: 15px;
+}
+
+.sectionHint {
+color: #606974;
+font-size: 11px;
+}
+
+.actionGrid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 13px;
+}
+
+.actionCard {
+text-align: left;
+min-height: 170px;
+padding: 17px;
+border-radius: 9px;
+border: 1px solid #292f37;
+background: #0d1116;
+color: white;
+transition: .15s;
+}
+
+.actionCard:hover {
+transform: translateY(-2px);
+border-color: #48515c;
+}
+
+.actionCard.danger {
+border-color: #493034;
+}
+
+.actionCard.warning {
+border-color: #4b422b;
+}
+
+.actionCard.positiveCard {
+border-color: #294538;
+}
+
+.actionTop {
+display: flex;
+align-items: center;
+gap: 9px;
+color: #7c858f;
+font-size: 9px;
+font-weight: 800;
+letter-spacing: .09em;
+}
+
+.actionIcon {
+width: 22px;
+height: 22px;
+border: 1px solid #3a414a;
+display: grid;
+place-items: center;
+border-radius: 5px;
+font-size: 11px;
+}
+
+.actionCard strong {
+display: block;
+font-size: 25px;
+margin-top: 19px;
+}
+
+.actionCard p {
+color: #89919a;
+font-size: 11px;
+margin: 6px 0;
+}
+
+.actionCard small {
+color: #606974;
+font-size: 10px;
+}
+
+.filtersSection {
+margin-top: 38px;
+padding: 18px;
+border: 1px solid #20262e;
+border-radius: 9px;
+background: #0c1015;
+}
+
+.filterRow {
+display: flex;
+align-items: end;
+gap: 25px;
+}
+
+.filterGroup label,
+.search label {
+display: block;
+font-size: 9px;
+color: #69727c;
+font-weight: 800;
+letter-spacing: .1em;
+margin-bottom: 8px;
+}
+
+.filterButtons {
+display: flex;
+gap: 5px;
+}
+
+.filterButtons button {
+border: 1px solid #292f38;
+background: #11151a;
+color: #7d8690;
+padding: 8px 13px;
+border-radius: 6px;
+font-size: 11px;
+}
+
+.filterButtons button.active {
+background: #e9edf0;
+color: #11151a;
+border-color: #e9edf0;
+}
+
+select,
+.search input {
+height: 35px;
+border-radius: 6px;
+border: 1px solid #292f38;
+background: #11151a;
+color: #d9dde2;
+padding: 0 11px;
+outline: none;
+}
+
+.search {
+margin-left: auto;
+}
+
+.search input {
+width: 210px;
+}
+
+.tableSection {
+margin-top: 35px;
+}
+
+.tableHeader {
+display: flex;
+justify-content: space-between;
+align-items: end;
+margin-bottom: 14px;
+}
+
+.tableHeader > span {
+color: #68717c;
+font-size: 11px;
+}
+
+.tableContainer {
+overflow-x: auto;
+border: 1px solid #20262e;
+border-radius: 9px;
+background: #0c1015;
+}
+
+table {
+width: 100%;
+border-collapse: collapse;
+min-width: 1000px;
+}
+
+th {
+text-align: left;
+padding: 13px 15px;
+color: #626b76;
+font-size: 9px;
+letter-spacing: .09em;
+border-bottom: 1px solid #20262e;
+}
+
+td {
+padding: 14px 15px;
+border-bottom: 1px solid #191e25;
+font-size: 12px;
+color: #aeb5bd;
+}
+
+tr:last-child td {
+border-bottom: none;
+}
+
+tr:hover td {
+background: rgba(255,255,255,.015);
+}
+
+.pnCell {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.pnCell strong {
+color: #e3e6e9;
+font-size: 11px;
+}
+
+.tag {
+font-size: 8px;
+border: 1px solid #56462c;
+color: #c4a76b;
+padding: 3px 5px;
+border-radius: 4px;
+}
+
+.investigate {
+border: 1px solid #303741;
+background: transparent;
+color: #929aa3;
+border-radius: 5px;
+padding: 6px 9px;
+font-size: 10px;
+}
+
+.investigate:hover {
+background: #e8ecef;
+color: #101318;
+}
+
+footer {
+margin-top: 35px;
+padding-top: 20px;
+border-top: 1px solid #1c2128;
+display: flex;
+justify-content: space-between;
+color: #4f5863;
+font-size: 10px;
+}
+
+@media (max-width: 1000px) {
+
+.metrics,
+.actionGrid {
+grid-template-columns: repeat(2, 1fr);
+}
+
+.filterRow {
+flex-wrap: wrap;
+}
+
+.search {
+margin-left: 0;
+}
+
+}
+
+@media (max-width: 650px) {
+
+.header {
+padding: 0 18px;
+}
+
+.status {
+display: none;
+}
+
+.container {
+padding: 25px 18px;
+}
+
+.metrics,
+.actionGrid {
+grid-template-columns: 1fr;
+}
+
+.intro {
+display: block;
+}
+
+.fecha {
+text-align: left;
+margin-top: 15px;
+}
+
+}
+
+`}</style>
+
+</div>
+);
+}
+
+export default App;
+
+==== ARCHIVO: Filters.jsx ====
+export default function Filters({
+ area,
+ setArea,
+ orden,
+ setOrden,
+ busqueda,
+ setBusqueda,
+}) {
+ return (
+<section className="filtersSection">
+<div className="filterGroup">
+<label>UBICACIÓN</label>
+<div className="filterButtons">
+         {[
+           "TODOS",
+           "Almacén",
+           "Piso",
+           "Consignación",
+         ].map((opcion) => (
+<button
+             key={opcion}
+             className={area === opcion ? "active" : ""}
+             onClick={() => setArea(opcion)}
+>
+             {opcion}
+</button>
+         ))}
+</div>
+</div>
+
+<div className="filterGroup">
+<label>ORDENAR POR</label>
+<select
+         value={orden}
+         onChange={(e) => setOrden(e.target.value)}
+>
+<option value="PERDIDA_USD">
+           Mayor pérdida USD
+</option>
+<option value="GANANCIA_USD">
+           Mayor ganancia USD
+</option>
+<option value="PERDIDA_PZAS">
+           Mayor pérdida piezas
+</option>
+<option value="GANANCIA_PZAS">
+           Mayor ganancia piezas
+</option>
+</select>
+</div>
+
+<div className="search">
+<label>NÚMERO DE PARTE</label>
+<input
+         type="text"
+         placeholder="Buscar PN..."
+         value={busqueda}
+         onChange={(e) => setBusqueda(e.target.value)}
+       />
+</div>
+</section>
+ );
+}
+
+==== ARCHIVO: Hallazgos.jsx ====
+export default function Hallazgos({
+ perdida,
+ ganancia,
+ qadCero,
+ fisicoCero,
+ onFiltro,
+}) {
+ return (
+<section className="hallazgosSection">
+<div className="sectionTitle">
+<div>
+<p className="eyebrow">
+           HALLAZGOS DE CONCILIACIÓN
+</p>
+<h2>
+           ¿Qué está fuera de conciliación?
+</h2>
+<p className="sectionDescription">
+           Un hallazgo se considera prioritario cuando existe
+           una diferencia que puede requerir investigación física
+           durante el inventario.
+</p>
+</div>
+</div>
+
+<div className="hallazgosGrid">
+<button
+         className="hallazgo danger"
+         onClick={() => onFiltro("PERDIDAS")}
+>
+<div className="hallazgoTitle">
+           PÉRDIDA ECONÓMICA
+</div>
+<strong>
+           {perdida}
+</strong>
+<p>
+           Mayor diferencia negativa en USD
+</p>
+<span>
+           Ver partes con pérdida →
+</span>
+</button>
+
+<button
+         className="hallazgo positive"
+         onClick={() => onFiltro("GANANCIAS")}
+>
+<div className="hallazgoTitle">
+           GANANCIA ECONÓMICA
+</div>
+<strong>
+           {ganancia}
+</strong>
+<p>
+           Mayor diferencia positiva en USD
+</p>
+<span>
+           Ver partes con ganancia →
+</span>
+</button>
+
+<button
+         className="hallazgo warning"
+         onClick={() => onFiltro("QAD_0")}
+>
+<div className="hallazgoTitle">
+           QAD = 0 / FÍSICO &gt; 0
+</div>
+<strong>
+           {qadCero}
+</strong>
+<p>
+           Existe material físico que QAD no registra.
+</p>
+<span>
+           Revisar →
+</span>
+</button>
+
+<button
+         className="hallazgo warning"
+         onClick={() => onFiltro("FISICO_0")}
+>
+<div className="hallazgoTitle">
+           FÍSICO = 0 / QAD &gt; 0
+</div>
+<strong>
+           {fisicoCero}
+</strong>
+<p>
+           QAD registra material que no aparece en los escaneos.
+</p>
+<span>
+           Revisar →
+</span>
+</button>
+</div>
+</section>
+ );
+}
+
+==== ARCHIVO: Header.jsx ====
+export default function Header({ archivos }) {
+ return (
+<header className="header">
+<div>
+<div className="brand">
+         VISTEON <span>|</span> RECONCILIADOR
+</div>
+<div className="subtitle">
+         Control de inventario físico vs QAD
+</div>
+</div>
+<div className="headerRight">
+<div className="status">
+<span className="statusDot"></span>
+         Datos sincronizados
+</div>
+<details className="fileDropdown">
+<summary>
+           {archivos.length} Archivos Fuente
+<span>⌄</span>
+</summary>
+<div className="fileMenu">
+           {archivos.map((archivo) => (
+<div key={archivo.nombre}>
+<strong>{archivo.tipo}</strong>
+<span>{archivo.nombre}</span>
+<small>{archivo.descripcion}</small>
+</div>
+           ))}
+</div>
+</details>
+</div>
+</header>
+ );
+}
+
+==== ARCHIVO: InventoryCharts.jsx ====
+export default function InventoryCharts({ cortes }) {
+ const maxUsd = Math.max(
+   ...cortes.map((corte) => Math.abs(corte.diferenciasUsd))
+ );
+ return (
+<section className="chartsSection">
+<div className="sectionTitle">
+<div>
+<p className="eyebrow">
+           SEGUIMIENTO DEL INVENTARIO
+</p>
+<h2>
+           Evolución durante el día
+</h2>
+<p className="sectionDescription">
+           Comparación de las diferencias detectadas en cada
+           corte de inventario.
+</p>
+</div>
+</div>
+
+<div className="chartsGrid">
+       {/* GRÁFICA USD */}
+<div className="chartCard">
+<div className="chartHeader">
+<div>
+<span>
+               DIFERENCIA ECONÓMICA
+</span>
+<strong>
+               USD
+</strong>
+</div>
+<small>
+             Cada 2 horas
+</small>
+</div>
+
+<div className="bars">
+           {cortes.map((corte) => {
+             const altura =
+               (Math.abs(corte.diferenciasUsd) / maxUsd) * 100;
+             return (
+<div className="barColumn" key={corte.hora}>
+<div className="barValue">
+                   ${(Math.abs(corte.diferenciasUsd) / 1000000).toFixed(1)}M
+</div>
+<div className="barWrapper">
+<div
+                     className="bar"
+                     style={{
+                       height: `${altura}%`,
+                     }}
+                   />
+</div>
+<span>
+                   {corte.hora}
+</span>
+</div>
+             );
+           })}
+</div>
+</div>
+
+       {/* ESTADO DEL INVENTARIO */}
+<div className="chartCard">
+<div className="chartHeader">
+<div>
+<span>
+               PARTES INVESTIGADAS
+</span>
+<strong>
+               PROGRESO
+</strong>
+</div>
+<small>
+             Durante el inventario
+</small>
+</div>
+
+<div className="progressList">
+           {cortes.map((corte) => {
+             const anterior =
+               cortes.length > 0
+                 ? cortes[cortes.length - 1].investigados
+                 : 1;
+             const porcentaje =
+               (corte.investigados / anterior) * 100;
+             return (
+<div
+                 className="progressRow"
+                 key={corte.hora}
+>
+<span>
+                   {corte.hora}
+</span>
+<div className="progressTrack">
+<div
+                     className="progressBar"
+                     style={{
+                       width: `${Math.min(
+                         porcentaje,
+                         100
+                       )}%`,
+                     }}
+                   />
+</div>
+<strong>
+                   {corte.investigados}
+</strong>
+</div>
+             );
+           })}
+</div>
+</div>
+</div>
+
+     {/* RESUMEN PARA JUNTA */}
+<div className="meetingSummary">
+<div>
+<span>ÚLTIMO CORTE</span>
+<strong>
+           {cortes[cortes.length - 1].hora}
+</strong>
+</div>
+<div>
+<span>DIFERENCIA ACTUAL</span>
+<strong>
+           {(
+             Math.abs(
+               cortes[cortes.length - 1].diferenciasUsd
+             ) / 1000000
+           ).toFixed(2)}
+           M USD
+</strong>
+</div>
+<div>
+<span>PARTES INVESTIGADAS</span>
+<strong>
+           {cortes[cortes.length - 1].investigados}
+</strong>
+</div>
+<div>
+<span>PRÓXIMO CORTE</span>
+<strong>
+           20:00
+</strong>
+</div>
+</div>
+</section>
+ );
+}
+
+==== ARCHIVO: InventoryTable.jsx ====
+const numero = (valor) =>
+ new Intl.NumberFormat("en-US").format(
+   Math.round(valor)
+ );
+const dinero = (valor) =>
+ new Intl.NumberFormat("en-US", {
+   style: "currency",
+   currency: "USD",
+   maximumFractionDigits: 0,
+ }).format(valor);
+
+export default function InventoryTable({ datos }) {
+ return (
+<section className="tableSection">
+<div className="tableHeader">
+<div>
+<p className="eyebrow">
+           DETALLE DE CONCILIACIÓN
+</p>
+<h2>
+           Números de parte
+</h2>
+</div>
+<span>
+         {datos.length} registros
+</span>
+</div>
+
+<div className="tableContainer">
+<table>
+<thead>
+<tr>
+<th>NÚMERO DE PARTE</th>
+<th>4WALL</th>
+<th>DSV</th>
+<th>QAD</th>
+<th>VAR PLANTA</th>
+<th>VAR USD</th>
+<th>DELTA TOTAL</th>
+<th>ACCIÓN</th>
+</tr>
+</thead>
+
+<tbody>
+           {datos.map((item) => (
+<tr key={item.pn}>
+<td>
+<strong className="pn">
+                   {item.pn}
+</strong>
+</td>
+<td>
+                 {numero(item.fisicoPlanta)}
+</td>
+<td>
+                 {numero(item.dsv)}
+</td>
+<td>
+                 {numero(item.qadTotal)}
+</td>
+<td>
+<span
+                   className={
+                     item.varPlanta < 0
+                       ? "negative"
+                       : "positive"
+                   }
+>
+                   {item.varPlanta > 0 ? "+" : ""}
+                   {numero(item.varPlanta)}
+</span>
+</td>
+<td>
+<span
+                   className={
+                     item.varPlantaUsd < 0
+                       ? "negative"
+                       : "positive"
+                   }
+>
+                   {dinero(item.varPlantaUsd)}
+</span>
+</td>
+<td>
+<span
+                   className={
+                     item.deltaTotalUsd < 0
+                       ? "negative"
+                       : "positive"
+                   }
+>
+                   {item.deltaTotal > 0 ? "+" : ""}
+                   {numero(item.deltaTotal)}
+</span>
+</td>
+<td>
+<button
+                   className="investigate"
+                   onClick={() =>
+                     alert(
+                       `Investigar PN: ${item.pn}\n\n` +
+                       `4Wall: ${numero(item.fisicoPlanta)}\n` +
+                       `DSV: ${numero(item.dsv)}\n` +
+                       `QAD: ${numero(item.qadTotal)}\n` +
+                       `Var Planta: ${numero(item.varPlanta)} piezas\n` +
+                       `Impacto: ${dinero(item.varPlantaUsd)}`
+                     )
+                   }
+>
+                   Investigar
+</button>
+</td>
+</tr>
+           ))}
+</tbody>
+</table>
+</div>
+</section>
+ );
+}
+
+==== ARCHIVO: MetricCard.jsx ====
+export default function MetricCard({
+ titulo,
+ valor,
+ descripcion,
+ tipo = "normal",
+}) {
+ return (
+<div className={`metricCard ${tipo}`}>
+<div className="metricHeader">
+<span>{titulo}</span>
+</div>
+<strong>{valor}</strong>
+<small>{descripcion}</small>
+</div>
+ );
+}
+
+==== ARCHIVO: mockData.js ====
+export const archivosFuente = [
+ {
+   nombre: "4wall-Area(5) - Diccionario de nombres 4wall y QAD",
+   tipo: "4Wall",
+   estado: "Procesado",
+ },
+ {
+   nombre: "Congelado QAD.3.2 09 10",
+   tipo: "QAD",
+   estado: "Procesado",
+ },
+ {
+   nombre: "Reporte de Escaneos - May 2026 179A",
+   tipo: "4Wall",
+   estado: "Procesado",
+ },
+ {
+   nombre: "Book1",
+   tipo: "BOM / Phantom",
+   estado: "Procesado",
+ },
+];
+export const cortesInventario = [
+ {
+   hora: "08:00",
+   impactoUsd: -820000,
+   varPlantaPzas: -4200,
+   investigados: 0,
+ },
+ {
+   hora: "10:00",
+   impactoUsd: -1050000,
+   varPlantaPzas: -5800,
+   investigados: 12,
+ },
+ {
+   hora: "12:00",
+   impactoUsd: -920000,
+   varPlantaPzas: -4900,
+   investigados: 25,
+ },
+ {
+   hora: "14:00",
+   impactoUsd: -680000,
+   varPlantaPzas: -3500,
+   investigados: 38,
+ },
+ {
+   hora: "16:00",
+   impactoUsd: -510000,
+   varPlantaPzas: -2700,
+   investigados: 51,
+ },
+];
+export const inventarioMock = [
+ {
+   pn: "PN-10001",
+   almacen: 1200,
+   piso: 350,
+   dsv: 0,
+   qad: 1900,
+   varAlmacen: -300,
+   varPiso: 50,
+   varDsv: 0,
+   varPlanta: -250,
+   varUsd: -12500,
+   costo: 50,
+ },
+ {
+   pn: "PN-10002",
+   almacen: 800,
+   piso: 200,
+   dsv: 150,
+   qad: 1000,
+   varAlmacen: -200,
+   varPiso: 100,
+   varDsv: 150,
+   varPlanta: -100,
+   varUsd: -8000,
+   costo: 80,
+ },
+ {
+   pn: "PN-10003",
+   almacen: 0,
+   piso: 0,
+   dsv: 0,
+   qad: 450,
+   varAlmacen: -300,
+   varPiso: -150,
+   varDsv: 0,
+   varPlanta: -450,
+   varUsd: -13500,
+   costo: 30,
+ },
+ {
+   pn: "PN-10004",
+   almacen: 600,
+   piso: 100,
+   dsv: 0,
+   qad: 500,
+   varAlmacen: 100,
+   varPiso: 0,
+   varDsv: 0,
+   varPlanta: 100,
+   varUsd: 6000,
+   costo: 60,
+ },
+ {
+   pn: "PN-10005",
+   almacen: 250,
+   piso: 450,
+   dsv: 0,
+   qad: 500,
+   varAlmacen: -50,
+   varPiso: 200,
+   varDsv: 0,
+   varPlanta: 150,
+   varUsd: 7500,
+   costo: 50,
+ },
+ {
+   pn: "PN-10006",
+   almacen: 100,
+   piso: 0,
+   dsv: 300,
+   qad: 350,
+   varAlmacen: 50,
+   varPiso: 0,
+   varDsv: 300,
+   varPlanta: 50,
+   varUsd: 2500,
+   costo: 50,
+ },
+ {
+   pn: "PN-10007",
+   almacen: 0,
+   piso: 300,
+   dsv: 0,
+   qad: 100,
+   varAlmacen: -50,
+   varPiso: 250,
+   varDsv: 0,
+   varPlanta: 200,
+   varUsd: 10000,
+   costo: 50,
+ },
+ {
+   pn: "PN-10008",
+   almacen: 900,
+   piso: 100,
+   dsv: 0,
+   qad: 1200,
+   varAlmacen: -100,
+   varPiso: -200,
+   varDsv: 0,
+   varPlanta: -300,
+   varUsd: -18000,
+   costo: 60,
+ },
+ {
+   pn: "PN-10009",
+   almacen: 450,
+   piso: 50,
+   dsv: 100,
+   qad: 500,
+   varAlmacen: -50,
+   varPiso: 0,
+   varDsv: 100,
+   varPlanta: -50,
+   varUsd: -5000,
+   costo: 100,
+ },
+ {
+   pn: "PN-10010",
+   almacen: 700,
+   piso: 250,
+   dsv: 0,
+   qad: 800,
+   varAlmacen: -50,
+   varPiso: -50,
+   varDsv: 0,
+   varPlanta: -100,
+   varUsd: -7000,
+   costo: 70,
+ },
+];
+
+==== ARCHIVO: App.css ====
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+
+
+==== ARCHIVO: App.jsx ====
+import React, { useMemo, useState } from "react";
+import Header from "./components/Header";
+import MetricCard from "./components/MetricCard";
+import Hallazgos from "./components/Hallazgos";
+import Filters from "./components/Filters";
+import InventoryCharts from "./components/InventoryCharts";
+import InventoryTable from "./components/InventoryTable";
+import {
+ inventarioMock,
+ cortesInventario,
+ archivosFuente,
+} from "./data/mockData";
+function App() {
+ const [filtro, setFiltro] = useState("TODOS");
+ const [orden, setOrden] = useState("PERDIDA_USD");
+ const [busqueda, setBusqueda] = useState("");
+ // ============================================================
+ // ÚLTIMO CORTE
+ // ============================================================
+ const ultimoCorte =
+   cortesInventario[cortesInventario.length - 1];
+ // ============================================================
+ // FILTROS Y ORDEN
+ // ============================================================
+ const inventarioFiltrado = useMemo(() => {
+   let datos = [...inventarioMock];
+   if (filtro === "ALMACÉN") {
+     datos = datos.filter((item) => item.almacen > 0);
+   }
+   if (filtro === "PISO") {
+     datos = datos.filter((item) => item.piso > 0);
+   }
+   if (filtro === "CONSIGNACIÓN") {
+     datos = datos.filter((item) => item.dsv > 0);
+   }
+   if (busqueda.trim() !== "") {
+     datos = datos.filter((item) =>
+item.pn
+         .toLowerCase()
+         .includes(busqueda.toLowerCase())
+     );
+   }
+   if (orden === "PERDIDA_USD") {
+     datos.sort((a, b) => a.varUsd - b.varUsd);
+   }
+   if (orden === "GANANCIA_USD") {
+     datos.sort((a, b) => b.varUsd - a.varUsd);
+   }
+   if (orden === "PERDIDA_PZAS") {
+     datos.sort((a, b) => a.varPlanta - b.varPlanta);
+   }
+   if (orden === "GANANCIA_PZAS") {
+     datos.sort((a, b) => b.varPlanta - a.varPlanta);
+   }
+   return datos;
+ }, [filtro, orden, busqueda]);
+ // ============================================================
+ // MÉTRICAS
+ // ============================================================
+ const metricas = useMemo(() => {
+   const total4Wall = inventarioMock.reduce(
+     (total, item) =>
+       total + item.almacen + item.piso,
+     0
+   );
+   const totalDsv = inventarioMock.reduce(
+     (total, item) => total + item.dsv,
+     0
+   );
+   const totalFisico =
+     total4Wall + totalDsv;
+   const totalQad = inventarioMock.reduce(
+     (total, item) => total + item.qad,
+     0
+   );
+   const varPlanta = inventarioMock.reduce(
+     (total, item) => total + item.varPlanta,
+     0
+   );
+   const impactoUsd = inventarioMock.reduce(
+     (total, item) => total + item.varUsd,
+     0
+   );
+   const pnsConDiferencia =
+     inventarioMock.filter(
+       (item) => item.varPlanta !== 0
+     ).length;
+   return {
+     total4Wall,
+     totalDsv,
+     totalFisico,
+     totalQad,
+     varPlanta,
+     impactoUsd,
+     pnsConDiferencia,
+   };
+ }, []);
+ // ============================================================
+ // IMPACTO POR UBICACIÓN
+ // ============================================================
+ const impactoUbicacion = useMemo(() => {
+   const resultado = {
+     almacen: 0,
+     piso: 0,
+     dsv: 0,
+   };
+   inventarioMock.forEach((item) => {
+     resultado.almacen +=
+       item.varAlmacen * item.costo;
+     resultado.piso +=
+       item.varPiso * item.costo;
+     resultado.dsv +=
+       item.varDsv * item.costo;
+   });
+   return resultado;
+ }, []);
+ // ============================================================
+ // CASOS IMPORTANTES
+ // ============================================================
+ const casos = useMemo(() => {
+   const qadCeroFisico =
+     inventarioMock.filter(
+       (item) =>
+         item.qad === 0 &&
+         item.almacen + item.piso > 0
+     );
+   const fisicoCeroQad =
+     inventarioMock.filter(
+       (item) =>
+         item.almacen + item.piso === 0 &&
+         item.qad > 0
+     );
+   const perdidaEconomica =
+     [...inventarioMock]
+       .filter((item) => item.varUsd < 0)
+       .sort(
+         (a, b) => a.varUsd - b.varUsd
+       )
+       .slice(0, 5);
+   const gananciaEconomica =
+     [...inventarioMock]
+       .filter((item) => item.varUsd > 0)
+       .sort(
+         (a, b) => b.varUsd - a.varUsd
+       )
+       .slice(0, 5);
+   return {
+     qadCeroFisico,
+     fisicoCeroQad,
+     perdidaEconomica,
+     gananciaEconomica,
+   };
+ }, []);
+ // ============================================================
+ // INTERFAZ
+ // ============================================================
+ return (
+<main className="dashboard">
+     {/* HEADER */}
+<Header
+       archivos={archivosFuente}
+       ultimoCorte={ultimoCorte.hora}
+     />
+     {/* ======================================================
+         ¿QUÉ ESTÁ PASANDO?
+     ====================================================== */}
+<section className="heroSection">
+<div className="heroText">
+<span className="sectionEyebrow">
+           CONTROL DEL INVENTARIO
+</span>
+<h1>
+           ¿Qué está pasando?
+</h1>
+<p>
+           Visualiza el impacto actual del inventario
+           físico y detecta dónde se están generando
+           las principales diferencias.
+</p>
+</div>
+<div className="cutStatus">
+<span>
+           ÚLTIMO CORTE
+</span>
+<strong>
+           {ultimoCorte.hora}
+</strong>
+<small>
+           Información procesada
+</small>
+</div>
+</section>
+     {/* ======================================================
+         MÉTRICAS
+     ====================================================== */}
+<section className="metricsGrid">
+<MetricCard
+         titulo="IMPACTO ACTUAL"
+         valor={`$${Math.abs(
+           metricas.impactoUsd
+         ).toLocaleString()} USD`}
+         descripcion="Diferencia económica identificada"
+         tipo={
+           metricas.impactoUsd < 0
+             ? "danger"
+             : "positive"
+         }
+       />
+<MetricCard
+         titulo="VAR PLANTA"
+         valor={`${metricas.varPlanta.toLocaleString()} pzas`}
+         descripcion="4Wall planta vs QAD planta"
+         tipo={
+           metricas.varPlanta < 0
+             ? "danger"
+             : "positive"
+         }
+       />
+<MetricCard
+         titulo="INVENTARIO 4WALL"
+         valor={metricas.total4Wall.toLocaleString()}
+         descripcion="Almacén + Piso / WIP"
+         tipo="normal"
+       />
+<MetricCard
+         titulo="INVENTARIO DSV"
+         valor={metricas.totalDsv.toLocaleString()}
+         descripcion="Inventario externo / consignación"
+         tipo="normal"
+       />
+</section>
+     {/* ======================================================
+         ¿DÓNDE ESTÁ PEGANDO?
+     ====================================================== */}
+<section className="impactSection">
+<div className="sectionHeading">
+<span className="sectionEyebrow">
+           IMPACTO POR UBICACIÓN
+</span>
+<h2>
+           ¿Dónde está pegando?
+</h2>
+<p>
+           Distribución del impacto económico
+           detectado en el último corte.
+</p>
+</div>
+<div className="impactGrid">
+<div className="impactCard">
+<span>ALMACÉN</span>
+<strong>
+             $
+             {Math.abs(
+               impactoUbicacion.almacen
+             ).toLocaleString()}
+</strong>
+<small>
+             Diferencia económica
+</small>
+</div>
+<div className="impactCard">
+<span>PISO / WIP</span>
+<strong>
+             $
+             {Math.abs(
+               impactoUbicacion.piso
+             ).toLocaleString()}
+</strong>
+<small>
+             Diferencia económica
+</small>
+</div>
+<div className="impactCard">
+<span>CONSIGNACIÓN / DSV</span>
+<strong>
+             $
+             {Math.abs(
+               impactoUbicacion.dsv
+             ).toLocaleString()}
+</strong>
+<small>
+             Diferencia económica
+</small>
+</div>
+</div>
+</section>
+     {/* ======================================================
+         HALLAZGOS
+     ====================================================== */}
+<section className="findingsSection">
+<Hallazgos casos={casos} />
+</section>
+     {/* ======================================================
+         SEGUIMIENTO
+     ====================================================== */}
+<section className="trackingSection">
+<InventoryCharts
+         cortes={cortesInventario}
+         ultimoCorte={ultimoCorte}
+       />
+</section>
+     {/* ======================================================
+         INVESTIGACIÓN
+     ====================================================== */}
+<section className="investigationSection">
+<div className="sectionHeading">
+<span className="sectionEyebrow">
+           INVESTIGACIÓN
+</span>
+<h2>
+           ¿Qué partes están provocando la diferencia?
+</h2>
+<p>
+           Busca, filtra y ordena los números de
+           parte para focalizar la investigación.
+</p>
+</div>
+<Filters
+         filtro={filtro}
+         setFiltro={setFiltro}
+         orden={orden}
+         setOrden={setOrden}
+         busqueda={busqueda}
+         setBusqueda={setBusqueda}
+       />
+<InventoryTable
+         datos={inventarioFiltrado}
+       />
+</section>
+     {/* ======================================================
+         PROCESAMIENTO
+     ====================================================== */}
+<section className="processingSection">
+<div className="sectionHeading">
+<span className="sectionEyebrow">
+           TRAZABILIDAD
+</span>
+<h2>
+           Procesamiento del corte
+</h2>
+<p>
+           Procesos utilizados para obtener
+           el resultado mostrado.
+</p>
+</div>
+<div className="processingGrid">
+<div className="processItem complete">
+<span>✓</span>
+<div>
+<strong>
+               4Wall leído
+</strong>
+<small>
+               Escaneos físicos procesados
+</small>
+</div>
+</div>
+<div className="processItem complete">
+<span>✓</span>
+<div>
+<strong>
+               BOM aplicado
+</strong>
+<small>
+               Componentes identificados
+</small>
+</div>
+</div>
+<div className="processItem complete">
+<span>✓</span>
+<div>
+<strong>
+               Phantom procesados
+</strong>
+<small>
+               Componentes calculados
+</small>
+</div>
+</div>
+<div className="processItem complete">
+<span>✓</span>
+<div>
+<strong>
+               Ubicaciones clasificadas
+</strong>
+<small>
+               Almacén / Piso / DSV
+</small>
+</div>
+</div>
+<div className="processItem complete">
+<span>✓</span>
+<div>
+<strong>
+               QAD cruzado
+</strong>
+<small>
+               Inventario teórico comparado
+</small>
+</div>
+</div>
+<div className="processItem complete">
+<span>✓</span>
+<div>
+<strong>
+               Impacto calculado
+</strong>
+<small>
+               Piezas y USD
+</small>
+</div>
+</div>
+</div>
+</section>
+     {/* ======================================================
+         FOOTER
+     ====================================================== */}
+<footer className="dashboardFooter">
+<div>
+<strong>
+           Visteon Reconciliador
+</strong>
+<span>
+           Herramienta de apoyo para el inventario físico
+</span>
+</div>
+<span>
+         Corte actual: {ultimoCorte.hora}
+</span>
+</footer>
+</main>
+ );
+}
+export default App;
+
+==== ARCHIVO: index.css ====
+* {
+ box-sizing: border-box;
+}
+body {
+ margin: 0;
+ font-family: Inter, Arial, sans-serif;
+ background: #07090d;
+ color: #f4f6f8;
+}
+button,
+input,
+select {
+ font: inherit;
+}
+button {
+ cursor: pointer;
+}
+.dashboard {
+ min-height: 100vh;
+ background:
+   radial-gradient(
+     circle at 80% 0%,
+     rgba(30, 55, 70, .25),
+     transparent 30%
+   ),
+   #07090d;
+}
+
+/* HEADER */
+.header {
+ height: 76px;
+ padding: 0 42px;
+ border-bottom: 1px solid #20252d;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ background: rgba(7, 9, 13, .94);
+}
+.brand {
+ font-size: 18px;
+ font-weight: 800;
+ letter-spacing: .08em;
+}
+.brand span {
+ opacity: .3;
+ margin: 0 8px;
+}
+.subtitle {
+ margin-top: 5px;
+ font-size: 12px;
+ color: #737b86;
+}
+.headerRight {
+ display: flex;
+ align-items: center;
+ gap: 18px;
+}
+.status {
+ color: #8c959f;
+ font-size: 12px;
+}
+.statusDot {
+ display: inline-block;
+ width: 7px;
+ height: 7px;
+ border-radius: 50%;
+ background: #58c38a;
+ margin-right: 7px;
+}
+
+/* ARCHIVOS */
+.fileDropdown {
+ position: relative;
+}
+.fileDropdown summary {
+ list-style: none;
+ background: #11151b;
+ border: 1px solid #282e37;
+ padding: 9px 13px;
+ border-radius: 7px;
+ color: #dce0e5;
+ font-size: 12px;
+}
+.fileDropdown summary::-webkit-details-marker {
+ display: none;
+}
+.fileMenu {
+ position: absolute;
+ right: 0;
+ top: 43px;
+ width: 340px;
+ background: #10141a;
+ border: 1px solid #292f38;
+ border-radius: 8px;
+ z-index: 20;
+ box-shadow:
+   0 18px 45px rgba(0,0,0,.45);
+}
+.fileMenu div {
+ padding: 13px 15px;
+ border-bottom: 1px solid #20252d;
+}
+.fileMenu div:last-child {
+ border-bottom: none;
+}
+.fileMenu strong {
+ display: block;
+ color: #dce1e6;
+ font-size: 11px;
+}
+.fileMenu span {
+ display: block;
+ margin-top: 5px;
+ color: #89919b;
+ font-size: 11px;
+}
+.fileMenu small {
+ display: block;
+ margin-top: 4px;
+ color: #59616b;
+ font-size: 10px;
+}
+
+/* CONTENEDOR */
+.container {
+ max-width: 1450px;
+ margin: auto;
+ padding:
+   38px
+   42px
+   50px;
+}
+
+/* INTRO */
+.intro {
+ display: flex;
+ justify-content: space-between;
+ align-items: end;
+ margin-bottom: 30px;
+}
+.eyebrow {
+ color: #737c87;
+ font-size: 10px;
+ font-weight: 800;
+ letter-spacing: .14em;
+ margin: 0 0 7px;
+}
+h1 {
+ font-size: 30px;
+ margin: 0;
+ letter-spacing: -.03em;
+}
+h2 {
+ margin: 0;
+ font-size: 20px;
+}
+.intro p:not(.eyebrow) {
+ color: #747d88;
+ font-size: 13px;
+ margin-top: 9px;
+}
+.fecha {
+ text-align: right;
+}
+.fecha span {
+ display: block;
+ color: #68717c;
+ font-size: 9px;
+ letter-spacing: .12em;
+}
+.fecha strong {
+ display: block;
+ margin-top: 5px;
+ font-size: 13px;
+}
+
+/* MÉTRICAS */
+.metrics {
+ display: grid;
+ grid-template-columns:
+   repeat(4, 1fr);
+ gap: 13px;
+}
+.metricCard {
+ background: #0e1217;
+ border: 1px solid #20262e;
+ border-radius: 9px;
+ padding: 19px;
+ min-height: 145px;
+}
+.metricCard.negativeCard {
+ border-color: #493034;
+}
+.metricCard.positiveCard {
+ border-color: #294538;
+}
+.metricHeader {
+ color: #707985;
+ font-size: 10px;
+ font-weight: 800;
+ letter-spacing: .08em;
+}
+.metricCard strong {
+ display: block;
+ font-size: 27px;
+ margin-top: 21px;
+ letter-spacing: -.04em;
+}
+.metricCard small {
+ color: #68717b;
+ font-size: 11px;
+ display: block;
+ margin-top: 7px;
+}
+
+/* COLORES */
+.negative {
+ color: #e37b7b;
+}
+.positive {
+ color: #70c899;
+}
+
+/* HALLAZGOS */
+.hallazgosSection {
+ margin-top: 40px;
+}
+.sectionTitle {
+ margin-bottom: 15px;
+}
+.sectionDescription {
+ max-width: 700px;
+ color: #69727c;
+ font-size: 12px;
+ line-height: 1.6;
+ margin-top: 7px;
+}
+.hallazgosGrid {
+ display: grid;
+ grid-template-columns:
+   repeat(4, 1fr);
+ gap: 13px;
+}
+.hallazgo {
+ min-height: 170px;
+ text-align: left;
+ padding: 18px;
+ border-radius: 9px;
+ border: 1px solid #292f37;
+ background: #0d1116;
+ color: white;
+ transition: .15s;
+}
+.hallazgo:hover {
+ transform: translateY(-2px);
+ border-color: #48515c;
+}
+.hallazgo.danger {
+ border-color: #493034;
+}
+.hallazgo.positive {
+ border-color: #294538;
+}
+.hallazgo.warning {
+ border-color: #4b422b;
+}
+.hallazgoTitle {
+ color: #7c858f;
+ font-size: 9px;
+ font-weight: 800;
+ letter-spacing: .09em;
+}
+.hallazgo strong {
+ display: block;
+ margin-top: 19px;
+ font-size: 25px;
+}
+.hallazgo p {
+ color: #89919a;
+ font-size: 11px;
+ line-height: 1.5;
+ min-height: 34px;
+}
+.hallazgo span {
+ color: #606974;
+ font-size: 10px;
+}
+
+/* GRÁFICAS */
+.chartsSection {
+ margin-top: 40px;
+}
+.chartsGrid {
+ display: grid;
+ grid-template-columns:
+   1.5fr 1fr;
+ gap: 13px;
+}
+.chartCard {
+ background: #0c1015;
+ border: 1px solid #20262e;
+ border-radius: 9px;
+ padding: 20px;
+}
+.chartHeader {
+ display: flex;
+ justify-content: space-between;
+ margin-bottom: 25px;
+}
+.chartHeader span {
+ display: block;
+ color: #6d7680;
+ font-size: 9px;
+ font-weight: 800;
+ letter-spacing: .1em;
+}
+.chartHeader strong {
+ display: block;
+ margin-top: 5px;
+ font-size: 15px;
+}
+.chartHeader small {
+ color: #5f6872;
+ font-size: 10px;
+}
+
+/* BARRAS */
+.bars {
+ height: 220px;
+ display: flex;
+ align-items: end;
+ justify-content: space-between;
+ gap: 12px;
+}
+.barColumn {
+ height: 100%;
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ justify-content: end;
+ align-items: center;
+}
+.barValue {
+ color: #858e98;
+ font-size: 9px;
+ margin-bottom: 6px;
+}
+.barWrapper {
+ height: 165px;
+ width: 100%;
+ display: flex;
+ align-items: end;
+ background: #11161c;
+ border-radius: 4px;
+}
+.bar {
+ width: 100%;
+ min-height: 3px;
+ background: #69747f;
+ border-radius: 4px 4px 0 0;
+}
+.barColumn > span {
+ margin-top: 8px;
+ color: #626b75;
+ font-size: 9px;
+}
+
+/* PROGRESO */
+.progressList {
+ display: flex;
+ flex-direction: column;
+ gap: 17px;
+ margin-top: 20px;
+}
+.progressRow {
+ display: grid;
+ grid-template-columns:
+   45px 1fr 30px;
+ align-items: center;
+ gap: 10px;
+}
+.progressRow span {
+ color: #717a84;
+ font-size: 10px;
+}
+.progressTrack {
+ height: 7px;
+ background: #191e24;
+ border-radius: 5px;
+ overflow: hidden;
+}
+.progressBar {
+ height: 100%;
+ background: #6f7983;
+ border-radius: 5px;
+}
+.progressRow strong {
+ color: #9aa2aa;
+ font-size: 10px;
+ text-align: right;
+}
+
+/* RESUMEN JUNTA */
+.meetingSummary {
+ display: grid;
+ grid-template-columns:
+   repeat(4, 1fr);
+ margin-top: 13px;
+ border:
+   1px solid #20262e;
+ border-radius: 9px;
+ background: #0e1217;
+}
+.meetingSummary div {
+ padding: 15px 18px;
+ border-right: 1px solid #20262e;
+}
+.meetingSummary div:last-child {
+ border-right: none;
+}
+.meetingSummary span {
+ display: block;
+ color: #626b75;
+ font-size: 9px;
+ letter-spacing: .08em;
+}
+.meetingSummary strong {
+ display: block;
+ margin-top: 6px;
+ font-size: 15px;
+}
+
+/* FILTROS */
+.filtersSection {
+ margin-top: 40px;
+ padding: 18px;
+ border:
+   1px solid #20262e;
+ border-radius: 9px;
+ background: #0c1015;
+ display: flex;
+ align-items: end;
+ gap: 25px;
+}
+.filterGroup label,
+.search label {
+ display: block;
+ font-size: 9px;
+ color: #69727c;
+ font-weight: 800;
+ letter-spacing: .1em;
+ margin-bottom: 8px;
+}
+.filterButtons {
+ display: flex;
+ gap: 5px;
+}
+.filterButtons button {
+ border:
+   1px solid #292f38;
+ background: #11151a;
+ color: #7d8690;
+ padding: 8px 13px;
+ border-radius: 6px;
+ font-size: 11px;
+}
+.filterButtons button.active {
+ background: #e9edf0;
+ color: #11151a;
+ border-color: #e9edf0;
+}
+select,
+.search input {
+ height: 35px;
+ border:
+   1px solid #292f38;
+ border-radius: 6px;
+ background: #11151a;
+ color: #d9dde2;
+ padding: 0 11px;
+ outline: none;
+}
+.search {
+ margin-left: auto;
+}
+.search input {
+ width: 210px;
+}
+
+/* TABLA */
+.tableSection {
+ margin-top: 35px;
+}
+.tableHeader {
+ display: flex;
+ justify-content: space-between;
+ align-items: end;
+ margin-bottom: 14px;
+}
+.tableHeader > span {
+ color: #68717c;
+ font-size: 11px;
+}
+.tableContainer {
+ overflow-x: auto;
+ border:
+   1px solid #20262e;
+ border-radius: 9px;
+ background: #0c1015;
+}
+table {
+ width: 100%;
+ border-collapse: collapse;
+ min-width: 1000px;
+}
+th {
+ text-align: left;
+ padding: 13px 15px;
+ color: #626b76;
+ font-size: 9px;
+ letter-spacing: .09em;
+ border-bottom:
+   1px solid #20262e;
+}
+td {
+ padding: 14px 15px;
+ border-bottom:
+   1px solid #191e25;
+ font-size: 12px;
+ color: #aeb5bd;
+}
+tr:last-child td {
+ border-bottom: none;
+}
+tr:hover td {
+ background:
+   rgba(255,255,255,.015);
+}
+.pn {
+ color: #e3e6e9;
+ font-size: 11px;
+}
+.investigate {
+ border:
+   1px solid #303741;
+ background: transparent;
+ color: #929aa3;
+ border-radius: 5px;
+ padding: 6px 9px;
+ font-size: 10px;
+}
+.investigate:hover {
+ background: #e8ecef;
+ color: #101318;
+}
+
+/* FOOTER */
+footer {
+ margin-top: 35px;
+ padding-top: 20px;
+ border-top:
+   1px solid #1c2128;
+ display: flex;
+ justify-content: space-between;
+ color: #4f5863;
+ font-size: 10px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+ .metrics,
+ .hallazgosGrid {
+   grid-template-columns:
+     repeat(2, 1fr);
+ }
+ .chartsGrid {
+   grid-template-columns: 1fr;
+ }
+}
+@media (max-width: 700px) {
+ .header {
+   padding: 0 18px;
+ }
+ .status {
+   display: none;
+ }
+ .container {
+   padding: 25px 18px;
+ }
+ .metrics,
+ .hallazgosGrid,
+ .meetingSummary {
+   grid-template-columns: 1fr;
+ }
+ .intro {
+   display: block;
+ }
+ .fecha {
+   margin-top: 15px;
+   text-align: left;
+ }
+ .filtersSection {
+   flex-direction: column;
+   align-items: stretch;
+ }
+ .search {
+   margin-left: 0;
+ }
+ .search input {
+   width: 100%;
+ }
+}
+
+==== ARCHIVO: main.jsx ====
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
+import "./index.css";
+ReactDOM.createRoot(
+ document.getElementById("root")
+).render(
+<React.StrictMode>
+<App />
+</React.StrictMode>
+);
+
+==== ARCHIVO: package.json ====
+{
+  "name": "visteon-dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+ "dev": "vite",
+ "build": "vite build",
+ "lint": "eslint .",
+ "preview": "vite preview",
+ "predeploy": "npm run build",
+ "deploy": "gh-pages -d dist"
+},
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "gh-pages": "^6.3.0",
+    "globals": "^17.12.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.3.0"
+  }
+  
+}
+
+
+==== ARCHIVO: vite.config.js ====
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+export default defineConfig({
+ plugins: [react()],
+ base: '/reconciliador-visteon/', // <-- Nombre exacto del repositorio entre diagonales
+})
+
