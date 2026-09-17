@@ -4,6 +4,14 @@ export default function Dashboard() {
  const [busqueda, setBusqueda] = useState('');
  const [filtroEspecial, setFiltroEspecial] = useState('NINGUNO');
  const [orden, setOrden] = useState('NINGUNO');
+ // NUEVO ESTADO: Controla el menú desplegable de los archivos
+ const [mostrarArchivos, setMostrarArchivos] = useState(false);
+ // NUEVA DATA: Simulador de los archivos procesados en el backend
+ const archivosProcesados = [
+   { nombre: "QAD_Inventory_WIP_20260917.xlsx", tipo: "ERP", registros: 15420, status: "Sincronizado" },
+   { nombre: "4Wall_Scan_Floor_20260917.csv", tipo: "Físico", registros: 8350, status: "Sincronizado" },
+   { nombre: "DSV_Stock_Report_20260917.xlsx", tipo: "3PL", registros: 4105, status: "Sincronizado" }
+ ];
  const itemsBase = [
    {
      pn: "VPTBFF-17C272-AC", fisicoPlanta: 6251, fisicoExt: 15520, qadTotal: 111284,
@@ -51,19 +59,59 @@ export default function Dashboard() {
  }
  return (
 <div className="min-h-screen bg-[#0B1120] text-slate-100 p-4 md:p-8 font-sans selection:bg-amber-500/30">
-<div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+     {/* Header Premium con Modal de Archivos */}
+<div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4 relative z-50">
 <div>
 <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-400">
            Visteon <span className="font-light text-slate-500">|</span> <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-amber-600">Reconciliador</span>
 </h1>
 <p className="text-sm text-slate-400 mt-1 font-medium">Auditoría Inteligente: Planta vs QAD & 4Wall</p>
 </div>
-<div className="flex items-center gap-3 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50 backdrop-blur-sm">
-<div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
-<span className="text-xs font-semibold text-slate-300 tracking-wide uppercase">Corte QAD Activo</span>
+       {/* BOTÓN INTERACTIVO DE ARCHIVOS */}
+<div className="relative">
+<button
+           onClick={() => setMostrarArchivos(!mostrarArchivos)}
+           className="flex items-center gap-3 bg-slate-800/80 hover:bg-slate-700 px-5 py-2.5 rounded-full border border-slate-600 backdrop-blur-sm transition-all cursor-pointer ring-1 ring-transparent hover:ring-amber-500/50 shadow-lg"
+>
+<div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+<span className="text-xs font-bold text-slate-200 tracking-wide uppercase">
+             3 Archivos Procesados
+</span>
+<svg className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${mostrarArchivos ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+</svg>
+</button>
+         {/* DROPDOWN FLOTANTE CON LA LISTA DE ARCHIVOS */}
+         {mostrarArchivos && (
+<div className="absolute right-0 mt-3 w-80 bg-[#0F172A] border border-slate-600 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+<div className="bg-slate-800/50 px-4 py-3 border-b border-slate-700 flex justify-between items-center">
+<h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Fuentes de Datos</h3>
+<span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">Sincronizado</span>
+</div>
+<div className="divide-y divide-slate-700/50 max-h-64 overflow-y-auto">
+               {archivosProcesados.map((archivo, index) => (
+<div key={index} className="px-4 py-3 hover:bg-slate-800/30 transition-colors flex items-start gap-3">
+<div className="mt-0.5 text-slate-400">
+<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+</svg>
+</div>
+<div>
+<p className="text-xs font-bold text-slate-200 break-all">{archivo.nombre}</p>
+<div className="flex gap-2 mt-1">
+<span className="text-[10px] text-slate-400 font-medium">Tipo: {archivo.tipo}</span>
+<span className="text-[10px] text-slate-500">•</span>
+<span className="text-[10px] text-slate-400 font-medium">{archivo.registros.toLocaleString()} líneas</span>
 </div>
 </div>
-<div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+</div>
+               ))}
+</div>
+</div>
+         )}
+</div>
+</div>
+<div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8 relative z-10">
 <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-slate-600 transition-colors">
 <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
 <p className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-1">Var Neta Planta</p>
@@ -81,12 +129,12 @@ export default function Dashboard() {
 </div>
 <div className="bg-emerald-950/20 border border-emerald-900/50 rounded-2xl p-5 shadow-lg relative overflow-hidden group ring-1 ring-emerald-500/20">
 <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-<p className="text-[11px] font-bold text-emerald-400 tracking-widest uppercase mb-1">Total Piezas Auditadas</p>
+<p className="text-[11px] font-bold text-emerald-400 tracking-widest uppercase mb-1">Corte Físico Total</p>
 <h2 className="text-3xl font-black text-white tracking-tight">40,307</h2>
-<p className="text-[10px] text-emerald-500/80 mt-1 font-medium">Suma física Planta + DSV</p>
+<p className="text-[10px] text-emerald-500/80 mt-1 font-medium">Planta (4Wall) + Externa (DSV)</p>
 </div>
 </div>
-<div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 shadow-xl backdrop-blur-md">
+<div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 shadow-xl backdrop-blur-md relative z-10">
 <div className="flex flex-col lg:flex-row justify-between gap-6 mb-6">
 <div className="bg-slate-900/80 p-1.5 rounded-xl flex gap-1 border border-slate-700/50 overflow-x-auto">
            {['TODOS', 'Almacén', 'Piso', 'Consignacion'].map((area) => (
@@ -103,7 +151,6 @@ export default function Dashboard() {
          />
 </div>
 <div className="flex flex-col gap-4 mb-6 p-5 bg-[#0F172A]/90 rounded-xl border border-slate-700/50 shadow-inner">
-         {/* Fila 1: Filtros de Casos */}
 <div className="flex flex-col md:flex-row md:items-center gap-3">
 <div className="w-32 text-[10px] font-black text-slate-500 tracking-widest uppercase">
              1. Filtrar Casos:
@@ -130,7 +177,6 @@ export default function Dashboard() {
 </div>
 </div>
 <div className="w-full h-px bg-slate-800/80"></div>
-         {/* Fila 2: Ordenamientos */}
 <div className="flex flex-col md:flex-row md:items-center gap-3">
 <div className="w-32 text-[10px] font-black text-slate-500 tracking-widest uppercase">
              2. Ordenar por:
