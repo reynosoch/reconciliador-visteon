@@ -16,7 +16,7 @@ HEADERS = {
 }
 numeros_parte = ['VPRLXF-1', 'P7-CHIP', 'PN-10003', 'PN-10004', 'PN-10005']
 areas = ['ALMACEN', 'PISO', 'CUARENTENA']
-print("🚀 Conectando auditores a SUPABASE en vivo...")
+print(" Conectando auditores a SUPABASE en vivo...")
 while True:
    try:
        scans_a_insertar = random.randint(1, 3)

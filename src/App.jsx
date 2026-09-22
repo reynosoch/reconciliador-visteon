@@ -56,9 +56,11 @@ export default function App() {
        if (scan.area_escaneo === 'PISO' || scan.area_escaneo === 'CUARENTENA') pisoVivo += scan.cantidad;
      });
      // Jitter determinístico: pequeño vaivén creíble, no random feo, y nunca negativo
-     const semilla = ruidoVisual + item.pn.length;
-     const jitterAlmacen = Math.round(Math.abs(Math.sin(semilla)) * 4);
-     const jitterPiso = Math.round(Math.abs(Math.cos(semilla)) * 3);
+     //const semilla = ruidoVisual + item.pn.length; ruido visual
+     const jitterAlmacen = 0;
+    const jitterPiso = 0;
+     // const jitterAlmacen = Math.round(Math.abs(Math.sin(semilla)) * 4); ruido visual
+     //const jitterPiso = Math.round(Math.abs(Math.cos(semilla)) * 3); ruido visual
      const fisicoAlmacen = (escaneos.length > 0 ? almacenVivo : 0) + jitterAlmacen;
      const fisicoPiso = (escaneos.length > 0 ? pisoVivo : 0) + jitterPiso;
      const fisicoPlanta = fisicoAlmacen + fisicoPiso;
