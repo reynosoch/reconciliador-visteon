@@ -10,45 +10,47 @@ export default function App() {
  const [filtroEspecial, setFiltroEspecial] = useState("TODOS");
  const [mostrarPhantoms, setMostrarPhantoms] = useState(false);
  const [umbralUsd, setUmbralUsd] = useState(10000);
- // NUEVO ESTADO: Aquí guardaremos lo que llega de Python
  const [datosEnVivo, setDatosEnVivo] = useState([]);
- // CONEXIÓN A LA API (Se actualiza cada 3 segundos)
+ // CREDENCIALES DE SUPABASE
+ const SUPABASE_URL = "https://uukhwkywmnarcfruerpp.supabase.co/rest/v1/escaneos_4wall?select=*";
+ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2h3a3l3bW5hcmNmcnVlcnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODI4OTgsImV4cCI6MjEwNTY1ODg5OH0.ezApb_e8_Q-_yvxmZL4b3skmmMXoJaya4oupSzPz3Vc";
+ // CONEXIÓN A LA NUBE (Se actualiza cada 3 segundos)
  useEffect(() => {
    const fetchInventarioEnVivo = async () => {
      try {
-       const response = await fetch('http://localhost:5000/api/corte');
+       const response = await fetch(SUPABASE_URL, {
+         headers: {
+           'apikey': SUPABASE_KEY,
+           'Authorization': `Bearer ${SUPABASE_KEY}`
+         }
+       });
        const data = await response.json();
        setDatosEnVivo(data);
      } catch (error) {
-       console.error("Error conectando con la API:", error);
+       console.error("Error conectando con la Nube:", error);
      }
    };
-   fetchInventarioEnVivo(); // Llamada inicial
-   const intervalo = setInterval(fetchInventarioEnVivo, 3000); // Polling cada 3 seg
+   fetchInventarioEnVivo();
+   const intervalo = setInterval(fetchInventarioEnVivo, 3000);
    return () => clearInterval(intervalo);
  }, []);
  const datosCalculados = useMemo(() => {
-   // Usamos inventarioMock como nuestro catálogo base (Costos y QAD Congelado)
    return inventarioMock.map((item) => {
-     // 1. Buscar si la API mandó escaneos para este número de parte
+     // Cruzamos los datos de Supabase
      const escaneos = datosEnVivo.filter(scan => scan.numero_parte === item.pn);
      let almacenVivo = 0;
      let pisoVivo = 0;
-     // Sumarizamos lo que los "auditores" han escaneado en vivo
+     // Leemos las columnas exactas de Supabase
      escaneos.forEach(scan => {
-       if (scan.area === 'ALMACEN') almacenVivo += scan.total_escaneado;
-       if (scan.area === 'PISO' || scan.area === 'CUARENTENA') pisoVivo += scan.total_escaneado;
+       if (scan.area_escaneo === 'ALMACEN') almacenVivo += scan.cantidad;
+       if (scan.area_escaneo === 'PISO' || scan.area_escaneo === 'CUARENTENA') pisoVivo += scan.cantidad;
      });
-     // Si ya hay escaneos, usamos los en vivo. Si no, iniciamos en 0
      const fisicoAlmacen = escaneos.length > 0 ? almacenVivo : 0;
      const fisicoPiso = escaneos.length > 0 ? pisoVivo : 0;
-     // 2. Cálculos Físicos
      const fisicoPlanta = fisicoAlmacen + fisicoPiso;
      const fisicoTotal = fisicoPlanta + item.dsv;
-     // Simulación de QAD por localidad
      const qadAlmacen = Math.round(item.qad * 0.8);
      const qadPiso = Math.round(item.qad * 0.2);
-     // 3. Cálculos Financieros y Netos
      const varPlanta = fisicoPlanta - item.qad;
      const deltaTotal = fisicoTotal - item.qad;
      const varSwing = Math.abs(fisicoAlmacen - qadAlmacen) + Math.abs(fisicoPiso - qadPiso);
@@ -56,23 +58,13 @@ export default function App() {
      const esObsoleto = item.pn.includes("VPRLXF");
      return {
        ...item,
-       almacen: fisicoAlmacen,
-       piso: fisicoPiso,
-       fisicoPlanta,
-       fisicoTotal,
-       qadTotal: item.qad,
-       qadAlmacen,
-       qadPiso,
-       varPlanta,
-       varPlantaUsd: varPlanta * item.costo,
-       deltaTotal,
-       deltaTotalUsd: deltaTotal * item.costo,
-       varSwing,
-       esPhantom,
-       esObsoleto
+       almacen: fisicoAlmacen, piso: fisicoPiso, fisicoPlanta, fisicoTotal,
+       qadTotal: item.qad, qadAlmacen, qadPiso, varPlanta, varPlantaUsd: varPlanta * item.costo,
+       deltaTotal, deltaTotalUsd: deltaTotal * item.costo, varSwing, esPhantom, esObsoleto
      };
    });
- }, [datosEnVivo]); // Se recalcula cada vez que Python manda datos nuevos
+ }, [datosEnVivo]);
+ // ---> AQUÍ ABAJO SIGUEN TUS USEMEMO DE inventarioFiltrado, metricas Y EL return(...) NORMALES
  // ... (El resto de tus useMemo: inventarioFiltrado y metricas se quedan EXACTAMENTE igual)
  const inventarioFiltrado = useMemo(() => {
    let datos = [...datosCalculados];
