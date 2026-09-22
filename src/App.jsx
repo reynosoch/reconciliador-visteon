@@ -11,18 +11,26 @@ export default function App() {
  const [mostrarPhantoms, setMostrarPhantoms] = useState(false);
  const [umbralUsd, setUmbralUsd] = useState(10000);
  const [datosEnVivo, setDatosEnVivo] = useState([]);
- // 1. CAMBIO: URL apuntando a tu servidor local de Python/Flask
- const API_URL = "http://localhost:5000/api/corte";
- // CONEXIÓN A LA BASE DE DATOS LOCAL (Se actualiza cada 3 segundos)
+ // CORRECCIÓN: Estado de conexión para evitar errores visuales
+ const [estadoConexion, setEstadoConexion] = useState({ mensaje: "Conectando...", colorText: "text-amber-500" });
+ // LLAVES DE SUPABASE
+ const SUPABASE_URL = "https://uukhwkywmnarcfruerpp.supabase.co/rest/v1/escaneos_4wall?select=*";
+ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2h3a3l3bW5hcmNmcnVlcnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODI4OTgsImV4cCI6MjEwNTY1ODg5OH0.ezApb_e8_Q-_yvxmZL4b3skmmMXoJaya4oupSzPz3Vc";
  useEffect(() => {
    const fetchInventarioEnVivo = async () => {
      try {
-       // 2. CAMBIO: Fetch simplificado sin llaves de Supabase
-       const response = await fetch(API_URL);
+       const response = await fetch(SUPABASE_URL, {
+         headers: {
+           'apikey': SUPABASE_KEY,
+           'Authorization': `Bearer ${SUPABASE_KEY}`
+         }
+       });
        const data = await response.json();
        setDatosEnVivo(data);
+       setEstadoConexion({ mensaje: "En vivo", colorText: "text-emerald-400" });
      } catch (error) {
-       console.error("Error conectando con la API de Python:", error);
+       console.error("Error conectando con Supabase:", error);
+       setEstadoConexion({ mensaje: "Desconectado", colorText: "text-rose-500" });
      }
    };
    fetchInventarioEnVivo();
@@ -34,10 +42,9 @@ export default function App() {
      const escaneos = datosEnVivo.filter(scan => scan.numero_parte === item.pn);
      let almacenVivo = 0;
      let pisoVivo = 0;
-     // 3. CAMBIO: Lectura de variables exacta al JSON que genera tu app.py
      escaneos.forEach(scan => {
-       if (scan.area === 'ALMACEN') almacenVivo += scan.total_escaneado;
-       if (scan.area === 'PISO' || scan.area === 'CUARENTENA') pisoVivo += scan.total_escaneado;
+       if (scan.area_escaneo === 'ALMACEN') almacenVivo += scan.cantidad;
+       if (scan.area_escaneo === 'PISO' || scan.area_escaneo === 'CUARENTENA') pisoVivo += scan.cantidad;
      });
      const fisicoAlmacen = escaneos.length > 0 ? almacenVivo : 0;
      const fisicoPiso = escaneos.length > 0 ? pisoVivo : 0;
@@ -82,7 +89,8 @@ export default function App() {
    const swingTotal = datosValidos.reduce((sum, it) => sum + it.varSwing, 0);
    return {
      totalFisico: total4Wall + datosValidos.reduce((sum, it) => sum + it.dsv, 0),
-     impactoNeto, swingTotal,
+     impactoNeto,
+     swingTotal,
      casosCriticos: datosValidos.filter(it => Math.abs(it.deltaTotalUsd) >= umbralUsd).length
    };
  }, [datosCalculados, umbralUsd]);
@@ -92,8 +100,13 @@ export default function App() {
 <div className="container">
 <section className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-5 mb-8">
 <div>
+<div className="flex items-center gap-3">
 <h1 className="text-3xl font-black text-white tracking-tight m-0">Ingesta de Inventario Físico</h1>
-<p className="text-sm text-slate-400 mt-2">Cruce automatizado. Filtrando variaciones {'<'} ${umbralUsd.toLocaleString()}</p>
+<span className={`text-xs font-bold px-2 py-1 bg-slate-800 rounded-full border border-slate-700 ${estadoConexion.colorText}`}>
+               ● {estadoConexion.mensaje}
+</span>
+</div>
+<p className="text-sm text-slate-400 mt-2">Cruce automatizado. Filtrando variaciones &lt; ${umbralUsd.toLocaleString()}</p>
 </div>
 </section>
 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

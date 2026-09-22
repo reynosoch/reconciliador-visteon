@@ -1,48 +1,40 @@
-import sqlite3
 import time
 import random
-db_path = 'inventario.db'
-# La lista sincronizada con React
-numeros_parte = [
-   'VPRLXF-1',  
-   'P7-CHIP',    
-   'PN-10003',    
-   'PN-10004',    
-   'PN-10005'  
-]
+import requests
+# Credenciales de Supabase
+URL = "https://uukhwkywmnarcfruerpp.supabase.co/rest/v1/escaneos_4wall"
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2h3a3l3bW5hcmNmcnVlcnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODI4OTgsImV4cCI6MjEwNTY1ODg5OH0.ezApb_e8_Q-_yvxmZL4b3skmmMXoJaya4oupSzPz3Vc"
+HEADERS = {
+   "apikey": API_KEY,
+   "Authorization": f"Bearer {API_KEY}",
+   "Content-Type": "application/json",
+   "Prefer": "return=minimal"
+}
+numeros_parte = ['VPRLXF-1', 'P7-CHIP', 'PN-10003', 'PN-10004', 'PN-10005']
 areas = ['ALMACEN', 'PISO', 'CUARENTENA']
-print("🚀 Iniciando simulador de escáneres 4Wall...")
-print("Presiona Ctrl+C en la terminal para detenerlo.\n")
+print("🚀 Conectando auditores a SUPABASE en vivo...")
 while True:
    try:
-       conn = sqlite3.connect(db_path)
-       cursor = conn.cursor()
-       cursor.execute('''
-       CREATE TABLE IF NOT EXISTS escaneos_4wall (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           numero_parte TEXT NOT NULL,
-           cantidad INTEGER NOT NULL,
-           area_escaneo TEXT,
-           fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-       )
-       ''')
        scans_a_insertar = random.randint(1, 3)
        for _ in range(scans_a_insertar):
            parte = random.choice(numeros_parte)
            cantidad = random.randint(1, 15)
            area = random.choice(areas)
-           cursor.execute('''
-               INSERT INTO escaneos_4wall (numero_parte, cantidad, area_escaneo)
-               VALUES (?, ?, ?)
-           ''', (parte, cantidad, area))
+           payload = {
+               "numero_parte": parte,
+               "cantidad": cantidad,
+               "area_escaneo": area
+           }
+           response = requests.post(URL, json=payload, headers=HEADERS)
            icono = "👻" if parte.startswith("P7") else ("⚠️" if "VPRLXF" in parte else "📦")
-           print(f"{icono} Escaneado: {cantidad} pz de {parte} en {area}")
-       conn.commit()
-       conn.close()
+           if response.status_code == 201:
+               print(f"{icono} NUBE: {cantidad} pz de {parte} en {area}")
+           else:
+               print(f"❌ Error al subir: {response.text}")
        time.sleep(3)
    except KeyboardInterrupt:
-       print("\n🛑 Simulador detenido por el usuario.")
+       print("\n🛑 Simulador detenido.")
        break
    except Exception as e:
-       print(f"\n❌ Error: {e}")
+       print(f"\n❌ Error de conexión: {e}")
        break
