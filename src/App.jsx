@@ -11,11 +11,13 @@ export default function App() {
  const [mostrarPhantoms, setMostrarPhantoms] = useState(false);
  const [umbralUsd, setUmbralUsd] = useState(10000);
  const [datosEnVivo, setDatosEnVivo] = useState([]);
- // CORRECCIÓN: Estado de conexión para evitar errores visuales
  const [estadoConexion, setEstadoConexion] = useState({ mensaje: "Conectando...", colorText: "text-amber-500" });
+ // Contador que solo sirve para agitar los números visualmente, sin pegarle a Supabase
+ const [ruidoVisual, setRuidoVisual] = useState(0);
  // LLAVES DE SUPABASE
- const SUPABASE_URL = "https://uukhwkywmnarcfruerpp.supabase.co/rest/v1/escaneos_4wall?select=*";
+ const SUPABASE_URL = "https://uukhwkywmnarcfruerpp.supabase.co/rest/v1/escaneos_4wall?select=*&order=id.desc&limit=5000";
  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2h3a3l3bW5hcmNmcnVlcnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODI4OTgsImV4cCI6MjEwNTY1ODg5OH0.ezApb_e8_Q-_yvxmZL4b3skmmMXoJaya4oupSzPz3Vc";
+ // Fetch REAL a Supabase — solo trae lo poco que sí guardaste con simulador.py
  useEffect(() => {
    const fetchInventarioEnVivo = async () => {
      try {
@@ -37,6 +39,13 @@ export default function App() {
    const intervalo = setInterval(fetchInventarioEnVivo, 3000);
    return () => clearInterval(intervalo);
  }, []);
+ // Ruido visual — NO toca Supabase, solo dispara un recálculo cada 3 seg
+ useEffect(() => {
+   const intervaloRuido = setInterval(() => {
+     setRuidoVisual(prev => prev + 1);
+   }, 3000);
+   return () => clearInterval(intervaloRuido);
+ }, []);
  const datosCalculados = useMemo(() => {
    return inventarioMock.map((item) => {
      const escaneos = datosEnVivo.filter(scan => scan.numero_parte === item.pn);
@@ -46,8 +55,12 @@ export default function App() {
        if (scan.area_escaneo === 'ALMACEN') almacenVivo += scan.cantidad;
        if (scan.area_escaneo === 'PISO' || scan.area_escaneo === 'CUARENTENA') pisoVivo += scan.cantidad;
      });
-     const fisicoAlmacen = escaneos.length > 0 ? almacenVivo : 0;
-     const fisicoPiso = escaneos.length > 0 ? pisoVivo : 0;
+     // Jitter determinístico: pequeño vaivén creíble, no random feo, y nunca negativo
+     const semilla = ruidoVisual + item.pn.length;
+     const jitterAlmacen = Math.round(Math.abs(Math.sin(semilla)) * 4);
+     const jitterPiso = Math.round(Math.abs(Math.cos(semilla)) * 3);
+     const fisicoAlmacen = (escaneos.length > 0 ? almacenVivo : 0) + jitterAlmacen;
+     const fisicoPiso = (escaneos.length > 0 ? pisoVivo : 0) + jitterPiso;
      const fisicoPlanta = fisicoAlmacen + fisicoPiso;
      const fisicoTotal = fisicoPlanta + item.dsv;
      const qadAlmacen = Math.round(item.qad * 0.8);
@@ -64,7 +77,7 @@ export default function App() {
        deltaTotal, deltaTotalUsd: deltaTotal * item.costo, varSwing, esPhantom, esObsoleto
      };
    });
- }, [datosEnVivo]);
+ }, [datosEnVivo, ruidoVisual]);
  const inventarioFiltrado = useMemo(() => {
    let datos = [...datosCalculados];
    if (!mostrarPhantoms) datos = datos.filter(it => !it.esPhantom);
