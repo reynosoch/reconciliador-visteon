@@ -11,23 +11,18 @@ export default function App() {
  const [mostrarPhantoms, setMostrarPhantoms] = useState(false);
  const [umbralUsd, setUmbralUsd] = useState(10000);
  const [datosEnVivo, setDatosEnVivo] = useState([]);
- // CREDENCIALES DE SUPABASE
- const SUPABASE_URL = "https://uukhwkywmnarcfruerpp.supabase.co/rest/v1/escaneos_4wall?select=*";
- const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2h3a3l3bW5hcmNmcnVlcnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODI4OTgsImV4cCI6MjEwNTY1ODg5OH0.ezApb_e8_Q-_yvxmZL4b3skmmMXoJaya4oupSzPz3Vc";
- // CONEXIÓN A LA NUBE (Se actualiza cada 3 segundos)
+ // 1. CAMBIO: URL apuntando a tu servidor local de Python/Flask
+ const API_URL = "http://localhost:5000/api/corte";
+ // CONEXIÓN A LA BASE DE DATOS LOCAL (Se actualiza cada 3 segundos)
  useEffect(() => {
    const fetchInventarioEnVivo = async () => {
      try {
-       const response = await fetch(SUPABASE_URL, {
-         headers: {
-           'apikey': SUPABASE_KEY,
-           'Authorization': `Bearer ${SUPABASE_KEY}`
-         }
-       });
+       // 2. CAMBIO: Fetch simplificado sin llaves de Supabase
+       const response = await fetch(API_URL);
        const data = await response.json();
        setDatosEnVivo(data);
      } catch (error) {
-       console.error("Error conectando con la Nube:", error);
+       console.error("Error conectando con la API de Python:", error);
      }
    };
    fetchInventarioEnVivo();
@@ -36,14 +31,13 @@ export default function App() {
  }, []);
  const datosCalculados = useMemo(() => {
    return inventarioMock.map((item) => {
-     // Cruzamos los datos de Supabase
      const escaneos = datosEnVivo.filter(scan => scan.numero_parte === item.pn);
      let almacenVivo = 0;
      let pisoVivo = 0;
-     // Leemos las columnas exactas de Supabase
+     // 3. CAMBIO: Lectura de variables exacta al JSON que genera tu app.py
      escaneos.forEach(scan => {
-       if (scan.area_escaneo === 'ALMACEN') almacenVivo += scan.cantidad;
-       if (scan.area_escaneo === 'PISO' || scan.area_escaneo === 'CUARENTENA') pisoVivo += scan.cantidad;
+       if (scan.area === 'ALMACEN') almacenVivo += scan.total_escaneado;
+       if (scan.area === 'PISO' || scan.area === 'CUARENTENA') pisoVivo += scan.total_escaneado;
      });
      const fisicoAlmacen = escaneos.length > 0 ? almacenVivo : 0;
      const fisicoPiso = escaneos.length > 0 ? pisoVivo : 0;
@@ -64,8 +58,6 @@ export default function App() {
      };
    });
  }, [datosEnVivo]);
- // ---> AQUÍ ABAJO SIGUEN TUS USEMEMO DE inventarioFiltrado, metricas Y EL return(...) NORMALES
- // ... (El resto de tus useMemo: inventarioFiltrado y metricas se quedan EXACTAMENTE igual)
  const inventarioFiltrado = useMemo(() => {
    let datos = [...datosCalculados];
    if (!mostrarPhantoms) datos = datos.filter(it => !it.esPhantom);
@@ -86,7 +78,6 @@ export default function App() {
  const metricas = useMemo(() => {
    const datosValidos = datosCalculados.filter(it => !it.esPhantom);
    const total4Wall = datosValidos.reduce((sum, it) => sum + it.fisicoPlanta, 0);
-   const qadTotal = datosValidos.reduce((sum, it) => sum + it.qadTotal, 0);
    const impactoNeto = datosValidos.reduce((sum, it) => sum + it.deltaTotalUsd, 0);
    const swingTotal = datosValidos.reduce((sum, it) => sum + it.varSwing, 0);
    return {
