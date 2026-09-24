@@ -2,36 +2,42 @@
 import React from "react";
 import {
  Ghost,
- GhostChaseLine,
 } from "../visual/PacmanGlyphs";
 import {
  HelpButton,
 } from "../help/HelpDrawer";
-function money(value) {
+
+function formatMoney(value) {
  return new Intl.NumberFormat(
    "en-US",
    {
-     style: "currency",
-     currency: "USD",
-     maximumFractionDigits: 0,
-     minimumFractionDigits: 0,
+     style:
+       "currency",
+     currency:
+       "USD",
+     maximumFractionDigits:
+       0,
+     minimumFractionDigits:
+       0,
    }
  ).format(
    Number(value) || 0
  );
 }
-function number(value) {
+
+function formatNumber(value) {
  return new Intl.NumberFormat(
    "en-US"
  ).format(
    Number(value) || 0
  );
 }
+
 function FinancialCell({
  label,
  value,
  detail,
- tone,
+ tone = "neutral",
  topic,
  onHelp,
  ghost = false,
@@ -49,29 +55,39 @@ function FinancialCell({
      "vi-money-neutral",
  }[tone] ||
  "vi-money-neutral";
+
  const openHelp = () => {
-   onHelp?.(topic);
+   onHelp?.(
+     topic
+   );
  };
+
  return (
 <div
      role="button"
      tabIndex={0}
-     onClick={openHelp}
-     onKeyDown={(event) => {
-       if (
-         event.key === "Enter" ||
-         event.key === " "
-       ) {
-         event.preventDefault();
-         openHelp();
+     onClick={
+       openHelp
+     }
+     onKeyDown={
+       (event) => {
+         if (
+           event.key ===
+             "Enter" ||
+           event.key ===
+             " "
+         ) {
+           event.preventDefault();
+           openHelp();
+         }
        }
-     }}
+     }
      className="
        vi-financial-cell
        text-left
-       hover:bg-white/[0.015]
-       transition-colors
        cursor-pointer
+       transition-colors
+       hover:bg-white/[0.02]
      "
 >
 <div
@@ -91,7 +107,7 @@ function FinancialCell({
 >
          {ghost && (
 <Ghost
-             size={14}
+             size={13}
              tone="violet"
            />
          )}
@@ -99,13 +115,17 @@ function FinancialCell({
            {label}
 </p>
 </div>
+
 <HelpButton
-         topic={topic}
+         topic={
+           topic
+         }
          onHelp={
            onHelp
          }
        />
 </div>
+
 <div
        className={`
          vi-financial-value
@@ -114,19 +134,14 @@ function FinancialCell({
 >
        {value}
 </div>
-<p
-       className="
-         mt-2
-         font-mono
-         text-[8px]
-         text-slate-500
-       "
->
+
+<p className="vi-financial-detail">
        {detail}
 </p>
 </div>
  );
 }
+
 export default function FinancialGrid({
  summary,
  ready = false,
@@ -134,10 +149,12 @@ export default function FinancialGrid({
 }) {
  const data =
    summary || {};
- const net =
+
+ const netUsd =
    Number(
      data.netUsd
    ) || 0;
+
  return (
 <section
      className="
@@ -151,69 +168,68 @@ export default function FinancialGrid({
          py-4
          border-b
          border-slate-800/70
-         flex
-         items-center
-         justify-between
-         gap-4
        "
 >
-<div>
 <p className="vi-eyebrow">
-           Financial Exposure
+         Financial Exposure
 </p>
-<h2 className="mt-1 text-lg font-black text-white vi-glow-title">
-           Plant Exposure
-</h2>
-<p
-           className="
-             mt-1
-             text-[10px]
-             text-slate-500
-           "
->
-           Click any metric to inspect its source and formula.
-</p>
-</div>
-<div
+<h2
          className="
-           hidden
-           xl:block
-           w-[280px]
+           mt-1
+           text-lg
+           font-black
+           text-white
+           vi-glow-title
          "
 >
-<GhostChaseLine />
+         Plant Exposure
+</h2>
+<p
+         className="
+           mt-1
+           text-[11px]
+           text-slate-400
+         "
+>
+         Click any metric to inspect its source and formula.
+</p>
 </div>
-</div>
+
 <div className="vi-financial-strip">
 <FinancialCell
          label="NET PLANT"
          value={
            ready
-             ? money(net)
+             ? formatMoney(
+                 netUsd
+               )
              : "---"
          }
          detail={
            ready
-             ? `${number(
+             ? `${formatNumber(
                  data.physicalQty
                )} PHYSICAL`
              : "WAITING REFERENCE DATA"
          }
          tone={
-           net < 0
+           netUsd < 0
              ? "loss"
-             : net > 0
+             : netUsd > 0
                ? "gain"
                : "neutral"
          }
          topic="net"
-         onHelp={onHelp}
+         onHelp={
+           onHelp
+         }
        />
+
 <FinancialCell
          label="GROSS LOSS"
          value={
            ready
-             ? money(
+             ? formatMoney(
                  data.grossLossUsd
                )
              : "---"
@@ -221,13 +237,16 @@ export default function FinancialGrid({
          detail="SHORTAGE BEFORE OFFSET"
          tone="loss"
          topic="grossLoss"
-         onHelp={onHelp}
+         onHelp={
+           onHelp
+         }
        />
+
 <FinancialCell
          label="GROSS GAIN"
          value={
            ready
-             ? money(
+             ? formatMoney(
                  data.grossGainUsd
                )
              : "---"
@@ -235,13 +254,16 @@ export default function FinancialGrid({
          detail="SURPLUS BEFORE OFFSET"
          tone="gain"
          topic="grossGain"
-         onHelp={onHelp}
+         onHelp={
+           onHelp
+         }
        />
+
 <FinancialCell
          label="OBSOLETE +"
          value={
            ready
-             ? money(
+             ? formatMoney(
                  data.obsoleteGainUsd
                )
              : "---"
@@ -249,33 +271,39 @@ export default function FinancialGrid({
          detail="OBSOLETE SURPLUS"
          tone="gain"
          topic="obsolete"
-         onHelp={onHelp}
+         onHelp={
+           onHelp
+         }
        />
+
 <FinancialCell
          label="SWING"
          value={
            ready
-             ? money(
+             ? formatMoney(
                  data.swingUsd
                )
              : "---"
          }
          detail={
            ready
-             ? `${number(
+             ? `${formatNumber(
                  data.swingPieces
                )} PCS`
              : "LOCATION DELTA"
          }
          tone="swing"
          topic="swing"
-         onHelp={onHelp}
+         onHelp={
+           onHelp
+         }
        />
+
 <FinancialCell
          label="PHANTOMS"
          value={
            ready
-             ? number(
+             ? formatNumber(
                  data.phantomCount
                )
              : "---"
@@ -283,7 +311,9 @@ export default function FinancialGrid({
          detail="ISPBB PHANTOM = YES"
          tone="phantom"
          topic="phantom"
-         onHelp={onHelp}
+         onHelp={
+           onHelp
+         }
          ghost
        />
 </div>

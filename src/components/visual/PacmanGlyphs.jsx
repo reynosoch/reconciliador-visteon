@@ -1,7 +1,8 @@
 // src/components/visual/PacmanGlyphs.jsx
 import React from "react";
+
 export function PacDot({
- size = 10,
+ size = 8,
  className = "",
 }) {
  return (
@@ -15,14 +16,19 @@ export function PacDot({
    />
  );
 }
+
 export function Ghost({
- size = 18,
+ size = 16,
  tone = "violet",
  className = "",
 }) {
  return (
 <span
-     className={`ghost-sprite ghost-${tone} ${className}`}
+     className={`
+       ghost-sprite
+       ghost-${tone}
+       ${className}
+     `}
      style={{
        width: size,
        height: size,
@@ -37,31 +43,62 @@ export function Ghost({
 </span>
  );
 }
+
 export function PelletRail({
  muted = false,
  className = "",
 }) {
  return (
 <div
-     className={`pac-pellet-rail ${muted ? "pac-pellet-rail-muted" : ""} ${className}`}
+     className={`
+       pac-pellet-rail
+       ${
+         muted
+           ? "pac-pellet-rail-muted"
+           : ""
+       }
+       ${className}
+     `}
    />
  );
 }
-export function GhostChaseLine({
+
+/**
+* Referencia Pac-Man low-key.
+*
+* Los Phantoms avanzan primero y el punto
+* amarillo va detrás de ellos lentamente.
+*/
+export function MenuChaseRail({
  className = "",
 }) {
  return (
-<div className={`ghost-chase-line ${className}`}>
-<div className="ghost-chase-track">
-<div className="ghost-chase-pellets" />
-<div className="ghost-pack">
-<Ghost size={15} tone="cyan" />
-<Ghost size={15} tone="violet" />
-<Ghost size={15} tone="rose" />
+<div
+     className={`
+       menu-chase
+       ${className}
+     `}
+     aria-hidden="true"
+>
+<div className="menu-chase-pellets" />
+<div className="menu-chase-ghosts">
+<Ghost
+         size={10}
+         tone="cyan"
+       />
+<Ghost
+         size={10}
+         tone="violet"
+       />
+<Ghost
+         size={10}
+         tone="rose"
+       />
 </div>
-<div className="pac-dot-runner">
-<PacDot size={10} />
-</div>
+<div className="menu-chase-player">
+<PacDot
+         size={7}
+       />
 </div>
 </div>
  );

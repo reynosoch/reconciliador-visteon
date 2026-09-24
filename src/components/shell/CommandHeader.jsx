@@ -1,21 +1,34 @@
 // src/components/shell/CommandHeader.jsx
 import React from "react";
-function time(date) {
+import {
+ MenuChaseRail,
+} from "../visual/PacmanGlyphs";
+
+function formatTime(date) {
  if (!date) {
    return "--:--:--";
  }
- return new Intl.DateTimeFormat(
-   "es-MX",
-   {
-     hour: "2-digit",
-     minute: "2-digit",
-     second: "2-digit",
-     hour12: false,
-   }
- ).format(
-   new Date(date)
- );
+ try {
+   return new Intl.DateTimeFormat(
+     "es-MX",
+     {
+       hour:
+         "2-digit",
+       minute:
+         "2-digit",
+       second:
+         "2-digit",
+       hour12:
+         false,
+     }
+   ).format(
+     new Date(date)
+   );
+ } catch {
+   return "--:--:--";
+ }
 }
+
 function SourceState({
  label,
  state,
@@ -28,58 +41,73 @@ function SourceState({
      className="
        flex
        items-center
-       gap-2
+       gap-2.5
+       min-w-[110px]
      "
 >
 <span
        className={`
-         w-1.5
-         h-1.5
+         w-2
+         h-2
          rounded-full
+         flex-shrink-0
          ${
            live
              ? "bg-emerald-400"
              : ready
                ? "bg-orange-400"
-               : "bg-slate-700"
+               : "bg-slate-600"
          }
        `}
      />
 <div>
 <p
          className="
-           font-mono
-           text-[9px]
-           font-black
-           text-slate-200
+           text-[10px]
+           font-bold
+           text-white
+           leading-tight
          "
 >
-         {label}{" "}
+         {label}
+</p>
+<div
+         className="
+           flex
+           items-center
+           gap-1.5
+           mt-0.5
+         "
+>
 <span
-           className={
-             live
-               ? "text-emerald-400"
-               : ready
-                 ? "text-orange-300"
-                 : "text-slate-500"
-           }
+           className={`
+             text-[9px]
+             font-bold
+             ${
+               live
+                 ? "text-emerald-400"
+                 : ready
+                   ? "text-orange-300"
+                   : "text-slate-400"
+             }
+           `}
 >
            {state}
 </span>
-</p>
-<p
-         className="
-           font-mono
-           text-[7px]
-           text-slate-500
-         "
+<span
+           className="
+             text-[9px]
+             text-slate-400
+           "
 >
-         {detail}
-</p>
+           {detail}
+</span>
+</div>
 </div>
 </div>
  );
 }
+
 export default function CommandHeader({
  connectionStatus,
  scanCount = 0,
@@ -94,15 +122,19 @@ export default function CommandHeader({
  const live =
    connectionStatus?.state ===
    "LIVE";
- const refsReady =
+
+ const referencesReady =
    referenceStatus?.allLoaded ===
    true;
+
  const loaded =
    referenceStatus
      ?.loadedCount || 0;
+
  const total =
    referenceStatus
      ?.totalSources || 5;
+
  return (
 <header
      className="
@@ -118,177 +150,234 @@ export default function CommandHeader({
          mx-auto
          px-4
          sm:px-6
-         min-h-[60px]
-         flex
-         items-center
-         justify-between
-         gap-5
        "
 >
 <div
          className="
+           min-h-[64px]
            flex
            items-center
-           gap-3
-           flex-shrink-0
+           justify-between
+           gap-5
          "
 >
+         {/* BRAND */}
+<div
+           className="
+             flex
+             items-center
+             gap-3
+             flex-shrink-0
+           "
+>
 <div className="vi-vtag">
-           V
+             V
 </div>
 <div>
-<div className="flex items-center gap-2">
-<span className="text-[20px] font-black text-white leading-none vi-glow-title-soft">
-               Visteon
+<div
+               className="
+                 flex
+                 items-center
+                 gap-2
+               "
+>
+<span
+                 className="
+                   text-xl
+                   font-black
+                   text-white
+                   leading-none
+                   vi-glow-title-soft
+                 "
+>
+                 Visteon
 </span>
-<span className="text-slate-800">
-               /
+<span className="text-slate-600">
+                 /
 </span>
 <span
+                 className="
+                   text-[10px]
+                   font-bold
+                   text-slate-300
+                 "
+>
+                 INVENTORY CONTROL
+</span>
+</div>
+<p
                className="
-                 font-mono
-                 text-[8px]
+                 mt-1
+                 text-[9px]
+                 tracking-[0.08em]
                  text-slate-400
                "
 >
-               INVENTORY CONTROL
-</span>
-</div>
-<p
-             className="
-               font-mono
-               text-[7px]
-               tracking-[0.13em]
-               text-slate-600
-             "
->
-             FINANCIAL RECONCILIATION
+               FINANCIAL RECONCILIATION
 </p>
 </div>
 </div>
-<div
-         className="
-           hidden
-           lg:flex
-           items-center
-           gap-8
-           flex-1
-           justify-center
-         "
->
-<SourceState
-           label="4WALL"
-           state={
-             live
-               ? "LIVE"
-               : "WAIT"
-           }
-           detail={`${scanCount.toLocaleString(
-             "en-US"
-           )} scans`}
-           live={live}
-         />
-<SourceState
-           label="QAD"
-           state={
-             refsReady
-               ? "FROZEN"
-               : "WAIT"
-           }
-           detail="Site 179A"
-           ready={refsReady}
-         />
-<SourceState
-           label="REFERENCE"
-           state={
-             refsReady
-               ? "READY"
-               : `${loaded}/${total}`
-           }
-           detail="Areas · ISPBB · BOM · Cost"
-           ready={refsReady}
-         />
-</div>
-<div
-         className="
-           flex
-           items-center
-           gap-2
-         "
->
+
+         {/* FLOW */}
 <div
            className="
              hidden
-             sm:block
-             text-right
-             mr-2
+             lg:flex
+             items-center
+             justify-center
+             gap-4
+             flex-1
+             min-w-0
            "
 >
-<p
+<SourceState
+             label="4WALL"
+             state={
+               live
+                 ? "LIVE"
+                 : "WAIT"
+             }
+             detail={`${scanCount.toLocaleString(
+               "en-US"
+             )} scans`}
+             live={live}
+           />
+
+<div
              className="
-               font-mono
-               text-[7px]
-               text-slate-600
+               w-[90px]
+               xl:w-[140px]
              "
 >
-             LAST CUT
+<MenuChaseRail />
+</div>
+
+<SourceState
+             label="QAD"
+             state={
+               referencesReady
+                 ? "FROZEN"
+                 : "WAIT"
+             }
+             detail="Site 179A"
+             ready={
+               referencesReady
+             }
+           />
+
+<div
+             className="
+               hidden
+               xl:block
+               w-[110px]
+             "
+>
+<MenuChaseRail />
+</div>
+
+<SourceState
+             label="REFERENCE"
+             state={
+               referencesReady
+                 ? "READY"
+                 : `${loaded}/${total}`
+             }
+             detail="BOM · COST · ISPBB"
+             ready={
+               referencesReady
+             }
+           />
+</div>
+
+         {/* ACTIONS */}
+<div
+           className="
+             flex
+             items-center
+             gap-2
+             flex-shrink-0
+           "
+>
+<div
+             className="
+               hidden
+               sm:block
+               text-right
+               mr-2
+             "
+>
+<p
+               className="
+                 text-[9px]
+                 text-slate-400
+               "
+>
+               LAST CUT
 </p>
 <p
-             className="
-               font-mono
-               text-[9px]
-               font-bold
-               text-slate-300
-             "
+               className="
+                 text-[10px]
+                 font-bold
+                 text-white
+               "
 >
-             {time(
-               lastUpdated
-             )}
+               {
+                 formatTime(
+                   lastUpdated
+                 )
+               }
 </p>
 </div>
+
 <button
-           type="button"
-           onClick={
-             onToggleSources
-           }
-           className={`
-             vi-button
-             ${
-               sourcesOpen
-                 ? "text-orange-300 border-orange-500/40"
-                 : ""
+             type="button"
+             onClick={
+               onToggleSources
              }
-           `}
+             className={`
+               vi-button
+               ${
+                 sourcesOpen
+                   ? "text-orange-300 border-orange-500/40"
+                   : ""
+               }
+             `}
 >
-           SOURCES
-<span className="text-slate-500">
-             {loaded}/{total}
+             SOURCES
+<span className="text-slate-400">
+               {loaded}/{total}
 </span>
 </button>
+
 <button
-           type="button"
-           onClick={
-             onOpenRules
-           }
-           className="vi-button"
+             type="button"
+             onClick={
+               onOpenRules
+             }
+             className="vi-button"
+             title="Ayuda y metodología"
 >
-           ?
+             ?
 </button>
+
 <button
-           type="button"
-           disabled={loading}
-           onClick={
-             onRefresh
-           }
-           className="
-             vi-button
-             vi-button-primary
-           "
+             type="button"
+             disabled={
+               loading
+             }
+             onClick={
+               onRefresh
+             }
+             className="
+               vi-button
+               vi-button-primary
+             "
 >
-           {loading
-             ? "SYNC..."
-             : "SYNC"}
+             {loading
+               ? "SYNC..."
+               : "SYNC"}
 </button>
+</div>
 </div>
 </div>
 </header>

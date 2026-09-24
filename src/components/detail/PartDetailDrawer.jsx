@@ -1,7 +1,7 @@
-// src/components/detail/PartDetailDrawer.jsx
+﻿// src/components/detail/PartDetailDrawer.jsx
 import React from "react";
 import {
- Pacman,
+ PacDot,
  Ghost,
  PelletRail,
 } from "../visual/PacmanGlyphs";
@@ -205,7 +205,7 @@ function BomMaze({
            tone="violet"
          />
        ) : (
-<Pacman
+<PacDot
            size={28}
          />
        )}
@@ -284,8 +284,8 @@ function BomMaze({
            "
 >
            {master.phantom
-             ? "ISPBB → PHANTOM YES"
-             : "ISPBB → REGULAR"}
+             ? "ISPBB â†’ PHANTOM YES"
+             : "ISPBB â†’ REGULAR"}
 </p>
 </div>
 
@@ -422,7 +422,7 @@ export default function PartDetailDrawer({
                  tone="violet"
                />
              ) : (
-<Pacman
+<PacDot
                  size={28}
                />
              )}
@@ -558,21 +558,21 @@ export default function PartDetailDrawer({
                  ? money(
                      master.unitCost
                    )
-                 : "—"
+                 : "â€”"
              }
            />
 <Metric
              label="COST STATUS"
              value={
                master.costStatus ||
-               "—"
+               "â€”"
              }
            />
 <Metric
              label="PLANNING"
              value={
                master.planningStatus ||
-               "—"
+               "â€”"
              }
            />
 <Metric
