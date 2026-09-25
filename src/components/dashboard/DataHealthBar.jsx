@@ -306,7 +306,7 @@ export default function DataHealthBar({
 <>
 <Divider />
 <HealthItem
-             label="Cut"
+             label="Fetched"
              value={
                new Intl.DateTimeFormat(
                  "es-MX",

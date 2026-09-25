@@ -193,6 +193,18 @@ export default function FinancialGrid({
 >
          Click any metric to inspect its source and formula.
 </p>
+{ready && (
+<div className="mt-3 border-l-2 border-amber-400 bg-amber-400/10 px-3 py-2 text-sm text-amber-100" role="status">
+  <strong>Preliminary intraday exposure.</strong>{" "}
+  {formatNumber(data.qadOnlyCount ?? 0)} QAD parts have no physical scan yet
+  {data.qadOnlyCount > 0 && (
+    <> ({formatMoney(data.qadOnlyExposureUsd)} included in gross loss and NET)</>
+  )}. They may still be awaiting audit.
+  {data.qadOnlyMissingCostCount > 0 && (
+    <> {formatNumber(data.qadOnlyMissingCostCount)} have no Cost Part match, so their exposure is unvalued.</>
+  )} Finance must confirm when unscanned parts become losses and which locations enter the financial scope.
+</div>
+)}
 </div>
 
 <div className="vi-financial-strip">
