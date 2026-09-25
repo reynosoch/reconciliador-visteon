@@ -1,352 +1,65 @@
-// src/components/dashboard/DataHealthBar.jsx
-import React from "react";
 import { HelpButton } from "../help/HelpDrawer";
 
-function formatNumber(value) {
- return new Intl.NumberFormat(
-   "en-US"
- ).format(
-   Number(value) || 0
- );
-}
+const number = (value) => new Intl.NumberFormat("es-MX").format(Number(value) || 0);
 
-function HealthItem({
- label,
- value,
- tone = "normal",
-}) {
- const toneClass = {
-   normal:
-     "text-slate-300",
-   live:
-     "text-emerald-400",
-   frozen:
-     "text-cyan-300",
-   warning:
-     "text-amber-400",
-   error:
-     "text-rose-400",
-   phantom:
-     "text-violet-400",
- }[tone] || "text-slate-300";
-
- const dotClass = {
-   normal:
-     "bg-slate-500",
-   live:
-     "bg-emerald-400",
-   frozen:
-     "bg-cyan-400",
-   warning:
-     "bg-amber-400",
-   error:
-     "bg-rose-500",
-   phantom:
-     "bg-violet-400",
- }[tone] || "bg-slate-500";
-
- return (
-<div
-     className="
-       flex
-       items-center
-       gap-2
-       whitespace-nowrap
-     "
->
-<span
-       className={`
-         w-1.5
-         h-1.5
-         rounded-full
-         ${dotClass}
-       `}
-     />
-
-<span
-       className="
-         font-mono
-         text-[11px]
-         font-black
-         uppercase
-         tracking-[0.12em]
-         text-slate-600
-       "
->
-       {label}
-</span>
-
-<span
-       className={`
-         font-mono
-         text-[11px]
-         font-bold
-         ${toneClass}
-       `}
->
-       {value}
-</span>
-</div>
- );
-}
-
-function Divider() {
- return (
-<span
-     className="
-       hidden
-       sm:inline
-       text-slate-800
-       font-mono
-       text-[10px]
-     "
->
-     //
-</span>
- );
+function HealthItem({ id, label, value, tone = "normal", activeView, onSelect }) {
+  return (
+    <button
+      type="button"
+      className={`vi-health-item vi-health-${tone} ${activeView === id ? "is-active" : ""}`}
+      onClick={() => onSelect?.(activeView === id ? null : id)}
+      aria-expanded={activeView === id}
+      aria-controls="vi-data-inspection"
+      title={`Ver ${label.toLowerCase()}`}
+    >
+      <span className="vi-health-dot" aria-hidden="true" />
+      <span className="vi-health-label">{label}</span>
+      <strong>{value}</strong>
+      <span className="vi-health-chevron" aria-hidden="true">{activeView === id ? "−" : "+"}</span>
+    </button>
+  );
 }
 
 export default function DataHealthBar({
- diagnostics,
- scanCount = 0,
- lastUpdated,
- referencesReady = false,
- liveReady = false,
- onHelp,
+  diagnostics,
+  scanCount = 0,
+  lastUpdated,
+  referencesReady = false,
+  liveReady = false,
+  activeView,
+  onSelect,
+  onHelp,
 }) {
- const sources =
-   diagnostics?.sources || {};
- const warnings =
-   diagnostics?.warnings || {};
+  const sources = diagnostics?.sources || {};
+  const warnings = diagnostics?.warnings || {};
+  const warningCount = referencesReady
+    ? (warnings.unmappedAreaNames?.length || 0)
+      + (warnings.partsWithoutCost?.length || 0)
+      + (warnings.unexpectedMaterial?.length || 0)
+      + (warnings.phantomDefinitionMismatches?.length || 0)
+    : 0;
 
- const warningCount =
- referencesReady
-   ? (
-       (
-         warnings
-           .unmappedAreaNames
-           ?.length || 0
-       ) +
-       (
-         warnings
-           .partsWithoutCost
-           ?.length || 0
-       ) +
-       (
-         warnings
-           .unexpectedMaterial
-           ?.length || 0
-       ) +
-       (
-         warnings
-           .phantomDefinitionMismatches
-           ?.length || 0
-       )
-     )
-   : 0;
-
- const hasWarnings =
-   warningCount > 0;
-
- return (
-<section
-     className="
-       vi-panel-flat
-       px-4
-       py-3
-       overflow-x-auto
-     "
->
-<div
-       className="
-         flex
-         items-center
-         gap-3
-         min-w-max
-       "
->
-<span
-         className="
-           font-mono
-           text-[11px]
-           font-black
-           uppercase
-           tracking-[0.16em]
-           text-orange-400
-         "
->
-         ESTADO DE DATOS
-</span>
-<HelpButton topic="overview" onHelp={onHelp} />
-
-<div className="w-8 h-px bg-orange-500/30" />
-
-<HealthItem label="4Wall escaneos" value={liveReady ? formatNumber(scanCount) : "EN ESPERA"} tone={liveReady ? "live" : "warning"} />
-<Divider />
-
-<HealthItem
- label="Alertas"
- value={
-   referencesReady
-     ? formatNumber(
-         warningCount
-       )
-     : "EN ESPERA"
- }
- tone={
-   !referencesReady
-     ? "warning"
-     : hasWarnings
-       ? "warning"
-       : "live"
- }
-/>
-
-<Divider />
-
-<HealthItem
-         label="QAD"
-         value={
-           referencesReady
-             ? formatNumber(
-                 sources.qadPartCount
-               )
-             : "EN ESPERA"
-         }
-         tone={
-           referencesReady
-             ? "frozen"
-             : "warning"
-         }
-       />
-
-<Divider />
-
-<HealthItem
-         label="Cost Part"
-         value={
-           referencesReady
-             ? formatNumber(
-                 sources.costPartCount
-               )
-             : "EN ESPERA"
-         }
-         tone={
-           referencesReady
-             ? "normal"
-             : "warning"
-         }
-       />
-
-<Divider />
-
-<HealthItem
-         label="BOM"
-         value={
-           referencesReady
-             ? formatNumber(
-                 sources.bomRelationCount
-               )
-             : "EN ESPERA"
-         }
-         tone={
-           referencesReady
-             ? "normal"
-             : "warning"
-         }
-       />
-
-<Divider />
-<HealthItem
-         label="Padres BOM escaneados"
-         value={
-           referencesReady && liveReady
-             ? `${formatNumber(diagnostics?.phantom?.scannedParentsWithBom)} / ${formatNumber(sources.bomParentCount)}`
-             : "EN ESPERA"
-         }
-         tone={
-           referencesReady && liveReady && diagnostics?.phantom?.scannedParentsWithBom > 0
-             ? "phantom"
-             : "warning"
-         }
-       />
-
-<Divider />
-<HealthItem
-         label="Revisar BOM"
-         value={
-           referencesReady && liveReady
-             ? formatNumber(diagnostics?.phantom?.bomReviewCount)
-             : "EN ESPERA"
-         }
-         tone="warning"
-       />
-
-<Divider />
-
-<HealthItem
-         label="ISPBB"
-         value={
-           referencesReady
-             ? formatNumber(
-                 sources.ispbbPartCount
-               )
-             : "EN ESPERA"
-         }
-         tone={
-           referencesReady
-             ? "normal"
-             : "warning"
-         }
-       />
-
-<Divider />
-
-<HealthItem
-         label="Phantoms"
-         value={
-           referencesReady
-             ? formatNumber(
-                 sources.ispbbPhantomCount
-               )
-             : "EN ESPERA"
-         }
-         tone={
-           referencesReady
-             ? "phantom"
-             : "warning"
-         }
-       />
-
-       {lastUpdated && (
-<>
-<Divider />
-<HealthItem
-             label="Consultado"
-             value={
-               new Intl.DateTimeFormat(
-                 "es-MX",
-                 {
-                   hour:
-                     "2-digit",
-                   minute:
-                     "2-digit",
-                   second:
-                     "2-digit",
-                   hour12:
-                     false,
-                 }
-               ).format(
-                 new Date(
-                   lastUpdated
-                 )
-               )
-             }
-             tone="normal"
-           />
-</>
-       )}
-</div>
-</section>
- );
+  return (
+    <section className="vi-panel-flat vi-health-bar" aria-label="Estado de las fuentes">
+      <div className="vi-health-heading">
+        <button type="button" className="vi-health-title" onClick={() => onSelect?.(activeView === "overview" ? null : "overview")} aria-expanded={activeView === "overview"} aria-controls="vi-data-inspection">
+          ESTADO DE DATOS <span aria-hidden="true">↗</span>
+        </button>
+        <HelpButton topic="dataHealth" onHelp={onHelp} />
+      </div>
+      <div className="vi-health-list">
+        <HealthItem id="scans" label="4Wall escaneos" value={liveReady ? number(scanCount) : "EN ESPERA"} tone={liveReady ? "live" : "warning"} activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="alerts" label="Alertas" value={referencesReady ? number(warningCount) : "EN ESPERA"} tone={warningCount ? "warning" : "live"} activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="areas" label="Áreas 4Wall" value={referencesReady ? number(sources.areaCount) : "EN ESPERA"} activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="qad" label="QAD" value={referencesReady ? number(sources.qadPartCount) : "EN ESPERA"} tone="frozen" activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="cost" label="Cost Part" value={referencesReady ? number(sources.costPartCount) : "EN ESPERA"} activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="bom" label="BOM" value={referencesReady ? number(sources.bomRelationCount) : "EN ESPERA"} activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="parents" label="Padres BOM escaneados" value={referencesReady && liveReady ? `${number(diagnostics?.phantom?.scannedParentsWithBom)} / ${number(sources.bomParentCount)}` : "EN ESPERA"} tone="phantom" activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="bomReview" label="Revisar BOM" value={referencesReady && liveReady ? number(diagnostics?.phantom?.bomReviewCount) : "EN ESPERA"} tone="warning" activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="ispbb" label="ISPBB" value={referencesReady ? number(sources.ispbbPartCount) : "EN ESPERA"} activeView={activeView} onSelect={onSelect} />
+        <HealthItem id="phantoms" label="Phantoms" value={referencesReady ? number(sources.ispbbPhantomCount) : "EN ESPERA"} tone="phantom" activeView={activeView} onSelect={onSelect} />
+      </div>
+      {lastUpdated && <span className="vi-health-updated">CONSULTADO {new Intl.DateTimeFormat("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(lastUpdated))}</span>}
+    </section>
+  );
 }

@@ -2,12 +2,14 @@ import { useState } from "react";
 import CommandHeader from "./components/shell/CommandHeader";
 import SourcesDrawer from "./components/shell/SourcesDrawer";
 import DataHealthBar from "./components/dashboard/DataHealthBar";
+import DataInspectionPanel from "./components/dashboard/DataInspectionPanel";
 import FinancialGrid from "./components/dashboard/FinancialGrid";
 import InventoryWorkspace from "./components/dashboard/InventoryWorkspace";
 import PartDetailDrawer from "./components/detail/PartDetailDrawer";
 import HelpDrawer from "./components/help/HelpDrawer";
 import { useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
+import { AmbientChase } from "./components/visual/PacmanGlyphs";
 
 const CRITICAL_USD_THRESHOLD = 10000;
 
@@ -15,6 +17,7 @@ export default function App() {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [selectedPart, setSelectedPart] = useState(null);
   const [helpTopic, setHelpTopic] = useState(null);
+  const [activeDataView, setActiveDataView] = useState(null);
   const references = useReferenceFiles();
   const inventory = useInventoryEngine({
     areaRows: references.areaRows,
@@ -33,6 +36,7 @@ export default function App() {
 
   return (
     <div className="vi-shell">
+      <AmbientChase />
       <CommandHeader
         connectionStatus={inventory.connectionStatus}
         scanCount={inventory.scanCount}
@@ -70,7 +74,22 @@ export default function App() {
           referencesReady={referencesReady}
           liveReady={liveReady}
           onHelp={setHelpTopic}
+          activeView={activeDataView}
+          onSelect={setActiveDataView}
         />
+        {activeDataView && <DataInspectionPanel
+          key={activeDataView}
+          view={activeDataView}
+          onClose={() => setActiveDataView(null)}
+          onSelectPart={setSelectedPart}
+          scanRows={inventory.scanRows}
+          diagnostics={inventory.diagnostics}
+          reconciliation={inventory.reconciliation}
+          engineSources={inventory.engine.sources}
+          referenceRows={{ areas: references.areaRows, qad: references.qadRows, cost: references.costRows, bom: references.bomRows, ispbb: references.ispbbRows }}
+          sources={references.sources}
+          referencesReady={referencesReady}
+        />}
         <FinancialGrid summary={inventory.summary} ready={ready} onHelp={setHelpTopic} />
         <InventoryWorkspace
           rows={inventory.reconciliation}

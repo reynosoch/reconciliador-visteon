@@ -63,13 +63,11 @@ export function PelletRail({
  );
 }
 
-// Una ruta decorativa de conciliación; no representa cantidades ni estados.
-export function ReconciliationChase({ className = "" }) {
+export function AmbientChase() {
  return (
-  <div className={`vi-chase-route ${className}`} aria-hidden="true">
-   <span className="vi-chase-pellets" />
-   <span className="vi-chase-ghosts"><Ghost size={13} tone="violet" /></span>
-   <span className="vi-chase-hunter"><span className="vi-pac-hunter" /></span>
+  <div className="vi-ambient-chase" aria-hidden="true">
+   <span className="vi-ambient-ghost"><Ghost size={16} tone="violet" /></span>
+   <span className="vi-ambient-hunter"><span className="vi-pac-hunter" /></span>
   </div>
  );
 }

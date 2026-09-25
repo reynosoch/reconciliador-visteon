@@ -168,10 +168,11 @@ function Radar({
 </div>
 
 <HelpButton
-           topic="phantom"
+           topic="phantomRadar"
            onHelp={onHelp}
          />
 </div>
+<p className="vi-radar-caption">Hasta 6 casos Phantom con mayor impacto NET absoluto.</p>
 </div>
 
 <div className="p-3">
@@ -301,6 +302,7 @@ export default function InventoryWorkspace({
    filter,
    setFilter,
  ] = useState("ALL");
+ const [page, setPage] = useState(0);
 
  const filtered =
    useMemo(() => {
@@ -370,6 +372,10 @@ export default function InventoryWorkspace({
      filter,
    ]);
 
+ const lastPage = Math.max(0, Math.ceil(filtered.length / 50) - 1);
+ const currentPage = Math.min(page, lastPage);
+ const visibleRows = filtered.slice(currentPage * 50, (currentPage + 1) * 50);
+
  return (
 <section
      className="
@@ -414,9 +420,7 @@ export default function InventoryWorkspace({
            value={search}
            disabled={!ready}
            onChange={(event) =>
-             setSearch(
-               event.target.value
-             )
+             { setSearch(event.target.value); setPage(0); }
            }
            className="
              vi-input
@@ -442,11 +446,7 @@ option.id
                }
                type="button"
                disabled={!ready}
-               onClick={() =>
-                 setFilter(
-option.id
-                 )
-               }
+               onClick={() => { setFilter(option.id); setPage(0); }}
                className={`
                  workspace-filter
                  ${
@@ -516,11 +516,7 @@ option.id
 </div>
      ) : (
 <div
-         className="
-           grid
-           grid-cols-1
-           2xl:grid-cols-[minmax(0,1fr)_270px]
-         "
+         className="vi-workspace-grid"
 >
 <div
            className="
@@ -597,7 +593,7 @@ option.id
 </thead>
 
 <tbody>
-               {filtered.map(
+               {visibleRows.map(
                  (item) => {
                    const financial =
                      item.financial ||
@@ -758,9 +754,13 @@ option.id
                )}
 </tbody>
 </table>
+{filtered.length > 50 && <div className="vi-table-pagination">
+  <span>{(currentPage * 50 + 1).toLocaleString("es-MX")}–{Math.min((currentPage + 1) * 50, filtered.length).toLocaleString("es-MX")} de {filtered.length.toLocaleString("es-MX")}</span>
+  <div><button type="button" className="vi-button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>ANTERIOR</button><span>{currentPage + 1} / {lastPage + 1}</span><button type="button" className="vi-button" disabled={currentPage === lastPage} onClick={() => setPage(currentPage + 1)}>SIGUIENTE</button></div>
+</div>}
 </div>
 
-<div className="hidden 2xl:block">
+<div className="vi-radar-slot">
 <Radar
              rows={rows}
              onSelectPart={

@@ -50,6 +50,20 @@ const HELP = {
   formula: "Contribución del componente = cantidad escaneada del padre × Usage.",
   notes: ["Solo ISPBB con Phantom = YES confirma esta clasificación; no se usan prefijos.", "Se usa Usage, no Grossed up Usage.", "La explosión de varios niveles sigue pendiente de un caso real validado.", "La cantidad directa 4Wall y la derivada de BOM se mantienen separadas."],
  },
+ phantomRadar: {
+  eyebrow: "PRIORIZACIÓN", title: "Radar Phantom",
+  description: "Muestra hasta seis Part Numbers que ISPBB identifica como Phantom y que tienen el mayor impacto NET absoluto en este corte. Sirve para decidir cuáles investigar primero.",
+  source: "Definición Phantom de ISPBB y resultados conciliados de 4Wall, QAD 3.2 y Cost Part.",
+  formula: "Primero se filtran los Phantom confirmados en ISPBB. Después se ordenan por el tamaño del impacto NET USD, tanto si es pérdida como si es ganancia.",
+  notes: ["Este radar es una lista de atención; no añade piezas ni modifica el resultado financiero.", "Selecciona un Part Number para ver su cantidad directa, posible contribución BOM y localidades.", "Si no aparecen casos, revisa que ISPBB y las demás fuentes estén cargadas."],
+ },
+ dataHealth: {
+  eyebrow: "FUENTES DEL CORTE", title: "Estado de datos",
+  description: "Cada indicador resume una fuente o una lista de revisión. Selecciónalo para ver sus registros aquí mismo; selecciónalo otra vez o pulsa CERRAR para regresar al tablero.",
+  source: "Snapshot de escaneos 4Wall, archivos QAD y diagnósticos del motor.",
+  formula: "Los números indican filas o Part Numbers, según la etiqueta. Alertas suma áreas sin mapeo, partes sin costo, material inesperado y diferencias de definición Phantom.",
+  notes: ["Un mismo Part Number puede figurar en más de un tipo de alerta.", "El panel muestra 50 filas por página y permite buscar sin cargar miles de renglones a la vez.", "Las alertas esperan a que se carguen los cinco archivos de referencia."],
+ },
  bomReview: {
   eyebrow: "PISTA DE AUDITORÍA", title: "Revisar BOM",
   description: "Destaca Part Numbers con cantidad QAD positiva, sin físico reconocido aún, que aparecen como componentes en el BOM recibido. Pueden requerir revisar un subensamble.",

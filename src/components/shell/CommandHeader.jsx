@@ -1,4 +1,3 @@
-import { ReconciliationChase } from "../visual/PacmanGlyphs";
 
 function formatTime(date) {
   if (!date) return "—";
@@ -34,7 +33,7 @@ export default function CommandHeader({
     <header className="vi-command-header">
       <div className="vi-header-main">
         <div className="vi-header-brand">
-          <img src={`${import.meta.env.BASE_URL}brand/visteon-logo-guide.png`} alt="Visteon" className="vi-brand-logo" />
+          <img src={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`} alt="Visteon" className="vi-brand-logo" />
           <span className="vi-brand-divider" aria-hidden="true" />
           <span className="vi-product-name">CONTROL DE INVENTARIO</span>
         </div>
@@ -53,7 +52,7 @@ export default function CommandHeader({
         <div className="vi-source-ribbon-inner">
           <span className="vi-flow-label">FLUJO DE DATOS</span>
           <SourceState label="4WALL" state={live ? "EN VIVO" : "EN ESPERA"} detail={`${scanCount.toLocaleString("es-MX")} escaneos`} live={live} />
-          <div className="vi-ribbon-chase"><ReconciliationChase /></div>
+          <span className="vi-ribbon-flow" aria-hidden="true" />
           <SourceState label="QAD" state={referencesReady ? "CONGELADO" : "PENDIENTE"} detail="Planta 179A" ready={referencesReady} />
           <span className="vi-ribbon-separator" aria-hidden="true" />
           <SourceState label="REFERENCIAS" state={referencesReady ? "LISTAS" : `${loaded}/${total} cargadas`} detail="ISPBB · BOM · COST" ready={referencesReady} />
