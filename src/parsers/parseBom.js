@@ -6,6 +6,14 @@ import {
  toNumber,
 } from "../domain/normalize";
 
+// QAD exports depths as "1", "0.2", "..3", "...4", etc.
+// Unknown depths are never assumed to be direct BOM edges.
+function parseBomLevel(value) {
+ const raw = String(value ?? "").trim();
+ const match = raw.match(/^(?:0\.|\.*)(\d+)$/);
+ return match ? Number(match[1]) : null;
+}
+
 export function parseBom(rows = []) {
  const byParent = new Map();
  const byComponent = new Map();
@@ -50,9 +58,9 @@ export function parseBom(rows = []) {
          row["Parent Phantom"]
        ),
      level:
-       toNumber(
-         row["Level"]
-       ),
+       parseBomLevel(row["Level"]),
+     rawLevel:
+       String(row["Level"] ?? "").trim(),
      componentPart,
      componentDescription:
        String(
