@@ -136,6 +136,7 @@ export function buildInventoryEngine({
      qad,
      planning,
      costs,
+     bom,
      phantomAdjustments,
    });
 
@@ -206,11 +207,15 @@ function buildDiagnostics({
  const unexpectedMaterial = [];
  const unmappedParts = [];
  const invMasterDifferences = [];
+ let bomReviewCount = 0;
 
  for (
    const item
    of reconciliation
  ) {
+   if (item.flags.isMissingPhysical && item.flags.hasBomReference) {
+     bomReviewCount++;
+   }
    // --------------------------------------
    // SIN COSTO
    // --------------------------------------
@@ -349,6 +354,7 @@ function buildDiagnostics({
    // PHANTOMS
    // ======================================
    phantom: {
+     bomReviewCount,
      scannedParentsWithBom:
        phantomAdjustments
          .scannedParentsWithBom,

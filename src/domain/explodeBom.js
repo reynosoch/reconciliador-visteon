@@ -137,7 +137,7 @@ export function explodeBom({
     */
    if (
      !relations ||
-     relations.length === 0
+     !relations.some((relation) => relation.level === 1)
    ) {
      continue;
    }
@@ -163,6 +163,11 @@ export function explodeBom({
      const relation
      of relations
    ) {
+     // This engine is deliberately single-level. The export also contains
+     // flattened descendants whose Usage is relative to another assembly.
+     if (relation.level !== 1) {
+       continue;
+     }
      const componentPart =
        normalizePartNumber(
          relation.componentPart

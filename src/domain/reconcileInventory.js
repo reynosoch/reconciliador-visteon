@@ -154,6 +154,7 @@ export function reconcileInventory({
  qad,
  planning,
  costs,
+ bom,
  phantomAdjustments,
 }) {
  const physicalMap =
@@ -164,6 +165,8 @@ export function reconcileInventory({
    planning?.byPart ?? new Map();
  const costMap =
    costs?.byPart ?? new Map();
+ const bomByComponent =
+   bom?.byComponent ?? new Map();
  const phantomMap =
    phantomAdjustments?.byPart ??
    phantomAdjustments ??
@@ -211,6 +214,8 @@ export function reconcileInventory({
      costMap.get(partNumber);
    const phantomAdjustment =
      phantomMap.get(partNumber);
+   const bomReferences =
+     bomByComponent.get(partNumber) ?? [];
 
    // ---------------------------------
    // 1. FÍSICO DIRECTO 4WALL
@@ -521,6 +526,8 @@ export function reconcileInventory({
        hasUnmappedPhysicalLocation,
        hasBomAdjustment:
          bomContribution !== 0,
+       hasBomReference:
+         bomReferences.length > 0,
      },
 
      // ==============================
@@ -532,6 +539,14 @@ export function reconcileInventory({
        bomSources:
          phantomAdjustment
            ?.sources ?? [],
+       bomReferences:
+         bomReferences.map((relation) => ({
+           parentPart: relation.parentPart,
+           level: relation.level,
+           rawLevel: relation.rawLevel,
+           usage: relation.usage,
+           site: relation.site,
+         })),
        sourceRows:
          physicalItem
            ?.sourceRows ?? [],
