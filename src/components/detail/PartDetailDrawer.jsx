@@ -1,10 +1,10 @@
 ﻿// src/components/detail/PartDetailDrawer.jsx
 import React from "react";
 import {
- PacDot,
  Ghost,
  PelletRail,
 } from "../visual/PacmanGlyphs";
+import { HelpButton } from "../help/HelpDrawer";
 
 function money(value) {
  return new Intl.NumberFormat(
@@ -60,6 +60,8 @@ function mapEntries(map) {
 function LocationColumn({
  title,
  locations,
+ topic,
+ onHelp,
 }) {
  const entries =
    mapEntries(
@@ -68,9 +70,7 @@ function LocationColumn({
 
  return (
 <div className="vi-maze-box p-4">
-<p className="vi-eyebrow">
-       {title}
-</p>
+<div className="flex items-center justify-between gap-2"><p className="vi-eyebrow">{title}</p><HelpButton topic={topic} onHelp={onHelp} /></div>
 
 <div className="mt-4 space-y-2">
        {entries.length ===
@@ -130,10 +130,12 @@ function Metric({
  label,
  value,
  className = "",
+ topic,
+ onHelp,
 }) {
  return (
 <div>
-<p
+<div className="flex items-center gap-1"><p
        className="
          font-mono
          text-[11px]
@@ -143,7 +145,7 @@ function Metric({
        "
 >
        {label}
-</p>
+</p>{topic && <HelpButton topic={topic} onHelp={onHelp} />}</div>
 <p
        className={`
          vi-money
@@ -161,6 +163,7 @@ function Metric({
 
 function BomMaze({
  item,
+ onHelp,
 }) {
  const master =
    item?.master || {};
@@ -208,16 +211,7 @@ function BomMaze({
 </p>
 </div>
 
-       {master.isPhantom ? (
-<Ghost
-           size={28}
-           tone="violet"
-         />
-       ) : (
-<PacDot
-           size={28}
-         />
-       )}
+<div className="flex items-center gap-2">{master.isPhantom && <Ghost size={17} tone="violet" />}<HelpButton topic="phantom" onHelp={onHelp} /></div>
 </div>
 
 <PelletRail
@@ -364,6 +358,7 @@ function BomMaze({
 
 export default function PartDetailDrawer({
  item,
+ onHelp,
  onClose,
 }) {
  if (!item) {
@@ -425,16 +420,7 @@ export default function PartDetailDrawer({
                gap-3
              "
 >
-             {master.isPhantom ? (
-<Ghost
-                 size={28}
-                 tone="violet"
-               />
-             ) : (
-<PacDot
-                 size={28}
-               />
-             )}
+             {master.isPhantom && <Ghost size={18} tone="violet" />}
 
 <div>
 <p className="vi-eyebrow">
@@ -481,6 +467,7 @@ export default function PartDetailDrawer({
 >
 <Metric
              label="NET USD"
+             topic="net" onHelp={onHelp}
              value={
                money(
                  financial.netUsd
@@ -496,6 +483,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="SWING"
+             topic="swing" onHelp={onHelp}
              value={
                money(
                  financial.swingUsd
@@ -505,6 +493,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="FÍSICO"
+             topic="physical" onHelp={onHelp}
              value={
                number(
                  physical.total
@@ -513,6 +502,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="QAD"
+             topic="qad" onHelp={onHelp}
              value={
                number(
                  qad.total
@@ -534,12 +524,14 @@ export default function PartDetailDrawer({
 >
 <LocationColumn
              title="4Wall / Físico"
+             topic="physical" onHelp={onHelp}
              locations={
                physical.locations
              }
            />
 <LocationColumn
              title="QAD / Sistema"
+             topic="qad" onHelp={onHelp}
              locations={
                qad.locations
              }
@@ -557,6 +549,7 @@ export default function PartDetailDrawer({
 >
 <Metric
              label="COSTO UNITARIO"
+             topic="cost" onHelp={onHelp}
              value={
                master.hasCost
                  ? money(
@@ -567,6 +560,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="ESTADO COST PART"
+             topic="status" onHelp={onHelp}
              value={
                master.costStatus ||
                "—"
@@ -574,6 +568,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="ESTADO ISPBB"
+             topic="status" onHelp={onHelp}
              value={
                master.planningStatus ||
                "—"
@@ -581,6 +576,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="PHANTOM"
+             topic="phantom" onHelp={onHelp}
              value={
                master.phantomKnown
                  ? master.isPhantom ? "SÍ" : "NO"
@@ -597,6 +593,7 @@ export default function PartDetailDrawer({
 <div className="mt-5">
 <BomMaze
              item={item}
+             onHelp={onHelp}
            />
 </div>
 

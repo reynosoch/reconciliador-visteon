@@ -68,7 +68,7 @@ export function ReconciliationChase({ className = "" }) {
  return (
   <div className={`vi-chase-route ${className}`} aria-hidden="true">
    <span className="vi-chase-pellets" />
-   <span className="vi-chase-ghosts"><Ghost size={15} tone="violet" /><Ghost size={13} tone="violet" /></span>
+   <span className="vi-chase-ghosts"><Ghost size={13} tone="violet" /></span>
    <span className="vi-chase-hunter"><span className="vi-pac-hunter" /></span>
   </div>
  );

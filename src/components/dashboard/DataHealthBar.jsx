@@ -1,5 +1,6 @@
 // src/components/dashboard/DataHealthBar.jsx
 import React from "react";
+import { HelpButton } from "../help/HelpDrawer";
 
 function formatNumber(value) {
  return new Intl.NumberFormat(
@@ -111,6 +112,7 @@ export default function DataHealthBar({
  lastUpdated,
  referencesReady = false,
  liveReady = false,
+ onHelp,
 }) {
  const sources =
    diagnostics?.sources || {};
@@ -175,6 +177,7 @@ export default function DataHealthBar({
 >
          ESTADO DE DATOS
 </span>
+<HelpButton topic="overview" onHelp={onHelp} />
 
 <div className="w-8 h-px bg-orange-500/30" />
 

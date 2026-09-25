@@ -301,7 +301,7 @@ export default function FinancialGrid({
            ready
              ? `${formatNumber(
                  data.swingPieces
-               ) } PZAS`
+               ) } PIEZAS`
              : "DIFERENCIA POR LOCALIDAD"
          }
          tone="swing"

@@ -3,6 +3,7 @@ import React, {
  useRef,
  useState,
 } from "react";
+import { HelpButton } from "../help/HelpDrawer";
 import {
  REFERENCE_SOURCE_TYPES,
 } from "../../hooks/useReferenceFiles";
@@ -12,7 +13,9 @@ const SOURCE_CONFIG = [
    type:
      REFERENCE_SOURCE_TYPES.AREAS,
    label:
-     "4Wall Areas",
+     "Áreas 4Wall",
+   description: "Ubica cada área escaneada en QAD.",
+   topic: "physical",
    short:
      "AREAS",
    suggested:
@@ -23,6 +26,8 @@ const SOURCE_CONFIG = [
      REFERENCE_SOURCE_TYPES.QAD,
    label:
      "QAD 3.2",
+   description: "Inventario esperado al detener la planta.",
+   topic: "qad",
    short:
      "QAD",
    suggested:
@@ -33,6 +38,8 @@ const SOURCE_CONFIG = [
      REFERENCE_SOURCE_TYPES.ISPBB,
    label:
      "ISPBB",
+   description: "Define qué materiales son Phantom.",
+   topic: "phantom",
    short:
      "ISPBB",
    suggested:
@@ -43,6 +50,8 @@ const SOURCE_CONFIG = [
      REFERENCE_SOURCE_TYPES.BOM,
    label:
      "BOM Export",
+   description: "Relaciona padres y componentes.",
+   topic: "bomReview",
    short:
      "BOM",
    suggested:
@@ -53,6 +62,8 @@ const SOURCE_CONFIG = [
      REFERENCE_SOURCE_TYPES.COST,
    label:
      "Cost Part",
+   description: "Costo para valorar las diferencias.",
+   topic: "cost",
    short:
      "COST",
    suggested:
@@ -183,20 +194,14 @@ function SourceLine({
  source,
  loadFile,
  clearFile,
+ onHelp,
 }) {
  const input =
    useRef(null);
 
  return (
 <div
-     className="
-       grid
-       grid-cols-[1fr_auto]
-       gap-3
-       py-3.5
-       border-b
-       border-slate-800/70
-     "
+     className="vi-source-line grid grid-cols-[1fr_auto] gap-3"
 >
 <input
        ref={input}
@@ -241,6 +246,7 @@ function SourceLine({
 <span className="text-xs font-bold text-slate-200">
            {config.label}
 </span>
+<HelpButton topic={config.topic} onHelp={onHelp} />
 
 <span
            className="
@@ -254,6 +260,8 @@ function SourceLine({
              : "EN ESPERA"}
 </span>
 </div>
+
+<p className="vi-source-description">{config.description}</p>
 
        {source?.loaded ? (
 <>
@@ -339,6 +347,7 @@ export default function SourcesDrawer({
  loadFile,
  clearFile,
  clearAll,
+ onHelp,
  onClose,
 }) {
  const bulkInput =
@@ -572,6 +581,7 @@ export default function SourcesDrawer({
                clearFile={
                  clearFile
                }
+               onHelp={onHelp}
              />
            )
          )}

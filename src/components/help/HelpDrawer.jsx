@@ -117,24 +117,8 @@ export function HelpButton({
        }
      }}
      title="¿De dónde sale este dato?"
-     className={`
-       inline-flex
-       items-center
-       justify-center
-       w-7
-       h-7
-       rounded-full
-       border
-       border-slate-700
-       text-[12px]
-       font-black
-       text-slate-400
-       hover:text-orange-300
-       hover:border-orange-500/40
-       transition-colors
-       cursor-pointer
-       ${className}
-     `}
+     aria-label="Explicar el origen y cálculo de este dato"
+     className={`vi-help-trigger ${className}`}
 >
      ?
 </span>
@@ -244,10 +228,7 @@ export default function HelpDrawer({
 <span className="text-yellow-400 mt-[2px]">
                      •
 </span>
-<p className="text-sm leading-relaxed text-slate-300">
-           <strong className="help-label block mb-2">QUÉ SIGNIFICA</strong>
-                     {note}
-</p>
+<p className="text-sm leading-relaxed text-slate-300">{note}</p>
 </div>
                )
              )}
