@@ -96,6 +96,8 @@ const HELP = {
      "No se utilizan prefijos P7, 0000 ni otras reglas por Part Number.",
      "Se utiliza Usage, no Grossed up Usage.",
      "La explosión multinivel permanece deshabilitada hasta validación funcional.",
+     "Solo una relación directa de nivel 1 con padre escaneado puede aportar físico derivado.",
+     "Aparecer como componente en el BOM indica dónde investigar; por sí solo no acredita físico ni reduce NET.",
    ],
  },
  physical: {
