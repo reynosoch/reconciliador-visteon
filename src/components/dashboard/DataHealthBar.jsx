@@ -251,6 +251,32 @@ export default function DataHealthBar({
        />
 
 <Divider />
+<HealthItem
+         label="BOM Parents Scanned"
+         value={
+           referencesReady && liveReady
+             ? `${formatNumber(diagnostics?.phantom?.scannedParentsWithBom)} / ${formatNumber(sources.bomParentCount)}`
+             : "WAIT"
+         }
+         tone={
+           referencesReady && liveReady && diagnostics?.phantom?.scannedParentsWithBom > 0
+             ? "phantom"
+             : "warning"
+         }
+       />
+
+<Divider />
+<HealthItem
+         label="BOM Review"
+         value={
+           referencesReady && liveReady
+             ? formatNumber(diagnostics?.phantom?.bomReviewCount)
+             : "WAIT"
+         }
+         tone="warning"
+       />
+
+<Divider />
 
 <HealthItem
          label="ISPBB"
@@ -283,22 +309,6 @@ export default function DataHealthBar({
            referencesReady
              ? "phantom"
              : "warning"
-         }
-       />
-
-<Divider />
-
-<HealthItem
-         label="Warnings"
-         value={
-           formatNumber(
-             warningCount
-           )
-         }
-         tone={
-           hasWarnings
-             ? "warning"
-             : "live"
          }
        />
 

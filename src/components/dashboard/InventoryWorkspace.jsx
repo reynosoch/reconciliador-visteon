@@ -39,6 +39,10 @@ const FILTERS = [
    id: "PHANTOM",
    label: "Phantom",
  },
+ {
+   id: "BOM_REVIEW",
+   label: "BOM Review",
+ },
 ];
 
 function money(value) {
@@ -90,7 +94,7 @@ function Radar({
          .filter(
            (item) =>
              item?.master
-               ?.phantom ===
+               ?.isPhantom ===
              true
          )
          .sort(
@@ -318,9 +322,14 @@ export default function InventoryWorkspace({
          ) {
            return (
              item?.master
-               ?.phantom ===
+               ?.isPhantom ===
              true
            );
+         }
+
+         if (filter === "BOM_REVIEW") {
+           return item?.flags?.isMissingPhysical === true &&
+             item?.flags?.hasBomReference === true;
          }
 
          if (
@@ -338,8 +347,8 @@ export default function InventoryWorkspace({
          if (
            filter !== "ALL" &&
            String(
-             item?.financial
-               ?.status || ""
+             item?.flags
+               ?.financialStatus || ""
            ).toUpperCase() !==
              filter
          ) {
@@ -617,7 +626,7 @@ option.id
                              gap-2
                            "
 >
-                           {master.phantom && (
+                           {master.isPhantom && (
 <Ghost
                                size={12}
                                tone="violet"
@@ -642,7 +651,7 @@ option.id
                                "
 >
                                {
-                                 financial.status ||
+                                 flags.financialStatus ||
                                  "UNKNOWN"
                                }
 </span>
@@ -728,9 +737,11 @@ option.id
 >
                          {flags.isUnexpectedMaterial
                            ? "QAD0"
+                           : flags.isMissingPhysical && flags.hasBomReference
+                             ? "BOM?"
                            : flags.hasUnmappedPhysicalLocation
                              ? "MAP?"
-                             : flags.missingCost
+                             : !master.hasCost
                                ? "$?"
                                : "·"}
 </td>
