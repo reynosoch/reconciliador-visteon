@@ -27,6 +27,8 @@ const HELP = {
      "Negativo = pérdida.",
      "Positivo = ganancia.",
      "No se usa Math.abs para presentar NET.",
+     "El corte intradía incluye partes QAD aún sin escaneo físico como pérdida provisional; Finanzas debe definir cuándo se consideran faltantes.",
+     "El alcance financiero definitivo de localidades sigue pendiente de validación.",
    ],
  },
  grossLoss: {
