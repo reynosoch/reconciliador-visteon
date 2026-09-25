@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+inventario.db
+descarga_4wall.xlsx
 
 # Editor directories and files
 .vscode/*
