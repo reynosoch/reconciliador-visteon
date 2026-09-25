@@ -586,6 +586,9 @@ export function calculateFinancialSummary(
  let criticalCount = 0;
  let unmappedLocationCount = 0;
  let missingCostCount = 0;
+ let qadOnlyCount = 0;
+ let qadOnlyExposureUsd = 0;
+ let qadOnlyMissingCostCount = 0;
 
  for (
    const item
@@ -650,6 +653,13 @@ export function calculateFinancialSummary(
    ) {
      missingCostCount++;
    }
+   // Intraday visibility only: QAD-only parts may not have been audited yet.
+   // Keep the existing financial calculation pending Finance's decision.
+   if (item.flags.isMissingPhysical) {
+     qadOnlyCount++;
+     qadOnlyExposureUsd += Math.abs(item.financial.netUsd);
+     if (!item.master.hasCost) qadOnlyMissingCostCount++;
+   }
  }
 
  return {
@@ -666,6 +676,9 @@ export function calculateFinancialSummary(
    criticalCount,
    unmappedLocationCount,
    missingCostCount,
+   qadOnlyCount,
+   qadOnlyExposureUsd,
+   qadOnlyMissingCostCount,
    totalParts:
      reconciliation.length,
    criticalUsdThreshold,
