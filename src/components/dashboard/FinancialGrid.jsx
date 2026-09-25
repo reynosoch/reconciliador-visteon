@@ -171,7 +171,7 @@ export default function FinancialGrid({
        "
 >
 <p className="vi-eyebrow">
-         Financial Exposure
+         IMPACTO FINANCIERO
 </p>
 <h2
          className="
@@ -182,7 +182,7 @@ export default function FinancialGrid({
            vi-glow-title
          "
 >
-         Plant Exposure
+         Exposición de planta
 </h2>
 <p
          className="
@@ -191,25 +191,25 @@ export default function FinancialGrid({
            text-slate-400
          "
 >
-         Click any metric to inspect its source and formula.
+         Selecciona un indicador para ver su origen y cálculo.
 </p>
 {ready && (
 <div className="mt-3 border-l-2 border-amber-400 bg-amber-400/10 px-3 py-2 text-sm text-amber-100" role="status">
-  <strong>Preliminary intraday exposure.</strong>{" "}
-  {formatNumber(data.qadOnlyCount ?? 0)} QAD parts have no physical scan yet
+  <strong>Corte intradía preliminar.</strong>{" "}
+  {formatNumber(data.qadOnlyCount ?? 0)} Part Numbers de QAD aún no tienen escaneo físico
   {data.qadOnlyCount > 0 && (
-    <> ({formatMoney(data.qadOnlyExposureUsd)} included in gross loss and NET)</>
-  )}. They may still be awaiting audit.
+    <> ({formatMoney(data.qadOnlyExposureUsd)} incluidos en pérdida bruta y NET)</>
+  )}. Pueden seguir pendientes de auditar.
   {data.qadOnlyMissingCostCount > 0 && (
-    <> {formatNumber(data.qadOnlyMissingCostCount)} have no Cost Part match, so their exposure is unvalued.</>
-  )} Finance must confirm when unscanned parts become losses and which locations enter the financial scope.
+    <> {formatNumber(data.qadOnlyMissingCostCount)} no tienen costo en Cost Part; su exposición aún no se puede valorar.</>
+  )} Finanzas debe definir cuándo un material sin escaneo cuenta como pérdida y qué localidades entran al cálculo.
 </div>
 )}
 </div>
 
 <div className="vi-financial-strip">
 <FinancialCell
-         label="NET PLANT"
+         label="NET PLANTA"
          value={
            ready
              ? formatMoney(
@@ -221,8 +221,8 @@ export default function FinancialGrid({
            ready
              ? `${formatNumber(
                  data.physicalQty
-               )} PHYSICAL`
-             : "WAITING REFERENCE DATA"
+               ) } FÍSICO`
+             : "FALTAN REFERENCIAS"
          }
          tone={
            netUsd < 0
@@ -238,7 +238,7 @@ export default function FinancialGrid({
        />
 
 <FinancialCell
-         label="GROSS LOSS"
+         label="PÉRDIDA BRUTA"
          value={
            ready
              ? formatMoney(
@@ -246,7 +246,7 @@ export default function FinancialGrid({
                )
              : "---"
          }
-         detail="SHORTAGE BEFORE OFFSET"
+         detail="ANTES DE COMPENSAR GANANCIAS"
          tone="loss"
          topic="grossLoss"
          onHelp={
@@ -255,7 +255,7 @@ export default function FinancialGrid({
        />
 
 <FinancialCell
-         label="GROSS GAIN"
+         label="GANANCIA BRUTA"
          value={
            ready
              ? formatMoney(
@@ -263,7 +263,7 @@ export default function FinancialGrid({
                )
              : "---"
          }
-         detail="SURPLUS BEFORE OFFSET"
+         detail="ANTES DE COMPENSAR PÉRDIDAS"
          tone="gain"
          topic="grossGain"
          onHelp={
@@ -272,7 +272,7 @@ export default function FinancialGrid({
        />
 
 <FinancialCell
-         label="OBSOLETE +"
+         label="OBSOLETO +"
          value={
            ready
              ? formatMoney(
@@ -280,7 +280,7 @@ export default function FinancialGrid({
                )
              : "---"
          }
-         detail="OBSOLETE SURPLUS"
+         detail="SOBRANTE OBSOLETO"
          tone="gain"
          topic="obsolete"
          onHelp={
@@ -301,8 +301,8 @@ export default function FinancialGrid({
            ready
              ? `${formatNumber(
                  data.swingPieces
-               )} PCS`
-             : "LOCATION DELTA"
+               ) } PZAS`
+             : "DIFERENCIA POR LOCALIDAD"
          }
          tone="swing"
          topic="swing"
@@ -320,7 +320,7 @@ export default function FinancialGrid({
                )
              : "---"
          }
-         detail="ISPBB PHANTOM = YES"
+         detail="DEFINIDOS EN ISPBB"
          tone="phantom"
          topic="phantom"
          onHelp={

@@ -245,13 +245,13 @@ function SourceLine({
 <span
            className="
              font-mono
-             text-[7px]
+             text-[11px]
              text-slate-700
            "
 >
            {source?.loaded
-             ? "READY"
-             : "WAIT"}
+             ? "LISTO"
+             : "EN ESPERA"}
 </span>
 </div>
 
@@ -261,7 +261,7 @@ function SourceLine({
              className="
                mt-1.5
                font-mono
-               text-[8px]
+               text-[11px]
                text-slate-500
                truncate
              "
@@ -272,7 +272,7 @@ function SourceLine({
              className="
                mt-1
                font-mono
-               text-[7px]
+               text-[11px]
                text-slate-700
              "
 >
@@ -282,7 +282,7 @@ function SourceLine({
              ).toLocaleString(
                "en-US"
              )}{" "}
-             ROWS
+             FILAS
 </p>
 </>
        ) : (
@@ -290,11 +290,11 @@ function SourceLine({
            className="
              mt-1.5
              font-mono
-             text-[8px]
+             text-[11px]
              text-slate-700
            "
 >
-           Example:{" "}
+           Ejemplo:{" "}
            {config.suggested}
 </p>
        )}
@@ -309,8 +309,8 @@ function SourceLine({
          className="source-mini-button"
 >
          {source?.loaded
-           ? "REPLACE"
-           : "LOAD"}
+           ? "REEMPLAZAR"
+           : "CARGAR"}
 </button>
 
        {source?.loaded && (
@@ -322,6 +322,7 @@ function SourceLine({
              )
            }
            className="source-clear-button"
+           aria-label={`Quitar ${config.label}`}
 >
            ×
 </button>
@@ -415,6 +416,7 @@ export default function SourcesDrawer({
  return (
 <div
      className="
+       vi-drawer-backdrop
        fixed
        inset-0
        z-[100]
@@ -434,6 +436,7 @@ export default function SourcesDrawer({
 >
 <aside
        className="
+         vi-drawer-panel
          absolute
          right-0
          top-0
@@ -474,13 +477,13 @@ export default function SourcesDrawer({
 <div className="flex items-start justify-between gap-4">
 <div>
 <p className="vi-eyebrow">
-               Reference Package
+               ARCHIVOS DE REFERENCIA
 </p>
 <h2 className="mt-1 text-xl font-black text-white">
-               Inventory Sources
+               Fuentes del inventario
 </h2>
-<p className="mt-1 text-[9px] text-slate-600">
-               Select all reference files at once. The dashboard detects each source automatically.
+<p className="mt-1 text-[11px] text-slate-600">
+               Selecciona los cinco archivos juntos; el sistema identifica cada fuente.
 </p>
 </div>
 
@@ -489,7 +492,7 @@ export default function SourcesDrawer({
              onClick={onClose}
              className="vi-button"
 >
-             CLOSE
+             CERRAR
 </button>
 </div>
 
@@ -508,8 +511,8 @@ export default function SourcesDrawer({
 >
 <span>
              {processing
-               ? "DETECTING FILES..."
-               : "LOAD INVENTORY PACKAGE"}
+               ? "IDENTIFICANDO ARCHIVOS..."
+               : "CARGAR ARCHIVOS DE INVENTARIO"}
 </span>
 <span className="text-orange-300">
              {loaded}/{total}
@@ -589,12 +592,12 @@ export default function SourcesDrawer({
 <p
              className="
                font-mono
-               text-[8px]
+               text-[11px]
                font-black
                text-amber-400
              "
 >
-             FILES NOT RECOGNIZED
+             ARCHIVOS NO RECONOCIDOS
 </p>
            {unknownFiles.map(
              (file) => (
@@ -603,7 +606,7 @@ export default function SourcesDrawer({
                  className="
                    mt-2
                    font-mono
-                   text-[8px]
+                   text-[11px]
                    text-slate-500
                  "
 >
@@ -625,14 +628,14 @@ export default function SourcesDrawer({
          "
 >
 <p className="help-label">
-           SUGGESTED NAMES
+           NOMBRES SUGERIDOS
 </p>
 <div
            className="
              mt-3
              space-y-1.5
              font-mono
-             text-[8px]
+             text-[11px]
              text-slate-600
            "
 >
@@ -657,7 +660,7 @@ export default function SourcesDrawer({
                text-rose-400
              "
 >
-             CLEAR ALL SOURCES
+             BORRAR TODAS LAS FUENTES
 </button>
 </div>
        )}

@@ -75,8 +75,8 @@ function LocationColumn({
 <div className="mt-4 space-y-2">
        {entries.length ===
        0 ? (
-<p className="font-mono text-[8px] text-slate-700">
-           NO LOCATION DATA
+<p className="font-mono text-[11px] text-slate-700">
+           SIN DATOS DE LOCALIDAD
 </p>
        ) : (
          entries.map(
@@ -101,7 +101,7 @@ function LocationColumn({
 <span
                  className="
                    font-mono
-                   text-[9px]
+                   text-[11px]
                    text-slate-400
                  "
 >
@@ -110,7 +110,7 @@ function LocationColumn({
 <span
                  className="
                    font-mono
-                   text-[9px]
+                   text-[11px]
                    font-bold
                    text-white
                  "
@@ -136,7 +136,7 @@ function Metric({
 <p
        className="
          font-mono
-         text-[7px]
+         text-[11px]
          font-black
          tracking-[0.12em]
          text-slate-700
@@ -170,8 +170,8 @@ function BomMaze({
  if (!physical.scanCount && !physical.bomContribution) {
    return (
      <div className="vi-maze-box p-5 text-sm text-amber-200">
-       No 4Wall scan or validated BOM contribution for this part yet.
-       QAD quantity is still included in the preliminary NET.
+       Este Part Number aún no tiene escaneo 4Wall ni contribución BOM validada.
+       La cantidad QAD sigue incluida en el NET preliminar.
      </div>
    );
  }
@@ -194,7 +194,7 @@ function BomMaze({
 >
 <div>
 <p className="vi-eyebrow">
-           BOM Maze Trace
+           RUTA DE TRAZABILIDAD BOM
 </p>
 <p
            className="
@@ -204,7 +204,7 @@ function BomMaze({
              text-white
            "
 >
-           Material Route
+           Ruta del material
 </p>
 </div>
 
@@ -234,11 +234,11 @@ function BomMaze({
 <p
            className="
              font-mono
-             text-[8px]
+             text-[11px]
              text-slate-700
            "
 >
-           SOURCE
+           FUENTE
 </p>
 <p
            className="
@@ -248,7 +248,7 @@ function BomMaze({
              text-white
            "
 >
-           {physical.scanCount ? "4WALL DIRECT SCAN" : "4WALL PARENT → BOM"}
+           {physical.scanCount ? "ESCANEO DIRECTO 4WALL" : "PADRE 4WALL → BOM"}
 </p>
 </div>
 
@@ -256,11 +256,11 @@ function BomMaze({
 <p
            className="
              font-mono
-             text-[8px]
+             text-[11px]
              text-slate-700
            "
 >
-           PHYSICAL
+           FÍSICO
 </p>
 <p
            className="
@@ -279,11 +279,11 @@ function BomMaze({
 <p
            className="
              font-mono
-             text-[8px]
+             text-[11px]
              text-slate-700
            "
 >
-           ITEM DEFINITION
+           DEFINICIÓN DEL ÍTEM
 </p>
 <p
            className="
@@ -293,8 +293,8 @@ function BomMaze({
            "
 >
            {master.phantomKnown
-             ? master.isPhantom ? "ISPBB: PHANTOM YES" : "ISPBB: PHANTOM NO"
-             : "NO ISPBB DEFINITION"}
+             ? master.isPhantom ? "ISPBB: PHANTOM SÍ" : "ISPBB: PHANTOM NO"
+             : "SIN DEFINICIÓN ISPBB"}
 </p>
 </div>
 
@@ -319,7 +319,7 @@ function BomMaze({
                  text-violet-300
                "
 >
-               BOM PHANTOM CONTRIBUTION
+               CONTRIBUCIÓN BOM PHANTOM
 </p>
 </div>
 
@@ -327,11 +327,11 @@ function BomMaze({
              className="
                mt-1
                font-mono
-               text-[8px]
+               text-[11px]
                text-slate-700
              "
 >
-             Usage multiplier preserved from BOM Export
+             Se aplica Usage del export BOM
 </p>
 </div>
        )}
@@ -340,11 +340,11 @@ function BomMaze({
 <p
            className="
              font-mono
-             text-[8px]
+             text-[11px]
              text-slate-700
            "
 >
-           DESTINATION
+           RESULTADO
 </p>
 <p
            className="
@@ -354,7 +354,7 @@ function BomMaze({
              text-orange-300
            "
 >
-           FINANCIAL ENGINE
+           CONCILIACIÓN FINANCIERA
 </p>
 </div>
 </div>
@@ -438,7 +438,7 @@ export default function PartDetailDrawer({
 
 <div>
 <p className="vi-eyebrow">
-                 Part Trace
+                 INVESTIGACIÓN DEL PART NUMBER
 </p>
 <h2
                  className="
@@ -461,7 +461,7 @@ export default function PartDetailDrawer({
              }
              className="vi-button"
 >
-             CLOSE
+             CERRAR
 </button>
 </div>
 
@@ -472,8 +472,7 @@ export default function PartDetailDrawer({
 </div>
 
 <div className="p-5">
-<div
-           className="
+<div className="vi-impact-metrics
              grid
              grid-cols-2
              lg:grid-cols-4
@@ -505,7 +504,7 @@ export default function PartDetailDrawer({
              className="vi-money-swing"
            />
 <Metric
-             label="PHYSICAL"
+             label="FÍSICO"
              value={
                number(
                  physical.total
@@ -522,6 +521,8 @@ export default function PartDetailDrawer({
            />
 </div>
 
+<p className="mt-4 text-xs text-slate-300">Físico directo 4Wall: {number(physical.directTotal)} · Contribución BOM: {number(physical.bomContribution)} piezas</p>
+
 <div
            className="
              mt-5
@@ -532,15 +533,63 @@ export default function PartDetailDrawer({
            "
 >
 <LocationColumn
-             title="4Wall / Physical"
+             title="4Wall / Físico"
              locations={
                physical.locations
              }
            />
 <LocationColumn
-             title="QAD / System"
+             title="QAD / Sistema"
              locations={
                qad.locations
+             }
+           />
+</div>
+
+<div
+           className="
+             mt-5
+             grid
+             grid-cols-2
+             sm:grid-cols-4
+             gap-4
+           "
+>
+<Metric
+             label="COSTO UNITARIO"
+             value={
+               master.hasCost
+                 ? money(
+                     master.unitCost
+                   )
+                 : "—"
+             }
+           />
+<Metric
+             label="ESTADO COST PART"
+             value={
+               master.costStatus ||
+               "—"
+             }
+           />
+<Metric
+             label="ESTADO ISPBB"
+             value={
+               master.planningStatus ||
+               "—"
+             }
+           />
+<Metric
+             label="PHANTOM"
+             value={
+               master.phantomKnown
+                 ? master.isPhantom ? "SÍ" : "NO"
+                 : "DESCONOCIDO"
+             }
+             className={
+               master.isPhantom
+                 ? "vi-money-phantom"
+                 : ""
              }
            />
 </div>
@@ -553,71 +602,35 @@ export default function PartDetailDrawer({
 
 {item.trace?.bomReferences?.length > 0 && (
 <section className="vi-maze-box mt-5 p-5">
-  <p className="vi-eyebrow">BOM References</p>
+  <p className="vi-eyebrow">REFERENCIAS BOM</p>
   <p className="mt-2 text-xs text-slate-300">
-    This part appears as a component in the supplied BOM export. A reference
-    does not prove it was counted in 4Wall or change the financial NET.
+    Este componente aparece en el BOM cargado. Esta relación indica dónde investigar; no demuestra un conteo físico ni modifica el NET.
   </p>
   <div className="mt-3 max-h-48 space-y-2 overflow-y-auto font-mono text-xs">
     {item.trace.bomReferences.slice(0, 12).map((reference, index) => (
       <div key={`${reference.parentPart}-${reference.rawLevel}-${index}`} className="border-b border-slate-800 pb-2 text-slate-200">
-        Parent {reference.parentPart} · Level {reference.rawLevel || "?"} · Usage {number(reference.usage)} · Site {reference.site || "?"}
+        PADRE {reference.parentPart} → COMPONENTE {item.partNumber} · Nivel {reference.rawLevel || "?"} · Usage {number(reference.usage)} · Sitio {reference.site || "?"}
       </div>
     ))}
     {item.trace.bomReferences.length > 12 && (
-      <p className="text-slate-400">{item.trace.bomReferences.length - 12} more BOM rows in the source.</p>
+      <p className="text-slate-400">{item.trace.bomReferences.length - 12} filas adicionales en el archivo BOM.</p>
     )}
   </div>
 </section>
 )}
 
-<div
-           className="
-             mt-5
-             grid
-             grid-cols-2
-             sm:grid-cols-4
-             gap-4
-           "
->
-<Metric
-             label="UNIT COST"
-             value={
-               master.hasCost
-                 ? money(
-                     master.unitCost
-                   )
-                 : "—"
-             }
-           />
-<Metric
-             label="COST STATUS"
-             value={
-               master.costStatus ||
-               "—"
-             }
-           />
-<Metric
-             label="PLANNING"
-             value={
-               master.planningStatus ||
-               "—"
-             }
-           />
-<Metric
-             label="PHANTOM"
-             value={
-               master.phantomKnown
-                 ? master.isPhantom ? "YES" : "NO"
-                 : "UNKNOWN"
-             }
-             className={
-               master.isPhantom
-                 ? "vi-money-phantom"
-                 : ""
-             }
-           />
-</div>
+<section className="vi-maze-box mt-5 p-5">
+ <p className="vi-eyebrow">ALERTAS Y TRAZABILIDAD</p>
+ <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-200">
+  {item.flags?.isMissingPhysical && <span className="vi-tag vi-tag-swing">SIN FÍSICO · corte preliminar</span>}
+  {item.flags?.isUnexpectedMaterial && <span className="vi-tag vi-tag-swing">QAD esperaba 0</span>}
+  {item.flags?.hasBomReference && <span className="vi-tag vi-tag-swing">REVISAR BOM</span>}
+  {item.flags?.hasUnmappedPhysicalLocation && <span className="vi-tag vi-tag-swing">ÁREA SIN MAPEO</span>}
+  {!master.hasCost && <span className="vi-tag vi-tag-swing">SIN COSTO</span>}
+  {!item.flags?.isMissingPhysical && !item.flags?.isUnexpectedMaterial && !item.flags?.hasBomReference && !item.flags?.hasUnmappedPhysicalLocation && master.hasCost && <span>Sin alertas adicionales.</span>}
+ </div>
+</section>
+
 </div>
 </aside>
 </div>

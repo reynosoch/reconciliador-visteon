@@ -10,8 +10,7 @@ import InventoryWorkspace from "./components/dashboard/InventoryWorkspace";
 import PartDetailDrawer from "./components/detail/PartDetailDrawer";
 import HelpDrawer from "./components/help/HelpDrawer";
 import {
- PacDot,
- PelletRail,
+ ReconciliationChase,
 } from "./components/visual/PacmanGlyphs";
 import {
  useReferenceFiles,
@@ -126,8 +125,7 @@ export default function App() {
 >
 <div>
 <p className="vi-eyebrow">
-             Plant 179A //
-             Physical Inventory
+             Planta 179A // Inventario físico
 </p>
 <h1
              className="
@@ -140,10 +138,10 @@ export default function App() {
                vi-glow-title
              "
 >
-             Inventory
+             Control de
 <span className="text-orange-500">
                {" "}
-               Control
+               inventario
 </span>
 </h1>
 </div>
@@ -156,13 +154,7 @@ export default function App() {
              px-5
            "
 >
-<PacDot
-             size={10}
-           />
-<PelletRail
-             muted
-             className="flex-1"
-           />
+<ReconciliationChase className="flex-1" />
 </div>
 <div className="flex items-center gap-2">
 <span
@@ -176,8 +168,8 @@ export default function App() {
              `}
 >
              {ready
-               ? "ENGINE READY"
-               : "WAITING DATA"}
+               ? "DATOS LISTOS"
+               : "ESPERANDO DATOS"}
 </span>
 <button
              type="button"
@@ -190,8 +182,8 @@ export default function App() {
                inline-flex
                items-center
                justify-center
-               w-7
-               h-7
+               w-9
+               h-9
                rounded-full
                border
                border-slate-700

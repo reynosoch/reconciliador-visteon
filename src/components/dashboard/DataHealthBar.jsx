@@ -65,7 +65,7 @@ function HealthItem({
 <span
        className="
          font-mono
-         text-[8px]
+         text-[11px]
          font-black
          uppercase
          tracking-[0.12em]
@@ -78,7 +78,7 @@ function HealthItem({
 <span
        className={`
          font-mono
-         text-[9px]
+         text-[11px]
          font-bold
          ${toneClass}
        `}
@@ -166,26 +166,29 @@ export default function DataHealthBar({
 <span
          className="
            font-mono
-           text-[9px]
+           text-[11px]
            font-black
            uppercase
            tracking-[0.16em]
            text-orange-400
          "
 >
-         System Health
+         ESTADO DE DATOS
 </span>
 
 <div className="w-8 h-px bg-orange-500/30" />
 
+<HealthItem label="4Wall escaneos" value={liveReady ? formatNumber(scanCount) : "EN ESPERA"} tone={liveReady ? "live" : "warning"} />
+<Divider />
+
 <HealthItem
- label="Warnings"
+ label="Alertas"
  value={
    referencesReady
      ? formatNumber(
          warningCount
        )
-     : "WAIT"
+     : "EN ESPERA"
  }
  tone={
    !referencesReady
@@ -205,7 +208,7 @@ export default function DataHealthBar({
              ? formatNumber(
                  sources.qadPartCount
                )
-             : "WAIT"
+             : "EN ESPERA"
          }
          tone={
            referencesReady
@@ -217,13 +220,13 @@ export default function DataHealthBar({
 <Divider />
 
 <HealthItem
-         label="Cost"
+         label="Cost Part"
          value={
            referencesReady
              ? formatNumber(
                  sources.costPartCount
                )
-             : "WAIT"
+             : "EN ESPERA"
          }
          tone={
            referencesReady
@@ -241,7 +244,7 @@ export default function DataHealthBar({
              ? formatNumber(
                  sources.bomRelationCount
                )
-             : "WAIT"
+             : "EN ESPERA"
          }
          tone={
            referencesReady
@@ -252,11 +255,11 @@ export default function DataHealthBar({
 
 <Divider />
 <HealthItem
-         label="BOM Parents Scanned"
+         label="Padres BOM escaneados"
          value={
            referencesReady && liveReady
              ? `${formatNumber(diagnostics?.phantom?.scannedParentsWithBom)} / ${formatNumber(sources.bomParentCount)}`
-             : "WAIT"
+             : "EN ESPERA"
          }
          tone={
            referencesReady && liveReady && diagnostics?.phantom?.scannedParentsWithBom > 0
@@ -267,11 +270,11 @@ export default function DataHealthBar({
 
 <Divider />
 <HealthItem
-         label="BOM Review"
+         label="Revisar BOM"
          value={
            referencesReady && liveReady
              ? formatNumber(diagnostics?.phantom?.bomReviewCount)
-             : "WAIT"
+             : "EN ESPERA"
          }
          tone="warning"
        />
@@ -285,7 +288,7 @@ export default function DataHealthBar({
              ? formatNumber(
                  sources.ispbbPartCount
                )
-             : "WAIT"
+             : "EN ESPERA"
          }
          tone={
            referencesReady
@@ -303,7 +306,7 @@ export default function DataHealthBar({
              ? formatNumber(
                  sources.ispbbPhantomCount
                )
-             : "WAIT"
+             : "EN ESPERA"
          }
          tone={
            referencesReady
@@ -316,7 +319,7 @@ export default function DataHealthBar({
 <>
 <Divider />
 <HealthItem
-             label="Fetched"
+             label="Consultado"
              value={
                new Intl.DateTimeFormat(
                  "es-MX",

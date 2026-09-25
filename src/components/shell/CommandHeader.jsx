@@ -1,7 +1,7 @@
 // src/components/shell/CommandHeader.jsx
 import React from "react";
 import {
- MenuChaseRail,
+ ReconciliationChase,
 } from "../visual/PacmanGlyphs";
 
 function formatTime(date) {
@@ -51,6 +51,7 @@ function SourceState({
          h-2
          rounded-full
          flex-shrink-0
+         ${live ? "vi-live-dot" : ""}
          ${
            live
              ? "bg-emerald-400"
@@ -81,7 +82,7 @@ function SourceState({
 >
 <span
            className={`
-             text-[9px]
+             text-[11px]
              font-bold
              ${
                live
@@ -96,7 +97,7 @@ function SourceState({
 </span>
 <span
            className="
-             text-[9px]
+             text-[11px]
              text-slate-400
            "
 >
@@ -202,18 +203,18 @@ export default function CommandHeader({
                    text-slate-300
                  "
 >
-                 INVENTORY CONTROL
+                 CONTROL DE INVENTARIO
 </span>
 </div>
 <p
                className="
                  mt-1
-                 text-[9px]
+                 text-[11px]
                  tracking-[0.08em]
                  text-slate-400
                "
 >
-               FINANCIAL RECONCILIATION
+               CONCILIACIÓN FINANCIERA
 </p>
 </div>
 </div>
@@ -222,7 +223,7 @@ export default function CommandHeader({
 <div
            className="
              hidden
-             lg:flex
+             xl:flex
              items-center
              justify-center
              gap-4
@@ -235,11 +236,11 @@ export default function CommandHeader({
              state={
                live
                  ? "LIVE"
-                 : "WAIT"
+                 : "EN ESPERA"
              }
              detail={`${scanCount.toLocaleString(
                "en-US"
-             )} scans`}
+             )} escaneos`}
              live={live}
            />
 
@@ -249,37 +250,27 @@ export default function CommandHeader({
                xl:w-[140px]
              "
 >
-<MenuChaseRail />
+<ReconciliationChase />
 </div>
 
 <SourceState
              label="QAD"
              state={
                referencesReady
-                 ? "FROZEN"
-                 : "WAIT"
+                 ? "CONGELADO"
+                 : "EN ESPERA"
              }
-             detail="Site 179A"
+             detail="Planta 179A"
              ready={
                referencesReady
              }
            />
 
-<div
-             className="
-               hidden
-               xl:block
-               w-[110px]
-             "
->
-<MenuChaseRail />
-</div>
-
 <SourceState
-             label="REFERENCE"
+             label="REFERENCIAS"
              state={
                referencesReady
-                 ? "READY"
+                 ? "LISTO"
                  : `${loaded}/${total}`
              }
              detail="BOM · COST · ISPBB"
@@ -308,11 +299,11 @@ export default function CommandHeader({
 >
 <p
                className="
-                 text-[9px]
+                 text-[11px]
                  text-slate-400
                "
 >
-               LAST FETCH
+               ÚLTIMA CONSULTA
 </p>
 <p
                className="
@@ -343,7 +334,7 @@ export default function CommandHeader({
                }
              `}
 >
-             SOURCES
+             FUENTES
 <span className="text-slate-400">
                {loaded}/{total}
 </span>
@@ -374,8 +365,8 @@ export default function CommandHeader({
              "
 >
              {loading
-               ? "SYNC..."
-               : "SYNC"}
+               ? "ACTUALIZANDO..."
+               : "ACTUALIZAR"}
 </button>
 </div>
 </div>

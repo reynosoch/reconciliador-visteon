@@ -2,167 +2,95 @@
 import React from "react";
 const HELP = {
  overview: {
-   eyebrow: "SYSTEM GUIDE",
-   title: "Cómo funciona el reconciliador",
-   description:
-     "El dashboard combina un snapshot físico LIVE de 4Wall con fuentes congeladas de QAD para calcular exposición financiera durante el inventario.",
-   source: "4Wall + QAD 3.2 + ISPBB + BOM Export + Cost Part",
-   formula: "RAW → NORMALIZED → RECONCILED → USD",
-   notes: [
-     "4Wall cambia durante el día y llega desde Supabase.",
-     "QAD, ISPBB, BOM y Cost Part se cargan como referencias congeladas.",
-     "Las fórmulas viven en /domain. React solamente presenta resultados.",
-   ],
+  eyebrow: "GUÍA DEL SISTEMA", title: "Cómo leer el corte de inventario",
+  description: "4Wall muestra lo contado en planta. QAD muestra lo esperado. El sistema cruza ambas fuentes y ordena las diferencias por impacto en USD para decidir qué auditar durante el día.",
+  source: "Escaneos 4Wall + diccionario de áreas + QAD 3.2 + ISPBB + BOM + Cost Part.",
+  formula: "Físico − QAD = diferencia de piezas.\nDiferencia de piezas × costo = impacto en USD.",
+  notes: ["Los escaneos de 4Wall se actualizan durante el día; las demás fuentes se cargan como archivos de referencia.", "Un material pendiente de contar puede aparecer como pérdida preliminar. Revisa la advertencia antes de interpretar el total.", "Selecciona un Part Number para ver localidades, costo y relaciones BOM disponibles."],
  },
  net: {
-   eyebrow: "FINANCIAL KPI",
-   title: "NET Plant",
-   description:
-     "Variación financiera final entre lo encontrado físicamente y lo registrado en QAD.",
-   source:
-     "Physical: 4Wall + Phantom/BOM adjustments. System: QAD 3.2. Cost: Cost Part Browse.",
-   formula: "NET Pieces = Physical Total - QAD Total\nNET USD = NET Pieces × Cost Total",
-   notes: [
-     "El signo se conserva.",
-     "Negativo = pérdida.",
-     "Positivo = ganancia.",
-     "No se usa Math.abs para presentar NET.",
-     "El corte intradía incluye partes QAD aún sin escaneo físico como pérdida provisional; Finanzas debe definir cuándo se consideran faltantes.",
-     "El alcance financiero definitivo de localidades sigue pendiente de validación.",
-   ],
+  eyebrow: "INDICADOR FINANCIERO", title: "NET de planta",
+  description: "Es el balance firmado entre lo contado y lo esperado, sumado para todos los Part Numbers y localidades incluidas en este corte. Un valor negativo señala pérdida; uno positivo, ganancia.",
+  source: "4Wall y su diccionario de áreas para el físico; QAD 3.2 para lo esperado; Cost Part para valorar la diferencia.",
+  formula: "NET piezas = físico total − QAD total.\nNET USD = NET piezas × Cost Total.",
+  notes: ["El signo de cada diferencia se conserva.", "Las partes QAD todavía sin escaneo se incluyen como pérdidas preliminares. Finanzas debe confirmar cuándo se consideran faltantes.", "El alcance definitivo de localidades sigue pendiente de validación."],
  },
  grossLoss: {
-   eyebrow: "FINANCIAL KPI",
-   title: "Gross Loss",
-   description:
-     "Suma de todas las pérdidas antes de permitir que las ganancias las compensen.",
-   source: "Resultado por Part Number del motor de conciliación.",
-   formula: "Σ NET USD cuando NET USD < 0",
-   notes: [
-     "Sirve para no esconder faltantes detrás de sobrantes.",
-     "Forma parte del NET final.",
-   ],
+  eyebrow: "INDICADOR FINANCIERO", title: "Pérdida bruta",
+  description: "Se suman todas las diferencias negativas de cada Part Number antes de compensarlas con ganancias.",
+  source: "NET de cada Part Number, calculado con 4Wall, QAD y Cost Part.",
+  formula: "Pérdida bruta = suma de los NET USD negativos.",
+  notes: ["Ayuda a ver los faltantes aunque existan sobrantes en otras partes.", "Incluye partes QAD todavía no escaneadas; su interpretación intradía es preliminar."],
  },
  grossGain: {
-   eyebrow: "FINANCIAL KPI",
-   title: "Gross Gain",
-   description:
-     "Suma de todas las ganancias antes de compensarlas contra pérdidas.",
-   source: "Resultado por Part Number del motor de conciliación.",
-   formula: "Σ NET USD cuando NET USD > 0",
-   notes: [
-     "Incluye las ganancias clasificadas como obsoletas.",
-     "Obsolete + también se muestra por separado.",
-   ],
+  eyebrow: "INDICADOR FINANCIERO", title: "Ganancia bruta",
+  description: "Se suman todas las diferencias positivas de cada Part Number antes de compensarlas con pérdidas.",
+  source: "NET de cada Part Number, calculado con 4Wall, QAD y Cost Part.",
+  formula: "Ganancia bruta = suma de los NET USD positivos.",
+  notes: ["Incluye la ganancia de material OBSOLETE cuando corresponde.", "Si QAD esperaba cero, el material se señala aparte como inesperado."],
  },
  obsolete: {
-   eyebrow: "FINANCIAL KPI",
-   title: "Obsolete +",
-   description:
-     "Ganancia proveniente de material cuyo Status en Cost Part es OBSOLETE.",
-   source: "Cost Part Browse → Status + Cost Total.",
-   formula:
-     "Si Status = OBSOLETE y Physical > QAD:\nObsolete Gain = (Physical - QAD) × Cost Total",
-   notes: [
-     "No se detecta obsoleto por prefijos.",
-     "La ganancia continúa formando parte del NET.",
-   ],
+  eyebrow: "INDICADOR FINANCIERO", title: "Obsoleto +",
+  description: "Muestra la ganancia de material marcado OBSOLETE en Cost Part cuando el físico supera a QAD.",
+  source: "Status y Cost Total de Cost Part; cantidades de 4Wall y QAD.",
+  formula: "Si Status = OBSOLETE y físico > QAD:\nGanancia obsoleta = (físico − QAD) × Cost Total.",
+  notes: ["Esta ganancia sigue incluida en el NET general.", "No se detecta material obsoleto por el nombre o prefijo del Part Number."],
  },
  swing: {
-   eyebrow: "LOCATION KPI",
-   title: "SWING",
-   description:
-     "Material existente pero localizado físicamente en una localidad diferente a QAD.",
-   source:
-     "4Wall AreaName → 4Wall Area Dictionary → QAD Location, comparado contra QAD 3.2.",
-   formula:
-     "SWING Pieces = Σ |Physical(location) - QAD(location)|\nSWING USD = SWING Pieces × Cost Total",
-   notes: [
-     "No se divide entre dos.",
-     "Se preservan localidades exactas.",
-     "El scope/grupo financiero definitivo de localidades todavía debe validarse con Finanzas.",
-   ],
+  eyebrow: "INDICADOR DE LOCALIDAD", title: "SWING",
+  description: "Señala diferencias de ubicación: 4Wall reporta material en una localidad distinta de la registrada en QAD. También puede coexistir con una pérdida o ganancia total.",
+  source: "4Wall, diccionario oficial de áreas y localidades exactas de QAD 3.2.",
+  formula: "Se compara el físico y QAD localidad por localidad.\nSWING piezas = suma de las diferencias absolutas por localidad.\nSWING USD = SWING piezas × Cost Total.",
+  notes: ["No se divide entre dos; Finanzas quiere ver el movimiento por localidad.", "SWING no demuestra por sí solo que falte material físicamente.", "Finanzas aún debe validar qué localidades forman el alcance financiero definitivo."],
  },
  phantom: {
-   eyebrow: "BOM / PHANTOM",
-   title: "Phantom Radar",
-   description:
-     "Identifica componentes Phantom y ajustes derivados de estructuras BOM.",
-   source:
-     "ISPBB 50.1.4.22 → Phantom. BOM Export 50.13.8.16 → Parent / Component / Usage.",
-   formula: "Contribution = scanned parent quantity × Usage",
-   notes: [
-     "ISPBB es la fuente autoritativa para Phantom.",
-     "No se utilizan prefijos P7, 0000 ni otras reglas por Part Number.",
-     "Se utiliza Usage, no Grossed up Usage.",
-     "La explosión multinivel permanece deshabilitada hasta validación funcional.",
-     "Solo una relación directa de nivel 1 con padre escaneado puede aportar físico derivado.",
-     "Aparecer como componente en el BOM indica dónde investigar; por sí solo no acredita físico ni reduce NET.",
-   ],
+  eyebrow: "BOM / PHANTOM", title: "Phantom",
+  description: "ISPBB define si un componente es Phantom. Cuando se escanea un padre con una relación directa válida, el motor puede sumar al componente la cantidad derivada del BOM.",
+  source: "Columna Phantom de ISPBB y relaciones Parent Item → Component del export BOM.",
+  formula: "Contribución del componente = cantidad escaneada del padre × Usage.",
+  notes: ["Solo ISPBB con Phantom = YES confirma esta clasificación; no se usan prefijos.", "Se usa Usage, no Grossed up Usage.", "La explosión de varios niveles sigue pendiente de un caso real validado.", "La cantidad directa 4Wall y la derivada de BOM se mantienen separadas."],
+ },
+ bomReview: {
+  eyebrow: "PISTA DE AUDITORÍA", title: "Revisar BOM",
+  description: "Destaca Part Numbers con cantidad QAD positiva, sin físico reconocido aún, que aparecen como componentes en el BOM recibido. Pueden requerir revisar un subensamble.",
+  source: "QAD 3.2, físico 4Wall y referencias Parent Item → Component del BOM cargado.",
+  formula: "Filtro de revisión: QAD > 0, físico = 0 y componente presente en BOM.\nNo se suma cantidad física por esta coincidencia.",
+  notes: ["Una referencia BOM es una pista, no prueba de que el padre fue contado.", "Revisa padre, nivel, Usage y sitio en el detalle; confirma el material con el equipo de inventario.", "La exposición sigue en el NET preliminar hasta contar con un ajuste Phantom válido o una regla confirmada por Finanzas."],
  },
  physical: {
-   eyebrow: "DATA COLUMN",
-   title: "Physical",
-   description:
-     "Cantidad física consolidada que el motor reconoce para el Part Number.",
-   source:
-     "4Wall LIVE desde Supabase + Area Dictionary + contribuciones Phantom/BOM cuando correspondan.",
-   formula: "Physical Total = Σ Physical by exact QAD location",
-   notes: [
-     "AreaName desconocida se clasifica UNMAPPED.",
-     "Nunca se adivina una localidad.",
-   ],
+  eyebrow: "DATO", title: "Físico",
+  description: "Cantidad que el motor reconoce para este Part Number a partir de escaneos directos y, cuando aplica, contribuciones Phantom de BOM.",
+  source: "4Wall y diccionario oficial de áreas; ISPBB y BOM para la contribución derivada.",
+  formula: "Físico total = escaneos directos + contribución BOM validada.",
+  notes: ["Las localidades se conservan exactamente, con WHSE normalizado a ZWHSE.", "Una AreaName que no existe en el diccionario queda como UNMAPPED; no se adivina su localidad."],
  },
  qad: {
-   eyebrow: "DATA COLUMN",
-   title: "QAD",
-   description:
-     "Cantidad registrada en el congelado de QAD 3.2.",
-   source: "QAD Inventory Detail by Item Browse.",
-   formula: "QAD Total = Σ Quantity On Hand por Location",
-   notes: [
-     "Qty On Hand - Inv Mstr NO se suma.",
-     "Actualmente el parser usa Site 179A y tipos PP, MP, FP.",
-     "Las localidades exactas se conservan.",
-   ],
+  eyebrow: "DATO", title: "QAD",
+  description: "Cantidad que el congelado QAD 3.2 registra para un Part Number en sus localidades.",
+  source: "QAD Inventory Detail by Item Browse, Site 179A y tipos PP, MP, FP del archivo cargado.",
+  formula: "QAD total = suma de Quantity On Hand por localidad.",
+  notes: ["Qty On Hand - Inv Mstr es un dato maestro repetido; no se suma.", "Se conservan las localidades exactas para revisar diferencias de ubicación."],
  },
  cost: {
-   eyebrow: "DATA COLUMN",
-   title: "Unit Cost",
-   description:
-     "Costo utilizado para convertir diferencias de piezas a impacto financiero.",
-   source: "Cost Part Browse → Cost Total.",
-   formula: "USD Impact = Pieces × Cost Total",
-   notes: [
-     "El costo de 4Wall se conserva únicamente para validación.",
-     "Cost Part es la fuente financiera usada por el motor actual.",
-   ],
+  eyebrow: "DATO", title: "Costo unitario",
+  description: "Es el costo con el que cada diferencia de piezas se convierte en impacto financiero.",
+  source: "Campo Cost Total de Cost Part Browse.",
+  formula: "Impacto USD = diferencia de piezas × Cost Total.",
+  notes: ["El costo de 4Wall se guarda como referencia, pero no se usa para valorar el NET.", "Finanzas aún debe confirmar que Cost Total es el costo oficial expresado en USD.", "Si falta costo, la alerta $? lo señala; un USD cero no prueba ausencia de impacto."],
  },
  status: {
-   eyebrow: "CLASSIFICATION",
-   title: "Part Status",
-   description:
-     "Clasificación principal calculada para cada Part Number.",
-   source: "Motor de reconciliación.",
-   formula:
-     "LOSS / GAIN / OBSOLETE_GAIN / UNEXPECTED / MISSING_PHYSICAL / SWING / BALANCED",
-   notes: [
-     "QAD=0 con físico se clasifica UNEXPECTED.",
-     "Una pieza puede tener SWING aunque su estado principal sea LOSS o GAIN.",
-   ],
+  eyebrow: "CLASIFICACIÓN", title: "Estado del Part Number",
+  description: "Resume el tipo principal de diferencia para orientar la auditoría. Una misma parte también puede tener SWING aunque su estado principal sea pérdida o ganancia.",
+  source: "Clasificación del motor a partir de 4Wall, QAD y Cost Part.",
+  formula: "PÉRDIDA, GANANCIA, OBSOLETO +, INESPERADO, SIN FÍSICO, SWING o BALANCEADO.",
+  notes: ["QAD = 0 con físico positivo se clasifica como material inesperado.", "SIN FÍSICO durante el día puede significar material pendiente de auditar."],
  },
  flags: {
-   eyebrow: "DATA HEALTH",
-   title: "Flags",
-   description:
-     "Alertas de calidad de datos que pueden afectar la interpretación financiera.",
-   source: "Diagnósticos del motor.",
-   formula: "QAD0 / MAP? / $? / Phantom mismatch",
-   notes: [
-     "QAD0 = QAD esperaba cero y apareció físico.",
-     "MAP? = AreaName sin mapeo oficial.",
-     "$? = falta costo.",
-   ],
+  eyebrow: "CALIDAD DE DATOS", title: "Alertas",
+  description: "Marcas que explican por qué una cifra necesita revisión adicional antes de tomar decisiones.",
+  source: "Diagnósticos del motor y archivos cargados.",
+  formula: "QAD0 = material inesperado. BOM? = revisar relación de subensamble. MAP? = área sin localidad oficial. $? = costo faltante.",
+  notes: ["BOM? no acredita físico ni modifica NET.", "Abre el Part Number para revisar sus fuentes y localidades exactas."],
  },
 };
 export function HelpButton({
@@ -193,12 +121,12 @@ export function HelpButton({
        inline-flex
        items-center
        justify-center
-       w-4
-       h-4
+       w-7
+       h-7
        rounded-full
        border
        border-slate-700
-       text-[8px]
+       text-[12px]
        font-black
        text-slate-400
        hover:text-orange-300
@@ -224,7 +152,7 @@ export default function HelpDrawer({
    HELP.overview;
  return (
 <div
-     className="fixed inset-0 z-[120] bg-black/55 backdrop-blur-[2px]"
+     className="vi-drawer-backdrop fixed inset-0 z-[120] bg-black/55 backdrop-blur-[2px]"
      onMouseDown={(event) => {
        if (
          event.target ===
@@ -236,6 +164,7 @@ export default function HelpDrawer({
 >
 <aside
        className="
+         vi-drawer-panel
          absolute
          top-0
          right-0
@@ -276,17 +205,18 @@ export default function HelpDrawer({
              onClick={onClose}
              className="vi-button"
 >
-             CLOSE
+             CERRAR
 </button>
 </div>
 </div>
 <div className="p-6">
 <p className="text-sm leading-relaxed text-slate-300">
+           <strong className="help-label block mb-2">QUÉ SIGNIFICA</strong>
            {info.description}
 </p>
 <section className="mt-7">
 <p className="help-label">
-             SOURCE
+             FUENTE
 </p>
 <div className="help-block">
              {info.source}
@@ -294,7 +224,7 @@ export default function HelpDrawer({
 </section>
 <section className="mt-5">
 <p className="help-label">
-             FORMULA / RULE
+             CÓMO SE CALCULA
 </p>
 <pre className="help-formula">
              {info.formula}
@@ -302,7 +232,7 @@ export default function HelpDrawer({
 </section>
 <section className="mt-5">
 <p className="help-label">
-             NOTES
+             QUÉ DEBO REVISAR
 </p>
 <div className="space-y-3 mt-3">
              {info.notes.map(
@@ -314,7 +244,8 @@ export default function HelpDrawer({
 <span className="text-yellow-400 mt-[2px]">
                      •
 </span>
-<p className="text-xs leading-relaxed text-slate-400">
+<p className="text-sm leading-relaxed text-slate-300">
+           <strong className="help-label block mb-2">QUÉ SIGNIFICA</strong>
                      {note}
 </p>
 </div>

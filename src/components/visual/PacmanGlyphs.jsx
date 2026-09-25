@@ -63,43 +63,13 @@ export function PelletRail({
  );
 }
 
-/**
-* Referencia Pac-Man low-key.
-*
-* Los Phantoms avanzan primero y el punto
-* amarillo va detrás de ellos lentamente.
-*/
-export function MenuChaseRail({
- className = "",
-}) {
+// Una ruta decorativa de conciliación; no representa cantidades ni estados.
+export function ReconciliationChase({ className = "" }) {
  return (
-<div
-     className={`
-       menu-chase
-       ${className}
-     `}
-     aria-hidden="true"
->
-<div className="menu-chase-pellets" />
-<div className="menu-chase-ghosts">
-<Ghost
-         size={10}
-         tone="cyan"
-       />
-<Ghost
-         size={10}
-         tone="violet"
-       />
-<Ghost
-         size={10}
-         tone="rose"
-       />
-</div>
-<div className="menu-chase-player">
-<PacDot
-         size={7}
-       />
-</div>
-</div>
+  <div className={`vi-chase-route ${className}`} aria-hidden="true">
+   <span className="vi-chase-pellets" />
+   <span className="vi-chase-ghosts"><Ghost size={15} tone="violet" /><Ghost size={13} tone="violet" /></span>
+   <span className="vi-chase-hunter"><span className="vi-pac-hunter" /></span>
+  </div>
  );
 }

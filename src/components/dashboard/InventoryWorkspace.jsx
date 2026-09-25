@@ -13,19 +13,19 @@ import {
 const FILTERS = [
  {
    id: "ALL",
-   label: "All",
+   label: "TODOS",
  },
  {
    id: "LOSS",
-   label: "Loss",
+   label: "PÉRDIDA",
  },
  {
    id: "GAIN",
-   label: "Gain",
+   label: "GANANCIA",
  },
  {
    id: "HAS_SWING",
-   label: "Has Swing",
+   label: "CON SWING",
  },
  {
    id: "UNEXPECTED",
@@ -33,17 +33,23 @@ const FILTERS = [
  },
  {
    id: "OBSOLETE_GAIN",
-   label: "Obsolete +",
+   label: "OBSOLETO +",
  },
  {
    id: "PHANTOM",
-   label: "Phantom",
+   label: "PHANTOM",
  },
  {
    id: "BOM_REVIEW",
-   label: "BOM Review",
+   label: "REVISAR BOM",
  },
 ];
+
+const STATUS_LABELS = {
+ LOSS: "PÉRDIDA", GAIN: "GANANCIA", OBSOLETE_GAIN: "OBSOLETO +",
+ UNEXPECTED: "INESPERADO", MISSING_PHYSICAL: "SIN FÍSICO",
+ SWING: "SWING", BALANCED: "BALANCEADO",
+};
 
 function money(value) {
  return new Intl.NumberFormat(
@@ -151,7 +157,7 @@ function Radar({
 <span
              className="
                font-mono
-               text-[8px]
+               text-[11px]
                font-black
                tracking-[0.12em]
                text-violet-400
@@ -176,11 +182,11 @@ function Radar({
              py-8
              text-center
              font-mono
-             text-[8px]
+             text-[11px]
              text-slate-700
            "
 >
-           NO ACTIVE PHANTOM PARTS
+           SIN PART NUMBERS PHANTOM
 </p>
        ) : (
 <div className="space-y-1">
@@ -212,7 +218,7 @@ function Radar({
 <span
                    className="
                      font-mono
-                     text-[8px]
+                     text-[11px]
                      text-slate-400
                      truncate
                    "
@@ -224,7 +230,7 @@ function Radar({
 <span
                    className={`
                      vi-money
-                     text-[8px]
+                     text-[11px]
                      ${moneyTone(
                        item
                          ?.financial
@@ -391,16 +397,16 @@ export default function InventoryWorkspace({
 >
 <div>
 <p className="vi-eyebrow">
-             Inventory Workspace
+             ÁREA DE CONCILIACIÓN
 </p>
 <p
              className="
                mt-0.5
-               text-[9px]
+               text-[11px]
                text-slate-600
              "
 >
-             Click any Part Number to inspect locations and calculation trace.
+             Selecciona un Part Number para revisar localidades y origen de la diferencia.
 </p>
 </div>
 
@@ -416,7 +422,7 @@ export default function InventoryWorkspace({
              vi-input
              lg:max-w-[310px]
            "
-           placeholder="SEARCH PART NUMBER..."
+           placeholder="BUSCAR PART NUMBER..."
          />
 </div>
 
@@ -456,12 +462,14 @@ option.id
            )
          )}
 
+<HelpButton topic="bomReview" onHelp={onHelp} className="flex-shrink-0" />
+
 <span
            className="
              ml-auto
              self-center
              font-mono
-             text-[7px]
+             text-[11px]
              text-slate-700
              whitespace-nowrap
            "
@@ -469,7 +477,7 @@ option.id
            {filtered.length.toLocaleString(
              "en-US"
            )}{" "}
-           PARTS
+           PART NUMBERS
 </span>
 </div>
 </div>
@@ -493,16 +501,16 @@ option.id
                text-slate-300
              "
 >
-             Reference package required
+             SE REQUIEREN ARCHIVOS DE REFERENCIA
 </p>
 <p
              className="
                mt-2
-               text-[9px]
+               text-[11px]
                text-slate-600
              "
 >
-             Open SOURCES and select the five files in a single upload.
+             Abre FUENTES y carga los cinco archivos juntos.
 </p>
 </div>
 </div>
@@ -528,7 +536,7 @@ option.id
                      topic="status"
                      onHelp={onHelp}
 >
-                     Part / Status
+                     Part Number / Estado
 </HeaderHelp>
 </th>
 <th className="text-right">
@@ -555,7 +563,7 @@ option.id
                      onHelp={onHelp}
                      align="right"
 >
-                     PHYSICAL
+                     FÍSICO
 </HeaderHelp>
 </th>
 <th className="text-right">
@@ -573,7 +581,7 @@ option.id
                      onHelp={onHelp}
                      align="right"
 >
-                     COST
+                     COSTO
 </HeaderHelp>
 </th>
 <th className="text-center">
@@ -582,7 +590,7 @@ option.id
                      onHelp={onHelp}
                      align="center"
 >
-                     FLAG
+                     ALERTA
 </HeaderHelp>
 </th>
 </tr>
@@ -616,7 +624,7 @@ option.id
                            item
                          )
                        }
-                       className="cursor-pointer"
+                       className="cursor-pointer vi-result-row" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelectPart?.(item); } }} aria-label={`Investigar ${item.partNumber}`}
 >
 <td>
 <div
@@ -636,7 +644,7 @@ option.id
 <p
                                className="
                                  vi-pn
-                                 text-[9px]
+                                 text-[11px]
                                "
 >
                                {
@@ -646,13 +654,12 @@ option.id
 <span
                                className="
                                  font-mono
-                                 text-[6px]
+                                 text-[11px]
                                  text-slate-700
                                "
 >
                                {
-                                 flags.financialStatus ||
-                                 "UNKNOWN"
+                                 STATUS_LABELS[flags.financialStatus] || "DESCONOCIDO"
                                }
 </span>
 </div>
@@ -680,7 +687,7 @@ option.id
                            text-right
                            vi-money
                            vi-money-swing
-                           text-[9px]
+                           text-[11px]
                          "
 >
                          {money(
@@ -692,7 +699,7 @@ option.id
                          className="
                            text-right
                            font-mono
-                           text-[8px]
+                           text-[11px]
                          "
 >
                          {number(
@@ -704,7 +711,7 @@ option.id
                          className="
                            text-right
                            font-mono
-                           text-[8px]
+                           text-[11px]
                          "
 >
                          {number(
@@ -716,7 +723,7 @@ option.id
                          className="
                            text-right
                            font-mono
-                           text-[8px]
+                           text-[11px]
                            text-slate-500
                          "
 >
@@ -731,7 +738,7 @@ option.id
                          className="
                            text-center
                            font-mono
-                           text-[7px]
+                           text-[11px]
                            text-slate-500
                          "
 >
