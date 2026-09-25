@@ -167,6 +167,15 @@ function BomMaze({
  const physical =
    item?.physical || {};
 
+ if (!physical.scanCount && !physical.bomContribution) {
+   return (
+     <div className="vi-maze-box p-5 text-sm text-amber-200">
+       No 4Wall scan or validated BOM contribution for this part yet.
+       QAD quantity is still included in the preliminary NET.
+     </div>
+   );
+ }
+
  return (
 <div
      className="
@@ -199,7 +208,7 @@ function BomMaze({
 </p>
 </div>
 
-       {master.phantom ? (
+       {master.isPhantom ? (
 <Ghost
            size={28}
            tone="violet"
@@ -239,7 +248,7 @@ function BomMaze({
              text-white
            "
 >
-           4WALL SCAN
+           {physical.scanCount ? "4WALL DIRECT SCAN" : "4WALL PARENT → BOM"}
 </p>
 </div>
 
@@ -283,13 +292,13 @@ function BomMaze({
              text-slate-300
            "
 >
-           {master.phantom
-             ? "ISPBB â†’ PHANTOM YES"
-             : "ISPBB â†’ REGULAR"}
+           {master.phantomKnown
+             ? master.isPhantom ? "ISPBB: PHANTOM YES" : "ISPBB: PHANTOM NO"
+             : "NO ISPBB DEFINITION"}
 </p>
 </div>
 
-       {master.phantom && (
+       {physical.bomContribution > 0 && (
 <div className="vi-trace-node">
 <div
              className="
@@ -416,7 +425,7 @@ export default function PartDetailDrawer({
                gap-3
              "
 >
-             {master.phantom ? (
+             {master.isPhantom ? (
 <Ghost
                  size={28}
                  tone="violet"
@@ -542,6 +551,26 @@ export default function PartDetailDrawer({
            />
 </div>
 
+{item.trace?.bomReferences?.length > 0 && (
+<section className="vi-maze-box mt-5 p-5">
+  <p className="vi-eyebrow">BOM References</p>
+  <p className="mt-2 text-xs text-slate-300">
+    This part appears as a component in the supplied BOM export. A reference
+    does not prove it was counted in 4Wall or change the financial NET.
+  </p>
+  <div className="mt-3 max-h-48 space-y-2 overflow-y-auto font-mono text-xs">
+    {item.trace.bomReferences.slice(0, 12).map((reference, index) => (
+      <div key={`${reference.parentPart}-${reference.rawLevel}-${index}`} className="border-b border-slate-800 pb-2 text-slate-200">
+        Parent {reference.parentPart} · Level {reference.rawLevel || "?"} · Usage {number(reference.usage)} · Site {reference.site || "?"}
+      </div>
+    ))}
+    {item.trace.bomReferences.length > 12 && (
+      <p className="text-slate-400">{item.trace.bomReferences.length - 12} more BOM rows in the source.</p>
+    )}
+  </div>
+</section>
+)}
+
 <div
            className="
              mt-5
@@ -558,32 +587,32 @@ export default function PartDetailDrawer({
                  ? money(
                      master.unitCost
                    )
-                 : "â€”"
+                 : "—"
              }
            />
 <Metric
              label="COST STATUS"
              value={
                master.costStatus ||
-               "â€”"
+               "—"
              }
            />
 <Metric
              label="PLANNING"
              value={
                master.planningStatus ||
-               "â€”"
+               "—"
              }
            />
 <Metric
              label="PHANTOM"
              value={
-               master.phantom
-                 ? "YES"
-                 : "NO"
+               master.phantomKnown
+                 ? master.isPhantom ? "YES" : "NO"
+                 : "UNKNOWN"
              }
              className={
-               master.phantom
+               master.isPhantom
                  ? "vi-money-phantom"
                  : ""
              }
