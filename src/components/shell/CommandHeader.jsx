@@ -312,7 +312,7 @@ export default function CommandHeader({
                  text-slate-400
                "
 >
-               LAST CUT
+               LAST FETCH
 </p>
 <p
                className="
