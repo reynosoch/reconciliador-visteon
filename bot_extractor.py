@@ -3,27 +3,27 @@ import os
 import warnings
 import pandas as pd
 import requests
-from urllib3.exceptions import InsecureRequestWarning
 from playwright.sync_api import sync_playwright
-warnings.simplefilter('ignore', InsecureRequestWarning)
-# ==========================================
-# 1. CONFIGURACIÓN
-# ==========================================
-USER = os.getenv("WALL_USER", "jreynos1")
-PASS = os.getenv("WALL_PASS", "V1st3on2026")
+# Only the bot host may hold write credentials. Never ship these in Vite.
+def required_env(name):
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+USER = required_env("WALL_USER")
+PASS = required_env("WALL_PASS")
 LOGIN_URL = "http://cuupd003.chihuahua.visteon.com/4WallAdmin/Pages/Login.aspx"
 OVERALL_URL = "http://cuupd003.chihuahua.visteon.com/4WallAdmin/Inventory/Overall.aspx"
-# Llamada directa al RPC de Supabase
-URL_RPC = "https://uukhwkywmnarcfruerpp.supabase.co/rest/v1/rpc/reemplazar_escaneos"
-API_KEY = os.getenv(
-   "SUPABASE_SERVICE_KEY",
-   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1a2h3a3l3bW5hcmNmcnVlcnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODI4OTgsImV4cCI6MjEwNTY1ODg5OH0.ezApb_e8_Q-_yvxmZL4b3skmmMXoJaya4oupSzPz3Vc"
-)
+SUPABASE_URL = required_env("SUPABASE_URL").rstrip("/")
+SUPABASE_SERVICE_KEY = required_env("SUPABASE_SERVICE_KEY")
+URL_RPC = f"{SUPABASE_URL}/rest/v1/rpc/reemplazar_escaneos"
 HEADERS_SUPABASE = {
-   "apikey": API_KEY,
-   "Authorization": f"Bearer {API_KEY}",
-   "Content-Type": "application/json"
+    "apikey": SUPABASE_SERVICE_KEY,
+    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+    "Content-Type": "application/json",
 }
+
 def procesar_y_subir(ruta_excel):
    print("[*] Leyendo archivo descargado de 4Wall...")
    try:
@@ -54,7 +54,6 @@ def procesar_y_subir(ruta_excel):
            URL_RPC,
            json={"payload": payload},
            headers=HEADERS_SUPABASE,
-           verify=False,
            timeout=60
        )
        if res.status_code in [200, 204]:
@@ -70,7 +69,7 @@ def run_bot():
    print("[*] Iniciando Bot Extractor Visteon (Playwright)...")
    with sync_playwright() as p:
        browser = p.chromium.launch(channel="msedge", headless=False)
-       context = browser.new_context(accept_downloads=True, ignore_https_errors=True)
+       context = browser.new_context(accept_downloads=True)
        page = context.new_page()
        print("[*] Iniciando sesión en 4Wall...")
        page.goto(LOGIN_URL)
