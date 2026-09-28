@@ -24,7 +24,7 @@ const qad={byPart:new Map([
 const rows=reconcileInventory({
  physical,qad,planning:{byPart:new Map()},
  costs:{byPart:new Map([["SWING",{hasValidCost:true,costTotal:1,status:"ACTIVE",isObsolete:false}]])},
- bom:{byComponent:new Map()},phantomAdjustments:{byComponent:new Map()}
+ bom:{byComponent:new Map()},phantomAdjustments:new Map()
 });
 const unvalued=rows.find(x=>x.partNumber==="UNCOSTED");
 const swing=rows.find(x=>x.partNumber==="SWING");
