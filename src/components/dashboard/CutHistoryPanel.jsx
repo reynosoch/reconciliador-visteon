@@ -1,142 +1,18 @@
-import { useMemo, useState } from "react";
-
-const STORAGE_KEY = "visteon.inventory.meetingCuts.v1";
-const MAX_CUTS = 24;
-
-function money(value) {
- return new Intl.NumberFormat("en-US", {
-   style: "currency",
-   currency: "USD",
-   maximumFractionDigits: 0,
- }).format(Number(value) || 0);
-}
-
-function loadCuts() {
- try {
-   const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-   return Array.isArray(parsed) ? parsed : [];
- } catch {
-   return [];
- }
-}
-
-function referenceSignature(sources = {}) {
- return ["areas", "qad", "ispbb", "bom", "cost"]
-   .map((key) => {
-     const source = sources[key] || {};
-     return {
-       type: key,
-       fileName: source.fileName || "",
-       fingerprint: source.fingerprint || "",
-     };
-   });
-}
-
-export default function CutHistoryPanel({
- ready = false,
- summary,
- scanCount = 0,
- lastUpdated,
- rows = [],
- sources = {},
-}) {
- const [cuts, setCuts] = useState(loadCuts);
- const lastCut = cuts[0] || null;
-
- const currentDelta = useMemo(() => {
-   if (!lastCut || !summary) return null;
-   return {
-     netUsd: Number(summary.netUsd || 0) - Number(lastCut.summary?.netUsd || 0),
-     grossLossUsd: Number(summary.grossLossUsd || 0) - Number(lastCut.summary?.grossLossUsd || 0),
-     grossGainUsd: Number(summary.grossGainUsd || 0) - Number(lastCut.summary?.grossGainUsd || 0),
-     swingUsd: Number(summary.swingUsd || 0) - Number(lastCut.summary?.swingUsd || 0),
-     scans: Number(scanCount || 0) - Number(lastCut.scanCount || 0),
-   };
- }, [lastCut, summary, scanCount]);
-
- const saveCut = () => {
-   if (!ready || !summary) return;
-   const cut = {
-     id: Date.now(),
-     savedAt: new Date().toISOString(),
-     fetchedAt: lastUpdated ? new Date(lastUpdated).toISOString() : null,
-     scanCount: Number(scanCount || 0),
-     summary: {
-       netUsd: Number(summary.netUsd || 0),
-       grossLossUsd: Number(summary.grossLossUsd || 0),
-       grossGainUsd: Number(summary.grossGainUsd || 0),
-       swingUsd: Number(summary.swingUsd || 0),
-       qadOnlyCount: Number(summary.qadOnlyCount || 0),
-       qadOnlyExposureUsd: Number(summary.qadOnlyExposureUsd || 0),
-       partsWithPhysicalEvidence: Number(summary.partsWithPhysicalEvidence || 0),
-     },
-     topParts: rows.slice(0, 10).map((item) => ({
-       partNumber: item.partNumber,
-       netUsd: Number(item.financial?.netUsd || 0),
-       status: item.flags?.financialStatus || "",
-     })),
-     references: referenceSignature(sources),
-   };
-   const next = [cut, ...cuts].slice(0, MAX_CUTS);
-   setCuts(next);
-   try {
-     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-   } catch (error) {
-     console.warn("No se pudo guardar el historial local de cortes.", error);
-   }
- };
-
- const clearCuts = () => {
-   setCuts([]);
-   try {
-     localStorage.removeItem(STORAGE_KEY);
-   } catch {
-     // La UI ya quedó limpia aunque el navegador bloquee storage.
-   }
- };
-
- return (
-<section className="vi-panel vi-cut-history">
- <div className="vi-cut-history-head">
-  <div>
-   <p className="vi-eyebrow">JUNTAS DE INVENTARIO</p>
-   <h2>Historial de cortes</h2>
-   <p>Guarda un corte antes de cada junta para comparar qué cambió. Este historial queda solo en este navegador.</p>
-  </div>
-  <div className="vi-cut-history-actions">
-   {cuts.length > 0 && <button type="button" className="vi-button" onClick={clearCuts}>BORRAR HISTORIAL</button>}
-   <button type="button" className="vi-button vi-button-primary" disabled={!ready} onClick={saveCut}>GUARDAR CORTE DE JUNTA</button>
-  </div>
- </div>
-
- {currentDelta && (
-  <div className="vi-cut-delta" role="status">
-   <span>DESDE EL ÚLTIMO CORTE</span>
-   <strong>NET {money(currentDelta.netUsd)}</strong>
-   <strong>PÉRDIDA {money(currentDelta.grossLossUsd)}</strong>
-   <strong>GANANCIA {money(currentDelta.grossGainUsd)}</strong>
-   <strong>SWING {money(currentDelta.swingUsd)}</strong>
-   <strong>{currentDelta.scans >= 0 ? "+" : ""}{currentDelta.scans.toLocaleString("es-MX")} ESCANEOS</strong>
-  </div>
- )}
-
- {cuts.length === 0 ? (
-  <p className="vi-cut-empty">Todavía no hay cortes guardados. El primer corte servirá como base para la siguiente junta.</p>
- ) : (
-  <div className="vi-cut-list">
-   {cuts.slice(0, 6).map((cut, index) => (
-    <div className="vi-cut-row" key={cut.id}>
-     <div>
-      <strong>{new Intl.DateTimeFormat("es-MX", { dateStyle: "short", timeStyle: "short" }).format(new Date(cut.savedAt))}</strong>
-      <span>{cut.scanCount.toLocaleString("es-MX")} escaneos · {cut.summary.qadOnlyCount.toLocaleString("es-MX")} QAD sin físico</span>
-     </div>
-     <span className={cut.summary.netUsd < 0 ? "vi-money-loss" : "vi-money-gain"}>{money(cut.summary.netUsd)}</span>
-     {index === 0 && <em>ÚLTIMO</em>}
-    </div>
-   ))}
-  </div>
- )}
- <p className="vi-cut-local-note">Para una auditoría formal o para compartir cortes entre computadoras, este historial deberá moverse a base de datos. Aquí se usa como apoyo operativo sin cambiar NET ni SWING.</p>
-</section>
- );
+import { useMemo,useState } from "react";
+const STORAGE_KEY="visteon.inventory.meetingCuts.v2",MAX_CUTS=24,RULES_VERSION="2026-09-28-finance-review-v1";
+function money(v){return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(Number(v)||0);}
+function loadCuts(){try{const p=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(p)?p:[];}catch{return [];}}
+function signature(s={}){return ["areas","qad","ispbb","bom","cost"].map(type=>({type,fileName:s[type]?.fileName||"",fingerprint:s[type]?.fingerprint||""}));}
+function campaign(s={}){return [s.qad?.fileName||"",s.areas?.fileName||""].join("|");}
+function comparable(last,sources){if(!last)return {ok:false,reason:"No existe un corte anterior."};if(last.rulesVersion!==RULES_VERSION)return {ok:false,reason:"El corte anterior usa otra versión de reglas."};if(last.campaignKey!==campaign(sources))return {ok:false,reason:"Los archivos base pertenecen a otra campaña/corte."};const now=signature(sources),old=last.references||[];const same=now.every(x=>Boolean(x.fingerprint)&&old.find(y=>y.type===x.type)?.fingerprint===x.fingerprint);return same?{ok:true,reason:""}:{ok:false,reason:"Las huellas de los archivos de referencia cambiaron."};}
+export default function CutHistoryPanel({ready=false,summary,scanCount=0,lastUpdated,rows=[],sources={}}){
+ const [cuts,setCuts]=useState(loadCuts),[storageError,setStorageError]=useState("");const last=cuts[0]||null;const comparison=useMemo(()=>comparable(last,sources),[last,sources]);
+ const delta=useMemo(()=>!comparison.ok||!last||!summary?null:{netUsd:Number(summary.netUsd||0)-Number(last.summary?.netUsd||0),grossLossUsd:Number(summary.grossLossUsd||0)-Number(last.summary?.grossLossUsd||0),grossGainUsd:Number(summary.grossGainUsd||0)-Number(last.summary?.grossGainUsd||0),swingUsd:Number(summary.swingUsd||0)-Number(last.summary?.swingUsd||0),scans:Number(scanCount||0)-Number(last.scanCount||0)},[comparison.ok,last,summary,scanCount]);
+ const save=()=>{if(!ready||!summary)return;const cut={id:Date.now(),savedAt:new Date().toISOString(),fetchedAt:lastUpdated?new Date(lastUpdated).toISOString():null,scanCount:Number(scanCount||0),rulesVersion:RULES_VERSION,campaignKey:campaign(sources),summary:{netUsd:Number(summary.netUsd||0),grossLossUsd:Number(summary.grossLossUsd||0),grossGainUsd:Number(summary.grossGainUsd||0),swingUsd:Number(summary.swingUsd||0),swingPieces:Number(summary.swingPieces||0),qadOnlyCount:Number(summary.qadOnlyCount||0),unvaluedPartCount:Number(summary.unvaluedPartCount||0)},topParts:rows.slice(0,10).map(x=>({partNumber:x.partNumber,netUsd:Number(x.financial?.netUsd||0),status:x.flags?.financialStatus||""})),references:signature(sources)};const next=[cut,...cuts].slice(0,MAX_CUTS);try{localStorage.setItem(STORAGE_KEY,JSON.stringify(next));setCuts(next);setStorageError("");}catch(e){setStorageError("No se pudo guardar el corte en este navegador. No uses este historial como evidencia hasta resolverlo.");console.warn(e);}};
+ const clear=()=>{try{localStorage.removeItem(STORAGE_KEY);setCuts([]);setStorageError("");}catch{setStorageError("No se pudo borrar el historial local.");}};
+ return <section className="vi-panel vi-cut-history"><div className="vi-cut-history-head"><div><p className="vi-eyebrow">JUNTAS DE INVENTARIO</p><h2>Historial de cortes</h2><p>Solo calcula variaciones cuando huellas, campaña y versión de reglas coinciden. Este historial queda solo en este navegador.</p></div><div className="vi-cut-history-actions">{cuts.length>0&&<button type="button" className="vi-button" onClick={clear}>BORRAR HISTORIAL</button>}<button type="button" className="vi-button vi-button-primary" disabled={!ready} onClick={save}>GUARDAR CORTE DE JUNTA</button></div></div>
+ {storageError&&<p className="vi-cut-error" role="alert">{storageError}</p>}{last&&!comparison.ok&&<p className="vi-cut-warning">NO COMPARABLE: {comparison.reason} Se conserva el corte, pero no se calcula variación.</p>}
+ {delta&&<div className="vi-cut-delta" role="status"><span>DESDE EL ÚLTIMO CORTE COMPARABLE</span><strong>NET {money(delta.netUsd)}</strong><strong>PÉRDIDA {money(delta.grossLossUsd)}</strong><strong>GANANCIA {money(delta.grossGainUsd)}</strong><strong>SWING {money(delta.swingUsd)}</strong><strong>{delta.scans>=0?"+":""}{delta.scans.toLocaleString("es-MX")} ESCANEOS</strong></div>}
+ {cuts.length===0?<p className="vi-cut-empty">Todavía no hay cortes guardados.</p>:<div className="vi-cut-list">{cuts.slice(0,6).map((cut,i)=><div className="vi-cut-row" key={cut.id}><div><strong>{new Intl.DateTimeFormat("es-MX",{dateStyle:"short",timeStyle:"short"}).format(new Date(cut.savedAt))}</strong><span>{cut.scanCount.toLocaleString("es-MX")} escaneos · {cut.summary.qadOnlyCount.toLocaleString("es-MX")} QAD sin físico · {cut.summary.unvaluedPartCount||0} sin valorar</span></div><span className={cut.summary.netUsd<0?"vi-money-loss":"vi-money-gain"}>{money(cut.summary.netUsd)}</span>{i===0&&<em>ÚLTIMO</em>}</div>)}</div>}
+ <p className="vi-cut-local-note">El enlace de GitHub Pages no comparte estos cortes con otra computadora. Para auditoría formal deberán persistirse en una base autorizada.</p></section>;
 }
