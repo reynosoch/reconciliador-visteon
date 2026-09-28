@@ -315,3 +315,30 @@ button:disabled:hover { transform: none; }
   .vi-ambient-chase { display: none; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+
+/* Meeting cut history: browser-local operational snapshots */
+.vi-cut-history { padding: 18px 20px; }
+.vi-cut-history-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+.vi-cut-history-head h2 { margin: 5px 0 4px; color: #fff; font-size: 19px; font-weight: 700; }
+.vi-cut-history-head p { margin: 0; color: #c4d6dd; font-size: 12px; line-height: 1.45; }
+.vi-cut-history-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: end; }
+.vi-cut-delta { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 11px 13px; border-left: 3px solid var(--vi-orange); background: #153c52; }
+.vi-cut-delta span { color: #ffb66f; font-size: 10px; font-weight: 700; letter-spacing: .09em; }
+.vi-cut-delta strong { color: #edf5f6; font-size: 12px; font-variant-numeric: tabular-nums; }
+.vi-cut-list { margin-top: 13px; border-top: 1px solid var(--vi-line); }
+.vi-cut-row { min-height: 50px; display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 16px; border-bottom: 1px solid var(--vi-line); }
+.vi-cut-row > div { display: grid; gap: 3px; }
+.vi-cut-row > div strong { color: #f4f8f9; font-size: 12px; }
+.vi-cut-row > div span { color: #b9cbd2; font-size: 11px; }
+.vi-cut-row > span { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vi-cut-row em { color: #ffb66f; font-size: 9px; font-style: normal; font-weight: 700; letter-spacing: .08em; }
+.vi-cut-empty { margin: 14px 0 0; padding: 12px; border: 1px dashed #55798a; color: #c4d6dd; font-size: 12px; }
+.vi-cut-local-note { margin: 11px 0 0; color: #9fb6c0; font-size: 10px; line-height: 1.45; }
+@media (max-width: 800px) {
+ .vi-cut-history-head { flex-direction: column; }
+ .vi-cut-history-actions { width: 100%; justify-content: stretch; }
+ .vi-cut-history-actions .vi-button { flex: 1; }
+ .vi-cut-row { grid-template-columns: minmax(0,1fr) auto; }
+ .vi-cut-row em { display: none; }
+}

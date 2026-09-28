@@ -292,6 +292,11 @@ function SourceLine({
              )}{" "}
              FILAS
 </p>
+{source.fingerprint && (
+<p className="mt-1 font-mono text-[10px] text-slate-500" title={source.fingerprint}>
+  SHA-256 {source.fingerprint.slice(0, 12)}
+</p>
+)}
 </>
        ) : (
 <p

@@ -18,6 +18,7 @@ const EMPTY_SOURCE = {
  loaded: false,
  error: null,
  loadedAt: null,
+ fingerprint: "",
 };
 
 function createInitialState() {
@@ -85,6 +86,17 @@ export const REFERENCE_SOURCE_LABELS = {
 * Después inventoryEngine procesa
 * las filas.
 */
+async function fingerprintFile(file) {
+ if (!globalThis.crypto?.subtle) {
+   return "";
+ }
+ const buffer = await file.arrayBuffer();
+ const digest = await globalThis.crypto.subtle.digest("SHA-256", buffer);
+ return Array.from(new Uint8Array(digest))
+   .map((byte) => byte.toString(16).padStart(2, "0"))
+   .join("");
+}
+
 export function useReferenceFiles() {
  const [
    sources,
@@ -138,10 +150,11 @@ export function useReferenceFiles() {
        );
 
        try {
-         const parsed =
-           await parseDelimitedFile(
-             file
-           );
+         const [parsed, fingerprint] =
+           await Promise.all([
+             parseDelimitedFile(file),
+             fingerprintFile(file),
+           ]);
 
          const seriousErrors =
            (
@@ -191,6 +204,7 @@ export function useReferenceFiles() {
                  null,
                loadedAt:
                  new Date(),
+               fingerprint,
              },
            })
          );
@@ -205,6 +219,7 @@ export function useReferenceFiles() {
              parsed.fields,
            delimiter:
              parsed.delimiter,
+           fingerprint,
            parseErrors:
              parsed.errors ?? [],
          };

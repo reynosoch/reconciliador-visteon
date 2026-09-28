@@ -4,6 +4,7 @@ import SourcesDrawer from "./components/shell/SourcesDrawer";
 import DataHealthBar from "./components/dashboard/DataHealthBar";
 import DataInspectionPanel from "./components/dashboard/DataInspectionPanel";
 import FinancialGrid from "./components/dashboard/FinancialGrid";
+import CutHistoryPanel from "./components/dashboard/CutHistoryPanel";
 import InventoryWorkspace from "./components/dashboard/InventoryWorkspace";
 import PartDetailDrawer from "./components/detail/PartDetailDrawer";
 import HelpDrawer from "./components/help/HelpDrawer";
@@ -91,6 +92,14 @@ export default function App() {
           referencesReady={referencesReady}
         />}
         <FinancialGrid summary={inventory.summary} ready={ready} onHelp={setHelpTopic} />
+        <CutHistoryPanel
+          ready={ready}
+          summary={inventory.summary}
+          scanCount={inventory.scanCount}
+          lastUpdated={inventory.lastUpdated}
+          rows={inventory.reconciliation}
+          sources={references.sources}
+        />
         <InventoryWorkspace
           rows={inventory.reconciliation}
           ready={ready}
