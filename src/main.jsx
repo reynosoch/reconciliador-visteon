@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.jsx";\nimport ErrorBoundary from "./components/shell/ErrorBoundary.jsx";
+import App from "./App.jsx";
+import ErrorBoundary from "./components/shell/ErrorBoundary.jsx";
 import "./index.css";
 import "./styles/pacman.css";
 

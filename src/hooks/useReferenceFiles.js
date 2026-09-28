@@ -169,7 +169,10 @@ export function useReferenceFiles() {
              fingerprintFile(file),
            ]);
 
-         validateRequiredFields(sourceType, parsed.fields);\n         const required=(REQUIRED_FIELDS[sourceType]||[]).flat();\n         const ambiguous=(parsed.duplicateHeaders||[]).filter(name=>required.includes(name));\n         if(ambiguous.length) throw new Error(`Archivo ambiguo: la columna necesaria ${ambiguous.join(", ")} aparece más de una vez.`);
+         validateRequiredFields(sourceType, parsed.fields);
+         const required=(REQUIRED_FIELDS[sourceType]||[]).flat();
+         const ambiguous=(parsed.duplicateHeaders||[]).filter(name=>required.includes(name));
+         if(ambiguous.length) throw new Error(`Archivo ambiguo: la columna necesaria ${ambiguous.join(", ")} aparece más de una vez.`);
 
          const seriousErrors =
            (
