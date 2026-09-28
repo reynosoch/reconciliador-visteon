@@ -1,0 +1,11 @@
+import { execFileSync } from "node:child_process";
+import { appendFileSync } from "node:fs";
+const tree=execFileSync("git",["ls-tree","-r","--name-only","origin/gh-pages"],{encoding:"utf8"});
+const asset=tree.split(/\r?\n/).find((p)=>/^assets\/index-.*\.js$/.test(p));
+if(!asset) throw new Error("No se encontró el JavaScript público anterior en gh-pages.");
+const js=execFileSync("git",["show",`origin/gh-pages:${asset}`],{encoding:"utf8",maxBuffer:20_000_000});
+const url=js.match(/https:\/\/[a-z0-9]+\.supabase\.co/)?.[0];
+const anon=js.match(/eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/)?.[0];
+if(!url||!anon) throw new Error("No se pudo recuperar la configuración pública de Supabase.");
+appendFileSync(process.env.GITHUB_ENV,`VITE_SUPABASE_URL=${url}\nVITE_SUPABASE_ANON_KEY=${anon}\n`);
+console.log("Configuración pública de Supabase recuperada desde gh-pages.");
