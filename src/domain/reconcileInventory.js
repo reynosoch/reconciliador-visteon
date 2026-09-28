@@ -112,6 +112,9 @@ function getFinancialStatus({
  netPieces,
  swingPieces,
 }) {
+ if (!hasCost && (netPieces !== 0 || swingPieces > 0)) {
+   return "UNVALUED";
+ }
  if (
    isObsolete &&
    obsoleteGainUsd > 0
@@ -120,9 +123,6 @@ function getFinancialStatus({
  }
  if (isUnexpectedMaterial) {
    return "UNEXPECTED";
- }
- if (!hasCost && (netPieces !== 0 || swingPieces > 0)) {
-   return "UNVALUED";
  }
  if (
    physicalTotal === 0 &&
@@ -318,6 +318,7 @@ export function reconcileInventory({
    // ---------------------------------
    const hasCost =
      costItem?.hasValidCost === true;
+   const costState = costItem ? (costItem.costConflict ? "CONFLICT" : costItem.hasValidCost ? "VALID" : "INVALID") : "MISSING";
    const unitCost =
      hasCost
        ? safeNumber(costItem.costTotal)
@@ -412,6 +413,7 @@ export function reconcileInventory({
      physicalLocations.has(
        "UNMAPPED"
      );
+   const hasInvalidQadLocation = qadLocations.has("NO_LOCATION");
 
    // ---------------------------------
    // 10. ESTADO PARA UI
@@ -502,9 +504,12 @@ export function reconcileInventory({
          planningItem
            ?.description ??
          "",
+       unitOfMeasure:
+         costItem?.unitOfMeasure ?? "",
        isObsolete,
        phantomKnown,
        isPhantom,
+       costState,
      },
 
      // ==============================
@@ -532,6 +537,9 @@ export function reconcileInventory({
        phantomKnown,
        hasCost,
        hasUnmappedPhysicalLocation,
+       hasInvalidQadLocation,
+       qadPresent: Boolean(qadItem),
+       physicalPresent: Boolean(physicalItem),
        hasBomAdjustment:
          bomContribution !== 0,
        hasBomReference:
@@ -686,7 +694,7 @@ export function calculateFinancialSummary(
    ) {
      missingCostCount++;
    }
-   if (item.flags.financialStatus === "UNVALUED") {
+   if (!item.master.hasCost && (item.financial.netPieces !== 0 || item.financial.swingPieces > 0)) {
      unvaluedPartCount++;
      unvaluedNetPieces += item.financial.netPieces;
      unvaluedSwingPieces += item.financial.swingPieces;

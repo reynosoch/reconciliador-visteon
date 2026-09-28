@@ -2,7 +2,7 @@
 import {
  normalizeText,
  normalizeQadLocation,
-} from "../domain/normalize";
+} from "../domain/normalize.js";
 export function parse4WallAreas(rows = []) {
  const byArea = new Map();
  const unmapped = [];

@@ -39,6 +39,8 @@ export default function DataHealthBar({
       + (warnings.invalidCostRows?.length || 0)
       + (warnings.duplicateCostParts?.length || 0)
       + (warnings.phantomDefinitionMismatches?.length || 0)
+      + (warnings.invalidPhysicalQuantityRows?.length || 0)
+      + (warnings.invalidQadQuantityRows?.length || 0)
     : 0;
 
   return (

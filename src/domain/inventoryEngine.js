@@ -341,6 +341,8 @@ function buildDiagnostics({
        costs.duplicatePartCount,
      conflictingCostPartCount:
        costs.conflictingDuplicatePartCount,
+     invalidPhysicalQuantityCount: physical.invalidQuantityCount ?? 0,
+     invalidQadQuantityCount: qad.invalidQuantityCount ?? 0,
    },
 
    // ======================================
@@ -350,6 +352,8 @@ function buildDiagnostics({
      unmappedAreaNames:
        physical
          .unmappedAreaNames,
+     invalidPhysicalQuantityRows: physical.invalidQuantityRows ?? [],
+     invalidQadQuantityRows: qad.invalidQuantityRows ?? [],
      partsWithoutCost,
      invalidCostRows:
        costs.invalidCostRows,

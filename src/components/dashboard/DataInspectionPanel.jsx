@@ -41,6 +41,14 @@ function warningRows(warnings = {}) {
       category: "PHANTOM POR REVISAR", partNumber: item.componentPart,
       detail: `Padre ${item.parentPart}: ISPBB y BOM no coinciden sobre la definición Phantom.`,
     })),
+    ...(warnings.invalidPhysicalQuantityRows || []).map((item) => ({
+      category: "CANTIDAD 4WALL INVÁLIDA", partNumber: item.partNumber,
+      detail: `Fila ${item.rowNumber}: la cantidad no se convirtió silenciosamente a cero.`,
+    })),
+    ...(warnings.invalidQadQuantityRows || []).map((item) => ({
+      category: "CANTIDAD QAD INVÁLIDA", partNumber: item.partNumber,
+      detail: `Fila ${item.rowNumber}: Quantity On Hand no es numérico/válido.`,
+    })),
   ];
 }
 

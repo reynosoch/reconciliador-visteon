@@ -24,3 +24,5 @@ descarga_4wall.xlsx
 *.njsproj
 *.sln
 *.sw?
+
+bot_snapshot_status.json
