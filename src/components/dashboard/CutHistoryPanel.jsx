@@ -1,7 +1,7 @@
 import { useMemo,useState } from "react";
 const STORAGE_KEY="visteon.inventory.meetingCuts.v2",MAX_CUTS=24,RULES_VERSION="2026-09-28-finance-review-v1";
 function money(v){return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(Number(v)||0);}
-function loadCuts(){try{const p=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(p)?p:[];}catch{return [];}}
+function loadCuts(){try{const raw=localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("visteon.inventory.meetingCuts.v1") ?? "[]";const p=JSON.parse(raw);return Array.isArray(p)?p:[];}catch{return [];}}
 function signature(s={}){return ["areas","qad","ispbb","bom","cost"].map(type=>({type,fileName:s[type]?.fileName||"",fingerprint:s[type]?.fingerprint||""}));}
 function campaign(s={}){return [s.qad?.fileName||"",s.areas?.fileName||""].join("|");}
 function comparable(last,sources){if(!last)return {ok:false,reason:"No existe un corte anterior."};if(last.rulesVersion!==RULES_VERSION)return {ok:false,reason:"El corte anterior usa otra versión de reglas."};if(last.campaignKey!==campaign(sources))return {ok:false,reason:"Los archivos base pertenecen a otra campaña/corte."};const now=signature(sources),old=last.references||[];const same=now.every(x=>Boolean(x.fingerprint)&&old.find(y=>y.type===x.type)?.fingerprint===x.fingerprint);return same?{ok:true,reason:""}:{ok:false,reason:"Las huellas de los archivos de referencia cambiaron."};}
