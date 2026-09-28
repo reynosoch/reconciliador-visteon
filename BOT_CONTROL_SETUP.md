@@ -1,20 +1,15 @@
-# Control seguro del bot 4Wall
+# Bot 4Wall: control desde el dashboard
 
-El dashboard incluye el botón **▶ BOT**, pero GitHub Pages es estático y no puede ejecutar `bot_extractor.py` directamente.
+El botón **▶ BOT** ya está integrado en la interfaz. La página pública no contiene ni valida la contraseña por sí misma.
 
-## Arquitectura
+## Seguridad
 
-1. El navegador pide autorización.
-2. `BotControlModal` envía la contraseña al controlador por HTTPS.
-3. `bot_control_server.py` valida contra `BOT_CONTROL_PASSWORD`.
-4. Solo si coincide, el controlador inicia `bot_extractor.py`.
+La contraseña se configura solamente en el equipo/servidor autorizado que ejecuta `bot_control_server.py`, mediante la variable de entorno `BOT_CONTROL_PASSWORD`.
 
-La contraseña acordada **no se guarda en este repositorio** y tampoco debe colocarse en una variable `VITE_*`, porque esas variables terminan visibles en el JavaScript del navegador.
+No pongas la contraseña en variables `VITE_*` ni en archivos versionados: cualquier valor de Vite termina visible en el navegador.
 
-En el equipo autorizado configura localmente `BOT_CONTROL_PASSWORD` con la contraseña acordada por el equipo, además de las variables que ya requiere `bot_extractor.py`.
+## Conexión
 
-El frontend necesita `VITE_BOT_CONTROL_URL` apuntando a un endpoint HTTPS alcanzable desde la página. Si esa variable no existe, el botón explica que falta conectar el controlador y no intenta simular que arrancó el bot.
+El frontend usa `VITE_BOT_CONTROL_URL` para llamar al controlador. El controlador debe ser alcanzable por HTTPS desde el navegador y permitir únicamente el origen autorizado mediante `BOT_CONTROL_ORIGIN`.
 
-## Importante
-
-No expongas el puerto local directamente a Internet. Para usar el botón desde GitHub Pages hace falta una ruta HTTPS autorizada por IT/seguridad hacia el host del bot. El origen permitido se controla con `BOT_CONTROL_ORIGIN`.
+GitHub Pages no puede ejecutar Python. El controlador y `bot_extractor.py` deben correr en el equipo o servidor que tenga acceso autorizado a 4Wall.
