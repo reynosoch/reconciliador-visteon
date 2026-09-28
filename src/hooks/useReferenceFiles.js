@@ -19,6 +19,7 @@ const EMPTY_SOURCE = {
  error: null,
  loadedAt: null,
  fingerprint: "",
+ warnings: [],
 };
 
 function createInitialState() {
@@ -219,6 +220,7 @@ export function useReferenceFiles() {
                loadedAt:
                  new Date(),
                fingerprint,
+               warnings: parsed.warnings ?? [],
              },
            })
          );
