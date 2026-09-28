@@ -468,11 +468,7 @@ export default function PartDetailDrawer({
 <Metric
              label="NET USD"
              topic="net" onHelp={onHelp}
-             value={
-               money(
-                 financial.netUsd
-               )
-             }
+             value={master.hasCost ? money(financial.netUsd) : "SIN VALORAR"}
              className={
                Number(
                  financial.netUsd
@@ -484,11 +480,7 @@ export default function PartDetailDrawer({
 <Metric
              label="SWING"
              topic="swing" onHelp={onHelp}
-             value={
-               money(
-                 financial.swingUsd
-               )
-             }
+             value={master.hasCost ? money(financial.swingUsd) : financial.swingPieces > 0 ? "SIN VALORAR" : money(0)}
              className="vi-money-swing"
            />
 <Metric
@@ -555,7 +547,7 @@ export default function PartDetailDrawer({
                  ? money(
                      master.unitCost
                    )
-                 : "—"
+                 : "SIN VALORAR"
              }
            />
 <Metric
