@@ -6,6 +6,7 @@ import {
 import {
  HelpButton,
 } from "../help/HelpDrawer";
+import PendingDecisions from "./PendingDecisions";
 
 function formatMoney(value) {
  return new Intl.NumberFormat(
@@ -193,6 +194,7 @@ export default function FinancialGrid({
 >
          Selecciona un indicador para ver su origen y cálculo.
 </p>
+<PendingDecisions />
 {ready && (
 <div className="mt-3 border-l-2 border-amber-400 bg-amber-400/10 px-3 py-2 text-sm text-amber-100" role="status">
   <strong>Corte intradía preliminar.</strong>{" "}
@@ -203,6 +205,9 @@ export default function FinancialGrid({
   {data.qadOnlyMissingCostCount > 0 && (
     <> {formatNumber(data.qadOnlyMissingCostCount)} no tienen costo en Cost Part; su exposición aún no se puede valorar.</>
   )} Finanzas debe definir cuándo un material sin escaneo cuenta como pérdida y qué localidades entran al cálculo.
+  {data.unvaluedPartCount > 0 && (
+    <div className="mt-2 border-t border-amber-200/20 pt-2"><strong>Valoración incompleta:</strong> {formatNumber(data.unvaluedPartCount)} Part Numbers tienen diferencia en piezas pero no un costo confiable. No se presentan como $0 ni como balanceados.</div>
+  )}
   <div className="mt-2 border-t border-amber-200/20 pt-2">
     <strong>Vista operativa:</strong> {formatMoney(data.netUsdWithPhysicalEvidence ?? 0)} de NET corresponde a {formatNumber(data.partsWithPhysicalEvidence ?? 0)} Part Numbers con al menos alguna evidencia 4Wall/BOM. Esto tampoco confirma que su conteo ya terminó.
   </div>
@@ -212,7 +217,7 @@ export default function FinancialGrid({
 
 <div className="vi-financial-strip">
 <FinancialCell
-         label="NET PLANTA"
+         label={data.unvaluedPartCount > 0 ? "NET VALORADO" : "NET PLANTA"}
          value={
            ready
              ? formatMoney(
