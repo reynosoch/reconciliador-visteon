@@ -121,14 +121,14 @@ function getFinancialStatus({
  if (isUnexpectedMaterial) {
    return "UNEXPECTED";
  }
+ if (!hasCost && (netPieces !== 0 || swingPieces > 0)) {
+   return "UNVALUED";
+ }
  if (
    physicalTotal === 0 &&
    qadTotal > 0
  ) {
    return "MISSING_PHYSICAL";
- }
- if (!hasCost && (netPieces !== 0 || swingPieces > 0)) {
-   return "UNVALUED";
  }
  if (netUsd < 0) {
    return "LOSS";
