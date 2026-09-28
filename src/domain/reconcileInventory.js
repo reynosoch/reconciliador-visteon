@@ -2,7 +2,7 @@
 import {
  normalizePartNumber,
  safeNumber,
-} from "./normalize";
+} from "./normalize.js";
 
 function cloneLocationMap(source) {
  const result = new Map();
