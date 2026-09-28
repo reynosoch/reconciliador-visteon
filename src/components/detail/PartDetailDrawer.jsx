@@ -1,5 +1,6 @@
 ﻿// src/components/detail/PartDetailDrawer.jsx
 import React from "react";
+import OverlayPortal from "../shell/OverlayPortal.jsx";
 import {
  Ghost,
  PelletRail,
@@ -378,6 +379,7 @@ export default function PartDetailDrawer({
    {};
 
  return (
+<OverlayPortal onClose={onClose}>
 <div
      className="vi-detail-overlay"
      onMouseDown={
@@ -646,5 +648,6 @@ export default function PartDetailDrawer({
 </div>
 </aside>
 </div>
+</OverlayPortal>
  );
 }

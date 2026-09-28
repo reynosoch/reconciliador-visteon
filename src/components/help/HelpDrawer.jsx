@@ -1,5 +1,6 @@
 // src/components/help/HelpDrawer.jsx
 import React from "react";
+import OverlayPortal from "../shell/OverlayPortal.jsx";
 const HELP = {
  overview: {
   eyebrow: "GUÍA DEL SISTEMA", title: "Cómo leer el corte de inventario",
@@ -149,6 +150,7 @@ export default function HelpDrawer({
    HELP[topic] ||
    HELP.overview;
  return (
+<OverlayPortal onClose={onClose}>
 <div
      className="vi-drawer-backdrop fixed inset-0 z-[120] bg-black/55 backdrop-blur-[2px]"
      onMouseDown={(event) => {
@@ -251,5 +253,6 @@ export default function HelpDrawer({
 </div>
 </aside>
 </div>
+</OverlayPortal>
  );
 }
