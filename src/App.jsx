@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CommandHeader from "./components/shell/CommandHeader";
 import SourcesDrawer from "./components/shell/SourcesDrawer";
 import DataHealthBar from "./components/dashboard/DataHealthBar";
@@ -8,6 +8,8 @@ import CutHistoryPanel from "./components/dashboard/CutHistoryPanel";
 import InventoryWorkspace from "./components/dashboard/InventoryWorkspace";
 import PartDetailDrawer from "./components/detail/PartDetailDrawer";
 import HelpDrawer from "./components/help/HelpDrawer";
+import NotificationCenter, { CHANGELOG } from "./components/shell/NotificationCenter";
+import BotControlModal from "./components/shell/BotControlModal";
 import { useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
 import { AmbientChase } from "./components/visual/PacmanGlyphs";
@@ -19,6 +21,8 @@ export default function App() {
   const [selectedPart, setSelectedPart] = useState(null);
   const [helpTopic, setHelpTopic] = useState(null);
   const [activeDataView, setActiveDataView] = useState(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [botOpen, setBotOpen] = useState(false);
   const references = useReferenceFiles();
   const inventory = useInventoryEngine({
     areaRows: references.areaRows,
@@ -35,6 +39,12 @@ export default function App() {
   const liveReady = Boolean(inventory.lastUpdated);
   const ready = referencesReady && liveReady && Boolean(inventory.diagnostics);
 
+  useEffect(() => {
+    if (!selectedPart?.partNumber) return;
+    const refreshed = inventory.reconciliation.find((item) => item.partNumber === selectedPart.partNumber);
+    if (refreshed && refreshed !== selectedPart) setSelectedPart(refreshed);
+  }, [inventory.reconciliation, selectedPart]);
+
   return (
     <div className="vi-shell">
       <AmbientChase />
@@ -48,6 +58,9 @@ export default function App() {
         onRefresh={inventory.refresh}
         onToggleSources={() => setSourcesOpen((value) => !value)}
         onOpenRules={() => setHelpTopic("overview")}
+        onOpenNotifications={() => setNotificationsOpen(true)}
+        onOpenBot={() => setBotOpen(true)}
+        notificationCount={CHANGELOG.length}
       />
 
       <main className="vi-main">
@@ -120,6 +133,8 @@ export default function App() {
       />
       <PartDetailDrawer item={selectedPart} onHelp={setHelpTopic} onClose={() => setSelectedPart(null)} />
       <HelpDrawer topic={helpTopic} onClose={() => setHelpTopic(null)} />
+      <NotificationCenter open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <BotControlModal open={botOpen} onClose={() => setBotOpen(false)} />
     </div>
   );
 }
