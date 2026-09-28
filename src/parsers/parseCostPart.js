@@ -5,7 +5,7 @@ import {
  normalizeText,
  isObsoleteStatus,
  toNumber,
-} from "../domain/normalize";
+} from "../domain/normalize.js";
 
 function parseCostValue(value) {
  const raw = String(value ?? "").trim();
