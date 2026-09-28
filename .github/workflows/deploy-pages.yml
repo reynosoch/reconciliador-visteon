@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Preparar Node
         uses: actions/setup-node@v4
         with:
@@ -27,11 +29,9 @@ jobs:
           cache: npm
       - name: Instalar dependencias
         run: npm ci
+      - name: Recuperar configuración pública existente
+        run: node scripts/extract-public-pages-env.mjs
       - name: Compilar dashboard
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_BOT_CONTROL_URL: ${{ secrets.VITE_BOT_CONTROL_URL }}
         run: npm run build
       - name: Preparar Pages
         uses: actions/configure-pages@v5
