@@ -676,9 +676,7 @@ option.id
                              )}
                            `}
 >
-                           {money(
-                             financial.netUsd
-                           )}
+                           {master.hasCost ? money(financial.netUsd) : "SIN VALORAR"}
 </span>
 </td>
 
@@ -690,9 +688,7 @@ option.id
                            text-[11px]
                          "
 >
-                         {money(
-                           financial.swingUsd
-                         )}
+                         {master.hasCost ? money(financial.swingUsd) : financial.swingPieces > 0 ? "SIN VALORAR" : money(0)}
 </td>
 
 <td
