@@ -616,6 +616,35 @@ export default function PartDetailDrawer({
 </section>
 )}
 
+
+{item.trace?.sourceRows?.length > 0 && (
+<section className="vi-maze-box mt-5 p-5">
+ <p className="vi-eyebrow">EVIDENCIA 4WALL</p>
+ <p className="mt-2 text-xs text-slate-300">
+   Últimos registros disponibles para este Part Number. Sirven para ubicar quién escaneó, quién auditó y el responsable del área; no significan que el conteo del PN ya esté cerrado.
+ </p>
+ <div className="mt-3 overflow-x-auto">
+  <table className="vi-table">
+   <thead><tr><th>Ticket</th><th>Área</th><th className="text-right">Pzas</th><th>Escaneador</th><th>Auditor</th><th>Responsable</th><th>Fecha</th></tr></thead>
+   <tbody>
+    {item.trace.sourceRows.slice(0, 8).map((row, index) => (
+     <tr key={`${row.ticket || "scan"}-${index}`}>
+      <td>{row.ticket || "—"}</td>
+      <td>{row.areaName || "—"}</td>
+      <td className="text-right">{number(row.quantity)}</td>
+      <td>{row.scannedBy || "—"}</td>
+      <td>{row.auditor || "—"}</td>
+      <td>{row.responsible || "—"}</td>
+      <td>{row.date || "—"}</td>
+     </tr>
+    ))}
+   </tbody>
+  </table>
+ </div>
+ {item.trace.sourceRows.length > 8 && <p className="mt-2 text-xs text-slate-400">Mostrando 8 de {item.trace.sourceRows.length} registros.</p>}
+</section>
+)}
+
 <section className="vi-maze-box mt-5 p-5">
  <p className="vi-eyebrow">ALERTAS Y TRAZABILIDAD</p>
  <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-200">

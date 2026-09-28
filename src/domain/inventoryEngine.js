@@ -331,6 +331,16 @@ function buildDiagnostics({
        costs.totalParts,
      obsoleteCatalogCount:
        costs.obsoleteParts,
+     costSites:
+       costs.sites,
+     invalidCostCount:
+       costs.invalidCostCount,
+     zeroCostRows:
+       costs.zeroCostRows,
+     duplicateCostPartCount:
+       costs.duplicatePartCount,
+     conflictingCostPartCount:
+       costs.conflictingDuplicatePartCount,
    },
 
    // ======================================
@@ -341,6 +351,10 @@ function buildDiagnostics({
        physical
          .unmappedAreaNames,
      partsWithoutCost,
+     invalidCostRows:
+       costs.invalidCostRows,
+     duplicateCostParts:
+       costs.duplicateParts,
      partsWithoutPlanningDefinition,
      unexpectedMaterial,
      unmappedParts,

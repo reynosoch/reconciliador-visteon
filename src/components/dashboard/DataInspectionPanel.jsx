@@ -29,6 +29,14 @@ function warningRows(warnings = {}) {
       category: "QAD ESPERABA 0", partNumber: item.partNumber,
       detail: `Físico ${item.physical} · NET ${Number(item.netUsd || 0).toLocaleString("en-US", { style: "currency", currency: "USD" })}`,
     })),
+    ...(warnings.invalidCostRows || []).map((item) => ({
+      category: "COSTO INVÁLIDO", partNumber: item.partNumber,
+      detail: `Fila ${item.rowNumber} · Site ${item.site || "?"} · Cost Total no numérico/vacío. No se valora como USD 0.`,
+    })),
+    ...(warnings.duplicateCostParts || []).map((item) => ({
+      category: "COST PART DUPLICADO", partNumber: item.partNumber,
+      detail: `Se conserva la primera fila y se alerta el duplicado. Sites: ${item.firstSite || "?"} / ${item.duplicateSite || "?"}.`,
+    })),
     ...(warnings.phantomDefinitionMismatches || []).map((item) => ({
       category: "PHANTOM POR REVISAR", partNumber: item.componentPart,
       detail: `Padre ${item.parentPart}: ISPBB y BOM no coinciden sobre la definición Phantom.`,

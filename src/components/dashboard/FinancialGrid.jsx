@@ -203,6 +203,9 @@ export default function FinancialGrid({
   {data.qadOnlyMissingCostCount > 0 && (
     <> {formatNumber(data.qadOnlyMissingCostCount)} no tienen costo en Cost Part; su exposición aún no se puede valorar.</>
   )} Finanzas debe definir cuándo un material sin escaneo cuenta como pérdida y qué localidades entran al cálculo.
+  <div className="mt-2 border-t border-amber-200/20 pt-2">
+    <strong>Vista operativa:</strong> {formatMoney(data.netUsdWithPhysicalEvidence ?? 0)} de NET corresponde a {formatNumber(data.partsWithPhysicalEvidence ?? 0)} Part Numbers con al menos alguna evidencia 4Wall/BOM. Esto tampoco confirma que su conteo ya terminó.
+  </div>
 </div>
 )}
 </div>

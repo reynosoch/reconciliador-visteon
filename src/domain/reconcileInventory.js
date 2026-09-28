@@ -310,13 +310,12 @@ export function reconcileInventory({
    // ---------------------------------
    // 4. COSTO FINANCIERO
    // ---------------------------------
-   const unitCost =
-     safeNumber(
-       costItem?.costTotal
-     );
    const hasCost =
-     Boolean(costItem) &&
-     Number.isFinite(unitCost);
+     costItem?.hasValidCost === true;
+   const unitCost =
+     hasCost
+       ? safeNumber(costItem.costTotal)
+       : 0;
 
    // ---------------------------------
    // 5. NET
@@ -604,6 +603,10 @@ export function calculateFinancialSummary(
  let qadOnlyCount = 0;
  let qadOnlyExposureUsd = 0;
  let qadOnlyMissingCostCount = 0;
+ let netUsdWithPhysicalEvidence = 0;
+ let grossLossUsdWithPhysicalEvidence = 0;
+ let grossGainUsdWithPhysicalEvidence = 0;
+ let partsWithPhysicalEvidence = 0;
 
  for (
    const item
@@ -675,6 +678,19 @@ export function calculateFinancialSummary(
      qadOnlyExposureUsd += Math.abs(item.financial.netUsd);
      if (!item.master.hasCost) qadOnlyMissingCostCount++;
    }
+
+   // Vista operativa, NO validación de conteo:
+   // tener al menos un escaneo o contribución BOM solo demuestra
+   // que existe evidencia física para el PN; no que el PN ya terminó.
+   const hasPhysicalEvidence =
+     item.physical.scanCount > 0 ||
+     item.physical.bomContribution !== 0;
+   if (hasPhysicalEvidence) {
+     partsWithPhysicalEvidence++;
+     netUsdWithPhysicalEvidence += item.financial.netUsd;
+     grossLossUsdWithPhysicalEvidence += item.financial.grossLossUsd;
+     grossGainUsdWithPhysicalEvidence += item.financial.grossGainUsd;
+   }
  }
 
  return {
@@ -694,6 +710,10 @@ export function calculateFinancialSummary(
    qadOnlyCount,
    qadOnlyExposureUsd,
    qadOnlyMissingCostCount,
+   netUsdWithPhysicalEvidence,
+   grossLossUsdWithPhysicalEvidence,
+   grossGainUsdWithPhysicalEvidence,
+   partsWithPhysicalEvidence,
    totalParts:
      reconciliation.length,
    criticalUsdThreshold,

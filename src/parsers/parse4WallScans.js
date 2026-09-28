@@ -102,6 +102,8 @@ export function parse4WallScans(
        row["Escaneador"] ?? null,
      auditor:
        row["auditor"] ?? null,
+     responsible:
+       row["Responsable"] ?? null,
      date:
        row["Fecha agregado"] ?? null,
    });
