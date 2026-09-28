@@ -194,7 +194,7 @@ export default function FinancialGrid({
 >
          Selecciona un indicador para ver su origen y cálculo.
 </p>
-<PendingDecisions />
+<button type="button" className="vi-finance-questions-link" onClick={onFinanceQuestions}>8 preguntas para Finanzas</button>
 {ready && (
 <div className="mt-3 border-l-2 border-amber-400 bg-amber-400/10 px-3 py-2 text-sm text-amber-100" role="status">
   <strong>Corte intradía preliminar.</strong>{" "}
@@ -217,7 +217,7 @@ export default function FinancialGrid({
 
 <div className="vi-financial-strip">
 <FinancialCell
-         label={data.unvaluedPartCount > 0 ? "NET VALORADO" : "NET PLANTA"}
+         label={data.unvaluedPartCount > 0 ? "DIFERENCIA VALORADA EN DÓLARES" : "DIFERENCIA TOTAL EN DÓLARES"}
          value={
            ready
              ? formatMoney(

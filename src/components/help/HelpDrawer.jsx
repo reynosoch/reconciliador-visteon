@@ -3,13 +3,13 @@ import React from "react";
 const HELP = {
  overview: {
   eyebrow: "GUÍA DEL SISTEMA", title: "Cómo leer el corte de inventario",
-  description: "4Wall muestra lo contado en planta. QAD muestra lo esperado. El sistema cruza ambas fuentes y ordena las diferencias por impacto en USD para decidir qué auditar durante el día.",
+  description: "Flujo recomendado: 1) carga las referencias, 2) actualiza 4Wall, 3) revisa las diferencias y 4) guarda un corte antes de la junta.",
   source: "Escaneos 4Wall + diccionario de áreas + QAD 3.2 + ISPBB + BOM + Cost Part.",
   formula: "Físico − QAD = diferencia de piezas.\nDiferencia de piezas × costo = impacto en USD.",
   notes: ["Los escaneos de 4Wall se actualizan durante el día; las demás fuentes se cargan como archivos de referencia.", "Un material pendiente de contar puede aparecer como pérdida preliminar. Revisa la advertencia antes de interpretar el total.", "Selecciona un Part Number para ver localidades, costo y relaciones BOM disponibles."],
  },
  net: {
-  eyebrow: "INDICADOR FINANCIERO", title: "NET de planta",
+  eyebrow: "INDICADOR FINANCIERO", title: "Diferencia total en dólares",
   description: "Es el balance firmado entre lo contado y lo esperado, sumado para todos los Part Numbers y localidades incluidas en este corte. Un valor negativo señala pérdida; uno positivo, ganancia.",
   source: "4Wall y su diccionario de áreas para el físico; QAD 3.2 para lo esperado; Cost Part para valorar la diferencia.",
   formula: "NET piezas = físico total − QAD total.\nNET USD = NET piezas × Cost Total.",
