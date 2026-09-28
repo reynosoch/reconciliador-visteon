@@ -6,7 +6,6 @@ import {
 import {
  HelpButton,
 } from "../help/HelpDrawer";
-import PendingDecisions from "./PendingDecisions";
 
 function formatMoney(value) {
  return new Intl.NumberFormat(
@@ -147,6 +146,7 @@ export default function FinancialGrid({
  summary,
  ready = false,
  onHelp,
+ onFinanceQuestions,
 }) {
  const data =
    summary || {};
