@@ -4,6 +4,7 @@ import React, {
  useState,
 } from "react";
 import { HelpButton } from "../help/HelpDrawer";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 import {
  REFERENCE_SOURCE_TYPES,
 } from "../../hooks/useReferenceFiles";
@@ -367,6 +368,7 @@ export default function SourcesDrawer({
    processing,
    setProcessing,
  ] = useState(false);
+ const [pendingClear,setPendingClear]=useState(null);
 
  if (!open) {
    return null;
@@ -583,9 +585,7 @@ export default function SourcesDrawer({
                loadFile={
                  loadFile
                }
-               clearFile={
-                 clearFile
-               }
+               clearFile={(type)=>setPendingClear({kind:"one",type})}
                onHelp={onHelp}
              />
            )
@@ -666,9 +666,7 @@ export default function SourcesDrawer({
 <div className="p-5">
 <button
              type="button"
-             onClick={
-               clearAll
-             }
+             onClick={()=>setPendingClear({kind:"all"})}
              className="
                vi-button
                w-full
@@ -680,6 +678,7 @@ export default function SourcesDrawer({
 </div>
        )}
 </aside>
+<ConfirmDialog open={Boolean(pendingClear)} title="¿Quitar información cargada?" message="Estos archivos están solo en memoria. Si continúas tendrás que seleccionarlos otra vez." confirmLabel="Quitar información" onCancel={()=>setPendingClear(null)} onConfirm={()=>{const action=pendingClear;setPendingClear(null);if(action?.kind==="all")clearAll();else if(action?.type)clearFile(action.type);}}/>
 </div>
  );
 }
