@@ -43,12 +43,16 @@ const FILTERS = [
    id: "BOM_REVIEW",
    label: "REVISAR BOM",
  },
+ {
+   id: "UNVALUED",
+   label: "SIN VALORAR",
+ },
 ];
 
 const STATUS_LABELS = {
  LOSS: "PÉRDIDA", GAIN: "GANANCIA", OBSOLETE_GAIN: "OBSOLETO +",
  UNEXPECTED: "INESPERADO", MISSING_PHYSICAL: "SIN FÍSICO",
- SWING: "SWING", BALANCED: "BALANCEADO",
+ SWING: "SWING", UNVALUED: "SIN VALORAR", BALANCED: "BALANCEADO",
 };
 
 function money(value) {
@@ -347,7 +351,7 @@ export default function InventoryWorkspace({
            return (
              Number(
                item?.financial
-                 ?.swingUsd
+                 ?.swingPieces
              ) > 0
            );
          }
@@ -727,7 +731,7 @@ option.id
                            ? money(
                                master.unitCost
                              )
-                           : "—"}
+                           : "SIN VALORAR"}
 </td>
 
 <td
@@ -738,7 +742,9 @@ option.id
                            text-slate-500
                          "
 >
-                         {flags.isUnexpectedMaterial
+                         {flags.financialStatus === "UNVALUED"
+                           ? "$?"
+                           : flags.isUnexpectedMaterial
                            ? "QAD0"
                            : flags.isMissingPhysical && flags.hasBomReference
                              ? "BOM?"

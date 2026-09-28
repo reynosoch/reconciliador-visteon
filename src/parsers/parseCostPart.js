@@ -79,6 +79,7 @@ export function parseCostPart(rows = []) {
      costTotal: parsedCost.value,
      hasValidCost: parsedCost.valid,
      rawCostTotal: parsedCost.raw,
+     costConflict: false,
      costBreakdown: {
        material: toNumber(row["Material"]),
        materialLL: toNumber(row["Material LL"]),
@@ -110,7 +111,11 @@ export function parseCostPart(rows = []) {
        existing.status !== item.status ||
        existing.hasValidCost !== item.hasValidCost ||
        existing.costTotal !== item.costTotal;
-     if (conflicts) conflictingDuplicateSeen.add(partNumber);
+     if (conflicts) {
+       conflictingDuplicateSeen.add(partNumber);
+       existing.hasValidCost = false;
+       existing.costConflict = true;
+     }
      // Deterministic rule: keep the first row. Never silently let a later
      // duplicate replace the financial source.
      acceptedRows++;

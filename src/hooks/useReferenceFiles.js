@@ -86,6 +86,18 @@ export const REFERENCE_SOURCE_LABELS = {
 * Después inventoryEngine procesa
 * las filas.
 */
+const REQUIRED_FIELDS = {
+ areas: [["Nombre"], ["Localidad QAD"]],
+ qad: [["Item Number"], ["Site"], ["Location"], ["Quantity On Hand"], ["Item Type"]],
+ ispbb: [["Item Number"], ["Site"], ["Phantom"]],
+ bom: [["Parent Item"], ["Component"], ["Usage"]],
+ cost: [["Item Number"], ["Cost Total"], ["Status"]],
+};
+function validateRequiredFields(sourceType, fields = []) {
+ const available = new Set(fields.map((field) => String(field).trim()));
+ const missing = (REQUIRED_FIELDS[sourceType] || []).filter((group) => !group.some((field) => available.has(field))).map((group) => group.join(" / "));
+ if (missing.length) throw new Error(`Archivo inválido para ${REFERENCE_SOURCE_LABELS[sourceType] || sourceType}. Faltan columnas: ${missing.join(", ")}.`);
+}
 async function fingerprintFile(file) {
  if (!globalThis.crypto?.subtle) {
    return "";
@@ -155,6 +167,8 @@ export function useReferenceFiles() {
              parseDelimitedFile(file),
              fingerprintFile(file),
            ]);
+
+         validateRequiredFields(sourceType, parsed.fields);
 
          const seriousErrors =
            (

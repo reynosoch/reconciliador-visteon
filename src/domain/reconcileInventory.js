@@ -108,6 +108,9 @@ function getFinancialStatus({
  isUnexpectedMaterial,
  physicalTotal,
  qadTotal,
+ hasCost,
+ netPieces,
+ swingPieces,
 }) {
  if (
    isObsolete &&
@@ -123,6 +126,9 @@ function getFinancialStatus({
    qadTotal > 0
  ) {
    return "MISSING_PHYSICAL";
+ }
+ if (!hasCost && (netPieces !== 0 || swingPieces > 0)) {
+   return "UNVALUED";
  }
  if (netUsd < 0) {
    return "LOSS";
@@ -419,6 +425,9 @@ export function reconcileInventory({
        isUnexpectedMaterial,
        physicalTotal,
        qadTotal,
+       hasCost,
+       netPieces,
+       swingPieces,
      });
 
    result.push({
@@ -591,6 +600,7 @@ export function calculateFinancialSummary(
  let grossLossUsd = 0;
  let grossGainUsd = 0;
  let swingUsd = 0;
+ let swingPieces = 0;
  let obsoleteGainUsd = 0;
  let physicalQty = 0;
  let qadQty = 0;
@@ -600,6 +610,9 @@ export function calculateFinancialSummary(
  let criticalCount = 0;
  let unmappedLocationCount = 0;
  let missingCostCount = 0;
+ let unvaluedPartCount = 0;
+ let unvaluedNetPieces = 0;
+ let unvaluedSwingPieces = 0;
  let qadOnlyCount = 0;
  let qadOnlyExposureUsd = 0;
  let qadOnlyMissingCostCount = 0;
@@ -620,6 +633,8 @@ export function calculateFinancialSummary(
      item.financial.grossGainUsd;
    swingUsd +=
      item.financial.swingUsd;
+   swingPieces +=
+     item.financial.swingPieces;
    obsoleteGainUsd +=
      item.financial
        .obsoleteGainUsd;
@@ -671,6 +686,11 @@ export function calculateFinancialSummary(
    ) {
      missingCostCount++;
    }
+   if (item.flags.financialStatus === "UNVALUED") {
+     unvaluedPartCount++;
+     unvaluedNetPieces += item.financial.netPieces;
+     unvaluedSwingPieces += item.financial.swingPieces;
+   }
    // Intraday visibility only: QAD-only parts may not have been audited yet.
    // Keep the existing financial calculation pending Finance's decision.
    if (item.flags.isMissingPhysical) {
@@ -698,6 +718,7 @@ export function calculateFinancialSummary(
    grossLossUsd,
    grossGainUsd,
    swingUsd,
+   swingPieces,
    obsoleteGainUsd,
    physicalQty,
    qadQty,
@@ -707,6 +728,9 @@ export function calculateFinancialSummary(
    criticalCount,
    unmappedLocationCount,
    missingCostCount,
+   unvaluedPartCount,
+   unvaluedNetPieces,
+   unvaluedSwingPieces,
    qadOnlyCount,
    qadOnlyExposureUsd,
    qadOnlyMissingCostCount,
