@@ -429,15 +429,7 @@ export default function PartDetailDrawer({
 </div>
 </div>
 
-<button
-             type="button"
-             onClick={
-               onClose
-             }
-             className="vi-button"
->
-             CERRAR
-</button>
+<button type="button" onClick={onClose} className="vi-icon-close" aria-label="Cerrar detalle">×</button>
 </div>
 
 <PelletRail
