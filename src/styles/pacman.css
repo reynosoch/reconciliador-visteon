@@ -628,3 +628,257 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
   .vi-liquid-surface,.vi-financial-shell,.vi-findings,.vi-health-bar,.vi-inspection,.vi-reconciliation-shell{border-radius:19px!important}
   .vi-meeting-explainer{margin-inline:9px;padding:12px}
 }
+
+
+/* =========================================================
+   Investigation navigation + spreadsheet viewer
+   ========================================================= */
+.vi-location-math-button{
+  flex:none;
+  min-height:40px;
+  border-radius:14px!important;
+  border-color:rgba(255,255,255,.16)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#dff2ff!important;
+}
+.vi-location-math{
+  margin:12px 14px 0;
+  padding:14px 16px;
+  display:grid;
+  gap:7px;
+  border:1px solid rgba(92,190,255,.22);
+  border-radius:17px;
+  background:rgba(13,73,105,.30);
+  color:#cde0e9;
+  font-size:12px;
+  line-height:1.55;
+}
+.vi-location-math strong{color:#fff;font-size:13px}
+.vi-location-math b{color:#8fd1ff}
+.vi-inline-data-link{
+  display:inline;
+  border:0;
+  padding:0;
+  background:none;
+  color:#147bd1;
+  font:inherit;
+  font-weight:800;
+  text-decoration:underline;
+  text-decoration-thickness:1.5px;
+  text-underline-offset:2px;
+  cursor:pointer;
+}
+.vi-inline-data-link:hover{color:#075fa8}
+.vi-finding-drawer-head{border-bottom:1px solid #d9e3e7}
+.vi-back-link{
+  display:inline-flex;
+  margin:0 0 14px;
+  padding:0;
+  border:0;
+  background:none;
+  color:#147bd1;
+  font-size:11px;
+  font-weight:900;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+.vi-finding-evidence{display:grid;gap:8px}
+.vi-finding-evidence>div{display:grid;gap:2px;padding:9px 10px;border:1px solid #dbe5e8;background:#f6f9fa}
+.vi-finding-evidence strong{font-size:10px;color:#0e6fae;text-transform:uppercase}
+.vi-finding-evidence span{font-size:11px;line-height:1.45}
+.vi-view-excel-button{width:100%;min-height:44px}
+.vi-excel-inline-button{
+  display:inline-flex;
+  align-items:center;
+  margin:4px 0 0;
+  padding:4px 7px;
+  border:1px solid rgba(84,174,229,.45);
+  border-radius:7px;
+  background:rgba(35,123,177,.12);
+  color:#8fd1ff;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.04em;
+  cursor:pointer;
+}
+.vi-excel-inline-button:hover{background:rgba(35,123,177,.22)}
+
+.vi-excel-viewer{
+  overflow:hidden;
+  padding:0!important;
+  border-radius:18px!important;
+  border:1px solid #9ca9a4!important;
+  background:#f4f6f5!important;
+  color:#1f2c27!important;
+  box-shadow:0 20px 55px rgba(0,8,16,.34)!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+.vi-excel-viewer::before{display:none!important}
+.vi-excel-titlebar{
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:8px 12px;
+  background:#185c37;
+  color:#fff;
+}
+.vi-excel-appmark{
+  width:29px;height:29px;display:grid;place-items:center;
+  border-radius:4px;background:#107c41;color:#fff;font-weight:900;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);
+}
+.vi-excel-titlebar>div:nth-child(2){display:grid;gap:1px;min-width:0}
+.vi-excel-titlebar strong{font-size:11px;letter-spacing:.08em}
+.vi-excel-titlebar span{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vi-excel-title-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.vi-excel-back,.vi-excel-close{
+  min-height:32px;padding:0 10px;border:1px solid rgba(255,255,255,.30);
+  border-radius:4px;background:rgba(255,255,255,.08);color:#fff;
+  font-size:10px;font-weight:800;cursor:pointer;
+}
+.vi-excel-back{text-decoration:underline;text-underline-offset:3px}
+.vi-excel-ribbon{
+  min-height:34px;display:flex;align-items:center;gap:20px;padding:0 14px;
+  border-bottom:1px solid #c9d0cd;background:#fff;color:#33443d;
+  font-size:10px;font-weight:700;
+}
+.vi-excel-ribbon span:first-child{color:#107c41;border-bottom:2px solid #107c41;align-self:stretch;display:flex;align-items:center}
+.vi-excel-ribbon b{margin-left:auto;color:#66756f;font-size:9px}
+.vi-excel-formula{
+  min-height:36px;display:grid;grid-template-columns:70px 30px minmax(0,1fr);
+  align-items:center;border-bottom:1px solid #c5ceca;background:#fbfcfb;
+}
+.vi-excel-namebox,.vi-excel-fx{height:100%;display:grid;place-items:center;border-right:1px solid #c5ceca;color:#596b63;font-size:10px}
+.vi-excel-fx{font-style:italic;font-weight:800;color:#107c41}
+.vi-excel-formula input{
+  width:100%;height:35px;border:0;outline:0;padding:0 10px;background:#fff;color:#24352e;font-size:12px;
+}
+.vi-excel-viewer .vi-inspection-description{
+  margin:0;padding:9px 12px;border-bottom:1px solid #cbd4d0;background:#eef3f0;color:#52635c;font-size:11px;
+}
+.vi-excel-grid-wrap{max-height:560px;background:#fff}
+.vi-excel-grid{min-width:760px;border-collapse:separate!important;border-spacing:0}
+.vi-excel-grid th,.vi-excel-grid td{
+  height:29px!important;padding:5px 8px!important;
+  border-right:1px solid #d8ddda!important;border-bottom:1px solid #d8ddda!important;
+  color:#27372f!important;background:#fff!important;font-size:11px!important;white-space:nowrap;
+}
+.vi-excel-grid thead .vi-excel-letters th{
+  position:sticky;top:0;z-index:5;height:22px!important;padding:2px 8px!important;
+  background:#e6ebe8!important;color:#5c6c65!important;text-align:center!important;font-size:9px!important;font-weight:700!important;
+}
+.vi-excel-grid thead .vi-excel-fields th{
+  position:sticky;top:22px;z-index:4;background:#f2f5f3!important;color:#23342d!important;font-weight:800!important;text-align:left!important;
+}
+.vi-excel-grid .vi-excel-row-number{
+  position:sticky;left:0;z-index:3;min-width:42px;width:42px;text-align:center!important;
+  background:#e9eeeb!important;color:#6a7872!important;font-weight:500!important;
+}
+.vi-excel-grid thead .vi-excel-row-number,.vi-excel-grid .vi-excel-corner{z-index:7}
+.vi-excel-grid tbody tr:hover td{background:#f2faf5!important}
+.vi-excel-grid .vi-inspection-part{color:#0563c1!important;text-decoration:underline;text-underline-offset:2px}
+.vi-excel-statusbar{
+  min-height:38px;display:flex;align-items:center;gap:12px;padding:4px 10px;
+  border-top:1px solid #bfc9c4;background:#f3f6f4;color:#53635c;font-size:10px;
+}
+.vi-excel-sheet-tab{
+  align-self:stretch;display:flex;align-items:center;padding:0 14px;
+  border-bottom:3px solid #107c41;background:#fff;color:#185c37;font-weight:800;
+}
+.vi-excel-statusbar>span{margin-left:auto}
+.vi-excel-statusbar .vi-inspection-pages{padding:0;display:flex;align-items:center;gap:6px}
+.vi-excel-statusbar .vi-button{min-height:28px;padding:0 8px;color:#34483f;border-color:#bdc8c3;background:#fff}
+
+/* =========================================================
+   More transparent glass so the ambient chase stays visible
+   ========================================================= */
+.vi-liquid-surface,
+.vi-financial-shell,
+.vi-findings,
+.vi-health-bar,
+.vi-reconciliation-shell{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.072),rgba(255,255,255,.018) 42%,rgba(0,41,63,.105) 100%)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(145%);
+  backdrop-filter:blur(18px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.15),
+    inset 0 -1px 0 rgba(255,255,255,.025),
+    0 18px 48px rgba(0,8,16,.23),
+    0 2px 8px rgba(0,0,0,.12)!important;
+}
+
+/* =========================================================
+   Ambient Pac-Man world
+   ========================================================= */
+.vi-ambient-chase{opacity:.82}
+.vi-random-chase::before{
+  content:"";
+  position:absolute;inset:0;
+  background:
+    radial-gradient(circle,rgba(255,225,115,.22) 0 1px,transparent 1.6px) 0 0/42px 42px,
+    linear-gradient(90deg,transparent 0 23%,rgba(61,115,174,.055) 23% 23.25%,transparent 23.25% 76%,rgba(61,115,174,.045) 76% 76.25%,transparent 76.25%),
+    linear-gradient(0deg,transparent 0 32%,rgba(61,115,174,.045) 32% 32.25%,transparent 32.25% 68%,rgba(61,115,174,.04) 68% 68.25%,transparent 68.25%);
+  opacity:.52;
+}
+.vi-random-chase .vi-pac-hunter{
+  width:19px!important;height:19px!important;
+  animation:vi-pac-mouth .24s steps(2,end) infinite;
+  filter:drop-shadow(0 0 5px rgba(255,215,106,.55));
+}
+@keyframes vi-pac-mouth{
+  0%,100%{clip-path:polygon(50% 50%,100% 12%,100% 0,0 0,0 100%,100% 100%,100% 88%)}
+  50%{clip-path:polygon(50% 50%,100% 44%,100% 0,0 0,0 100%,100% 100%,100% 56%)}
+}
+.vi-random-chase.is-power-mode .vi-pac-hunter{
+  animation-duration:.16s;
+  filter:drop-shadow(0 0 9px rgba(255,225,82,.95));
+}
+.vi-power-pellet{
+  width:15px!important;height:15px!important;
+  animation:vi-power-pulse .9s ease-in-out infinite alternate;
+}
+@keyframes vi-power-pulse{to{transform:var(--pellet-position) scale(1.22);filter:brightness(1.25)}}
+.vi-arcade-fruit,.vi-arcade-score{
+  position:absolute;top:0;left:0;will-change:transform;z-index:0;
+}
+.vi-arcade-fruit{
+  font-size:15px;font-weight:900;line-height:1;
+  filter:drop-shadow(0 0 5px rgba(255,255,255,.16));
+}
+.vi-fruit-cherry{color:#ff5c72;letter-spacing:-7px}
+.vi-fruit-orange{color:#ff9a3c}
+.vi-fruit-berry{color:#75d98a}
+.vi-arcade-score{
+  color:#fff0a3;font-family:monospace;font-size:11px;font-weight:900;
+  opacity:0;text-shadow:0 0 7px rgba(255,222,80,.6);
+}
+.vi-arcade-score.is-visible{animation:vi-score-pop 1s ease-out forwards}
+@keyframes vi-score-pop{
+  0%{opacity:0;margin-top:4px}
+  18%{opacity:1}
+  100%{opacity:0;margin-top:-18px}
+}
+.vi-random-chase.is-power-mode .ghost-sprite{
+  animation:vi-frightened-blink .55s steps(2,end) infinite;
+}
+@keyframes vi-frightened-blink{50%{filter:brightness(1.35)}}
+
+@media(max-width:800px){
+  .vi-findings-head .vi-location-math-button{width:100%}
+  .vi-excel-titlebar{align-items:flex-start;flex-wrap:wrap}
+  .vi-excel-title-actions{width:100%;margin-left:40px}
+  .vi-excel-title-actions button{flex:1}
+  .vi-excel-ribbon{gap:12px;overflow-x:auto}
+  .vi-excel-statusbar{align-items:stretch;flex-wrap:wrap}
+  .vi-excel-statusbar>span{margin-left:auto}
+}
+@media(max-width:480px){
+  .vi-location-math{margin-inline:9px}
+  .vi-excel-title-actions{margin-left:0}
+  .vi-excel-title-actions{display:grid;grid-template-columns:1fr}
+  .vi-excel-formula{grid-template-columns:52px 26px minmax(0,1fr)}
+}
