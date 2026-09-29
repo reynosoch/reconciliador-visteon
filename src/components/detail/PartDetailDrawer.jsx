@@ -135,28 +135,15 @@ function Metric({
  onHelp,
 }) {
  return (
-<div>
-<div className="flex items-center gap-1"><p
-       className="
-         font-mono
-         text-[11px]
-         font-black
-         tracking-[0.12em]
-         text-slate-700
-       "
->
-       {label}
-</p>{topic && <HelpButton topic={topic} onHelp={onHelp} />}</div>
-<p
-       className={`
-         vi-money
-         mt-1
-         text-sm
-         text-white
-         ${className}
-       `}
->
-       {value}
+<div className="vi-detail-metric">
+<div className="flex items-center gap-1 min-w-0">
+<p className="font-mono text-[10px] font-black tracking-[0.10em] text-slate-400 min-w-0">
+ {label}
+</p>
+{topic && <HelpButton topic={topic} onHelp={onHelp} />}
+</div>
+<p className={`vi-money mt-2 text-white ${className}`}>
+ {value}
 </p>
 </div>
  );
@@ -460,12 +447,7 @@ export default function PartDetailDrawer({
 </div>
 
 <div className="p-5">
-<div className="vi-impact-metrics
-             grid
-             grid-cols-2
-             lg:grid-cols-4
-             gap-4
-           "
+<div className="vi-impact-metrics grid grid-cols-1 sm:grid-cols-2 gap-3"
 >
 <Metric
              label="NET USD"
