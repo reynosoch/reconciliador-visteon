@@ -50,6 +50,7 @@ export default function App() {
     [selectedPart, setSelectedPart] = useState(null),
     [helpTopic, setHelpTopic] = useState(null),
     [activeDataView, setActiveDataView] = useState(null),
+    [dataNavigation, setDataNavigation] = useState(null),
     [notificationsOpen, setNotificationsOpen] = useState(false),
     [notificationTab, setNotificationTab] = useState("OPERATIVAS"),
     [botOpen, setBotOpen] = useState(false),
@@ -158,6 +159,17 @@ export default function App() {
       setIdentity(n);
       if (!safeWriteJson(KEY, n).ok) setWarning(STORAGE_WARNING);
     },
+    openExcelForFinding = (partNumber, findingId) => {
+      setDataNavigation({ partNumber, findingId });
+      setActiveDataView("reconciliationExcel");
+      setTimeout(() => document.getElementById("vi-data-inspection")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    },
+    backToFinding = (findingId) => {
+      setActiveDataView(null);
+      setDataNavigation(null);
+      setFocusFindingId(findingId);
+      setTimeout(() => document.querySelector(".vi-findings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    },
     reason = !referencesReady
       ? "Faltan archivos de referencia válidos."
       : inventory.loading
@@ -209,13 +221,22 @@ export default function App() {
           liveReady={Boolean(inventory.lastUpdated)}
           onHelp={setHelpTopic}
           activeView={activeDataView}
-          onSelect={setActiveDataView}
+          onSelect={(view) => {
+            setDataNavigation(null);
+            setActiveDataView(view);
+          }}
         />
         {activeDataView && (
           <DataInspectionPanel
             view={activeDataView}
-            onClose={() => setActiveDataView(null)}
+            onClose={() => {
+              setActiveDataView(null);
+              setDataNavigation(null);
+            }}
             onSelectPart={setSelectedPart}
+            initialQuery={dataNavigation?.partNumber || ""}
+            originFindingId={dataNavigation?.findingId || null}
+            onBackToFinding={backToFinding}
             scanRows={inventory.scanRows}
             diagnostics={inventory.diagnostics}
             reconciliation={inventory.reconciliation}
@@ -242,6 +263,7 @@ export default function App() {
           evaluationReason={reason}
           focusFindingId={focusFindingId}
           onFocusHandled={() => setFocusFindingId(null)}
+          onOpenExcel={openExcelForFinding}
         />
         <CutHistoryPanel
           canSave={valid}
