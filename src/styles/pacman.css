@@ -1153,3 +1153,21 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
   .vi-menu-overlay{padding:8px}
   .vi-menu-panel{width:calc(100vw - 16px);max-height:calc(100vh - 16px)}
 }
+
+
+/* Keep NET and SWING visually independent in the reconciliation table. */
+.vi-reconciliation-shell .vi-table th:nth-child(2),
+.vi-reconciliation-shell .vi-table td:nth-child(2){
+  min-width:118px;
+  padding-right:18px!important;
+  border-right:1px solid rgba(255,255,255,.08);
+}
+.vi-reconciliation-shell .vi-table th:nth-child(3),
+.vi-reconciliation-shell .vi-table td:nth-child(3){
+  min-width:112px;
+  padding-left:18px!important;
+}
+.vi-reconciliation-shell .vi-table td:nth-child(2) .vi-money,
+.vi-reconciliation-shell .vi-table td:nth-child(3){
+  white-space:nowrap;
+}
