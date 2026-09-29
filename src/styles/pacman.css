@@ -1171,3 +1171,230 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
 .vi-reconciliation-shell .vi-table td:nth-child(3){
   white-space:nowrap;
 }
+
+
+/* =========================================================
+   Responsive navigation + drawer readability pass
+   ========================================================= */
+.vi-header-main{
+  min-height:66px;
+  padding-top:8px;
+  padding-bottom:8px;
+}
+.vi-header-actions{margin-left:auto;gap:7px}
+.vi-menu-button{order:99;margin-left:4px}
+.vi-refresh-button{width:42px!important;padding:0!important;display:grid!important;place-items:center}
+.vi-refresh-icon{display:block}
+.vi-refresh-icon.is-spinning{animation:vi-refresh-spin .8s linear infinite}
+@keyframes vi-refresh-spin{to{transform:rotate(360deg)}}
+.vi-bot-button{gap:7px}
+.vi-ribbon-help{
+  margin-left:auto;min-height:34px;padding:0 11px;display:inline-flex;align-items:center;gap:7px;
+  border:1px solid rgba(255,255,255,.12);border-radius:12px;
+  background:rgba(255,255,255,.045);color:#d8e7ec;font-size:9px;font-weight:800;letter-spacing:.08em;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)
+}
+.vi-ribbon-help>span{
+  width:20px;height:20px;display:grid;place-items:center;border-radius:50%;
+  background:rgba(245,130,31,.13);color:#ffc18b;font-size:11px
+}
+.vi-ribbon-help:hover{border-color:rgba(245,130,31,.55);background:rgba(245,130,31,.07)}
+
+/* Drawer typography must stay readable over glass. */
+.vi-drawer-panel .vi-eyebrow,
+.vi-global-drawer .vi-eyebrow,
+.vi-liquid-drawer .vi-eyebrow{
+  color:#ffb36d!important;font-size:10px!important;font-weight:900!important;letter-spacing:.12em!important
+}
+.vi-drawer-panel h2,
+.vi-global-drawer h2,
+.vi-liquid-drawer h2{color:#fff!important;font-size:20px!important;line-height:1.2!important}
+.vi-drawer-panel p,
+.vi-global-drawer p,
+.vi-liquid-drawer p,
+.vi-drawer-panel .text-slate-300,
+.vi-drawer-panel .text-slate-400,
+.vi-drawer-panel .text-slate-500,
+.vi-drawer-panel .text-slate-600,
+.vi-drawer-panel .text-slate-700{
+  color:#c8d9df!important
+}
+.vi-drawer-panel .text-\[11px\],
+.vi-global-drawer .text-\[11px\]{font-size:12px!important;line-height:1.45!important}
+.vi-source-description{color:#b9ced6!important;font-size:12px!important;line-height:1.45!important}
+.vi-drawer-panel .vi-source-line .text-slate-200{color:#f5fafb!important;font-size:13px!important}
+.vi-drawer-panel .help-label,
+.vi-global-drawer .help-label{
+  color:#ffb879!important;font-size:10px!important;font-weight:900!important;letter-spacing:.1em
+}
+.vi-drawer-panel .help-block,
+.vi-drawer-panel .help-formula,
+.vi-global-drawer .help-block,
+.vi-global-drawer .help-formula{
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-left:1px solid rgba(255,255,255,.10)!important;
+  border-radius:16px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.022))!important;
+  color:#e8f3f6!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07)!important
+}
+.vi-drawer-panel .help-formula,
+.vi-global-drawer .help-formula{white-space:pre-wrap}
+.vi-drawer-panel .source-progress-node{
+  border-color:rgba(255,255,255,.09)!important;
+  background:rgba(255,255,255,.04)!important;
+  color:#a9c0c9!important;border-radius:10px!important
+}
+.vi-drawer-panel .source-progress-ready{
+  background:rgba(76,202,145,.11)!important;color:#a8ebcc!important;border-color:rgba(76,202,145,.24)!important
+}
+.vi-source-line{
+  border-color:rgba(255,255,255,.09)!important;
+  border-radius:17px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018))!important
+}
+
+/* Consistent close/back placement. */
+.vi-drawer-panel .vi-icon-close,
+.vi-global-drawer .vi-icon-close,
+.vi-liquid-drawer .vi-icon-close{
+  position:relative;top:auto;right:auto;margin-left:auto
+}
+.vi-back-button{
+  min-height:38px;padding:0 10px 0 7px;display:inline-flex;align-items:center;gap:3px;
+  border:0;background:transparent;color:#80c8ff;font-size:10px;font-weight:800;letter-spacing:.05em;cursor:pointer
+}
+.vi-back-button>span{font-size:30px;font-weight:300;line-height:.8}
+.vi-back-button:hover{color:#b6e1ff}
+.vi-drawer-back-head{align-items:center!important}
+.vi-drawer-back-title{min-width:0;margin-left:auto;text-align:right}
+.vi-drawer-back-title h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Notifications: separated controls, not a compressed row. */
+.vi-notification-head{
+  position:sticky;top:0;z-index:14;padding:14px 16px 12px!important;
+  background:linear-gradient(180deg,rgba(17,60,79,.94),rgba(7,38,53,.82))!important;
+  border-bottom:1px solid rgba(255,255,255,.10)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(155%);backdrop-filter:blur(26px) saturate(155%)
+}
+.vi-notification-navrow{min-height:40px;display:flex;align-items:center;justify-content:space-between}
+.vi-notification-heading-copy{padding:7px 3px 2px}
+.vi-notification-heading-copy h2{margin-top:3px}
+.vi-notification-heading-copy>p:last-child{margin-top:5px!important;max-width:42ch;font-size:12px!important;line-height:1.45}
+.vi-notification-tabs{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important;margin-top:14px!important
+}
+.vi-notification-tabs button{
+  min-width:0;min-height:58px!important;padding:8px 9px!important;display:grid!important;align-content:center;justify-items:start;gap:2px;
+  border-radius:15px!important;text-align:left
+}
+.vi-notification-tabs button span{font-size:10px;font-weight:900;letter-spacing:.05em}
+.vi-notification-tabs button small{font-size:9px;color:#9db5bf}
+.vi-notification-tabs button b{justify-self:end;grid-row:1;grid-column:2;color:inherit;font-size:11px}
+.vi-notification-tabs button.is-active small{color:#3d4d53!important}
+.vi-alert-summary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;padding:12px 0!important}
+.vi-alert-summary button{min-height:52px!important;padding:8px 10px!important;text-align:left!important;line-height:1.25!important}
+
+/* Main menu comes from the right, matching its far-right hamburger. */
+.vi-menu-overlay{justify-content:flex-end!important}
+.vi-menu-panel{animation:vi-slide .28s ease both}
+
+/* Health/data viewer belongs to the same glass system. */
+.vi-health-item{
+  border-color:rgba(255,255,255,.10)!important;border-radius:13px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.018))!important;
+  color:#c7d9df!important;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)
+}
+.vi-health-item:hover,.vi-health-item.is-active{
+  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(245,130,31,.06))!important;
+  border-color:rgba(245,130,31,.48)!important;color:#fff!important
+}
+.vi-health-item.is-active{box-shadow:inset 0 -2px rgba(245,130,31,.78),inset 0 1px rgba(255,255,255,.09)!important}
+.vi-inspection{
+  background:linear-gradient(145deg,rgba(20,63,82,.76),rgba(6,38,53,.68))!important;
+  border:1px solid rgba(255,255,255,.11)!important;border-left:1px solid rgba(255,255,255,.11)!important;
+  border-radius:20px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 44px rgba(0,0,0,.14);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)
+}
+.vi-inspection-description{color:#c4d8df!important}
+.vi-excel-titlebar{border-radius:18px 18px 0 0;overflow:hidden}
+.vi-excel-title-actions{margin-left:auto;display:flex;align-items:center}
+.vi-excel-back{
+  min-height:34px;padding:0 8px;border:0;background:transparent;color:#d9f0e3;font-size:10px;font-weight:900;cursor:pointer
+}
+.vi-excel-back>span{font-size:24px;vertical-align:-2px}
+
+/* Keep both radars with the user while the reconciliation is in view. */
+.vi-radar-slot{align-self:stretch!important;position:relative}
+.vi-radar-stack{position:sticky!important;top:126px!important;z-index:8}
+@media(max-width:1190px){
+  .vi-radar-slot{
+    position:sticky!important;top:116px!important;z-index:12!important;order:-1;
+    background:rgba(6,34,48,.76);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)
+  }
+  .vi-radar-stack{
+    position:static!important;max-height:none!important;grid-template-columns:repeat(2,minmax(260px,1fr));
+    overflow-x:auto!important;overflow-y:hidden!important
+  }
+}
+@media(max-width:900px){
+  .vi-radar-slot{top:108px!important}
+  .vi-radar-stack{position:static!important;display:flex!important;grid-template-columns:none!important;padding:8px!important}
+  .vi-radar-card{min-width:min(78vw,330px)}
+}
+
+/* Responsive command bar */
+@media(max-width:1050px){
+  .vi-product-name{display:none}
+  .vi-fetch-time{display:none}
+  .vi-bot-button span:last-child{font-size:0}
+  .vi-bot-button span:last-child::after{content:"BOT 4WALL";font-size:10px}
+  .vi-source-ribbon-inner{gap:13px}
+  .vi-source-copy{gap:5px}
+}
+@media(max-width:760px){
+  .vi-header-main{min-height:60px;padding:7px 10px;gap:8px;flex-wrap:nowrap!important}
+  .vi-header-brand{width:auto!important;flex:1;gap:8px}
+  .vi-brand-logo{width:112px!important}
+  .vi-header-actions{width:auto!important;flex:none;justify-content:flex-end!important;gap:4px!important}
+  .vi-header-actions .vi-button{min-height:36px!important;height:36px;padding:0 8px!important;border-radius:11px!important}
+  .vi-bot-button{width:36px!important;padding:0!important;justify-content:center}
+  .vi-bot-button span:first-child{font-size:11px}
+  .vi-bot-button span:last-child{display:none}
+  .vi-sources-button{font-size:0!important;width:42px!important;padding:0!important;justify-content:center}
+  .vi-sources-button::before{content:"SRC";font-size:9px;font-weight:900}
+  .vi-sources-button .vi-button-count{display:none}
+  .vi-menu-button{width:38px!important;margin-left:2px}
+  .vi-source-ribbon-inner{min-height:46px;padding:6px 10px;gap:9px;overflow-x:auto;scrollbar-width:none}
+  .vi-source-ribbon-inner::-webkit-scrollbar{display:none}
+  .vi-flow-label,.vi-ribbon-flow,.vi-ribbon-separator{display:none!important}
+  .vi-source-ribbon .vi-source-state{flex:none!important}
+  .vi-source-copy{display:grid;gap:0}
+  .vi-source-copy strong{font-size:9px}
+  .vi-source-copy small{font-size:9px}
+  .vi-source-detail{display:none}
+  .vi-ribbon-help{flex:none;margin-left:0;min-height:32px;padding:0 8px}
+  .vi-ribbon-help strong{display:none}
+  .vi-notification-tabs{grid-template-columns:1fr!important}
+  .vi-notification-tabs button{min-height:48px!important;grid-template-columns:1fr auto}
+  .vi-alert-summary{grid-template-columns:1fr!important}
+  .vi-drawer-panel,.vi-detail-drawer,.vi-global-drawer,.vi-menu-panel{width:100vw!important;max-width:100vw!important;border-radius:0!important}
+  .vi-drawer-panel>div:first-of-type,.vi-global-drawer>div:first-child{padding-left:16px!important;padding-right:16px!important}
+  .vi-drawer-panel h2,.vi-global-drawer h2{font-size:19px!important}
+  .vi-source-line{grid-template-columns:1fr!important}
+  .vi-source-line>div:last-child{justify-content:flex-end}
+  .vi-dual-grid{grid-template-columns:1fr!important}
+  .vi-dual-sheet-scroll{max-height:42vh}
+  .vi-excel-titlebar{border-radius:0}
+}
+@media(max-width:420px){
+  .vi-brand-logo{width:96px!important}
+  .vi-header-actions .vi-button{width:34px!important;padding:0!important}
+  .vi-icon-button{width:34px!important}
+  .vi-sources-button{width:34px!important}
+  .vi-menu-button{width:34px!important}
+  .vi-refresh-button{width:34px!important}
+  .vi-header-actions{gap:3px!important}
+}
