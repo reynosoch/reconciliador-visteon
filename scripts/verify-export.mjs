@@ -1,4 +1,4 @@
-import { exportInventoryWorkbook } from "../src/services/exportInventoryWorkbook.js";
+import { exportInventoryWorkbook, exportDiscrepanciesWorkbook } from "../src/services/exportInventoryWorkbook.js";
 
 let capturedBlob = null;
 const originalCreate = URL.createObjectURL;
@@ -36,7 +36,13 @@ try {
   const bytes = new Uint8Array(await capturedBlob.arrayBuffer());
   if (bytes[0] !== 0x50 || bytes[1] !== 0x4b || bytes[2] !== 0x03 || bytes[3] !== 0x04) throw new Error("Generated file is not a ZIP/XLSX container");
   if (result.sheets !== 7) throw new Error(`Expected 7 sheets, got ${result.sheets}`);
-  console.log(`Excel export verification OK · ${bytes.length} bytes · ${result.sheets} sheets`);
+  const discrepancies = await exportDiscrepanciesWorkbook({
+    findings: [{ partNumber: "TEST-PN", ruleCode: "NO_PHYSICAL", category: "CANTIDAD", tags: ["SIN FÍSICO"], netPieces: -10, netUsd: -20, locations: ["ZWHSE"], whatFound: "QAD tiene saldo sin físico.", possibleExplanation: "Conteo pendiente.", nextAction: "Revisar.", valuationState: "VALORADO", countState: "DESCONOCIDO" }],
+    inventoryName: "Verification",
+    lastUpdated: new Date("2026-09-29T12:00:00Z"),
+  });
+  if (discrepancies.sheets !== 2) throw new Error(`Expected 2 discrepancy sheets, got ${discrepancies.sheets}`);
+  console.log(`Excel export verification OK · ${bytes.length} bytes · ${result.sheets} inventory sheets · ${discrepancies.sheets} discrepancy sheets`);
 } finally {
   URL.createObjectURL = originalCreate;
   URL.revokeObjectURL = originalRevoke;
