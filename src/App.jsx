@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CommandHeader from "./components/shell/CommandHeader";
 import SourcesDrawer from "./components/shell/SourcesDrawer";
 import DataHealthBar from "./components/dashboard/DataHealthBar";
@@ -47,6 +47,7 @@ function initial() {
   return { id: old || newId(), name: old || "Inventario actual" };
 }
 export default function App() {
+  const mobileSwipeStart = useRef(null);
   const [sourcesOpen, setSourcesOpen] = useState(false),
     [selectedPart, setSelectedPart] = useState(null),
     [helpTopic, setHelpTopic] = useState(null),
@@ -158,6 +159,30 @@ export default function App() {
     addEventListener("beforeunload", h);
     return () => removeEventListener("beforeunload", h);
   }, [references.status.loadedCount, warning]);
+  useEffect(() => {
+    const start = (event) => {
+      if (window.innerWidth > 760 || sourcesOpen || notificationsOpen || botOpen || helpTopic || selectedPart || menuOpen || animationOnly) return;
+      const touch = event.touches?.[0];
+      if (!touch || touch.clientX < window.innerWidth - 28) return;
+      mobileSwipeStart.current = { x: touch.clientX, y: touch.clientY };
+    };
+    const end = (event) => {
+      const origin = mobileSwipeStart.current;
+      mobileSwipeStart.current = null;
+      if (!origin) return;
+      const touch = event.changedTouches?.[0];
+      if (!touch) return;
+      const dx = touch.clientX - origin.x;
+      const dy = Math.abs(touch.clientY - origin.y);
+      if (dx < -58 && dy < 70) setMenuOpen(true);
+    };
+    addEventListener("touchstart", start, { passive: true });
+    addEventListener("touchend", end, { passive: true });
+    return () => {
+      removeEventListener("touchstart", start);
+      removeEventListener("touchend", end);
+    };
+  }, [sourcesOpen, notificationsOpen, botOpen, helpTopic, selectedPart, menuOpen, animationOnly]);
   const saveIdentity = (n) => {
       setIdentity(n);
       if (!safeWriteJson(KEY, n).ok) setWarning(STORAGE_WARNING);
