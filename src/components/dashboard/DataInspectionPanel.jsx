@@ -308,7 +308,7 @@ function FindingEvidenceView({ finding, scanRows, referenceRows, reconciliation,
           <span>{finding?.ruleCode || "Hallazgo"}</span>
         </div>
         <div className="vi-excel-title-actions">
-          <button type="button" className="vi-excel-close" onClick={onClose}>CERRAR ×</button>
+          <button type="button" className="vi-excel-back" onClick={onClose}><span aria-hidden="true">‹</span> REGRESAR</button>
         </div>
       </div>
       <div className="vi-evidence-alert">
@@ -383,7 +383,7 @@ export default function DataInspectionPanel({
           <span>{VIEW_TITLES[view]}</span>
         </div>
         <div className="vi-excel-title-actions">
-          <button type="button" className="vi-excel-close" onClick={onClose}>CERRAR ×</button>
+          <button type="button" className="vi-icon-close vi-excel-close" onClick={onClose} aria-label="Cerrar visor">×</button>
         </div>
       </div>
       <div className="vi-excel-ribbon">
