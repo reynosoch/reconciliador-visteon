@@ -5,10 +5,7 @@ export function PacDot({ size = 8, className = "" }) {
   return (
     <span
       className={`pac-dot ${className}`}
-      style={{
-        width: size,
-        height: size,
-      }}
+      style={{ width: size, height: size }}
       aria-hidden="true"
     />
   );
@@ -17,15 +14,8 @@ export function PacDot({ size = 8, className = "" }) {
 export function Ghost({ size = 16, tone = "violet", className = "" }) {
   return (
     <span
-      className={`
-       ghost-sprite
-       ghost-${tone}
-       ${className}
-     `}
-      style={{
-        width: size,
-        height: size,
-      }}
+      className={`ghost-sprite ghost-${tone} ${className}`}
+      style={{ width: size, height: size }}
       aria-hidden="true"
     >
       <span className="ghost-eye ghost-eye-left" />
@@ -40,11 +30,7 @@ export function Ghost({ size = 16, tone = "violet", className = "" }) {
 export function PelletRail({ muted = false, className = "" }) {
   return (
     <div
-      className={`
-       pac-pellet-rail
-       ${muted ? "pac-pellet-rail-muted" : ""}
-       ${className}
-     `}
+      className={`pac-pellet-rail ${muted ? "pac-pellet-rail-muted" : ""} ${className}`}
     />
   );
 }
@@ -59,56 +45,113 @@ export function AmbientChase() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const pacman = host.querySelector('[data-chase="pacman"]');
     const ghosts = [...host.querySelectorAll('[data-chase="ghost"]')];
-    const powerPellet = host.querySelector('[data-chase="power"]');
+    const pellets = [...host.querySelectorAll('[data-chase="power"]')];
+    const fruits = [...host.querySelectorAll('[data-chase="fruit"]')];
+    const score = host.querySelector('[data-chase="score"]');
 
     let frame = 0;
     let last = 0;
     let point = { x: 48, y: 180 };
     let target = { ...point };
     let trail = [];
-    let powerPoint = null;
-    let powerArmed = false;
     let powerUntil = 0;
-    let nextPowerAt = performance.now() + 7000 + Math.random() * 9000;
+    let targetPellet = null;
+    let nextPowerAt = performance.now() + 5000 + Math.random() * 7000;
+    let scoreUntil = 0;
 
     const randomPoint = () => ({
-      x: 28 + Math.random() * Math.max(1, window.innerWidth - 72),
-      y: 110 + Math.random() * Math.max(1, window.innerHeight - 170),
+      x: 28 + Math.random() * Math.max(1, window.innerWidth - 78),
+      y: 105 + Math.random() * Math.max(1, window.innerHeight - 165),
     });
+
+    const setPosition = (element, p) => {
+      if (!element || !p) return;
+      element.dataset.x = String(p.x);
+      element.dataset.y = String(p.y);
+      element.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
+    };
+
+    const readPosition = (element) => ({
+      x: Number(element?.dataset.x) || 0,
+      y: Number(element?.dataset.y) || 0,
+    });
+
+    const scatterDecorations = () => {
+      pellets.forEach((pellet) => {
+        pellet.hidden = false;
+        setPosition(pellet, randomPoint());
+      });
+      fruits.forEach((fruit) => {
+        fruit.hidden = false;
+        setPosition(fruit, randomPoint());
+      });
+    };
 
     const sampleAt = (wanted) =>
       trail.findLast((sample) => sample.time <= wanted) || trail[0] || point;
 
-    const place = (element, sample, offsetY = 0, faceLeft = false) => {
+    const place = (element, sample, faceLeft = false) => {
       if (!element || !sample) return;
-      element.style.transform =
-        `translate3d(${sample.x}px, ${sample.y + offsetY}px, 0)`;
+      element.style.transform = `translate3d(${sample.x}px, ${sample.y}px, 0)`;
       const face = element.querySelector(".vi-pac-hunter");
       if (face) face.style.transform = faceLeft ? "scaleX(-1)" : "scaleX(1)";
-    };
-
-    const hidePower = () => {
-      powerArmed = false;
-      powerPoint = null;
-      if (powerPellet) powerPellet.hidden = true;
-    };
-
-    const armPower = (now) => {
-      powerPoint = randomPoint();
-      powerArmed = true;
-      target = { ...powerPoint };
-      if (powerPellet) {
-        powerPellet.hidden = false;
-        powerPellet.style.transform =
-          `translate3d(${powerPoint.x}px, ${powerPoint.y}px, 0)`;
-      }
-      nextPowerAt = now + 12000 + Math.random() * 12000;
     };
 
     const setPowerMode = (active) => {
       host.classList.toggle("is-power-mode", active);
     };
 
+    const showScore = (p, value = "+100") => {
+      if (!score) return;
+      score.textContent = value;
+      score.style.transform = `translate3d(${p.x}px, ${p.y - 12}px, 0)`;
+      score.classList.remove("is-visible");
+      void score.offsetWidth;
+      score.classList.add("is-visible");
+      scoreUntil = performance.now() + 1000;
+    };
+
+    const choosePower = () => {
+      const available = pellets.filter((pellet) => !pellet.hidden);
+      if (!available.length) {
+        scatterDecorations();
+      }
+      const candidates = pellets.filter((pellet) => !pellet.hidden);
+      targetPellet = candidates[Math.floor(Math.random() * candidates.length)] || null;
+      if (targetPellet) target = readPosition(targetPellet);
+    };
+
+    const eatPower = (now) => {
+      if (!targetPellet) return;
+      const pelletPoint = readPosition(targetPellet);
+      targetPellet.hidden = true;
+      showScore(pelletPoint, "+50");
+      targetPellet = null;
+      powerUntil = now + 6500 + Math.random() * 3000;
+      setPowerMode(true);
+      nextPowerAt = powerUntil + 5000 + Math.random() * 9000;
+      target = randomPoint();
+    };
+
+    const checkFruit = (now) => {
+      for (const fruit of fruits) {
+        if (fruit.hidden) continue;
+        const p = readPosition(fruit);
+        if (Math.hypot(point.x - p.x, point.y - p.y) < 20) {
+          fruit.hidden = true;
+          showScore(p, "+100");
+          window.setTimeout(() => {
+            if (!host.isConnected) return;
+            setPosition(fruit, randomPoint());
+            fruit.hidden = false;
+          }, 3500 + Math.random() * 3500);
+          break;
+        }
+      }
+      if (score && now > scoreUntil) score.classList.remove("is-visible");
+    };
+
+    scatterDecorations();
     target = randomPoint();
 
     const tick = (now) => {
@@ -121,26 +164,23 @@ export function AmbientChase() {
       const powered = now < powerUntil;
       if (!powered && host.classList.contains("is-power-mode")) {
         setPowerMode(false);
-        nextPowerAt = now + 9000 + Math.random() * 15000;
       }
-
-      if (!powered && !powerArmed && now >= nextPowerAt) armPower(now);
+      if (!powered && !targetPellet && now >= nextPowerAt) choosePower();
 
       const elapsed = last ? Math.min(now - last, 64) / 1000 : 0;
       last = now;
       const dx = target.x - point.x;
       const dy = target.y - point.y;
       const distance = Math.hypot(dx, dy);
-      const speed = powered ? 96 : 76;
+      const speed = powered ? 104 : 78;
       const step = Math.min(distance, speed * elapsed);
 
-      if (distance < 8) {
-        if (powerArmed && powerPoint) {
-          hidePower();
-          powerUntil = now + 6500 + Math.random() * 3500;
-          setPowerMode(true);
+      if (distance < 9) {
+        if (targetPellet) {
+          eatPower(now);
+        } else {
+          target = randomPoint();
         }
-        target = randomPoint();
       } else {
         point = {
           x: point.x + (dx / distance) * step,
@@ -148,24 +188,25 @@ export function AmbientChase() {
         };
       }
 
+      checkFruit(now);
       trail.push({ ...point, time: now, left: dx < 0 });
-      trail = trail.filter((sample) => now - sample.time < 3200);
+      trail = trail.filter((sample) => now - sample.time < 4200);
 
       if (now < powerUntil) {
-        // Power mode: blue ghosts flee in a line and Pac-Man follows them.
+        // Frightened mode: blue phantoms stay well ahead and Pac-Man hunts them.
         ghosts.forEach((ghost, index) => {
-          const sample = sampleAt(now - index * 150);
-          place(ghost, sample, 0, sample.left);
+          const sample = sampleAt(now - index * 380);
+          place(ghost, sample, sample.left);
         });
-        const pacSample = sampleAt(now - 720);
-        place(pacman, pacSample, 0, pacSample.left);
+        const pacSample = sampleAt(now - 1050);
+        place(pacman, pacSample, pacSample.left);
       } else {
-        // Normal mode: Pac-Man runs first and the phantoms chase in a line.
+        // Normal mode: Pac-Man flees and phantoms follow with visible spacing.
         const pacSample = sampleAt(now);
-        place(pacman, pacSample, 0, pacSample.left);
+        place(pacman, pacSample, pacSample.left);
         ghosts.forEach((ghost, index) => {
-          const sample = sampleAt(now - 420 - index * 210);
-          place(ghost, sample, 0, sample.left);
+          const sample = sampleAt(now - 650 - index * 420);
+          place(ghost, sample, sample.left);
         });
       }
 
@@ -175,14 +216,13 @@ export function AmbientChase() {
     const resize = () => {
       point = {
         x: Math.min(point.x, Math.max(28, window.innerWidth - 40)),
-        y: Math.min(point.y, Math.max(110, window.innerHeight - 40)),
+        y: Math.min(point.y, Math.max(105, window.innerHeight - 40)),
       };
+      targetPellet = null;
       target = randomPoint();
       trail = [];
-      if (powerArmed) {
-        hidePower();
-        nextPowerAt = performance.now() + 5000 + Math.random() * 9000;
-      }
+      scatterDecorations();
+      nextPowerAt = performance.now() + 4000 + Math.random() * 7000;
     };
 
     window.addEventListener("resize", resize);
@@ -195,23 +235,27 @@ export function AmbientChase() {
   }, []);
 
   return (
-    <div
-      ref={root}
-      className="vi-ambient-chase vi-random-chase"
-      aria-hidden="true"
-    >
-      <span className="vi-power-pellet" data-chase="power" hidden />
+    <div ref={root} className="vi-ambient-chase vi-random-chase" aria-hidden="true">
+      <span className="vi-power-pellet" data-chase="power" />
+      <span className="vi-power-pellet" data-chase="power" />
+      <span className="vi-power-pellet" data-chase="power" />
+
+      <span className="vi-arcade-fruit vi-fruit-cherry" data-chase="fruit">●●</span>
+      <span className="vi-arcade-fruit vi-fruit-orange" data-chase="fruit">●</span>
+      <span className="vi-arcade-fruit vi-fruit-berry" data-chase="fruit">◆</span>
+      <span className="vi-arcade-score" data-chase="score">+100</span>
+
       <span className="vi-ambient-hunter" data-chase="pacman">
         <span className="vi-pac-hunter" />
       </span>
       <span className="vi-ambient-ghost" data-chase="ghost">
-        <Ghost size={16} tone="violet" />
+        <Ghost size={17} tone="violet" />
       </span>
       <span className="vi-ambient-ghost" data-chase="ghost">
-        <Ghost size={16} tone="cyan" />
+        <Ghost size={17} tone="cyan" />
       </span>
       <span className="vi-ambient-ghost" data-chase="ghost">
-        <Ghost size={16} tone="pink" />
+        <Ghost size={17} tone="pink" />
       </span>
     </div>
   );
