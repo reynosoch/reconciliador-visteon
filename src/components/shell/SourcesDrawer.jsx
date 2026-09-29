@@ -432,6 +432,7 @@ export default function SourcesDrawer({
    };
 
  return (
+<OverlayPortal onClose={onClose}>
 <div
      className="
        vi-drawer-backdrop
