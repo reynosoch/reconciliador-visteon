@@ -43,46 +43,47 @@ function warningRows(warnings = {}) {
   ];
 }
 
+const FOUR_WALL_COLUMNS = [
+  "Ticket/FIFO",
+  "AreaName",
+  "subArea",
+  "Escaneador",
+  "auditor",
+  "Numero de parte",
+  "Número Parte QAD",
+  "Quantity",
+  "Costo Estándar",
+  "Costo Total",
+  "Responsable",
+  "Área General",
+  "Fecha agregado",
+  "serial",
+];
+
 function rawScanObject(row) {
-  return row?.raw_record && typeof row.raw_record === "object"
-    ? row.raw_record
-    : {
-        id: row?.id,
-        numero_parte: row?.numero_parte,
-        cantidad: row?.cantidad,
-        area_escaneo: row?.area_escaneo,
-      };
+  const raw = row?.raw_record && typeof row.raw_record === "object" ? row.raw_record : {};
+  const normalizedFallback = {
+    "Número Parte QAD": row?.numero_parte,
+    Quantity: row?.cantidad,
+    AreaName: row?.area_escaneo,
+  };
+  return Object.fromEntries(
+    FOUR_WALL_COLUMNS.map((key) => [key, raw[key] ?? normalizedFallback[key] ?? ""]),
+  );
 }
 
 function scanColumns(scanRows = []) {
-  const keys = [];
-  const seen = new Set();
-  scanRows.slice(0, 200).forEach((row) => {
-    Object.keys(rawScanObject(row)).forEach((key) => {
-      if (!seen.has(key)) {
-        seen.add(key);
-        keys.push(key);
-      }
-    });
-  });
   const sourceColumns = scanRows.find((row) => row?.source_columns)?.source_columns || {};
-  const roleLabel = { part_number: "Part Number", quantity: "Cantidad", area: "Área 4Wall" };
-  const used = new Map(
-    Object.entries(sourceColumns).map(([role, key]) => [String(key), roleLabel[role] || role]),
-  );
-  const fallbackUsed = new Map([
-    ["numero_parte", "Part Number"],
-    ["cantidad", "Cantidad"],
-    ["area_escaneo", "Área"],
+  const usedKeys = new Map([
+    [String(sourceColumns.part_number || "Número Parte QAD"), "Part Number"],
+    [String(sourceColumns.quantity || "Quantity"), "Cantidad"],
+    [String(sourceColumns.area || "AreaName"), "Área 4Wall"],
   ]);
-  return keys.map((key) => {
-    const role = used.get(key) || fallbackUsed.get(key);
-    return {
-      key,
-      label: role ? `${key}  ★ USADO: ${role}` : key,
-      used: Boolean(role),
-    };
-  });
+  return FOUR_WALL_COLUMNS.map((key) => ({
+    key,
+    label: usedKeys.has(key) ? `${key}  ★ USADO: ${usedKeys.get(key)}` : key,
+    used: usedKeys.has(key),
+  }));
 }
 
 function scanViewRows(scanRows = []) {
