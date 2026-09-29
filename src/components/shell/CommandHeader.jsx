@@ -1,11 +1,11 @@
 import { Bell } from "./NotificationCenter";
 function formatTime(date){if(!date)return "—";try{return new Intl.DateTimeFormat("es-MX",{hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(date));}catch{return "—";}}
 function SourceState({label,state,detail,live=false,ready=false,error=false}){return <div className="vi-source-state"><span className={`vi-source-indicator ${live?"is-live":ready?"is-ready":error?"is-error":""}`} aria-hidden="true"/><span className="vi-source-copy"><strong>{label}</strong><small>{state}<span className="vi-source-detail"> · {detail}</span></small></span></div>;}
-export default function CommandHeader({connectionStatus,scanCount=0,lastUpdated,referenceStatus,loading=false,sourcesOpen=false,onRefresh,onToggleSources,onOpenRules,onOpenNotifications,onOpenBot,notificationCount=0}){
+export default function CommandHeader({connectionStatus,scanCount=0,lastUpdated,referenceStatus,loading=false,sourcesOpen=false,onRefresh,onToggleSources,onOpenRules,onOpenNotifications,onOpenBot,onOpenMenu,notificationCount=0}){
  const live=["LIVE","REFRESHING"].includes(connectionStatus?.state);const liveError=connectionStatus?.state==="ERROR";const referencesReady=referenceStatus?.allLoaded===true;const loaded=referenceStatus?.loadedCount||0;const total=referenceStatus?.totalSources||5;
  return <header className="vi-command-header"><div className="vi-header-main">
   <div className="vi-header-brand"><img src={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`} alt="Visteon" className="vi-brand-logo"/><span className="vi-brand-divider" aria-hidden="true"/><span className="vi-product-name">CONTROL DE INVENTARIO</span></div>
-  <div className="vi-header-actions"><span className="vi-fetch-time"><small>ÚLTIMA CONSULTA</small><strong>{formatTime(lastUpdated)}</strong></span>
+  <div className="vi-header-actions"><button type="button" className="vi-button vi-button-light vi-menu-button" onClick={onOpenMenu} aria-label="Abrir menú"><span className="vi-hamburger" aria-hidden="true"><i/><i/><i/></span></button><span className="vi-fetch-time"><small>ÚLTIMA CONSULTA</small><strong>{formatTime(lastUpdated)}</strong></span>
    <button type="button" onClick={onOpenNotifications} className="vi-button vi-button-light vi-icon-button" aria-label="Abrir notificaciones"><Bell/>{notificationCount>0&&<b className="vi-notification-badge">{notificationCount}</b>}</button>
    <button type="button" onClick={onOpenBot} className="vi-button vi-button-light" aria-label="Control del bot 4Wall">▶ BOT</button>
    <button type="button" onClick={onToggleSources} className={`vi-button vi-button-light ${sourcesOpen?"is-selected":""}`} aria-expanded={sourcesOpen}>FUENTES <span className="vi-button-count">{loaded}/{total}</span></button>
