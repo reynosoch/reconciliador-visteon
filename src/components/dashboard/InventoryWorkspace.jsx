@@ -384,6 +384,7 @@ export default function InventoryWorkspace({
 <section
      className="
        vi-panel
+       vi-reconciliation-shell
        overflow-hidden
      "
 >
