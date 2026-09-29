@@ -5,13 +5,12 @@ import {
   snapshotsComparable,
 } from "../../domain/buildDiscrepancyFindings.js";
 import {
-  downloadJson,
-  browserDb,
   idbGet,
   idbSet,
   STORAGE_WARNING,
 } from "../../services/browserStorage.js";
-import ConfirmDialog from "../shell/ConfirmDialog.jsx";
+import { exportInventoryWorkbook } from "../../services/exportInventoryWorkbook.js";
+
 export const RULES_VERSION = "2026-09-28-discrepancy-v2";
 const EMPTY = [];
 const money = (v) =>
@@ -26,25 +25,27 @@ const refs = (s) =>
     fingerprint: s[type]?.fingerprint || "",
     fileName: s[type]?.fileName || "",
   }));
+
 export default function CutHistoryPanel({
   canSave,
   summary,
   scanCount = 0,
   lastUpdated,
   rows = [],
+  findings = [],
+  scanRows = [],
+  diagnostics,
   sources = {},
   snapshotMeta,
   inventory,
-  onRenameInventory,
-  onCreateInventory,
   onLatestCut,
   onPersistenceError,
 }) {
-  const [draft, setDraft] = useState(inventory.name);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState("");
   const [memory, setMemory] = useState(null);
-  const [confirmClear, setConfirmClear] = useState(false);
   const key = `cuts:${inventory.id}`;
   const stored = useLiveQuery(
     async () => ({ ...(await idbGet(key, EMPTY)), key }),
@@ -58,9 +59,7 @@ export default function CutHistoryPanel({
         ? stored.value
         : EMPTY;
   const last = cuts[0] || null;
-  useEffect(() => {
-    setDraft(inventory.name);
-  }, [inventory.id, inventory.name]);
+
   useEffect(() => {
     if (loaded && !stored.ok) {
       setError(STORAGE_WARNING);
@@ -70,16 +69,16 @@ export default function CutHistoryPanel({
   useEffect(() => {
     onLatestCut?.(last);
   }, [last, onLatestCut]);
-  const nameDirty = draft.trim() !== inventory.name.trim();
   useEffect(() => {
-    if (!nameDirty && !busy && !memory) return;
+    if (!busy && !memory && !exporting) return;
     const warn = (e) => {
       e.preventDefault();
       e.returnValue = "";
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [nameDirty, busy, memory]);
+  }, [busy, memory, exporting]);
+
   const current = useMemo(
     () =>
       buildSnapshot({
@@ -96,6 +95,7 @@ export default function CutHistoryPanel({
     () => snapshotsComparable(last, current),
     [last, current],
   );
+
   const persist = async (value) => {
     if (busy || !loaded) return;
     setBusy(true);
@@ -110,6 +110,7 @@ export default function CutHistoryPanel({
     }
     setBusy(false);
   };
+
   const save = () => {
     if (!canSave || !summary || busy || !loaded) return;
     const cut = {
@@ -122,80 +123,89 @@ export default function CutHistoryPanel({
     };
     persist([cut, ...cuts].slice(0, 24));
   };
-  const backup = async () => {
-    // Include archived older versions so migration never makes them inaccessible.
-    let legacy = {};
+
+  const exportExcel = async () => {
+    if (!canSave || !summary || exporting) return;
+    setExporting(true);
+    setExportMessage("");
     try {
-      const keys = await browserDb.state.toCollection().primaryKeys();
-      for (const k of keys.filter((k) => String(k).startsWith("legacy:")))
-        legacy[k] = await browserDb.state.get(k);
-    } catch {
-      setError(
-        "El respaldo incluye los cortes abiertos. No pudimos leer los archivos del historial anterior.",
+      const result = await exportInventoryWorkbook({
+        inventory,
+        summary,
+        rows,
+        findings,
+        scanRows,
+        diagnostics,
+        sources,
+        snapshotMeta,
+        lastUpdated,
+      });
+      setExportMessage(
+        `Excel listo: ${result.sheets} hojas con dashboard, conciliación y evidencia del corte.`,
       );
+    } catch (cause) {
+      console.error("Excel export failed", cause);
+      setExportMessage(
+        "No se pudo crear el Excel. Los resultados del navegador no se borraron.",
+      );
+    } finally {
+      setExporting(false);
     }
-    downloadJson(`respaldo-${inventory.id}.json`, { inventory, cuts, legacy });
   };
+
   return (
-    <section className="vi-panel vi-cut-history">
-      <div className="vi-cut-history-head">
+    <section className="vi-panel vi-cut-history vi-liquid-surface">
+      <div className="vi-cut-history-head vi-meeting-head">
         <div>
           <p className="vi-eyebrow">JUNTAS DE INVENTARIO</p>
-          <h2>Resultados guardados para las juntas</h2>
+          <h2>Guardar o compartir este corte</h2>
           <p>
-            Guarda los resultados de este momento para revisarlos en la
-            siguiente junta.
+            Guarda una copia en este navegador para comparar la siguiente junta,
+            o exporta un Excel completo para compartirlo con Finanzas.
           </p>
         </div>
-        <div className="vi-cut-history-actions">
-          <label className="vi-campaign-label">
-            NOMBRE DEL INVENTARIO
-            <input
-              className="vi-input"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-            />
-          </label>
+        <div className="vi-cut-history-actions vi-meeting-actions">
           <button
-            className="vi-button"
-            disabled={!nameDirty || !draft.trim()}
-            onClick={() => onRenameInventory?.(draft.trim())}
-          >
-            GUARDAR NOMBRE
-          </button>
-          <button className="vi-button" onClick={onCreateInventory}>
-            CREAR INVENTARIO
-          </button>
-          <button className="vi-button" onClick={backup}>
-            DESCARGAR RESPALDO
-          </button>
-          <button
-            className="vi-button"
-            disabled={!cuts.length || busy}
-            onClick={() => setConfirmClear(true)}
-          >
-            LIMPIAR HISTORIAL
-          </button>
-          <button
-            className="vi-button vi-button-primary"
+            className="vi-button vi-button-glass"
             disabled={!canSave || busy || !loaded}
             onClick={save}
           >
-            {busy ? "GUARDANDO…" : "GUARDAR RESULTADOS"}
+            {busy ? "GUARDANDO…" : "GUARDAR RESULTADOS EN NAVEGADOR"}
+          </button>
+          <button
+            className="vi-button vi-button-primary vi-export-button"
+            disabled={!canSave || exporting}
+            onClick={exportExcel}
+          >
+            {exporting ? "CREANDO EXCEL…" : "EXPORTAR EXCEL COMPLETO"}
           </button>
         </div>
       </div>
+
+      <div className="vi-meeting-explainer">
+        <strong>¿Qué incluye el Excel?</strong>
+        <span>
+          Un dashboard con fecha y hora, indicadores explicados para cualquier
+          lector, conciliación completa por Part Number, detalle por localidad,
+          hallazgos para investigar, 4Wall actual, fuentes utilizadas y una guía
+          de interpretación.
+        </span>
+      </div>
+
       <p className="vi-cut-local-note" role="status">
         {busy
-          ? "Guardando…"
+          ? "Guardando resultados en este navegador…"
           : memory?.key === key
-            ? "Hay resultados que aún no se han guardado."
-            : nameDirty
-              ? "Falta guardar el nombre."
-              : !loaded
-                ? "Abriendo el historial…"
-                : "Historial disponible en este navegador."}
+            ? "Hay resultados que aún no se han guardado de forma permanente."
+            : !loaded
+              ? "Abriendo el historial del navegador…"
+              : "El historial queda en este navegador; el Excel es la copia para compartir."}
       </p>
+      {exportMessage && (
+        <p className="vi-export-message" role="status">
+          {exportMessage}
+        </p>
+      )}
       {error && (
         <p className="vi-cut-error" role="alert">
           {error}
@@ -203,12 +213,13 @@ export default function CutHistoryPanel({
       )}
       {last && canSave && !comparison.ok && (
         <p className="vi-cut-warning">
-          No podemos comparar estos resultados: {comparison.reason}
+          No podemos comparar estos resultados con el corte anterior: {comparison.reason}
         </p>
       )}
+
       {!cuts.length ? (
         <p className="vi-cut-empty">
-          Todavía no hay resultados guardados para este inventario.
+          Todavía no hay resultados guardados en este navegador.
         </p>
       ) : (
         <div className="vi-cut-list">
@@ -227,21 +238,6 @@ export default function CutHistoryPanel({
           ))}
         </div>
       )}
-      <p className="vi-cut-local-note">
-        Estos resultados quedan en este equipo. Descarga un respaldo si
-        necesitas llevarlos a otro.
-      </p>
-      <ConfirmDialog
-        open={confirmClear}
-        title="¿Limpiar el historial?"
-        message="Descarga un respaldo si necesitas conservar estos resultados. Solo se borrará el historial de este inventario."
-        confirmLabel="Limpiar historial"
-        onCancel={() => setConfirmClear(false)}
-        onConfirm={() => {
-          setConfirmClear(false);
-          persist([]);
-        }}
-      />
     </section>
   );
 }
