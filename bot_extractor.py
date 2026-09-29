@@ -9,7 +9,7 @@ def required_env(name):
     value=os.getenv(name)
     if not value: raise RuntimeError(f"Missing required environment variable: {name}")
     return value
-def utcnow(): return datetime.now(timezone.utc).isoformat()
+def utcnow(): return datetime.now(timezone.utc).isoformat()\ndef json_value(value):\n    if pd.isna(value): return None\n    if isinstance(value,(pd.Timestamp,datetime)): return value.isoformat()\n    if hasattr(value,"item"):\n        try: return value.item()\n        except Exception: pass\n    return value
 USER=required_env("WALL_USER");PASS=required_env("WALL_PASS")
 LOGIN_URL="http://cuupd003.chihuahua.visteon.com/4WallAdmin/Pages/Login.aspx"
 OVERALL_URL="http://cuupd003.chihuahua.visteon.com/4WallAdmin/Inventory/Overall.aspx"
@@ -34,7 +34,7 @@ def procesar_y_subir(ruta_excel,snapshot_id,extracted_at):
             parte=str(row[col_parte]).strip().upper();cantidad=pd.to_numeric(row[col_cant],errors="coerce");area=str(row[col_area]).strip().upper()
             if pd.isna(cantidad): invalid_qty+=1;continue
             if not parte or parte in ["NAN","NONE",""]: continue
-            payload.append({"numero_parte":parte,"cantidad":int(cantidad),"area_escaneo":area})
+            raw_record={str(column):json_value(row[column]) for column in df.columns}\n            payload.append({"numero_parte":parte,"cantidad":int(cantidad),"area_escaneo":area,"raw_record":raw_record,"source_columns":{"part_number":str(col_parte),"quantity":str(col_cant),"area":str(col_area)}})
         print(f"[+] Preparando corte con {len(payload)} registros vigentes...")
         res=requests.post(URL_RPC,json={"payload":payload},headers=HEADERS_SUPABASE,timeout=60)
         if res.status_code not in [200,204]: raise RuntimeError(f"Supabase RPC HTTP {res.status_code}")
