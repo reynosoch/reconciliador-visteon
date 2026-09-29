@@ -188,7 +188,7 @@ export default function App() {
       if (!safeWriteJson(KEY, n).ok) setWarning(STORAGE_WARNING);
     },
     openExcelForFinding = (finding) => {
-      setDataNavigation({ finding });
+      setDataNavigation({ finding, returnY: window.scrollY });
       setActiveDataView("findingEvidence");
       setTimeout(() => document.getElementById("vi-data-inspection")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
     },
@@ -254,8 +254,12 @@ export default function App() {
           <DataInspectionPanel
             view={activeDataView}
             onClose={() => {
+              const returnY = dataNavigation?.returnY;
               setActiveDataView(null);
               setDataNavigation(null);
+              if (Number.isFinite(returnY)) {
+                requestAnimationFrame(() => window.scrollTo({ top: returnY, behavior: "smooth" }));
+              }
             }}
             onSelectPart={setSelectedPart}
             initialQuery={dataNavigation?.finding?.partNumber || ""}
