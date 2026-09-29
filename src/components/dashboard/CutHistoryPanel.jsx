@@ -10,6 +10,7 @@ import {
   STORAGE_WARNING,
 } from "../../services/browserStorage.js";
 import { exportInventoryWorkbook } from "../../services/exportInventoryWorkbook.js";
+import ConfirmDialog from "../shell/ConfirmDialog.jsx";
 
 export const RULES_VERSION = "2026-09-28-discrepancy-v2";
 const EMPTY = [];
@@ -46,6 +47,7 @@ export default function CutHistoryPanel({
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
   const [memory, setMemory] = useState(null);
+  const [confirmClear, setConfirmClear] = useState(false);
   const key = `cuts:${inventory.id}`;
   const stored = useLiveQuery(
     async () => ({ ...(await idbGet(key, EMPTY)), key }),
@@ -179,6 +181,13 @@ export default function CutHistoryPanel({
           >
             {exporting ? "CREANDO EXCEL…" : "EXPORTAR EXCEL COMPLETO"}
           </button>
+          <button
+            className="vi-button vi-button-danger-soft"
+            disabled={!cuts.length || busy}
+            onClick={() => setConfirmClear(true)}
+          >
+            BORRAR HISTORIAL
+          </button>
         </div>
       </div>
 
@@ -238,6 +247,17 @@ export default function CutHistoryPanel({
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={confirmClear}
+        title="¿Borrar el historial guardado?"
+        message="Se borrarán únicamente los cortes guardados en este navegador para este inventario. Los archivos cargados y el resultado actual no se eliminan."
+        confirmLabel="Borrar historial"
+        onCancel={() => setConfirmClear(false)}
+        onConfirm={() => {
+          setConfirmClear(false);
+          persist([]);
+        }}
+      />
     </section>
   );
 }
