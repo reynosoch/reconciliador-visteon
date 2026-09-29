@@ -202,7 +202,6 @@ function SourceLine({
    useRef(null);
 
  return (
-<OverlayPortal onClose={onClose}>
 <div
      className="vi-source-line grid grid-cols-[1fr_auto] gap-3"
 >
