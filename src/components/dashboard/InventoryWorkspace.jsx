@@ -1,3 +1,4 @@
+const unitMoney = value => new Intl.NumberFormat("en-US", {style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(value);
 // src/components/dashboard/InventoryWorkspace.jsx
 import React, {
  useMemo,
@@ -634,7 +635,7 @@ option.id
                          "
 >
                          {master.hasCost
-                           ? money(
+                           ? unitMoney(
                                master.unitCost
                              )
                            : "SIN VALORAR"}

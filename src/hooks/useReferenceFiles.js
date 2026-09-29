@@ -1,411 +1,251 @@
-// src/hooks/useReferenceFiles.js
-import {
- useCallback,
- useMemo,
- useState,
-} from "react";
-import {
- parseDelimitedFile,
-} from "../parsers/parseDelimitedFile";
-
-const EMPTY_SOURCE = {
- file: null,
- fileName: "",
- rows: [],
- fields: [],
- delimiter: "",
- loading: false,
- loaded: false,
- error: null,
- loadedAt: null,
- fingerprint: "",
- warnings: [],
-};
-
-function createInitialState() {
- return {
-   areas: {
-     ...EMPTY_SOURCE,
-   },
-   qad: {
-     ...EMPTY_SOURCE,
-   },
-   ispbb: {
-     ...EMPTY_SOURCE,
-   },
-   bom: {
-     ...EMPTY_SOURCE,
-   },
-   cost: {
-     ...EMPTY_SOURCE,
-   },
- };
-}
-
-/**
-* Fuentes válidas del inventario.
-*
-* 4Wall LIVE no aparece aquí porque
-* viene de Supabase mediante
-* useInventoryEngine.
-*/
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { parseDelimitedFile } from "../parsers/parseDelimitedFile.js";
+import { mergeBomLibrary } from "../domain/bomLibrary.js";
+import { idbGet, idbSet, downloadJson } from "../services/browserStorage.js";
+const BOM_KEY = "reference:bom-library.v1";
+const empty = () => ({
+  rows: [],
+  fields: [],
+  fileName: "",
+  fingerprint: "",
+  loaded: false,
+  loading: false,
+  error: null,
+  warnings: [],
+});
+const initial = () =>
+  Object.fromEntries(
+    ["areas", "qad", "ispbb", "bom", "cost", "scans"].map((k) => [k, empty()]),
+  );
 export const REFERENCE_SOURCE_TYPES = {
- AREAS: "areas",
- QAD: "qad",
- ISPBB: "ispbb",
- BOM: "bom",
- COST: "cost",
+  AREAS: "areas",
+  QAD: "qad",
+  ISPBB: "ispbb",
+  BOM: "bom",
+  COST: "cost",
+  SCANS: "scans",
 };
-
 export const REFERENCE_SOURCE_LABELS = {
- areas:
-   "4Wall Areas",
- qad:
-   "QAD 3.2",
- ispbb:
-   "ISPBB / Phantoms",
- bom:
-   "BOM Export",
- cost:
-   "Cost Part Browse",
+  areas: "Áreas 4Wall",
+  qad: "Inventario QAD",
+  ispbb: "ISPBB / Phantoms",
+  bom: "BOM",
+  cost: "Cost Part",
+  scans: "Escaneos 4Wall",
 };
-
-/**
-* Hook responsable de los archivos
-* congelados / referencia.
-*
-* NO interpreta las reglas de negocio.
-*
-* Su trabajo es únicamente:
-*
-* Archivo
-*   ↓
-* PapaParse
-*   ↓
-* Rows
-*
-* Después inventoryEngine procesa
-* las filas.
-*/
-const REQUIRED_FIELDS = {
- areas: [["Nombre"], ["Localidad QAD"]],
- qad: [["Item Number"], ["Site"], ["Location"], ["Quantity On Hand"], ["Item Type"]],
- ispbb: [["Item Number"], ["Site"], ["Phantom"]],
- bom: [["Parent Item"], ["Component"], ["Usage"]],
- cost: [["Item Number"], ["Cost Total"], ["Status"]],
+const REQUIRED = {
+  areas: [["Nombre"], ["Localidad QAD"]],
+  qad: [
+    ["Item Number"],
+    ["Site"],
+    ["Location"],
+    ["Quantity On Hand"],
+    ["Item Type"],
+  ],
+  ispbb: [["Item Number"], ["Site"], ["Phantom"]],
+  bom: [["Parent Item"], ["Component"], ["Usage"], ["Level"], ["Comp Phantom"]],
+  cost: [["Item Number"], ["Cost Total"], ["Status"]],
+  scans: [
+    ["Número Parte QAD", "Numero Parte QAD", "numero_parte", "Numero de parte"],
+    ["Quantity", "cantidad"],
+    ["AreaName", "area_escaneo"],
+  ],
 };
-function validateRequiredFields(sourceType, fields = []) {
- const available = new Set(fields.map((field) => String(field).trim()));
- const missing = (REQUIRED_FIELDS[sourceType] || []).filter((group) => !group.some((field) => available.has(field))).map((group) => group.join(" / "));
- if (missing.length) throw new Error(`Archivo inválido para ${REFERENCE_SOURCE_LABELS[sourceType] || sourceType}. Faltan columnas: ${missing.join(", ")}.`);
+async function parseReferenceFile(type, file) {
+  if (type !== 'bom' || !file.name.toLowerCase().endsWith('.json')) return parseDelimitedFile(file);
+  const value=JSON.parse(await file.text());
+  if (!Array.isArray(value.rows) || value.rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) throw new Error('El respaldo BOM no tiene un formato válido.');
+  const fields=[...new Set(value.rows.flatMap(row => Object.keys(row)))];
+  return {rows:value.rows,fields,fileName:file.name,delimiter:'backup',errors:[],warnings:[],duplicateHeaders:[]};
 }
-async function fingerprintFile(file) {
- if (!globalThis.crypto?.subtle) {
-   return "";
- }
- const buffer = await file.arrayBuffer();
- const digest = await globalThis.crypto.subtle.digest("SHA-256", buffer);
- return Array.from(new Uint8Array(digest))
-   .map((byte) => byte.toString(16).padStart(2, "0"))
-   .join("");
+async function fingerprint(file) {
+  const bytes = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return [...new Uint8Array(bytes)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
-
+function bomSource(library) {
+  return {
+    ...empty(),
+    loaded: true,
+    rows: library.rows,
+    files: library.files,
+    fileName: `${library.files.length} archivos BOM guardados`,
+    fingerprint:
+      library.files
+        .map((f) => f.fingerprint)
+        .sort()
+        .join(":") || "bom-empty-v1",
+    fields: Object.keys(library.rows[0] ?? {}),
+    loadedAt: new Date(),
+  };
+}
 export function useReferenceFiles() {
- const [
-   sources,
-   setSources,
- ] = useState(
-   createInitialState
- );
-
- // ==========================================
- // CARGAR ARCHIVO
- // ==========================================
- const loadFile =
-   useCallback(
-     async (
-       sourceType,
-       file
-     ) => {
-       if (
-         !Object.values(
-           REFERENCE_SOURCE_TYPES
-         ).includes(sourceType)
-       ) {
-         throw new Error(
-           `Fuente desconocida: ${sourceType}`
-         );
-       }
-
-       if (!file) {
-         throw new Error(
-           "No se seleccionó ningún archivo."
-         );
-       }
-
-       // Primero marcamos loading.
-       setSources(
-         (previous) => ({
-           ...previous,
-           [sourceType]: {
-             ...previous[
-               sourceType
-             ],
-             file,
-             fileName:
-               file.name,
-             loading:
-               true,
-             error:
-               null,
-           },
-         })
-       );
-
-       try {
-         const [parsed, fingerprint] =
-           await Promise.all([
-             parseDelimitedFile(file),
-             fingerprintFile(file),
-           ]);
-
-         validateRequiredFields(sourceType, parsed.fields);
-         const required=(REQUIRED_FIELDS[sourceType]||[]).flat();
-         const ambiguous=(parsed.duplicateHeaders||[]).filter(name=>required.includes(name));
-         if(ambiguous.length) throw new Error(`Archivo ambiguo: la columna necesaria ${ambiguous.join(", ")} aparece más de una vez.`);
-
-         const seriousErrors =
-           (
-             parsed.errors ?? []
-           ).filter(
-             (error) =>
-               error.type !==
-               "FieldMismatch"
-           );
-
-         /**
-          * PapaParse puede reportar
-          * algunos FieldMismatch en
-          * archivos exportados por QAD.
-          *
-          * No detenemos automáticamente
-          * toda la carga por eso.
-          */
-         if (
-           seriousErrors.length >
-           0
-         ) {
-           console.warn(
-             `Advertencias parseando ${file.name}:`,
-             seriousErrors
-           );
-         }
-
-         setSources(
-           (previous) => ({
-             ...previous,
-             [sourceType]: {
-               file,
-               fileName:
-                 parsed.fileName,
-               rows:
-                 parsed.rows,
-               fields:
-                 parsed.fields,
-               delimiter:
-                 parsed.delimiter,
-               loading:
-                 false,
-               loaded:
-                 true,
-               error:
-                 null,
-               loadedAt:
-                 new Date(),
-               fingerprint,
-               warnings: parsed.warnings ?? [],
-             },
-           })
-         );
-
-         return {
-           sourceType,
-           fileName:
-             parsed.fileName,
-           rowCount:
-             parsed.rows.length,
-           fields:
-             parsed.fields,
-           delimiter:
-             parsed.delimiter,
-           fingerprint,
-           parseErrors:
-             parsed.errors ?? [],
-         };
-       } catch (error) {
-         console.error(
-           `Error cargando ${sourceType}:`,
-           error
-         );
-
-         setSources(
-           (previous) => ({
-             ...previous,
-             [sourceType]: {
-               ...EMPTY_SOURCE,
-               file,
-               fileName:
-                 file.name,
-               error:
-                 error instanceof Error
-                   ? error
-                   : new Error(
-                       "Error desconocido leyendo archivo."
-                     ),
-             },
-           })
-         );
-
-         throw error;
-       }
-     },
-     []
-   );
-
- // ==========================================
- // LIMPIAR UNA FUENTE
- // ==========================================
- const clearFile =
-   useCallback(
-     (sourceType) => {
-       if (
-         !Object.values(
-           REFERENCE_SOURCE_TYPES
-         ).includes(sourceType)
-       ) {
-         return;
-       }
-
-       setSources(
-         (previous) => ({
-           ...previous,
-           [sourceType]: {
-             ...EMPTY_SOURCE,
-           },
-         })
-       );
-     },
-     []
-   );
-
- // ==========================================
- // LIMPIAR TODO
- // ==========================================
- const clearAll =
-   useCallback(() => {
-     setSources(
-       createInitialState()
-     );
-   }, []);
-
- // ==========================================
- // ATAJOS DE ROWS
- // ==========================================
- const areaRows =
-   sources.areas.rows;
- const qadRows =
-   sources.qad.rows;
- const ispbbRows =
-   sources.ispbb.rows;
- const bomRows =
-   sources.bom.rows;
- const costRows =
-   sources.cost.rows;
-
- // ==========================================
- // ESTADO GENERAL
- // ==========================================
- const status =
-   useMemo(() => {
-     const entries =
-       Object.entries(
-         sources
-       );
-
-     const loaded =
-       entries.filter(
-         ([, source]) =>
-           source.loaded
-       );
-
-     const loading =
-       entries.filter(
-         ([, source]) =>
-           source.loading
-       );
-
-     const errors =
-       entries.filter(
-         ([, source]) =>
-           Boolean(
-             source.error
-           )
-       );
-
-     const missing =
-       entries.filter(
-         ([, source]) =>
-           !source.loaded
-       );
-
-     return {
-       totalSources:
-         entries.length,
-       loadedCount:
-         loaded.length,
-       loadingCount:
-         loading.length,
-       errorCount:
-         errors.length,
-       missingCount:
-         missing.length,
-       allLoaded:
-         loaded.length ===
-         entries.length,
-       hasErrors:
-         errors.length > 0,
-       loadedSources:
-         loaded.map(
-           ([key]) => key
-         ),
-       missingSources:
-         missing.map(
-           ([key]) => key
-         ),
-       errorSources:
-         errors.map(
-           ([key]) => key
-         ),
-     };
-   }, [sources]);
-
- // ==========================================
- // SALIDA
- // ==========================================
- return {
-   sources,
-   status,
-
-   // Filas listas para inventoryEngine.
-   areaRows,
-   qadRows,
-   ispbbRows,
-   bomRows,
-   costRows,
-
-   // Acciones.
-   loadFile,
-   clearFile,
-   clearAll,
- };
+  const [sources, setSources] = useState(initial);
+  const library = useRef({ rows: [], files: [] }),
+    queue = useRef(Promise.resolve()),
+    mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    queue.current = queue.current.then(async () => {
+      const result = await idbGet(BOM_KEY, { rows: [], files: [] });
+      if (!mounted.current) return;
+      if (!result.ok) {
+        setSources((s) => ({
+          ...s,
+          bom: {
+            ...s.bom,
+            error: new Error(
+              "No pudimos abrir los BOM guardados. Recarga antes de agregar archivos.",
+            ),
+          },
+        }));
+        return;
+      }
+      library.current = result.value;
+      setSources((s) => ({ ...s, bom: bomSource(result.value) }));
+    });
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const loadFile = useCallback((type, file) => {
+    const operation = queue.current.then(async () => {
+      if (!REQUIRED[type] || !file)
+        throw new Error("Selecciona un archivo y una fuente válida.");
+      setSources((s) => ({
+        ...s,
+        [type]: { ...s[type], loading: true, error: null },
+      }));
+      try {
+        const [parsed, hash] = await Promise.all([
+          parseReferenceFile(type, file),
+          fingerprint(file),
+        ]);
+        const missing = REQUIRED[type].filter(
+          (g) => !g.some((k) => parsed.fields.includes(k)),
+        );
+        if (missing.length)
+          throw new Error(
+            `Faltan columnas: ${missing.map((g) => g.join(" / ")).join(", ")}.`,
+          );
+        const duplicates = (parsed.duplicateHeaders ?? []).filter((k) =>
+          REQUIRED[type].flat().includes(k),
+        );
+        if (duplicates.length)
+          throw new Error(`Columnas repetidas: ${duplicates.join(", ")}.`);
+        if (parsed.errors.length)
+          throw new Error(
+            "No pudimos separar correctamente las columnas. Conservamos el archivo anterior.",
+          );
+        if (type === "scans") {
+          const bad = parsed.rows.some((r) => {
+            const q = String(r.Quantity ?? r.cantidad ?? "").trim();
+            const pn = String(
+              r["Número Parte QAD"] ??
+                r["Numero Parte QAD"] ??
+                r.numero_parte ??
+                r["Numero de parte"] ??
+                "",
+            ).trim();
+            return !pn || !q || !Number.isFinite(Number(q.replace(/,/g, "")));
+          });
+          if (bad)
+            throw new Error(
+              "Hay partes vacías o cantidades inválidas en los escaneos. Conservamos el reporte anterior.",
+            );
+        }
+        if (type === "bom") {
+          const invalid=parsed.rows.findIndex(r => !String(r['Parent Item']??'').trim() || !String(r.Component??'').trim() ||
+            ([".2","0.2","0,2"].includes(String(r.Level??'').trim()) && String(r['Comp Phantom']??'').trim().toLowerCase()==='no' &&
+              (!String(r.Usage??'').trim() || !Number.isFinite(Number(String(r.Usage).replace(/,/g,''))) || Number(String(r.Usage).replace(/,/g,''))<0)));
+          if(invalid>=0) throw new Error(`Fila BOM ${invalid+2}: falta una parte o el Usage no es válido. Conservamos la colección anterior.`);
+        }
+        let source = {
+          ...parsed,
+          loaded: true,
+          loading: false,
+          error: null,
+          fingerprint: hash,
+          loadedAt: new Date(),
+        };
+        if (type === "bom") {
+          const current = await idbGet(BOM_KEY, { rows: [], files: [] });
+          if (!current.ok)
+            throw new Error(
+              "No pudimos abrir el respaldo BOM. No se modificó.",
+            );
+          const next = mergeBomLibrary(
+            current.value,
+            parsed.rows,
+            file.name,
+            hash,
+          );
+          const saved = await idbSet(BOM_KEY, next);
+          if (!saved.ok)
+            throw new Error(
+              "No se pudo guardar el BOM. Conservamos la colección anterior; no cierres sin respaldar.",
+            );
+          library.current = next;
+          source = bomSource(next);
+          source.warnings = [
+            {
+              message: next.addedParents
+                ? `Se agregaron ${next.addedParents} BOM nuevos.`
+                : "Estos BOM ya estaban guardados. No se duplicaron.",
+            },
+          ];
+        }
+        setSources((s) => ({ ...s, [type]: source }));
+        return source;
+      } catch (error) {
+        setSources((s) => ({
+          ...s,
+          [type]: { ...s[type], loading: false, error },
+        }));
+        throw error;
+      }
+    });
+    queue.current = operation.catch(() => {});
+    return operation;
+  }, []);
+  const clearFile = useCallback((type) => {
+    if (type === "bom") return;
+    setSources((s) => ({ ...s, [type]: empty() }));
+  }, []);
+  const clearAll = useCallback(
+    () => setSources((s) => ({ ...initial(), bom: s.bom })),
+    [],
+  );
+  const backupBom = useCallback(
+    () => downloadJson("respaldo-bom.json", library.current),
+    [],
+  );
+  const status = useMemo(() => {
+    const entries = Object.entries(sources).filter(([k]) => k !== "scans");
+    const required = entries.filter(([k]) => k !== "bom");
+    return {
+      totalSources: 5,
+      loadedCount: entries.filter(([, s]) => s.loaded).length,
+      loadingCount: Object.values(sources).filter((s) => s.loading).length,
+      errorCount: Object.values(sources).filter((s) => s.error).length,
+      hasErrors: Object.values(sources).some((s) => s.error),
+      allLoaded: required.every(([, s]) => s.loaded),
+      missingSources: required.filter(([, s]) => !s.loaded).map(([k]) => k),
+    };
+  }, [sources]);
+  return {
+    sources,
+    status,
+    areaRows: sources.areas.rows,
+    qadRows: sources.qad.rows,
+    ispbbRows: sources.ispbb.rows,
+    bomRows: sources.bom.rows,
+    costRows: sources.cost.rows,
+    manualScans: sources.scans.loaded ? sources.scans : null,
+    loadFile,
+    clearFile,
+    clearAll,
+    backupBom,
+  };
 }

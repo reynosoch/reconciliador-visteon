@@ -33,7 +33,7 @@ export default function DataHealthBar({
   const sources = diagnostics?.sources || {};
   const warnings = diagnostics?.warnings || {};
   const warningCount = referencesReady
-    ? (warnings.unmappedAreaNames?.length || 0)
+    ? (warnings.missingBoms?.length || 0) + (warnings.emptyBoms?.length || 0) + (warnings.unmappedAreaNames?.length || 0)
       + (warnings.partsWithoutCost?.length || 0)
       + (warnings.unexpectedMaterial?.length || 0)
       + (warnings.invalidCostRows?.length || 0)

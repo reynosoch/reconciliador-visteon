@@ -349,6 +349,8 @@ function buildDiagnostics({
    // ALERTAS
    // ======================================
    warnings: {
+     missingBoms: phantomAdjustments.missingBoms,
+     emptyBoms: phantomAdjustments.emptyBoms,
      unmappedAreaNames:
        physical
          .unmappedAreaNames,
@@ -372,6 +374,8 @@ function buildDiagnostics({
    // PHANTOMS
    // ======================================
    phantom: {
+     missingBoms: phantomAdjustments.missingBoms,
+     emptyBoms: phantomAdjustments.emptyBoms,
      bomReviewCount,
      scannedParentsWithBom:
        phantomAdjustments

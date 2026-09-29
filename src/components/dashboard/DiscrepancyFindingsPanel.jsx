@@ -20,7 +20,11 @@ const money = (v) =>
     ["SIN_VALORAR", "FALTA COSTO"],
   ],
   RULE = {
-    QTY_DIFF: "Diferencia de cantidad",
+    MISSING_BOM: "Falta el BOM",
+  EMPTY_BOM: "BOM sin componentes aplicables",
+  PHANTOM_QAD: "Phantom con saldo QAD",
+  ZERO_COST: "Costo en cero",
+  QTY_DIFF: "Diferencia de cantidad",
     NO_PHYSICAL: "Sin físico registrado",
     UNEXPECTED: "Material inesperado",
     LOCATION_CANDIDATE: "Posible ubicación",

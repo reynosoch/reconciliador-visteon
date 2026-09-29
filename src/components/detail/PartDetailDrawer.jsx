@@ -13,7 +13,8 @@ function money(value) {
    {
      style: "currency",
      currency: "USD",
-     maximumFractionDigits: 0,
+     minimumFractionDigits: 2,
+     maximumFractionDigits: 2,
      minimumFractionDigits: 0,
    }
  ).format(
@@ -313,7 +314,7 @@ function BomMaze({
                text-slate-700
              "
 >
-             Se aplica Usage del export BOM
+             Solo componentes NO de nivel .2: escaneo del phantom × Usage del BOM
 </p>
 </div>
        )}
@@ -479,7 +480,7 @@ export default function PartDetailDrawer({
            />
 </div>
 
-<p className="mt-4 text-xs text-slate-300">Físico directo 4Wall: {number(physical.directTotal)} · Contribución BOM: {number(physical.bomContribution)} piezas</p>
+<p className="mt-4 text-xs text-slate-300">Escaneado originalmente: {number(physical.scannedTotal ?? physical.directTotal)} · Físico directo reconocido: {number(physical.directTotal)} · Contribución BOM: {number(physical.bomContribution)} piezas</p>
 
 <div
            className="

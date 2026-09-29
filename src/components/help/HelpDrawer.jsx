@@ -46,14 +46,14 @@ const HELP = {
  },
  phantom: {
   eyebrow: "BOM / PHANTOM", title: "Phantom",
-  description: "ISPBB indica cuáles piezas son phantom. Si contamos un ensamble y el BOM indica cuántas de esas piezas lleva, la aplicación puede calcularlas a partir del ensamble.",
+  description: "ISPBB indica qué escaneos son phantom. Buscamos ese número en Parent Item del BOM y calculamos sus componentes NO de nivel .2 multiplicando Usage por lo escaneado.",
   source: "Columna Phantom de ISPBB y relaciones Parent Item → Component del export BOM.",
   formula: "Contribución del componente = cantidad escaneada del padre × Usage.",
-  notes: ["Solo ISPBB con Phantom = YES confirma esta clasificación; no se usan prefijos.", "Se usa Usage, no Grossed up Usage.", "Por ahora solo se revisan los componentes que dependen directamente del ensamble. Falta confirmar un ejemplo con el departamento para ir más abajo.", "La cantidad directa 4Wall y la derivada de BOM se mantienen separadas."],
+  notes: ["Solo ISPBB con Phantom = YES confirma esta clasificación; no se usan prefijos.", "Se usa Usage, no Grossed up Usage.", "Acuerdo del 29/09: solo filas Level .2 / 0.2 y Comp Phantom NO. Los demás niveles se ignoran; no se recorren otros BOM.", "El escaneo phantom queda visible como origen, pero no se suma como físico directo. Sus componentes se suman a los escaneos directos de cada componente."],
  },
  phantomRadar: {
   eyebrow: "PRIORIZACIÓN", title: "Radar Phantom",
-  description: "Muestra hasta seis Part Numbers que ISPBB identifica como Phantom y que tienen el diferencias más grandes en dólares. Sirve para decidir cuáles investigar primero.",
+  description: "Muestra hasta seis Part Numbers que ISPBB identifica como Phantom y que tienen las diferencias más grandes en dólares. Sirve para decidir cuáles investigar primero.",
   source: "Definición Phantom de ISPBB y resultados conciliados de 4Wall, QAD 3.2 y Cost Part.",
   formula: "Primero se filtran los Phantom confirmados en ISPBB. Después se ordenan por el tamaño del impacto NET USD, tanto si es pérdida como si es ganancia.",
   notes: ["Este radar es una lista de atención; no añade piezas ni modifica el resultado financiero.", "Selecciona un Part Number para ver lo escaneado, lo calculado desde un ensamble y sus lugares.", "Si no aparecen casos, revisa que ISPBB y las demás fuentes estén cargadas."],

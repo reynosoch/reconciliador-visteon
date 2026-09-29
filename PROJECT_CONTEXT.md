@@ -42,3 +42,7 @@ En la laptop corporativa los comandos deben ejecutarse con:
 npm.cmd run dev
 npm.cmd run build
 npm.cmd install paquete
+```
+
+## Regla vigente: junta 29/09/2026
+Leer la sección de acuerdos del 29/09 en README.md. Sustituye la antigua explosión: escaneo ISPBB YES → Parent Item B → solo F=.2/0.2 y M=NO → Usage I × escaneo. No recursión. Phantom escaneado no suma directo; conservar origen y QAD sin alteraciones. BOM acumulativos locales con conflictos explícitos; escaneos completos se reemplazan. USD, costo visible con dos decimales sin redondear el cálculo, top 10 por NET USD. Pages solo por instrucción explícita.

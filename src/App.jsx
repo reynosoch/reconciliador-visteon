@@ -1,3 +1,4 @@
+import MeetingPriorities from "./components/dashboard/MeetingPriorities.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import CommandHeader from "./components/shell/CommandHeader";
 import SourcesDrawer from "./components/shell/SourcesDrawer";
@@ -68,6 +69,7 @@ export default function App() {
     [animationOnly, setAnimationOnly] = useState(false);
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
+      manualScans: references.manualScans,
       areaRows: references.areaRows,
       qadRows: references.qadRows,
       ispbbRows: references.ispbbRows,
@@ -285,6 +287,7 @@ export default function App() {
           ready={displayReady}
           onHelp={setHelpTopic}
         />
+        <MeetingPriorities rows={inventory.reconciliation} ready={displayReady} onSelectPart={setSelectedPart} onOpenSources={() => setSourcesOpen(true)} />
         <DiscrepancyFindingsPanel
           findings={findings}
           evaluationValid={valid}
@@ -324,6 +327,7 @@ export default function App() {
         loadFile={references.loadFile}
         clearFile={references.clearFile}
         clearAll={references.clearAll}
+        backupBom={references.backupBom}
         onHelp={setHelpTopic}
         onClose={() => setSourcesOpen(false)}
       />}

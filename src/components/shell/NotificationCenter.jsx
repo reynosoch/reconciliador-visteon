@@ -43,6 +43,10 @@ export function Bell() {
   );
 }
 const LABEL = {
+  MISSING_BOM: "Falta el BOM",
+  EMPTY_BOM: "BOM sin componentes aplicables",
+  PHANTOM_QAD: "Phantom con saldo QAD",
+  ZERO_COST: "Costo en cero",
   QTY_DIFF: "La cantidad no coincide",
   NO_PHYSICAL: "Aún no hay físico registrado",
   UNEXPECTED: "Material que QAD no esperaba",

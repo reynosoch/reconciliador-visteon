@@ -32,6 +32,8 @@ const VIEW_TITLES = {
 
 function warningRows(warnings = {}) {
   return [
+    ...(warnings.missingBoms || []).map(x=>({category:'FALTA BOM',partNumber:x.parentPart,detail:`Escaneado: ${x.scannedQuantity}. Agregar su BOM.`})),
+    ...(warnings.emptyBoms || []).map(x=>({category:'BOM SIN FILAS APLICABLES',partNumber:x.parentPart,detail:'No hay componentes NO de nivel .2 con Usage válido.'})),
     ...(warnings.unmappedAreaNames || []).map((area) => ({ category: "ÁREA SIN MAPEO", partNumber: "", detail: area })),
     ...(warnings.partsWithoutCost || []).map((partNumber) => ({ category: "SIN COSTO", partNumber, detail: "Cost Part no tiene costo para este Part Number." })),
     ...(warnings.unexpectedMaterial || []).map((item) => ({ category: "QAD ESPERABA 0", partNumber: item.partNumber, detail: `Físico ${item.physical} · NET ${Number(item.netUsd || 0).toLocaleString("en-US", { style: "currency", currency: "USD" })}` })),
@@ -175,8 +177,8 @@ function getView(view, { scanRows, diagnostics, reconciliation, referenceRows, s
     case "bom":
       return {
         rows: referenceRows.bom,
-        description: "Relaciones BOM; el motor usa Usage.",
-        columns: [{ label: "Padre", key: "Parent Item" }, { label: "Componente", key: "Component" }, { label: "Usage", key: "Usage" }, { label: "Nivel", key: "Level" }, { label: "Sitio", key: "Site" }],
+        description: "Solo Level .2 / 0.2 y Comp Phantom NO aportan cantidades mediante Usage.",
+        columns: [{ label: "Padre", key: "Parent Item" }, { label: "Componente", key: "Component" }, { label: "Usage", key: "Usage" }, { label: "Phantom componente", key: "Comp Phantom" }, { label: "Archivo origen", key: "__sourceFile" }, { label: "Nivel", key: "Level" }, { label: "Sitio", key: "Site" }],
       };
     case "ispbb":
       return {
@@ -192,8 +194,8 @@ function getView(view, { scanRows, diagnostics, reconciliation, referenceRows, s
       };
     case "parents":
       return {
-        rows: Array.from(diagnostics?.physical?.byPart?.values() || []).filter((item) => diagnostics?.bom?.byParent?.get(item.partNumber)?.some((relation) => relation.level === 1)),
-        description: "Padres con evidencia física y relación BOM directa.",
+        rows: Array.from(diagnostics?.physical?.byPart?.values() || []).filter((item) => diagnostics?.planning?.byPart?.get(item.partNumber)?.phantom === true && diagnostics?.bom?.byParent?.has(item.partNumber)),
+        description: "Escaneos phantom con un BOM disponible. Solo se calculan componentes NO de nivel .2.",
         columns: [byPart, { label: "Escaneos", key: "scanCount" }, { label: "Cantidad física", key: "physicalTotal" }],
       };
     case "bomReview":

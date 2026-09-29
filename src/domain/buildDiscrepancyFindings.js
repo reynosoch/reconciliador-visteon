@@ -70,6 +70,15 @@ export function buildDiscrepancyFindings({
     const coverageIncomplete = swingRows.some((row) => !validLocation(row.location)) || item.flags?.hasUnmappedPhysicalLocation;
     const locationsWithDelta = mappedRows.filter((row) => Math.abs(n(row.delta)) > tolerance).map((row) => row.location);
 
+    for (const [flag, ruleCode, message, action] of [
+      ['missingBom','MISSING_BOM','Hay escaneos de este phantom, pero falta su BOM.','Descargar su BOM y agregarlo en Fuentes.'],
+      ['emptyBom','EMPTY_BOM','El BOM existe, pero no tiene componentes NO de nivel .2 con Usage positivo válido.','Revisar el BOM recibido con el departamento.'],
+      ['phantomQadBalance','PHANTOM_QAD','QAD trae saldo para una parte marcada como phantom en ISPBB.','Confirmar el catálogo y el saldo QAD; no se modificó el archivo QAD.'],
+      ['zeroCost','ZERO_COST','Cost Part contiene costo cero. Las cantidades siguen visibles, pero no generan importe.','Confirmar si el costo cero es correcto. No significa que no haya inventario.']
+    ]) {
+      if (item.flags?.[flag]) findings.push(baseFinding({campaignId,ruleCode,category:'CALIDAD',item,tags:['REVISAR FUENTE'],whatFound:message,possibleExplanation:'Este dato requiere revisión antes de interpretar la diferencia.',nextAction:action,evidence:[{source:'4Wall / BOM / QAD / Cost Part',detail:`Escaneos originales: ${n(item.physical?.scannedTotal ?? item.physical?.directTotal)}; físico reconocido: ${physical}; QAD: ${qad}`}]}));
+    }
+
     if (Math.abs(netPieces) > tolerance) {
       findings.push(baseFinding({
         campaignId, ruleCode:"QTY_DIFF", category:"CANTIDAD", item, locations:locationsWithDelta,

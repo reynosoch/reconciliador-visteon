@@ -12,7 +12,7 @@ import {
 import { exportInventoryWorkbook } from "../../services/exportInventoryWorkbook.js";
 import ConfirmDialog from "../shell/ConfirmDialog.jsx";
 
-export const RULES_VERSION = "2026-09-28-discrepancy-v2";
+export const RULES_VERSION = "2026-09-29-phantom-level2-v3";
 const EMPTY = [];
 const money = (v) =>
   new Intl.NumberFormat("en-US", {

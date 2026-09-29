@@ -4,7 +4,7 @@ import {
  normalizeText,
  toBoolean,
  toNumber,
-} from "../domain/normalize";
+} from "../domain/normalize.js";
 
 // QAD exports depths as "1", "0.2", "..3", "...4", etc.
 // Unknown depths are never assumed to be direct BOM edges.
@@ -57,6 +57,8 @@ export function parseBom(rows = []) {
        toBoolean(
          row["Parent Phantom"]
        ),
+     sourceFile: row.__sourceFile || "",
+     eligibleLevel: [".2", "0.2", "0,2"].includes(String(row["Level"] ?? "").trim()),
      level:
        parseBomLevel(row["Level"]),
      rawLevel:
@@ -74,9 +76,7 @@ export function parseBom(rows = []) {
          row["Grossed up Usage"]
        ),
      componentPhantomReported:
-       toBoolean(
-         row["Comp Phantom"]
-       ),
+       (["yes", "no"].includes(String(row["Comp Phantom"] ?? "").trim().toLowerCase()) ? String(row["Comp Phantom"]).trim().toLowerCase() === "yes" : null),
      itemType:
        normalizeText(
          row["Item Type"]

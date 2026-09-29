@@ -1,63 +1,55 @@
 export const DEPARTMENT_QUESTIONS = [
   {
     id: "close",
-    q: "¿Cómo sabemos que ya terminaron de contar un área?",
-    why: "Si todavía no cuentan una pieza, puede aparecer como faltante.",
+    q: "¿Qué dato de 4Wall confirma que terminó el conteo?",
+    why: "Una localidad QAD puede reunir varias áreas de 4Wall.",
     example:
-      "QAD dice 100 piezas y aún no hay escaneos: quizá todavía no pasan por esa área.",
-    need: "Quién avisa que terminó el conteo y dónde lo registra.",
+      "Cerrar una de tres áreas no confirma que toda la localidad terminó.",
+    need: "Nombre del estado o reporte de cierre y cómo reconocer todas las áreas terminadas.",
   },
   {
     id: "scope",
-    q: "¿Qué almacenes y áreas vamos a incluir?",
-    why: "Necesitamos comparar los mismos lugares en 4Wall y QAD.",
-    example: "El material de un almacén externo podría revisarse por separado.",
-    need: "Lista de áreas incluidas y cuáles se mostrarán aparte.",
+    q: "¿Cuáles son los códigos de Francia, Paso y CUU?",
+    why: "Se acordó incluir toda la planta y esos lugares. Necesitamos relacionarlos con los códigos de los archivos.",
+    example: "Un nombre de almacén puede aparecer con otro código en QAD.",
+    need: "Listado de sitios y localidades. El filtro QAD actual sigue en 179A, tipos PP/MP/FP; confirmar cómo cubre el alcance acordado.",
   },
   {
     id: "freeze",
-    q: "¿Qué reporte de QAD usaremos como punto de partida?",
-    why: "Si después se mueve material, eso puede explicar una diferencia.",
-    example: "Sale material después de descargar QAD, pero antes de contarlo.",
-    need: "Hora del reporte y cómo vamos a revisar entradas, salidas y movimientos posteriores.",
+    q: "¿El reporte oficial es 3.2 o 3.12?",
+    why: "El archivo de prueba dice 3.2 y las notas de la junta dicen 3.12. El oficial llega el día del inventario.",
+    example:
+      "No debemos presentar una prueba como el inventario congelado oficial.",
+    need: "Nombre y columnas del reporte oficial y su hora de corte.",
+  },
+  {
+    id: "bom-version",
+    q: "Si cambia un BOM ya guardado, ¿qué versión usamos?",
+    why: "Acumulamos BOM, pero dos versiones del mismo ensamble no deben sumarse.",
+    example: "Un BOM anterior dice 4 tornillos y uno nuevo dice 5.",
+    need: "Quién confirma la versión vigente. Mientras tanto se conserva la anterior y se avisa del conflicto.",
+  },
+  {
+    id: "phantom-source",
+    q: "¿Confirmamos ISPBB cuando el BOM dice otra cosa?",
+    why: "El ejemplo de la junta marca el escaneo como phantom, pero Parent Phantom del BOM dice NO.",
+    example:
+      "ISPBB YES activa el cálculo; dentro del BOM solo se usan componentes M=NO y F=.2.",
+    need: "Validar esa diferencia y el ejemplo de la fila 7, que suma un escaneo directo de un componente phantom.",
+  },
+  {
+    id: "shared",
+    q: "¿Los BOM cargados deben aparecer en ambas computadoras?",
+    why: "Por ahora la colección BOM se guarda en cada navegador.",
+    example:
+      "Un BOM cargado por una persona no aparece automáticamente en el equipo de otra.",
+    need: "Confirmar el almacenamiento compartido y quién puede agregar o cambiar versiones.",
   },
   {
     id: "cost",
-    q: "¿Confirmamos que usaremos Cost Total para el costo de cada pieza?",
-    why: "Todos los importes están en dólares. Falta confirmar qué costo aplicar y qué hacer si viene vacío o en cero.",
-    example: "Una diferencia de 10 piezas a $5 cada una representa $50.",
-    need: "Reporte de costos aprobado y cómo revisar costos vacíos o en cero.",
-  },
-  {
-    id: "swing",
-    q: "¿Cómo debemos interpretar SWING en las juntas?",
-    why: "Necesitamos que el número de la pantalla signifique exactamente lo mismo que usa Finanzas.",
-    example:
-      "Faltan 10 piezas en un lugar y sobran 10 en otro. La fórmula actual suma ambas diferencias: 20 piezas.",
-    need: "Un ejemplo resuelto y los lugares que debemos comparar.",
-  },
-  {
-    id: "bom",
-    q: "¿Cómo debemos tratar un phantom durante el inventario?",
-    why: "Algunas piezas se calculan a partir del ensamble que las contiene.",
-    example:
-      "Si contamos 10 ensambles y cada uno contiene 2 componentes, serían 20 componentes. Hay que revisar si ya se contaron por separado.",
-    need: "Un ensamble, sus componentes y el resultado correcto para ese caso.",
-  },
-  {
-    id: "records",
-    q: "Cuando vuelven a contar, ¿se reemplaza el dato anterior?",
-    why: "Necesitamos evitar sumar dos veces el mismo material.",
-    example:
-      "Primero registran 100 piezas y después corrigen a 95. Debemos saber cuál conteo usar.",
-    need: "Cómo reconocer una corrección y cuál registro queda vigente.",
-  },
-  {
-    id: "thresholds",
-    q: "¿A partir de cuántos dólares una diferencia debe investigarse en la junta?",
-    why: "Necesitamos un límite claro para ordenar primero las diferencias que Finanzas considera importantes. Este límite solo prioriza la revisión; no cambia el cálculo.",
-    example:
-      "Por ejemplo: definir si se investigan primero diferencias mayores a $100, $500, $1,000 u otro monto, y si el límite cambia según el área.",
-    need: "Monto exacto en dólares que activa la revisión, si existe más de un nivel de prioridad y qué área o puesto atiende cada caso.",
+    q: "¿Cómo validamos los costos en cero?",
+    why: "Todo está en USD. Un costo cero no demuestra que no haya inventario.",
+    example: "Puede haber material contado con costo pendiente de negociar.",
+    need: "Quién confirma estos casos. Se muestran dos decimales, conservando toda la precisión para calcular.",
   },
 ];

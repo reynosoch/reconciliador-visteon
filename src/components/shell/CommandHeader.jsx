@@ -47,6 +47,7 @@ export default function CommandHeader({
   onOpenMenu,
   notificationCount = 0,
 }) {
+  const manual = connectionStatus?.state === "MANUAL";
   const live = ["LIVE", "REFRESHING"].includes(connectionStatus?.state);
   const liveError = connectionStatus?.state === "ERROR";
   const referencesReady = referenceStatus?.allLoaded === true;
@@ -77,7 +78,7 @@ export default function CommandHeader({
           <button type="button" onClick={onToggleSources} className={`vi-button vi-button-light vi-sources-button ${sourcesOpen ? "is-selected" : ""}`} aria-expanded={sourcesOpen}>
             FUENTES <span className="vi-button-count">{loaded}/{total}</span>
           </button>
-          <button type="button" disabled={loading} onClick={onRefresh} className="vi-button vi-button-primary vi-refresh-button" aria-label={loading ? "Actualizando datos" : "Actualizar datos"} title="Actualizar datos">
+          <button type="button" disabled={loading || manual} onClick={onRefresh} className="vi-button vi-button-primary vi-refresh-button" aria-label={loading ? "Actualizando datos" : "Actualizar datos"} title={manual ? "Reemplaza el archivo manual en Fuentes para actualizar" : "Actualizar datos"}>
             <RefreshIcon spinning={loading} />
           </button>
           <button type="button" className="vi-button vi-button-light vi-menu-button" onClick={onOpenMenu} aria-label="Abrir menú">
@@ -89,7 +90,7 @@ export default function CommandHeader({
       <div className="vi-source-ribbon">
         <div className="vi-source-ribbon-inner">
           <span className="vi-flow-label">FLUJO DE DATOS</span>
-          <SourceState label="4WALL" state={live ? "EN VIVO" : liveError ? "ERROR" : "EN ESPERA"} detail={liveError ? (connectionStatus?.detail || "No se pudo actualizar") : `${scanCount.toLocaleString("es-MX")} escaneos`} live={live} error={liveError} />
+          <SourceState label="4WALL" state={manual ? "ARCHIVO MANUAL" : live ? "EN VIVO" : liveError ? "ERROR" : "EN ESPERA"} detail={manual ? connectionStatus.detail : liveError ? (connectionStatus?.detail || "No se pudo actualizar") : `${scanCount.toLocaleString("es-MX")} escaneos`} live={live} ready={manual} error={liveError} />
           <span className="vi-ribbon-flow" aria-hidden="true" />
           <SourceState label="QAD" state={referencesReady ? "CONGELADO" : "PENDIENTE"} detail="Planta 179A" ready={referencesReady} />
           <span className="vi-ribbon-separator" aria-hidden="true" />

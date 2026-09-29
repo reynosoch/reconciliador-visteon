@@ -157,7 +157,7 @@ No se divide entre dos. El alcance final de localidades para SWING sigue pendien
 - No se identifica por prefijos del Part Number.
 - La fuente autoritativa es ISPBB.
 - BOM usa `Usage`, no `Grossed up Usage`.
-- La explosión actual es directa/no recursiva.
+- La explosión actual parte de escaneos phantom YES y selecciona componentes NO de nivel .2; no es recursiva.
 - Una coincidencia en BOM por sí sola no debe crear un ajuste financiero nuevo.
 
 ### Obsoleto
@@ -234,18 +234,9 @@ Si IndexedDB falla, la aplicación intenta conservar el trabajo en memoria y mue
 
 Crear otro inventario no borra los archivos de referencia que ya están cargados en la sesión.
 
-## Preguntas pendientes con Finanzas
+## Preguntas pendientes con el departamento
 
-Estas decisiones se mantienen visibles y no se resuelven por una suposición técnica:
-
-1. Cómo saber que terminó el conteo de un área.
-2. Qué localidades y sitios entran al alcance.
-3. Qué congelado QAD se usa y cómo tratar movimientos posteriores.
-4. Qué costo/moneda se considera oficial.
-5. Cómo debe interpretarse SWING en las juntas.
-6. Cómo debe tratarse Phantom/BOM en casos reales.
-7. Cómo identificar correcciones y reconteos.
-8. A partir de qué monto en USD una diferencia debe priorizarse y quién la investiga.
+Las preguntas vigentes están únicamente en la campana y en la sección de acuerdos del 29/09 al final de este documento. Se confirmaron USD, actualización por reemplazo de escaneos, Top 10 y selección BOM nivel .2 / componente NO. No volver a presentar esas decisiones como pendientes.
 
 ## Bot 4Wall
 
@@ -356,7 +347,7 @@ La referencia Pac-Man es ambiental, no arcade: normalmente Pac-Man huye mientras
 - Confirmar alcance final de localidades/sitios con Finanzas.
 - Confirmar costo y moneda oficiales.
 - Confirmar interpretación operativa final de SWING.
-- Confirmar profundidad y reglas BOM con casos reales.
+- Validar la regla acordada (.2 / NO) con los nuevos escaneos y BOM de prueba.
 - Definir una fuente válida de cierre de conteo.
 - Definir identidad oficial de registros/reconteos.
 - Exponer metadatos de snapshot de extremo a extremo en el backend.
@@ -420,3 +411,48 @@ En el área de conciliación, el bloque lateral se mantiene visible mientras se 
 - `OBSOLETOS +`: principales materiales obsoletos con sobrante valorizado.
 
 Ambos bloques abren el detalle normal del Part Number.
+
+## Acuerdos de la junta del 29 de septiembre de 2026
+
+Esta sección reemplaza las reglas anteriores de explosión BOM. Los archivos de la junta son ejemplos de prueba, no el congelado oficial del inventario.
+
+### Escaneos y phantoms
+
+1. Leer el reporte completo de 4Wall. Cargar otro reporte **reemplaza** el anterior; no acumula escaneos ni reconteos. Una reducción de filas es válida (se reportó una reducción a 4,943 por preconteos; ese archivo nuevo aún debe cargarse y verificarse).
+2. ISPBB `Phantom=YES` identifica el **número escaneado** que se debe convertir. Los escaneos NO se reconocen directamente. Sin definición ISPBB, se mantiene la revisión de catálogo; no se infieren prefijos.
+3. Para un escaneo YES buscar su número en `Parent Item` (B).
+4. Usar exclusivamente `Level` (F) `.2` / `0.2` (también `0,2` al importar) y `Comp Phantom` (M) `NO`. Ignorar nivel 1 y niveles inferiores, componentes YES y etiquetas desconocidas. **No es una multiplicación por 0.2.**
+5. Multiplicar `Usage` (I) por la cantidad escaneada del phantom. No usar `Grossed up Usage`, no hacer recursión. Conservar la localidad del escaneo de origen.
+6. Por componente: físico reconocido = escaneos directos NO phantom + aportaciones de BOM. El escaneo original del phantom se conserva en el detalle, pero aporta cero como físico directo. QAD nunca se reescribe a cero; un phantom con saldo QAD abre una alerta.
+7. NET piezas = físico reconocido − QAD. NET USD = NET piezas × costo. SWING conserva la suma absoluta por localidad sin dividir entre dos.
+
+Ejemplo de la junta: 48 escaneos de `VPTBFF-10849-ABT`. Para sus filas válidas, Usage 5 produce 240; Usage 0.0025 produce 0.12; Usage 8 produce 384. El Excel tiene 15 filas aplicables. Las fórmulas arrastradas a otros niveles en ese Excel **no son reglas válidas**. Z–AD son columnas añadidas para explicar aportación BOM, escaneos directos, total, QAD y diferencia; no vienen en el TXT original.
+
+### BOM acumulativos y archivos originales
+
+- Se admite el TXT separado por `|` tal como llega por correo, además de CSV. No hace falta convertirlo en Excel. No se importan fórmulas del Excel de demostración.
+- Agregar dos BOM a una colección de 300 conserva los anteriores. La colección y sus archivos originales interpretados se guardan con Dexie en este navegador y se recuperan al recargar.
+- La misma versión de un Parent Item no se suma dos veces. Un archivo que cambia un BOM existente se rechaza completo con un mensaje, manteniendo la colección anterior. No se elige silenciosamente una versión ni se deduplican componentes legítimos dentro de un BOM.
+- `RESPALDAR BOM` descarga la colección como JSON, que se puede volver a cargar con AGREGAR BOM. Conservar también los TXT originales. Quitar las demás fuentes no borra la colección BOM.
+- Falta BOM y BOM existente sin filas aplicables son estados diferentes. Ambos conservan el escaneo pendiente y advierten que las cantidades aún pueden estar incompletas.
+- **No hay sincronización BOM entre equipos.** No confundir Dexie local con una base compartida. El trabajo de almacenamiento compartido queda pendiente de definir.
+
+### Uso de escaneos manuales
+
+En Fuentes, cargar `Escaneos 4Wall (archivo manual)`. El encabezado identifica este modo. La consulta automática se pausa para que una respuesta del bot no reemplace el archivo seleccionado. El botón de actualizar no sustituye el archivo manual; usar REEMPLAZAR en Fuentes. Quitar el archivo vuelve a la consulta del bot. No se envía el archivo manual a la base remota.
+
+### Juntas y costos
+
+- Dos listas Top 10, pérdidas y ganancias por revisar, ordenadas por NET USD por número de parte. Incluyen el universo QAD del comparativo y señalan cuándo todavía no hay conteo; no son pérdidas finales confirmadas.
+- Importes en USD. Costo unitario mostrado con dos decimales; cálculo con precisión original (un costo menor a un centavo no se convierte en cero antes de multiplicar).
+- Costo cero se señala, conservando cantidades; no se interpreta como ausencia de inventario ni se inventa una causa de negociación.
+- Los resultados guardados con la regla anterior no se comparan como si usaran la nueva regla; se incrementó la versión de cálculo.
+- Preguntas pendientes únicamente en la campana: cierre de áreas, códigos de alcance Francia/Paso/CUU, reporte QAD 3.2 vs 3.12, versiones BOM, diferencias ISPBB/BOM, costos cero y almacenamiento compartido.
+- No se inventa el cierre de un área. Una localidad QAD puede agrupar varias áreas 4Wall. El filtro actual sigue en Site 179A y tipos PP/MP/FP hasta recibir los códigos que correspondan al alcance acordado.
+- La contraseña se indicó con cambio cada 90 días; debe actualizarse en la configuración local del bot cuando corresponda, nunca en el repositorio. Falta confirmar qué cuenta aplica; no se programó cambio automático.
+
+### Verificación y publicación
+
+`npm.cmd install` y `npm.cmd run build` en Windows. Las pruebas incluyen casos sintéticos de la nueva regla, niveles ignorados, cantidades fraccionarias, conservación de QAD y acumulación/conflictos BOM.
+
+Esta actualización se sube a **main solamente**. No ejecutar el despliegue manual de Pages hasta que se solicite. El workflow de verificación de main puede ejecutarse sin publicar Pages.

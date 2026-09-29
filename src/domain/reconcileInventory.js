@@ -242,10 +242,9 @@ export function reconcileInventory({
    // ---------------------------------
    // 2. AJUSTE BOM / PHANTOM
    // ---------------------------------
-   const physicalLocations =
-     cloneLocationMap(
-       directPhysicalLocations
-     );
+   const physicalLocations = planningItem?.phantom === true
+     ? new Map()
+     : cloneLocationMap(directPhysicalLocations);
    const bomContribution =
      safeNumber(
        phantomAdjustment
@@ -439,8 +438,8 @@ export function reconcileInventory({
      // FÍSICO
      // ==============================
      physical: {
-       directTotal:
-         physicalDirectTotal,
+       scannedTotal: physicalDirectTotal,
+       directTotal: planningItem?.phantom === true ? 0 : physicalDirectTotal,
        bomContribution,
        total:
          physicalTotal,
@@ -529,6 +528,10 @@ export function reconcileInventory({
      // ALERTAS
      // ==============================
      flags: {
+       missingBom: (phantomAdjustments?.missingBoms ?? []).some(x => x.parentPart === partNumber),
+       emptyBom: (phantomAdjustments?.emptyBoms ?? []).some(x => x.parentPart === partNumber),
+       phantomQadBalance: isPhantom && qadTotal !== 0,
+       zeroCost: hasCost && unitCost === 0,
        financialStatus,
        isUnexpectedMaterial,
        isMissingPhysical,

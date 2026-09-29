@@ -40,6 +40,7 @@ function flattenRows(rows=[]){return rows.map(item=>({
   "Descripción (Cost Part / ISPBB)":item.master?.description||"",
   "Estado (motor)":item.flags?.financialStatus||"",
   "Físico total (4Wall + BOM)":n(item.physical?.total),
+  "Cantidad escaneada original (4Wall)":n(item.physical?.scannedTotal ?? item.physical?.directTotal),
   "Físico directo (4Wall)":n(item.physical?.directTotal),
   "Ajuste BOM (BOM + ISPBB)":n(item.physical?.bomContribution),
   "QAD total (QAD 3.2)":n(item.qad?.total),
