@@ -151,8 +151,17 @@ export function AmbientChase() {
       if (score && now > scoreUntil) score.classList.remove("is-visible");
     };
 
+    const chooseRoamTarget = () => {
+      const visibleFruit = fruits.filter((fruit) => !fruit.hidden);
+      if (visibleFruit.length && Math.random() < 0.28) {
+        target = readPosition(visibleFruit[Math.floor(Math.random() * visibleFruit.length)]);
+      } else {
+        target = randomPoint();
+      }
+    };
+
     scatterDecorations();
-    target = randomPoint();
+    chooseRoamTarget();
 
     const tick = (now) => {
       if (reducedMotion.matches || document.hidden) {
@@ -179,7 +188,7 @@ export function AmbientChase() {
         if (targetPellet) {
           eatPower(now);
         } else {
-          target = randomPoint();
+          chooseRoamTarget();
         }
       } else {
         point = {
@@ -219,7 +228,7 @@ export function AmbientChase() {
         y: Math.min(point.y, Math.max(105, window.innerHeight - 40)),
       };
       targetPellet = null;
-      target = randomPoint();
+      chooseRoamTarget();
       trail = [];
       scatterDecorations();
       nextPowerAt = performance.now() + 4000 + Math.random() * 7000;
