@@ -146,7 +146,7 @@ export default function FinancialGrid({
  summary,
  ready = false,
  onHelp,
- onFinanceQuestions,
+
 }) {
  const data =
    summary || {};
@@ -183,7 +183,7 @@ export default function FinancialGrid({
            vi-glow-title
          "
 >
-         Exposición de planta
+         Diferencias en dólares
 </h2>
 <p
          className="
@@ -194,22 +194,22 @@ export default function FinancialGrid({
 >
          Selecciona un indicador para ver su origen y cálculo.
 </p>
-<button type="button" className="vi-finance-questions-link" onClick={onFinanceQuestions}>8 preguntas para Finanzas</button>
+
 {ready && (
 <div className="mt-3 border-l-2 border-amber-400 bg-amber-400/10 px-3 py-2 text-sm text-amber-100" role="status">
-  <strong>Corte intradía preliminar.</strong>{" "}
-  {formatNumber(data.qadOnlyCount ?? 0)} Part Numbers de QAD aún no tienen escaneo físico
+  <strong>Resultados de lo contado hasta ahora.</strong>{" "}
+  {formatNumber(data.qadOnlyCount ?? 0)} números de parte de QAD aún no tienen físico registrado
   {data.qadOnlyCount > 0 && (
     <> ({formatMoney(data.qadOnlyExposureUsd)} incluidos en pérdida bruta y NET)</>
-  )}. Pueden seguir pendientes de auditar.
+  )}. Puede que todavía no terminen de contarlos.
   {data.qadOnlyMissingCostCount > 0 && (
-    <> {formatNumber(data.qadOnlyMissingCostCount)} no tienen costo en Cost Part; su exposición aún no se puede valorar.</>
-  )} Finanzas debe definir cuándo un material sin escaneo cuenta como pérdida y qué localidades entran al cálculo.
+    <> {formatNumber(data.qadOnlyMissingCostCount)} no tienen costo en Cost Part; todavía no podemos calcular su diferencia en dólares.</>
+  )} La diferencia puede cambiar mientras avanza el conteo.
   {data.unvaluedPartCount > 0 && (
-    <div className="mt-2 border-t border-amber-200/20 pt-2"><strong>Valoración incompleta:</strong> {formatNumber(data.unvaluedPartCount)} Part Numbers tienen diferencia en piezas pero no un costo confiable. No se presentan como $0 ni como balanceados.</div>
+    <div className="mt-2 border-t border-amber-200/20 pt-2"><strong>Falta costo:</strong> {formatNumber(data.unvaluedPartCount)} números de parte tienen diferencias, pero falta un costo confiable para calcular sus dólares.</div>
   )}
   <div className="mt-2 border-t border-amber-200/20 pt-2">
-    <strong>Vista operativa:</strong> {formatMoney(data.netUsdWithPhysicalEvidence ?? 0)} de NET corresponde a {formatNumber(data.partsWithPhysicalEvidence ?? 0)} Part Numbers con al menos alguna evidencia 4Wall/BOM. Esto tampoco confirma que su conteo ya terminó.
+    <strong>Partes con conteo registrado:</strong> {formatMoney(data.netUsdWithPhysicalEvidence ?? 0)} de diferencia corresponden a {formatNumber(data.partsWithPhysicalEvidence ?? 0)} números de parte con escaneos o cantidades calculadas desde un ensamble. Su conteo todavía puede estar en proceso.
   </div>
 </div>
 )}
@@ -254,7 +254,7 @@ export default function FinancialGrid({
                )
              : "---"
          }
-         detail="ANTES DE COMPENSAR GANANCIAS"
+         detail="TOTAL DE DIFERENCIAS NEGATIVAS"
          tone="loss"
          topic="grossLoss"
          onHelp={
@@ -271,7 +271,7 @@ export default function FinancialGrid({
                )
              : "---"
          }
-         detail="ANTES DE COMPENSAR PÉRDIDAS"
+         detail="TOTAL DE DIFERENCIAS POSITIVAS"
          tone="gain"
          topic="grossGain"
          onHelp={

@@ -87,7 +87,7 @@ export function buildDiscrepancyFindings({
         whatFound:`QAD tiene ${qad} piezas y no hay físico reconocido en el corte actual.`,
         possibleExplanation:"El material puede seguir pendiente de conteo. Este hallazgo no confirma una pérdida.",
         nextAction:"Confirmar estado/cierre del conteo y revisar las localidades QAD antes de tratarlo como faltante.",
-        evidence:[{source:"QAD 3.2",detail:`Saldo positivo: ${qad}`},{source:"4Wall",detail:"Sin físico reconocido en el snapshot evaluado."}],
+        evidence:[{source:"QAD 3.2",detail:`Saldo positivo: ${qad}`},{source:"4Wall",detail:"Sin físico registrado en este reporte."}],
       }));
     }
 
@@ -126,7 +126,7 @@ export function buildDiscrepancyFindings({
         tags:["SIN VALORAR"],
         whatFound:"Existe una diferencia en piezas, pero no hay un costo confiable para convertirla a dinero.",
         possibleExplanation: costState === "COSTO_CONTRADICTORIO" ? "Cost Part contiene filas contradictorias para el PN." : costState === "COSTO_INVALIDO" ? "Cost Total está vacío o no es numérico." : "No se encontró un costo válido para el PN.",
-        nextAction:"Resolver Cost Part y moneda antes de interpretar el impacto en USD.",
+        nextAction:"Revisar el costo en Cost Part antes de calcular la diferencia en dólares.",
         evidence:[{source:"Cost Part",detail:`Estado de valoración: ${costState}`}],
       }));
     }
@@ -175,7 +175,7 @@ export function buildDiscrepancyFindings({
           tags:["CAMBIO INUSUAL"],
           whatFound:`Cambio contra corte comparable: ${pieceChange} piezas${usdChange===null?"":`; ${usdChange.toLocaleString("en-US",{style:"currency",currency:"USD"})}`}.`,
           possibleExplanation:"Supera un criterio configurable de revisión; no implica duplicación ni error por sí solo.",
-          nextAction:"Revisar el cambio entre snapshots y confirmar la identidad oficial de registros/reconteos.",
+          nextAction:"Comparar los reportes y revisar si hubo un nuevo conteo o una corrección.",
           evidence:[{source:"Historial",detail:`Criterio de revisión: |Δ piezas| ≥ ${n(unusualThresholds.netPieces)} o |Δ USD| ≥ ${n(unusualThresholds.netUsd)}.`}],
         }));
       }
@@ -217,12 +217,12 @@ export function buildSnapshot({campaignId="",rows=[],references=[],rulesVersion=
 
 export function snapshotsComparable(previous,current) {
   if (!previous || !current) return {ok:false,reason:"No existe un corte anterior."};
-  if (!previous.valid || !current.valid) return {ok:false,reason:"Uno de los cortes no es válido/completo."};
-  if (!previous.campaignId || previous.campaignId !== current.campaignId) return {ok:false,reason:"La campaña no coincide."};
-  if (previous.rulesVersion !== current.rulesVersion) return {ok:false,reason:"La versión de reglas cambió."};
+  if (!previous.valid || !current.valid) return {ok:false,reason:"Faltan datos completos en uno de los reportes."};
+  if (!previous.campaignId || previous.campaignId !== current.campaignId) return {ok:false,reason:"Los resultados pertenecen a inventarios diferentes."};
+  if (previous.rulesVersion !== current.rulesVersion) return {ok:false,reason:"Cambió la forma de calcular los resultados."};
   const oldRefs=new Map((previous.references||[]).map((r)=>[r.type,r.fingerprint]));
   const same=(current.references||[]).every((r)=>r.fingerprint && oldRefs.get(r.type)===r.fingerprint);
-  if (!same) return {ok:false,reason:"Las referencias no tienen las mismas huellas."};
-  if (previous.snapshotMeta?.complete !== true || current.snapshotMeta?.complete !== true) return {ok:false,reason:"No se pudo demostrar un snapshot completo."};
+  if (!same) return {ok:false,reason:"Los archivos de referencia cambiaron."};
+  if (previous.snapshotMeta?.complete !== true || current.snapshotMeta?.complete !== true) return {ok:false,reason:"No sabemos si se descargó el reporte completo."};
   return {ok:true,reason:""};
 }

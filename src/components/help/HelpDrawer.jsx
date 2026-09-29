@@ -3,25 +3,25 @@ import React from "react";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
 const HELP = {
  overview: {
-  eyebrow: "GUÍA DEL SISTEMA", title: "Cómo leer el corte de inventario",
-  description: "Flujo recomendado: 1) carga las referencias, 2) actualiza 4Wall, 3) revisa las diferencias y 4) guarda un corte antes de la junta.",
+  eyebrow: "GUÍA DEL SISTEMA", title: "Cómo usar el tablero",
+  description: "Carga los archivos, actualiza 4Wall y revisa las diferencias. Antes de la junta, guarda los resultados para compararlos después.",
   source: "Escaneos 4Wall + diccionario de áreas + QAD 3.2 + ISPBB + BOM + Cost Part.",
   formula: "Físico − QAD = diferencia de piezas.\nDiferencia de piezas × costo = impacto en USD.",
   notes: ["Los escaneos de 4Wall se actualizan durante el día; las demás fuentes se cargan como archivos de referencia.", "Un material pendiente de contar puede aparecer como pérdida preliminar. Revisa la advertencia antes de interpretar el total.", "Selecciona un Part Number para ver localidades, costo y relaciones BOM disponibles."],
  },
  net: {
   eyebrow: "INDICADOR FINANCIERO", title: "Diferencia total en dólares",
-  description: "Es el balance firmado entre lo contado y lo esperado, sumado para todos los Part Numbers y localidades incluidas en este corte. Un valor negativo señala pérdida; uno positivo, ganancia.",
+  description: "Compara lo contado con lo que aparece en QAD. Un número negativo significa que llevamos menos piezas; uno positivo, que llevamos más. El resultado puede cambiar mientras siguen contando.",
   source: "4Wall y su diccionario de áreas para el físico; QAD 3.2 para lo esperado; Cost Part para valorar la diferencia.",
   formula: "NET piezas = físico total − QAD total.\nNET USD = NET piezas × Cost Total.",
-  notes: ["El signo de cada diferencia se conserva.", "Las partes QAD todavía sin escaneo se incluyen como pérdidas preliminares. Finanzas debe confirmar cuándo se consideran faltantes.", "El alcance definitivo de localidades sigue pendiente de validación."],
+  notes: ["El signo de cada diferencia se conserva.", "Las partes de QAD que aún no se cuentan reducen este resultado. Hay que confirmar con el departamento cuándo tratarlas como faltantes.", "Falta acordar con el departamento qué lugares vamos a incluir."],
  },
  grossLoss: {
   eyebrow: "INDICADOR FINANCIERO", title: "Pérdida bruta",
   description: "Se suman todas las diferencias negativas de cada Part Number antes de compensarlas con ganancias.",
   source: "NET de cada Part Number, calculado con 4Wall, QAD y Cost Part.",
   formula: "Pérdida bruta = suma de los NET USD negativos.",
-  notes: ["Ayuda a ver los faltantes aunque existan sobrantes en otras partes.", "Incluye partes QAD todavía no escaneadas; su interpretación intradía es preliminar."],
+  notes: ["Ayuda a ver los faltantes aunque existan sobrantes en otras partes.", "Incluye material que puede estar pendiente de contar. No significa que ya se confirmó una pérdida."],
  },
  grossGain: {
   eyebrow: "INDICADOR FINANCIERO", title: "Ganancia bruta",
@@ -39,44 +39,44 @@ const HELP = {
  },
  swing: {
   eyebrow: "INDICADOR DE LOCALIDAD", title: "SWING",
-  description: "Señala diferencias de ubicación: 4Wall reporta material en una localidad distinta de la registrada en QAD. También puede coexistir con una pérdida o ganancia total.",
+  description: "Compara las cantidades lugar por lugar. Aumenta si falta o sobra material en algún lugar, aunque la cantidad total del número de parte coincida. Por sí solo no confirma que el material se movió.",
   source: "4Wall, diccionario oficial de áreas y localidades exactas de QAD 3.2.",
   formula: "Se compara el físico y QAD localidad por localidad.\nSWING piezas = suma de las diferencias absolutas por localidad.\nSWING USD = SWING piezas × Cost Total.",
-  notes: ["No se divide entre dos; Finanzas quiere ver el movimiento por localidad.", "SWING no demuestra por sí solo que falte material físicamente.", "Finanzas aún debe validar qué localidades forman el alcance financiero definitivo."],
+  notes: ["La fórmula actual suma las diferencias de cada lugar sin dividir entre dos.", "SWING no demuestra por sí solo que falte material físicamente.", "Falta confirmar con el departamento qué lugares se incluyen."],
  },
  phantom: {
   eyebrow: "BOM / PHANTOM", title: "Phantom",
-  description: "ISPBB define si un componente es Phantom. Cuando se escanea un padre con una relación directa válida, el motor puede sumar al componente la cantidad derivada del BOM.",
+  description: "ISPBB indica cuáles piezas son phantom. Si contamos un ensamble y el BOM indica cuántas de esas piezas lleva, la aplicación puede calcularlas a partir del ensamble.",
   source: "Columna Phantom de ISPBB y relaciones Parent Item → Component del export BOM.",
   formula: "Contribución del componente = cantidad escaneada del padre × Usage.",
-  notes: ["Solo ISPBB con Phantom = YES confirma esta clasificación; no se usan prefijos.", "Se usa Usage, no Grossed up Usage.", "La explosión de varios niveles sigue pendiente de un caso real validado.", "La cantidad directa 4Wall y la derivada de BOM se mantienen separadas."],
+  notes: ["Solo ISPBB con Phantom = YES confirma esta clasificación; no se usan prefijos.", "Se usa Usage, no Grossed up Usage.", "Por ahora solo se revisan los componentes que dependen directamente del ensamble. Falta confirmar un ejemplo con el departamento para ir más abajo.", "La cantidad directa 4Wall y la derivada de BOM se mantienen separadas."],
  },
  phantomRadar: {
   eyebrow: "PRIORIZACIÓN", title: "Radar Phantom",
-  description: "Muestra hasta seis Part Numbers que ISPBB identifica como Phantom y que tienen el mayor impacto NET absoluto en este corte. Sirve para decidir cuáles investigar primero.",
+  description: "Muestra hasta seis Part Numbers que ISPBB identifica como Phantom y que tienen el diferencias más grandes en dólares. Sirve para decidir cuáles investigar primero.",
   source: "Definición Phantom de ISPBB y resultados conciliados de 4Wall, QAD 3.2 y Cost Part.",
   formula: "Primero se filtran los Phantom confirmados en ISPBB. Después se ordenan por el tamaño del impacto NET USD, tanto si es pérdida como si es ganancia.",
-  notes: ["Este radar es una lista de atención; no añade piezas ni modifica el resultado financiero.", "Selecciona un Part Number para ver su cantidad directa, posible contribución BOM y localidades.", "Si no aparecen casos, revisa que ISPBB y las demás fuentes estén cargadas."],
+  notes: ["Este radar es una lista de atención; no añade piezas ni modifica el resultado financiero.", "Selecciona un Part Number para ver lo escaneado, lo calculado desde un ensamble y sus lugares.", "Si no aparecen casos, revisa que ISPBB y las demás fuentes estén cargadas."],
  },
  dataHealth: {
   eyebrow: "FUENTES DEL CORTE", title: "Estado de datos",
   description: "Cada indicador resume una fuente o una lista de revisión. Selecciónalo para ver sus registros aquí mismo; selecciónalo otra vez o pulsa CERRAR para regresar al tablero.",
-  source: "Snapshot de escaneos 4Wall, archivos QAD y diagnósticos del motor.",
+  source: "Reporte de escaneos 4Wall, archivos QAD y revisión de los datos.",
   formula: "Los números indican filas o Part Numbers, según la etiqueta. Alertas suma áreas sin mapeo, partes sin costo, material inesperado y diferencias de definición Phantom.",
-  notes: ["Un mismo Part Number puede figurar en más de un tipo de alerta.", "El panel muestra 50 filas por página y permite buscar sin cargar miles de renglones a la vez.", "Las alertas esperan a que se carguen los cinco archivos de referencia."],
+  notes: ["Un mismo número de parte puede tener varios avisos.", "El panel muestra 50 filas por página y permite buscar sin cargar miles de renglones a la vez.", "Las alertas esperan a que se carguen los cinco archivos de referencia."],
  },
  bomReview: {
   eyebrow: "PISTA DE AUDITORÍA", title: "Revisar BOM",
   description: "Destaca Part Numbers con cantidad QAD positiva, sin físico reconocido aún, que aparecen como componentes en el BOM recibido. Pueden requerir revisar un subensamble.",
   source: "QAD 3.2, físico 4Wall y referencias Parent Item → Component del BOM cargado.",
   formula: "Filtro de revisión: QAD > 0, físico = 0 y componente presente en BOM.\nNo se suma cantidad física por esta coincidencia.",
-  notes: ["Una referencia BOM es una pista, no prueba de que el padre fue contado.", "Revisa padre, nivel, Usage y sitio en el detalle; confirma el material con el equipo de inventario.", "La exposición sigue en el NET preliminar hasta contar con un ajuste Phantom válido o una regla confirmada por Finanzas."],
+  notes: ["Una referencia BOM es una pista, no prueba de que el padre fue contado.", "Revisa padre, nivel, Usage y sitio en el detalle; confirma el material con el equipo de inventario.", "La diferencia sigue en el total hasta que haya datos para explicarla o una regla acordada con el departamento."],
  },
  physical: {
   eyebrow: "DATO", title: "Físico",
   description: "Cantidad que el motor reconoce para este Part Number a partir de escaneos directos y, cuando aplica, contribuciones Phantom de BOM.",
   source: "4Wall y diccionario oficial de áreas; ISPBB y BOM para la contribución derivada.",
-  formula: "Físico total = escaneos directos + contribución BOM validada.",
+  formula: "Físico total = escaneos directos + cantidad calculada con el BOM.",
   notes: ["Las localidades se conservan exactamente, con WHSE normalizado a ZWHSE.", "Una AreaName que no existe en el diccionario queda como UNMAPPED; no se adivina su localidad."],
  },
  qad: {
@@ -91,7 +91,7 @@ const HELP = {
   description: "Es el costo con el que cada diferencia de piezas se convierte en impacto financiero.",
   source: "Campo Cost Total de Cost Part Browse.",
   formula: "Impacto USD = diferencia de piezas × Cost Total.",
-  notes: ["El costo de 4Wall se guarda como referencia, pero no se usa para valorar el NET.", "Finanzas aún debe confirmar que Cost Total es el costo oficial expresado en USD.", "Si falta costo, la alerta $? lo señala; un USD cero no prueba ausencia de impacto."],
+  notes: ["El costo de 4Wall se guarda como referencia, pero no se usa para valorar el NET.", "Todos los importes están en dólares. Falta confirmar con el departamento que Cost Total sea el costo que debemos usar.", "Si falta costo, la alerta $? lo señala; un USD cero no prueba ausencia de impacto."],
  },
  status: {
   eyebrow: "CLASIFICACIÓN", title: "Estado del Part Number",
@@ -105,7 +105,7 @@ const HELP = {
   description: "Marcas que explican por qué una cifra necesita revisión adicional antes de tomar decisiones.",
   source: "Diagnósticos del motor y archivos cargados.",
   formula: "QAD0 = material inesperado. BOM? = revisar relación de subensamble. MAP? = área sin localidad oficial. $? = costo faltante.",
-  notes: ["BOM? no acredita físico ni modifica NET.", "Abre el Part Number para revisar sus fuentes y localidades exactas."],
+  notes: ["BOM? solo pide revisar el ensamble. No agrega piezas ni cambia los dólares.", "Abre el Part Number para revisar sus fuentes y localidades exactas."],
  },
 };
 export function HelpButton({

@@ -69,7 +69,7 @@ function getView(view, { scanRows, diagnostics, reconciliation, referenceRows, s
         })),
       ];
       return {
-        rows: list, description: "El número de filas corresponde a cada archivo o snapshot recibido. Selecciona una fuente en la barra para ver sus registros.",
+        rows: list, description: "El número de filas corresponde a cada archivo o reporte recibido. Selecciona una fuente en la barra para ver sus registros.",
         columns: [{ label: "Fuente", key: "name" }, { label: "Archivo / sistema", key: "file" }, { label: "Filas", key: "rows" }, { label: "Estado", key: "state" }],
       };
     }
