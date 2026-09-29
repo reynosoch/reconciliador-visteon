@@ -38,6 +38,9 @@ La aplicación incluye:
 - Diseño responsive para laptop, iPad y móvil.
 - Referencias visuales sutiles de Pac-Man.
 - Superficies principales con tratamiento Liquid Glass: blur, transparencia, reflejos suaves y profundidad, manteniendo el contenido legible y evitando apilar vidrio sobre vidrio.
+- `Estado de datos` abre un visor tipo hoja de cálculo con letras de columna, números de fila, búsqueda, pestaña de hoja y navegación de regreso al hallazgo.
+- `Posible ubicación` explica su cálculo en UI y permite abrir el PN directamente en el visor por localidad; los vínculos de cantidades son evidencia navegable, no ajustes automáticos.
+- El ambiente Pac-Man incluye persecución normal, modo power con phantoms azules, varios power pellets, frutas, puntaje visual y mayor separación entre personajes.
 
 ## Arquitectura
 
