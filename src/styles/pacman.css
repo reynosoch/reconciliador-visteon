@@ -1398,3 +1398,186 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
   .vi-refresh-button{width:34px!important}
   .vi-header-actions{gap:3px!important}
 }
+
+
+/* =========================================================
+   Sticky command center + development feedback
+   ========================================================= */
+.vi-command-header{
+  position:sticky!important;
+  top:0;
+  z-index:70!important;
+  box-shadow:0 14px 34px rgba(0,18,28,.18);
+}
+
+.vi-dev-feedback{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:420;
+  pointer-events:none;
+}
+.vi-dev-feedback-trigger{
+  pointer-events:auto;
+  margin-left:auto;
+  min-height:52px;
+  padding:0 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:18px;
+  background:linear-gradient(145deg,rgba(245,130,31,.96),rgba(212,91,13,.94));
+  color:#fff;
+  box-shadow:0 16px 42px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.28);
+  font-family:inherit;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.08em;
+  cursor:pointer;
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  backdrop-filter:blur(18px) saturate(150%);
+}
+.vi-dev-feedback-trigger:hover{transform:translateY(-1px)}
+.vi-dev-feedback-trigger.is-open{background:linear-gradient(145deg,rgba(24,70,91,.97),rgba(7,42,57,.96))}
+.vi-dev-feedback-panel{
+  pointer-events:auto;
+  width:min(480px,calc(100vw - 24px));
+  max-height:min(760px,calc(100vh - 92px));
+  margin-bottom:10px;
+  overflow:auto;
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:26px;
+  background:linear-gradient(155deg,rgba(25,67,85,.97),rgba(6,35,49,.97));
+  color:#eef7fa;
+  box-shadow:0 30px 90px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.12);
+  -webkit-backdrop-filter:blur(30px) saturate(155%);
+  backdrop-filter:blur(30px) saturate(155%);
+}
+.vi-dev-feedback-head{
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding:18px 18px 14px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  border-bottom:1px solid rgba(255,255,255,.09);
+  background:rgba(8,40,55,.90);
+  -webkit-backdrop-filter:blur(24px);
+  backdrop-filter:blur(24px);
+}
+.vi-dev-feedback-head>div{min-width:0}
+.vi-dev-feedback-head h2{margin:3px 0 0;color:#fff;font-size:20px;line-height:1.2}
+.vi-dev-feedback-head>div>p:last-child{margin:6px 0 0;color:#a9c2cc;font-size:11px;line-height:1.4}
+.vi-dev-feedback-form{padding:16px 18px 18px;display:grid;gap:14px}
+.vi-dev-feedback-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vi-dev-feedback-form label{display:grid;gap:7px}
+.vi-dev-feedback-form label>span,
+.vi-feedback-evidence>div>strong{
+  color:#9db9c4;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.11em;
+}
+.vi-dev-feedback-form select,
+.vi-dev-feedback-form textarea{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  outline:0;
+  background:rgba(255,255,255,.055);
+  color:#f3fafc;
+  font:inherit;
+}
+.vi-dev-feedback-form select{
+  min-height:44px;
+  padding:0 12px;
+  color-scheme:dark;
+  font-size:11px;
+  font-weight:700;
+}
+.vi-dev-feedback-form textarea{
+  min-height:82px;
+  padding:11px 12px;
+  resize:vertical;
+  font-size:12px;
+  line-height:1.5;
+}
+.vi-dev-feedback-form select:focus,
+.vi-dev-feedback-form textarea:focus{
+  border-color:rgba(245,130,31,.72);
+  box-shadow:0 0 0 3px rgba(245,130,31,.10);
+}
+.vi-dev-feedback-form textarea::placeholder{color:#6f929f}
+.vi-feedback-evidence{
+  padding:13px;
+  display:grid;
+  gap:10px;
+  border:1px dashed rgba(255,255,255,.15);
+  border-radius:17px;
+  background:rgba(0,0,0,.08);
+}
+.vi-feedback-evidence>div:first-child{display:grid;gap:3px}
+.vi-feedback-evidence>div:first-child>span{color:#8faab5;font-size:10px;line-height:1.4}
+.vi-feedback-upload{
+  min-height:68px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  background:rgba(255,255,255,.04);
+  color:#d9e9ee;
+  cursor:pointer;
+}
+.vi-feedback-upload>span{font-size:22px;color:#ffad64}
+.vi-feedback-upload strong{font-size:9px;letter-spacing:.08em}
+.vi-feedback-preview{position:relative;overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.10)}
+.vi-feedback-preview img{display:block;width:100%;max-height:220px;object-fit:contain;background:#071c27}
+.vi-feedback-preview button{
+  position:absolute;right:8px;bottom:8px;min-height:30px;padding:0 9px;
+  border:1px solid rgba(255,255,255,.15);border-radius:10px;
+  background:rgba(5,30,42,.88);color:#fff;font-size:8px;font-weight:900;cursor:pointer
+}
+.vi-feedback-error,.vi-feedback-status{
+  margin:0!important;
+  padding:9px 10px;
+  border-radius:11px;
+  background:rgba(255,113,123,.10);
+  color:#ffc1c6!important;
+  font-size:10px!important;
+  line-height:1.4!important;
+}
+.vi-feedback-status.is-ok{background:rgba(80,205,149,.10);color:#a9ebcc!important}
+.vi-feedback-submit{
+  min-height:45px;
+  border:0;
+  border-radius:14px;
+  background:#f5821f;
+  color:#fff;
+  font-family:inherit;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.09em;
+  cursor:pointer;
+}
+.vi-feedback-submit:disabled{opacity:.55;cursor:wait}
+
+@media(max-width:640px){
+  .vi-dev-feedback{right:10px;bottom:10px}
+  .vi-dev-feedback-trigger{width:50px;height:50px;min-height:50px;padding:0;border-radius:16px}
+  .vi-dev-feedback-trigger>span{display:none}
+  .vi-dev-feedback-panel{
+    width:calc(100vw - 20px);
+    max-height:calc(100dvh - 76px);
+    border-radius:22px;
+  }
+  .vi-dev-feedback-grid{grid-template-columns:1fr}
+  .vi-dev-feedback-head{padding:15px}
+  .vi-dev-feedback-form{padding:14px 15px 16px}
+}
