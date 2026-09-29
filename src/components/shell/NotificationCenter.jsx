@@ -177,41 +177,51 @@ export default function NotificationCenter({
     <OverlayPortal onClose={onClose}>
       <div className="vi-global-overlay">
         <aside className="vi-drawer-panel vi-global-drawer">
-          <div className="sticky top-0 z-10 px-5 py-5 bg-white">
-            <div className="flex justify-between gap-4">
-              <div>
-                <p className="vi-eyebrow">NOTIFICACIONES</p>
-                <h2 className="mt-1 text-xl font-black">Por revisar</h2>
-                <p className="mt-1 text-[11px]">
-                  El historial queda en este navegador. Las alertas se
-                  comprueban con los archivos cargados.
-                </p>
-              </div>
-              <button className="vi-button" onClick={onClose}>
-                CERRAR
-              </button>
+          <div className="vi-notification-head">
+            <div className="vi-notification-navrow">
+              {(tab !== "OPERATIVAS" || selectedGroup) ? (
+                <button
+                  type="button"
+                  className="vi-back-button"
+                  onClick={() => {
+                    if (selectedGroup) {
+                      setSelectedGroup(null);
+                      setPage(0);
+                    } else {
+                      setTab("OPERATIVAS");
+                      setPage(0);
+                    }
+                  }}
+                  aria-label="Regresar"
+                >
+                  <span aria-hidden="true">‹</span><strong>REGRESAR</strong>
+                </button>
+              ) : <span />}
+              <button type="button" className="vi-icon-close" onClick={onClose} aria-label="Cerrar notificaciones">×</button>
+            </div>
+            <div className="vi-notification-heading-copy">
+              <p className="vi-eyebrow">NOTIFICACIONES</p>
+              <h2>Por revisar</h2>
+              <p>El historial queda en este navegador. Las alertas se comprueban con los archivos cargados.</p>
             </div>
             <div className="vi-notification-tabs">
               <button
                 className={tab === "OPERATIVAS" ? "is-active" : ""}
-                onClick={() => {
-                  setTab("OPERATIVAS");
-                  setPage(0);
-                }}
+                onClick={() => { setTab("OPERATIVAS"); setSelectedGroup(null); setPage(0); }}
               >
-                ALERTAS <b>{unread}</b>
+                <span>ALERTAS</span><b>{unread}</b>
               </button>
               <button
                 className={tab === "DEPARTAMENTO" ? "is-active" : ""}
-                onClick={() => setTab("DEPARTAMENTO")}
+                onClick={() => { setTab("DEPARTAMENTO"); setSelectedGroup(null); }}
               >
-                CONFIRMAR CON EL DEPARTAMENTO
+                <span>CONFIRMAR</span><small>Departamento</small>
               </button>
               <button
                 className={tab === "NOVEDADES" ? "is-active" : ""}
-                onClick={() => setTab("NOVEDADES")}
+                onClick={() => { setTab("NOVEDADES"); setSelectedGroup(null); }}
               >
-                NOVEDADES <b>{news}</b>
+                <span>NOVEDADES</span><b>{news}</b>
               </button>
             </div>
           </div>
