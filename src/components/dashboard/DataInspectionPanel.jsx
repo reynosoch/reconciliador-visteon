@@ -66,8 +66,9 @@ function scanColumns(scanRows = []) {
     });
   });
   const sourceColumns = scanRows.find((row) => row?.source_columns)?.source_columns || {};
+  const roleLabel = { part_number: "Part Number", quantity: "Cantidad", area: "Área 4Wall" };
   const used = new Map(
-    Object.entries(sourceColumns).map(([role, key]) => [String(key), role]),
+    Object.entries(sourceColumns).map(([role, key]) => [String(key), roleLabel[role] || role]),
   );
   const fallbackUsed = new Map([
     ["numero_parte", "Part Number"],
