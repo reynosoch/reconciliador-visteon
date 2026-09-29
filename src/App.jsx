@@ -179,7 +179,7 @@ export default function App() {
   return (
     <div className="vi-shell">
       <AmbientChase />
-      <CommandHeader
+      {!animationOnly && <CommandHeader
         connectionStatus={inventory.connectionStatus}
         scanCount={inventory.scanCount}
         lastUpdated={inventory.lastUpdated}
@@ -196,7 +196,7 @@ export default function App() {
         onOpenBot={() => setBotOpen(true)}
         onOpenMenu={() => setMenuOpen(true)}
         notificationCount={notificationCount}
-      />
+      />}
       {animationOnly && <AnimationOnlyView onClose={() => setAnimationOnly(false)} />}
       {!animationOnly && warning && <div className="vi-persistence-warning">{warning}</div>}
       {!animationOnly && <main className="vi-main">
