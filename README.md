@@ -1,16 +1,364 @@
-# React + Vite
+# Visteon Inventory Reconciler — 4Wall vs QAD
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Dashboard web para apoyar la conciliación del inventario físico de planta durante el día de inventario. El sistema compara el físico proveniente de **4Wall** contra el congelado de **QAD**, incorpora referencias de planeación, BOM y costos, y presenta diferencias en piezas y dólares para las juntas periódicas de Finanzas.
 
-Currently, two official plugins are available:
+> **Importante:** los archivos usados actualmente para desarrollo y demostración son archivos de prueba. Las discrepancias mostradas por el sistema no deben interpretarse como pérdidas reales de planta.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Objetivo operativo
 
-## React Compiler
+Durante el inventario físico, Finanzas necesita detectar temprano qué Part Numbers requieren revisión sin esperar hasta el cierre nocturno. La aplicación prioriza impacto en USD, conserva el detalle por localidad y separa diferencias financieras de problemas de calidad de datos.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+El flujo esperado es:
 
-## Expanding the ESLint configuration
+1. Cargar los archivos de referencia congelados.
+2. Actualizar el físico vigente de 4Wall.
+3. Revisar impacto financiero y discrepancias por investigar.
+4. Abrir evidencia por Part Number/localidad.
+5. Guardar un corte para la siguiente junta.
+6. Comparar únicamente cortes válidos y compatibles.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Estado actual
+
+La aplicación incluye:
+
+- Conciliación 4Wall vs QAD por Part Number y localidad.
+- NET / diferencia total en dólares, pérdida bruta y ganancia bruta.
+- SWING por localidad.
+- Identificación de Phantom desde ISPBB.
+- Referencias BOM sin crear ajustes por una coincidencia simple.
+- Identificación de obsoletos desde Cost Part.
+- Detección de material inesperado y QAD positivo sin físico.
+- Motor de **Discrepancias por investigar** separado de React.
+- Alertas operativas con IDs estables por inventario.
+- Preguntas pendientes para Finanzas disponibles desde la campana.
+- Historial de juntas almacenado localmente en IndexedDB.
+- Respaldo descargable del historial local.
+- Control local del bot con estado de proceso y último resultado publicado.
+- Manejo de fallos de almacenamiento y Error Boundary.
+- Diseño responsive para laptop, iPad y móvil.
+- Referencias visuales sutiles de Pac-Man.
+
+## Arquitectura
+
+```text
+RAW / FUENTES
+   ↓
+PARSERS
+   ↓
+NORMALIZACIÓN
+   ↓
+MOTOR DE DOMINIO
+   ├── conciliación
+   ├── SWING
+   ├── Phantom / BOM
+   └── hallazgos
+   ↓
+RESUMEN FINANCIERO
+   ↓
+REACT / UI
+```
+
+React presenta resultados; las reglas financieras y de hallazgos viven en `src/domain`.
+
+### Estructura principal
+
+```text
+src/
+├── App.jsx
+├── domain/
+│   ├── normalize.js
+│   ├── explodeBom.js
+│   ├── reconcileInventory.js
+│   ├── inventoryEngine.js
+│   ├── buildDiscrepancyFindings.js
+│   ├── notificationState.js
+│   └── visibleAlerts.js
+├── parsers/
+│   ├── parseDelimitedFile.js
+│   ├── parse4WallAreas.js
+│   ├── parse4WallScans.js
+│   ├── parseQad32.js
+│   ├── parseISPBB.js
+│   ├── parseBom.js
+│   └── parseCostPart.js
+├── hooks/
+│   ├── useInventoryEngine.js
+│   └── useReferenceFiles.js
+├── services/
+│   ├── supabase.js
+│   └── browserStorage.js
+├── components/
+│   ├── dashboard/
+│   ├── detail/
+│   ├── help/
+│   ├── shell/
+│   └── visual/
+└── styles/pacman.css
+```
+
+## Fuentes de datos
+
+| Fuente | Uso actual |
+| --- | --- |
+| 4Wall | Físico vigente: PN, cantidad y área de escaneo |
+| 4Wall-Area | Traducción de área 4Wall a localidad QAD |
+| QAD 3.2 | Inventario congelado por PN y localidad |
+| ISPBB 50.1.4.22 | Fuente autoritativa para saber si un PN es Phantom |
+| BOM | Relación Parent → Component y Usage |
+| Cost Part Browse | Cost Total y Status para valoración financiera |
+
+Los archivos de referencia se cargan manualmente en el navegador y se validan por columnas requeridas. También se calcula una huella SHA-256 para detectar si las referencias cambiaron.
+
+### Limitación actual del 4Wall en vivo
+
+La consulta web actual recibe de Supabase:
+
+- `id`
+- `numero_parte`
+- `cantidad`
+- `area_escaneo`
+
+Por lo tanto, la interfaz **no debe inventar** Ticket/FIFO, auditor, responsable o fecha si esos campos no llegaron por el pipeline publicado.
+
+## Reglas financieras actuales
+
+### Diferencia total / NET
+
+```text
+NET piezas = Físico total - QAD total
+NET USD    = NET piezas × costo unitario
+```
+
+El signo se conserva. El NET representa la diferencia total del PN; no se usa valor absoluto.
+
+### Pérdida y ganancia bruta
+
+- NET negativo → pérdida bruta.
+- NET positivo → ganancia bruta.
+- Un PN sin costo confiable no se presenta como USD 0 válido.
+
+### SWING
+
+La implementación vigente compara localidad contra localidad:
+
+```text
+SWING piezas = Σ ABS(Físico(localidad) - QAD(localidad))
+SWING USD    = SWING piezas × costo unitario
+```
+
+No se divide entre dos. El alcance final de localidades para SWING sigue pendiente de confirmación con Finanzas.
+
+### Phantom
+
+- No se identifica por prefijos del Part Number.
+- La fuente autoritativa es ISPBB.
+- BOM usa `Usage`, no `Grossed up Usage`.
+- La explosión actual es directa/no recursiva.
+- Una coincidencia en BOM por sí sola no debe crear un ajuste financiero nuevo.
+
+### Obsoleto
+
+Se toma de `Status = OBSOLETE` en Cost Part. Un sobrante obsoleto puede aislarse para revisión, pero sigue formando parte del NET del PN.
+
+### Material inesperado
+
+Si Físico > 0 y QAD = 0, se marca para investigar. El motor distingue cuando el PN está presente con saldo cero de cuando está ausente del archivo QAD filtrado.
+
+### Sin físico registrado
+
+QAD > 0 y Físico = 0 se muestra como **Sin físico registrado**. Durante el conteo intradía esto no significa automáticamente una pérdida confirmada.
+
+## Discrepancias por investigar
+
+`src/domain/buildDiscrepancyFindings.js` genera hallazgos con IDs estables por inventario, regla, PN y localidad.
+
+Tipos actuales:
+
+- Diferencia de cantidad.
+- Sin físico registrado.
+- Material inesperado.
+- Posible ubicación.
+- Falta un costo confiable.
+- Área/localidad sin mapeo.
+- Revisión BOM.
+- Cambio inusual entre cortes comparables.
+
+Un mismo PN puede tener varias etiquetas, pero su NET no se suma varias veces.
+
+### Posible ubicación
+
+Para cada localidad:
+
+```text
+deltaLocalidad = físicoLocalidad - qadLocalidad
+sobrantes = suma(deltas positivos)
+faltantes = suma(abs(deltas negativos))
+potencialmenteCompensable = min(sobrantes, faltantes)
+```
+
+Solo es una pista de investigación. No afirma un traslado y no modifica NET ni SWING.
+
+## Costos y calidad de datos
+
+Cost Part distingue:
+
+- costo válido;
+- costo ausente;
+- costo inválido;
+- costo contradictorio.
+
+Un valor vacío o `"$"` no debe convertirse silenciosamente en cero. Un cero numérico real se conserva como cero.
+
+Si una columna necesaria para calcular está duplicada de forma ambigua, la fuente debe revisarse en lugar de escoger una columna silenciosamente.
+
+## Inventarios, cortes e historial
+
+El **nombre del inventario** y su **ID interno** son independientes. Renombrar no cambia los IDs de los hallazgos.
+
+Los cortes grandes y alertas se guardan en IndexedDB. `localStorage` se reserva para preferencias pequeñas.
+
+Cada corte conserva información suficiente para validar comparabilidad, incluyendo:
+
+- inventario;
+- versión de reglas;
+- referencias/huellas;
+- estado del snapshot;
+- resumen;
+- detalle requerido para comparación.
+
+Si IndexedDB falla, la aplicación intenta conservar el trabajo en memoria y muestra una advertencia. El historial local **no se sincroniza entre computadoras**.
+
+Crear otro inventario no borra los archivos de referencia que ya están cargados en la sesión.
+
+## Preguntas pendientes con Finanzas
+
+Estas decisiones se mantienen visibles y no se resuelven por una suposición técnica:
+
+1. Cómo saber que terminó el conteo de un área.
+2. Qué localidades y sitios entran al alcance.
+3. Qué congelado QAD se usa y cómo tratar movimientos posteriores.
+4. Qué costo/moneda se considera oficial.
+5. Cómo debe interpretarse SWING en las juntas.
+6. Cómo debe tratarse Phantom/BOM en casos reales.
+7. Cómo identificar correcciones y reconteos.
+8. A partir de qué monto en USD una diferencia debe priorizarse y quién la investiga.
+
+## Bot 4Wall
+
+`bot_extractor.py` usa Playwright para entrar al 4Wall interno, exportar el reporte, limpiar cantidades inválidas y publicar un corte mediante el RPC de Supabase.
+
+`bot_control_server.py` controla el arranque del extractor localmente:
+
+- evita arranques concurrentes;
+- valida que exista el extractor;
+- diferencia solicitud aceptada de snapshot publicado;
+- expone estado y último resultado sin devolver credenciales;
+- usa contraseña desde `BOT_CONTROL_PASSWORD`;
+- por defecto solo escucha en loopback.
+
+No guardar usuarios, contraseñas ni `service_role` dentro del frontend o del repositorio.
+
+## Metadatos de snapshot
+
+El extractor prepara:
+
+- `snapshotId`
+- `extractedAt`
+- `publishedAt`
+- `result`
+- `rowCount`
+
+La lectura frontend actual también verifica que el conjunto no cambie durante la paginación. Mientras el esquema remoto no exponga un `snapshotId` real a la consulta, el frontend indica que la antigüedad real del reporte no está confirmada.
+
+## Desarrollo local
+
+Requisitos:
+
+- Node.js compatible con Vite 8.
+- npm.
+- Variables públicas de Supabase en `.env.local`.
+
+En la laptop corporativa Windows se recomienda usar `npm.cmd`:
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+```
+
+Verificación y build:
+
+```powershell
+npm.cmd run build
+```
+
+El build ejecuta primero verificaciones de Finanzas, discrepancias, seguridad de UI e IndexedDB y después compila Vite.
+
+## Variables del frontend
+
+```text
+VITE_SUPABASE_URL=<url del proyecto>
+VITE_SUPABASE_ANON_KEY=<anon key>
+```
+
+La anon key puede existir en el frontend; la seguridad real debe depender de RLS/permisos del backend. Nunca colocar una `service_role` en React.
+
+## Despliegue
+
+Vite usa la base:
+
+```text
+/reconciliador-visteon/
+```
+
+GitHub Pages está configurado para **despliegue manual**. Hacer push a `main` no publica automáticamente el dashboard.
+
+Antes de publicar:
+
+```powershell
+git pull --ff-only origin main
+npm.cmd install
+npm.cmd run build
+```
+
+La publicación debe ejecutarse únicamente cuando se haya decidido qué versión se quiere mostrar.
+
+## Diseño
+
+La UI sigue la identidad visual de Visteon:
+
+- Roboto.
+- Visteon Orange `#F5821F`.
+- Dark Blue `#00293F` / `#113B5E`.
+- Prioridad visual para impacto financiero.
+- Responsive para monitor/laptop, iPad y móvil.
+
+La referencia Pac-Man es ambiental, no arcade: normalmente Pac-Man huye mientras los Phantoms lo persiguen en fila. En momentos aleatorios aparece un power pellet; cuando Pac-Man lo alcanza, los fantasmas se vuelven azules y huyen en fila. El poder dura unos segundos y después vuelve la persecución normal. `prefers-reduced-motion` desactiva esta animación.
+
+## Principios que no deben romperse
+
+- No inventar autorizaciones de Finanzas.
+- No tratar QAD sin físico como pérdida confirmada durante un conteo incompleto.
+- No usar prefijos para identificar Phantom.
+- No usar `Grossed up Usage` como Usage.
+- No dividir SWING entre dos.
+- No convertir un área desconocida automáticamente a Piso.
+- No convertir costos o cantidades inválidas silenciosamente a cero.
+- No duplicar NET porque un PN tenga varias alertas.
+- No presentar datos de prueba como pérdidas reales.
+- No publicar automáticamente cambios a GitHub Pages.
+
+## Pendientes técnicos/funcionales
+
+- Confirmar alcance final de localidades/sitios con Finanzas.
+- Confirmar costo y moneda oficiales.
+- Confirmar interpretación operativa final de SWING.
+- Confirmar profundidad y reglas BOM con casos reales.
+- Definir una fuente válida de cierre de conteo.
+- Definir identidad oficial de registros/reconteos.
+- Exponer metadatos de snapshot de extremo a extremo en el backend.
+- Si se requieren Ticket/auditor/responsable/fecha en vivo, ampliar de forma coordinada bot + tabla/RPC + consulta frontend.
+- Migrar historial compartido a una base central si las juntas necesitan ver los mismos cortes desde varios equipos.
+
+---
+
+Proyecto PoC de conciliación de inventario para Visteon. El dashboard apoya la investigación; no sustituye la validación operativa ni las decisiones de Finanzas.

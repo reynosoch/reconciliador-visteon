@@ -373,3 +373,133 @@ button:disabled:hover { transform: none; }
 .ghost-power .ghost-eye{background:#fff}
 .vi-powered-hunter .vi-pac-hunter{filter:drop-shadow(0 0 6px rgba(255,220,70,.45))}
 .vi-frightened-ghost{opacity:.92}
+
+
+/* =========================================================
+   Responsive hardening — laptop, iPad and mobile
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box}
+html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
+.vi-main>*{min-width:0}
+.vi-panel,.vi-panel-flat,.vi-financial-shell,.vi-findings,.vi-cut-history{max-width:100%;min-width:0}
+.vi-findings-table-wrap,.vi-inspection-scroll,.vi-table-shell{max-width:100%;overscroll-behavior-inline:contain}
+.vi-header-main,.vi-source-ribbon-inner,.vi-cut-history-head,.vi-findings-head,.vi-inspection-head{min-width:0}
+.vi-header-actions>*{flex:none}
+.vi-cut-history-actions{min-width:0}
+.vi-campaign-label{min-width:min(260px,100%)}
+.vi-campaign-label .vi-input{min-width:0}
+.vi-global-drawer{max-width:min(520px,100vw)}
+.vi-notification-list,.vi-finding-detail{min-width:0}
+.vi-notification-item,.vi-operational-alert,.vi-finance-question{overflow-wrap:anywhere}
+.vi-alert-summary button{min-height:40px}
+.vi-findings-filters{scrollbar-width:thin}
+.vi-findings-table-wrap{scrollbar-width:thin}
+
+@media(max-width:1180px){
+  .vi-header-main{align-items:flex-start;flex-wrap:wrap}
+  .vi-header-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}
+  .vi-fetch-time{margin-right:auto;text-align:left}
+  .vi-source-ribbon-inner{overflow-x:auto;justify-content:flex-start}
+  .vi-source-ribbon-inner>*{flex:none}
+  .vi-financial-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .vi-financial-cell{border-bottom:1px solid var(--vi-line)}
+  .vi-workspace-grid{grid-template-columns:minmax(0,1fr)}
+  .vi-radar-slot{border-top:1px solid var(--vi-line)}
+}
+
+@media(max-width:800px){
+  .vi-main{padding:20px 14px 52px;gap:14px}
+  .vi-command-header{position:relative}
+  .vi-header-main{padding:12px 14px;gap:12px}
+  .vi-header-brand{width:100%;gap:12px}
+  .vi-brand-logo{width:132px}
+  .vi-brand-divider{height:24px}
+  .vi-product-name{font-size:10px;white-space:normal}
+  .vi-header-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .vi-header-actions .vi-button{width:100%;min-width:0;padding:0 8px;font-size:10px}
+  .vi-header-actions .vi-fetch-time{grid-column:1/-1;width:100%;min-width:0;padding:0;text-align:left}
+  .vi-source-ribbon-inner{padding:8px 14px;gap:14px}
+  .vi-flow-label{display:none}
+  .vi-source-copy{display:grid;gap:1px}
+  .vi-source-copy small{font-size:10px}
+  .vi-ribbon-flow{width:54px}
+  .vi-intro{min-height:0;align-items:flex-start;padding-bottom:16px}
+  .vi-intro h1{font-size:clamp(27px,9vw,36px)}
+  .vi-intro-description{font-size:12px}
+  .vi-health-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vi-health-item{width:100%;min-width:0}
+  .vi-financial-shell>div:first-child{padding:15px}
+  .vi-financial-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vi-financial-cell,.vi-financial-cell:first-child{min-height:132px;padding:16px 14px}
+  .vi-financial-value,.vi-financial-cell:first-child .vi-financial-value{font-size:clamp(22px,7vw,30px)}
+  .vi-findings-head,.vi-cut-history-head,.vi-inspection-head{flex-direction:column}
+  .vi-findings-filters{padding:9px;gap:6px}
+  .vi-findings-filters button{min-height:42px}
+  .vi-findings-table{min-width:720px}
+  .vi-cut-history{padding:15px}
+  .vi-cut-history-actions{display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .vi-cut-history-actions .vi-campaign-label{grid-column:1/-1;width:100%}
+  .vi-cut-history-actions .vi-button{width:100%;min-width:0;padding-inline:8px}
+  .vi-inspection{padding:15px}
+  .vi-inspection-tools{align-items:stretch;flex-direction:column}
+  .vi-inspection-tools .vi-input{max-width:none}
+  .vi-inspection-tools>span{margin-left:0}
+  .vi-inspection-pages{align-items:flex-start;flex-direction:column}
+  .vi-global-overlay{align-items:stretch}
+  .vi-global-drawer{width:100%;max-width:none}
+  .vi-notification-tabs{display:grid;grid-template-columns:1fr}
+  .vi-notification-tabs button{width:100%;min-height:44px}
+  .vi-alert-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vi-alert-summary button{width:100%}
+  .vi-pager{align-items:center;flex-wrap:wrap}
+}
+
+@media(max-width:480px){
+  .vi-main{padding-inline:10px}
+  .vi-header-main{padding-inline:10px}
+  .vi-brand-logo{width:116px}
+  .vi-product-name{font-size:9px;letter-spacing:.08em}
+  .vi-header-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vi-header-actions .vi-fetch-time{grid-column:1/-1}
+  .vi-source-ribbon-inner{padding-inline:10px}
+  .vi-health-list{grid-template-columns:1fr}
+  .vi-financial-strip{grid-template-columns:1fr}
+  .vi-financial-cell,.vi-financial-cell:first-child{min-height:112px}
+  .vi-cut-history-actions{grid-template-columns:1fr}
+  .vi-cut-history-actions .vi-campaign-label{grid-column:auto}
+  .vi-cut-row{grid-template-columns:minmax(0,1fr);gap:5px;padding:10px 0}
+  .vi-cut-row>span{text-align:left}
+  .vi-alert-summary{grid-template-columns:1fr}
+  .vi-findings-table{min-width:660px}
+  .vi-confirm-card{width:calc(100vw - 20px);padding:18px}
+  .vi-notification-list{padding:12px}
+}
+
+/* =========================================================
+   Pac-Man ambient story
+   Normal: phantoms chase Pac-Man in a line.
+   Power pellet: ghosts turn blue and flee; after a few seconds
+   the power expires and the original chase resumes.
+   ========================================================= */
+.vi-random-chase>span{animation:none!important;top:0;left:0;transition:none}
+.vi-power-pellet{
+  position:absolute;
+  width:13px;
+  height:13px;
+  border-radius:50%;
+  background:#fff1a8;
+  box-shadow:0 0 0 3px rgba(255,241,168,.12),0 0 14px rgba(255,241,168,.8);
+  will-change:transform;
+}
+.vi-random-chase.is-power-mode .ghost-sprite{
+  color:#2458d3!important;
+  background:#2458d3!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.22),0 0 13px rgba(70,120,255,.42);
+}
+.vi-random-chase.is-power-mode .ghost-eye{background:#fff}
+.vi-random-chase.is-power-mode .vi-pac-hunter{
+  filter:drop-shadow(0 0 7px rgba(255,220,70,.72));
+}
+@media(prefers-reduced-motion:reduce){
+  .vi-random-chase{display:none}
+}
