@@ -882,3 +882,274 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
   .vi-excel-title-actions{display:grid;grid-template-columns:1fr}
   .vi-excel-formula{grid-template-columns:52px 26px minmax(0,1fr)}
 }
+
+
+/* =========================================================
+   Liquid Glass system — global language for controls/drawers
+   ========================================================= */
+.vi-liquid-surface,
+.vi-financial-shell,
+.vi-findings,
+.vi-health-bar,
+.vi-reconciliation-shell{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.048),rgba(255,255,255,.010) 46%,rgba(0,41,63,.060) 100%)!important;
+  border-color:rgba(255,255,255,.115)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(136%);
+  backdrop-filter:blur(12px) saturate(136%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.13),
+    inset 0 -1px 0 rgba(255,255,255,.018),
+    0 16px 42px rgba(0,8,16,.18)!important;
+}
+.vi-liquid-surface::before,
+.vi-financial-shell::before,
+.vi-findings::before,
+.vi-health-bar::before,
+.vi-reconciliation-shell::before{opacity:.55!important}
+
+.vi-button,
+.source-mini-button,
+.source-clear-button,
+.source-package-button,
+.workspace-filter,
+.vi-notification-tabs button,
+.vi-alert-summary button{
+  border-color:rgba(255,255,255,.14)!important;
+  border-radius:14px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.095),rgba(255,255,255,.025))!important;
+  color:#eef8fb!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 8px 20px rgba(0,0,0,.10);
+  -webkit-backdrop-filter:blur(12px) saturate(135%);
+  backdrop-filter:blur(12px) saturate(135%);
+}
+.vi-button:hover,
+.source-mini-button:hover,
+.source-clear-button:hover,
+.source-package-button:hover,
+.workspace-filter:hover{
+  border-color:rgba(245,130,31,.58)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(245,130,31,.075))!important;
+}
+.vi-button-primary{
+  background:linear-gradient(145deg,rgba(255,157,69,.96),rgba(245,130,31,.87))!important;
+  border-color:rgba(255,181,111,.72)!important;
+  color:#092536!important;
+}
+.vi-button-danger-soft{
+  border-color:rgba(255,130,140,.26)!important;
+  color:#ffd9dd!important;
+  background:linear-gradient(145deg,rgba(255,95,108,.10),rgba(255,255,255,.018))!important;
+}
+.workspace-filter-active,
+.workspace-filter.is-active{
+  background:linear-gradient(145deg,rgba(245,130,31,.98),rgba(225,105,12,.88))!important;
+  border-color:#ffb36e!important;
+  color:#092536!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px rgba(245,130,31,.20)!important;
+}
+.workspace-filter-active *,
+.workspace-filter.is-active *{color:#092536!important}
+
+/* Every side menu/dialog uses the same glass language. */
+.vi-global-overlay,
+.vi-drawer-backdrop,
+.vi-detail-overlay{
+  background:rgba(0,15,24,.23)!important;
+  -webkit-backdrop-filter:blur(8px) saturate(118%);
+  backdrop-filter:blur(8px) saturate(118%);
+}
+.vi-global-drawer,
+.vi-drawer-panel,
+.vi-detail-drawer,
+.vi-liquid-drawer{
+  color:#e9f5f8!important;
+  background:
+    linear-gradient(150deg,rgba(15,57,78,.76),rgba(4,29,43,.62) 48%,rgba(1,24,36,.68))!important;
+  border:1px solid rgba(255,255,255,.13)!important;
+  border-right:0!important;
+  -webkit-backdrop-filter:blur(28px) saturate(160%);
+  backdrop-filter:blur(28px) saturate(160%);
+  box-shadow:
+    inset 1px 0 0 rgba(255,255,255,.10),
+    -26px 0 70px rgba(0,7,12,.24)!important;
+}
+.vi-global-drawer .bg-white,
+.vi-drawer-panel .bg-white,
+.vi-global-drawer [class*="bg-[#"],
+.vi-drawer-panel [class*="bg-[#"],
+.vi-detail-drawer [class*="bg-[#"]{
+  background:rgba(6,37,52,.64)!important;
+}
+.vi-drawer-glass-head,
+.vi-global-drawer>div:first-child,
+.vi-drawer-panel>div:first-child,
+.vi-detail-drawer>div:first-child{
+  position:sticky;top:0;z-index:12;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:20px;
+  background:linear-gradient(180deg,rgba(20,61,80,.90),rgba(6,38,53,.72))!important;
+  border-bottom:1px solid rgba(255,255,255,.10)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(150%);
+  backdrop-filter:blur(24px) saturate(150%);
+}
+.vi-global-drawer h2,
+.vi-drawer-panel h2,
+.vi-detail-drawer h2{color:#fff!important}
+.vi-global-drawer p,
+.vi-drawer-panel p,
+.vi-detail-drawer p{color:#c9dbe2}
+.vi-global-drawer .vi-finding-detail section,
+.vi-global-drawer .vi-notification-item,
+.vi-global-drawer .vi-finance-question,
+.vi-drawer-panel .vi-bot-status,
+.vi-drawer-panel .vi-bot-state,
+.vi-detail-drawer .vi-maze-box,
+.vi-confirm-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.022))!important;
+  border:1px solid rgba(255,255,255,.11)!important;
+  color:#e8f3f6!important;
+  border-radius:18px!important;
+  -webkit-backdrop-filter:blur(14px) saturate(135%);
+  backdrop-filter:blur(14px) saturate(135%);
+}
+.vi-global-drawer .vi-finding-detail h3,
+.vi-global-drawer .vi-notification-item strong,
+.vi-global-drawer .vi-finance-question strong,
+.vi-detail-drawer .vi-maze-box strong{color:#fff!important}
+.vi-global-drawer .vi-finding-evidence>div{
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(255,255,255,.09)!important;
+}
+.vi-icon-close{
+  width:40px;height:40px;flex:none;display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.16);border-radius:999px;
+  background:rgba(255,255,255,.075);color:#fff;font-size:25px;line-height:1;
+  cursor:pointer;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+
+/* Hamburger / Development menu */
+.vi-menu-button{width:42px;padding:0!important}
+.vi-hamburger{display:grid;gap:4px;width:17px}
+.vi-hamburger i{display:block;height:1.5px;border-radius:5px;background:currentColor}
+.vi-menu-overlay{justify-content:flex-start!important;padding:14px}
+.vi-menu-panel{
+  width:min(390px,calc(100vw - 28px));
+  max-height:calc(100vh - 28px);
+  overflow:auto;
+  border-radius:30px!important;
+  border-right:1px solid rgba(255,255,255,.13)!important;
+}
+.vi-menu-head{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 14px}
+.vi-menu-head h2{margin-top:4px;color:#fff;font-size:20px;font-weight:800}
+.vi-menu-section{padding:10px 12px 18px;display:grid;gap:7px}
+.vi-menu-section+.vi-menu-section{border-top:1px solid rgba(255,255,255,.08)}
+.vi-menu-section-title{padding:0 8px;color:#7ea1b1;font-size:9px;font-weight:900;letter-spacing:.14em}
+.vi-menu-item{
+  width:100%;min-height:64px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border:1px solid rgba(255,255,255,.085);border-radius:18px;
+  background:rgba(255,255,255,.04);color:#eef7fa;text-align:left;
+}
+.vi-menu-item>span{display:grid;gap:3px;min-width:0}
+.vi-menu-item strong{font-size:12px}
+.vi-menu-item small{color:#91aab5;font-size:10px;line-height:1.35}
+.vi-menu-item em{flex:none;color:#698795;font-size:8px;font-style:normal;font-weight:900;letter-spacing:.08em}
+.vi-menu-item:disabled{opacity:.55}
+.vi-menu-secret{padding-top:18px}
+.vi-animation-entry{cursor:pointer;opacity:.70}
+.vi-animation-entry:hover{opacity:1;background:rgba(255,255,255,.075)}
+.vi-animation-entry>b{font-size:24px;font-weight:300;color:#8fd1ff}
+.vi-animation-only{
+  position:fixed;inset:0;z-index:40;pointer-events:none;
+  background:radial-gradient(circle at center,transparent 0 54%,rgba(0,9,15,.18) 100%);
+}
+.vi-animation-exit{
+  position:fixed;z-index:45;top:18px;right:18px;pointer-events:auto;
+  width:48px;height:48px;border:1px solid rgba(255,255,255,.16);border-radius:999px;
+  background:rgba(7,40,55,.38);color:#fff;font-size:30px;
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.vi-animation-only-copy{position:fixed;left:20px;bottom:20px;display:grid;color:rgba(255,255,255,.56);font-size:9px;letter-spacing:.15em}
+.vi-animation-only-copy small{margin-top:4px;color:rgba(255,255,255,.28)}
+
+/* Discrepancy help popover */
+.vi-findings-head-actions{display:flex;align-items:center;gap:9px}
+.vi-findings-help-wrap{position:relative}
+.vi-round-help{
+  width:42px;height:42px;display:grid;place-items:center;border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.055);color:#fff;
+  font-size:16px;font-weight:900;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.vi-iphone-popover{
+  position:absolute;z-index:30;top:50px;right:0;width:min(370px,86vw);padding:8px;
+  border:1px solid rgba(255,255,255,.14);border-radius:25px;
+  background:linear-gradient(160deg,rgba(32,72,90,.94),rgba(8,37,51,.91));
+  box-shadow:0 24px 65px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.12);
+  -webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);
+}
+.vi-popover-title{display:grid;gap:2px;padding:11px 12px 9px}
+.vi-popover-title strong{font-size:12px;color:#fff}.vi-popover-title span{font-size:10px;color:#9fb5bf}
+.vi-popover-row{border-top:1px solid rgba(255,255,255,.075)}
+.vi-popover-row summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;cursor:pointer}
+.vi-popover-row summary::-webkit-details-marker{display:none}
+.vi-popover-row summary>span{display:grid;gap:2px}
+.vi-popover-row summary strong{font-size:11px;color:#f3fafc}.vi-popover-row summary small{font-size:9px;color:#8eabb7}
+.vi-popover-row summary>b{font-size:20px;color:#7196a6;transition:transform .16s}
+.vi-popover-row[open] summary>b{transform:rotate(90deg)}
+.vi-popover-row p{margin:0 12px 12px;padding:10px;border-radius:12px;background:rgba(0,0,0,.12);color:#bfd2da;font-size:10px;line-height:1.55}
+
+/* Split evidence viewer */
+.vi-dual-evidence{padding:0!important}
+.vi-evidence-alert{display:grid;gap:4px;padding:12px 14px;border-bottom:1px solid #cbd4d0;background:#eef6f1;color:#40564c;font-size:11px}
+.vi-evidence-alert strong{color:#185c37}
+.vi-dual-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:360px;background:#cfd7d3;gap:1px}
+.vi-dual-sheet{min-width:0;background:#fff}
+.vi-dual-sheet-title{height:39px;padding:0 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#185c37;color:#fff}
+.vi-dual-sheet-title strong{font-size:11px}.vi-dual-sheet-title span{font-size:9px;color:#cce7d7}
+.vi-dual-sheet-scroll{max-height:520px;overflow:auto}
+.vi-dual-sheet .vi-excel-grid{min-width:560px}
+.vi-dual-empty{padding:20px;color:#7b4237;background:#fff5f3;font-size:11px;line-height:1.5}
+.vi-excel-grid .is-source-used{background:#e9f7ed!important;box-shadow:inset 0 -2px #107c41}
+.vi-excel-grid thead .is-source-used{color:#0a6735!important}
+.vi-excel-fields th.is-source-used::after{content:"";display:inline-block;width:6px;height:6px;margin-left:5px;border-radius:50%;background:#107c41}
+
+/* Radar follows the user through the reconciliation section. */
+.vi-radar-slot{align-self:start;overflow:visible!important}
+.vi-radar-stack{position:sticky;top:126px;display:grid;gap:12px;padding:12px;max-height:calc(100vh - 142px);overflow:auto}
+.vi-radar-card{
+  overflow:hidden;border:1px solid rgba(255,255,255,.10);border-radius:20px;
+  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  -webkit-backdrop-filter:blur(14px) saturate(135%);backdrop-filter:blur(14px) saturate(135%);
+}
+.vi-radar-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 12px 5px;color:#dfcafa;font-size:10px;font-weight:900;letter-spacing:.09em}
+.vi-obsolete-radar .vi-radar-card-head{color:#99e2bd}
+.vi-obsolete-icon{width:24px;height:24px;display:grid;place-items:center;border-radius:9px;background:rgba(93,209,151,.09)}
+.vi-radar-card .vi-radar-caption{padding:0 12px 9px;margin:0;color:#78939e;font-size:9px;line-height:1.35}
+.vi-radar-card-body{padding:7px}
+.vi-radar-row{width:100%;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid transparent;border-radius:10px;background:transparent;text-align:left}
+.vi-radar-row:hover{border-color:rgba(255,255,255,.09);background:rgba(255,255,255,.045)}
+.vi-radar-pn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c9d8dd;font-size:10px}
+.vi-radar-empty{padding:18px 8px;text-align:center;color:#6d8996;font-size:9px}
+
+/* Part-number drawer metrics never collide. */
+.vi-detail-metric{
+  min-width:0;padding:12px 13px;border:1px solid rgba(255,255,255,.09);border-radius:16px;
+  background:rgba(255,255,255,.035);
+}
+.vi-detail-metric .vi-money{max-width:100%;font-size:clamp(16px,4vw,24px)!important;line-height:1.12;overflow-wrap:anywhere;word-break:break-word}
+.vi-impact-metrics{align-items:stretch}
+
+@media(max-width:900px){
+  .vi-findings-head-actions{width:100%;justify-content:flex-end}
+  .vi-dual-grid{grid-template-columns:1fr}
+  .vi-radar-stack{position:static;max-height:none}
+}
+@media(max-width:640px){
+  .vi-findings-head-actions{justify-content:stretch}
+  .vi-findings-head-actions>.vi-button{flex:1}
+  .vi-iphone-popover{position:fixed;top:90px;right:12px;left:12px;width:auto}
+  .vi-menu-overlay{padding:8px}
+  .vi-menu-panel{width:calc(100vw - 16px);max-height:calc(100vh - 16px)}
+}
