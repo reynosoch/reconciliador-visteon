@@ -162,16 +162,10 @@ export default function App() {
       setIdentity(n);
       if (!safeWriteJson(KEY, n).ok) setWarning(STORAGE_WARNING);
     },
-    openExcelForFinding = (partNumber, findingId) => {
-      setDataNavigation({ partNumber, findingId });
-      setActiveDataView("reconciliationExcel");
+    openExcelForFinding = (finding) => {
+      setDataNavigation({ finding });
+      setActiveDataView("findingEvidence");
       setTimeout(() => document.getElementById("vi-data-inspection")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-    },
-    backToFinding = (findingId) => {
-      setActiveDataView(null);
-      setDataNavigation(null);
-      setFocusFindingId(findingId);
-      setTimeout(() => document.querySelector(".vi-findings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
     },
     reason = !referencesReady
       ? "Faltan archivos de referencia válidos."
@@ -239,9 +233,8 @@ export default function App() {
               setDataNavigation(null);
             }}
             onSelectPart={setSelectedPart}
-            initialQuery={dataNavigation?.partNumber || ""}
-            originFindingId={dataNavigation?.findingId || null}
-            onBackToFinding={backToFinding}
+            initialQuery={dataNavigation?.finding?.partNumber || ""}
+            findingContext={dataNavigation?.finding || null}
             scanRows={inventory.scanRows}
             diagnostics={inventory.diagnostics}
             reconciliation={inventory.reconciliation}
@@ -269,6 +262,8 @@ export default function App() {
           focusFindingId={focusFindingId}
           onFocusHandled={() => setFocusFindingId(null)}
           onOpenExcel={openExcelForFinding}
+          inventoryName={identity.name}
+          lastUpdated={inventory.lastUpdated}
         />
         <CutHistoryPanel
           canSave={valid}
