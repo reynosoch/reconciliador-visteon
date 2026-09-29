@@ -23,7 +23,7 @@ function validLocation(location) {
   const value = clean(location);
   return Boolean(value) && value !== "UNMAPPED" && value !== "NO_LOCATION";
 }
-function baseFinding({campaignId,ruleCode,category,item,locations=[],tags=[],whatFound,possibleExplanation,nextAction,evidence=[]}) {
+function baseFinding({campaignId,ruleCode,category,item,locations=[],tags=[],whatFound,possibleExplanation,nextAction,evidence=[],locationAnalysis=null}) {
   const valuation = valuationState(item);
   return {
     id: stableId(campaignId, ruleCode, item.partNumber, locations),
@@ -38,6 +38,7 @@ function baseFinding({campaignId,ruleCode,category,item,locations=[],tags=[],wha
     valuationState: valuation,
     countState: countState(item),
     evidence,
+    locationAnalysis,
     whatFound,
     possibleExplanation,
     nextAction,
@@ -117,6 +118,7 @@ export function buildDiscrepancyFindings({
         possibleExplanation:"La distribución por localidad merece revisión; esto no demuestra un traslado y no modifica NET ni SWING.",
         nextAction:"Comparar las localidades candidatas y confirmar el movimiento/ubicación con una fuente operativa válida.",
         evidence:mappedRows.filter((row)=>Math.abs(n(row.delta))>tolerance).map((row)=>({source:"4Wall vs QAD",detail:`${row.location}: físico ${n(row.physicalQty)}, QAD ${n(row.qadQty)}, delta ${n(row.delta)}`})),
+        locationAnalysis:{surplus,shortage,compensable,coverageIncomplete,rows:mappedRows.filter((row)=>Math.abs(n(row.delta))>tolerance).map((row)=>({location:row.location,physicalQty:n(row.physicalQty),qadQty:n(row.qadQty),delta:n(row.delta)}))},
       }));
     }
 
