@@ -334,18 +334,6 @@ export default function DataInspectionPanel({
     setPage(0);
   }, [view, initialQuery]);
 
-  if (view === "findingEvidence" && findingContext) {
-    return (
-      <FindingEvidenceView
-        finding={findingContext}
-        scanRows={scanRows}
-        referenceRows={referenceRows}
-        reconciliation={reconciliation}
-        onClose={onClose}
-      />
-    );
-  }
-
   const viewData = useMemo(() => getView(view, {
     scanRows, diagnostics: { ...diagnostics, ...engineSources },
     reconciliation, referenceRows, sources, referencesReady,
@@ -363,6 +351,18 @@ export default function DataInspectionPanel({
   const currentPage = Math.min(page, lastPage);
   const visible = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
   const parts = useMemo(() => new Map(reconciliation.map((item) => [item.partNumber, item])), [reconciliation]);
+
+  if (view === "findingEvidence" && findingContext) {
+    return (
+      <FindingEvidenceView
+        finding={findingContext}
+        scanRows={scanRows}
+        referenceRows={referenceRows}
+        reconciliation={reconciliation}
+        onClose={onClose}
+      />
+    );
+  }
 
   if (!view) return null;
 
