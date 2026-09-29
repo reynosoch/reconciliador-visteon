@@ -249,13 +249,12 @@ export default function App() {
           scanCount={inventory.scanCount}
           lastUpdated={inventory.lastUpdated}
           rows={inventory.reconciliation}
+          findings={findings}
+          scanRows={inventory.scanRows}
+          diagnostics={inventory.diagnostics}
           sources={references.sources}
           snapshotMeta={inventory.snapshotMeta}
           inventory={identity}
-          onRenameInventory={(name) =>
-            saveIdentity({ ...identity, name: name || "Inventario sin nombre" })
-          }
-          onCreateInventory={() => setConfirmNew(true)}
           onLatestCut={setPreviousCut}
           onPersistenceError={setWarning}
         />
