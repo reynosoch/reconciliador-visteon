@@ -10,7 +10,7 @@ async function fetchSignature(signal){
 }
 async function fetchPages(signal,pageSize){
  const allRows=[];let from=0;
- while(true){const to=from+pageSize-1;const endpoint=`${SUPABASE_URL}/rest/v1/escaneos_4wall?select=id,numero_parte,cantidad,area_escaneo&order=id.asc`;
+ while(true){const to=from+pageSize-1;const endpoint=`${SUPABASE_URL}/rest/v1/escaneos_4wall?select=*&order=id.asc`;
   const response=await fetch(endpoint,{method:"GET",headers:authHeaders({"Range-Unit":"items",Range:`${from}-${to}`}),signal});
   if(!response.ok){const detail=await response.text().catch(()=>"");throw new Error(`Supabase HTTP ${response.status}: ${detail}`);}
   const chunk=await response.json();if(!Array.isArray(chunk))throw new Error("Supabase regresó una respuesta inesperada.");allRows.push(...chunk);if(chunk.length<pageSize)break;from+=pageSize;
