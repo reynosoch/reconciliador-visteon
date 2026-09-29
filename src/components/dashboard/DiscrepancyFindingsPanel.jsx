@@ -78,19 +78,14 @@ function Detail({ finding, onClose, onOpenExcel }) {
     <OverlayPortal onClose={onClose}>
       <div className="vi-global-overlay">
         <aside className="vi-drawer-panel vi-global-drawer vi-liquid-drawer">
-          <div className="vi-drawer-glass-head">
-            <div>
+          <div className="vi-drawer-glass-head vi-drawer-back-head">
+            <button type="button" className="vi-back-button" onClick={onClose} aria-label="Regresar a discrepancias">
+              <span aria-hidden="true">‹</span><strong>REGRESAR</strong>
+            </button>
+            <div className="vi-drawer-back-title">
               <p className="vi-eyebrow">{RULE[finding.ruleCode] || finding.ruleCode}</p>
               <h2>{finding.partNumber}</h2>
             </div>
-            <button
-              type="button"
-              className="vi-icon-close"
-              onClick={onClose}
-              aria-label="Cerrar detalle"
-            >
-              ×
-            </button>
           </div>
 
           <div className="vi-finding-detail">
