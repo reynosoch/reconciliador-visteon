@@ -12,17 +12,25 @@ export default function OverlayPortal({ children, onClose }) {
     document.body.style.overflow = "hidden";
 
     const marker = token.current;
-    const currentState = history.state && typeof history.state === "object" ? history.state : {};
+    const currentState =
+      history.state && typeof history.state === "object" ? history.state : {};
     history.pushState({ ...currentState, viOverlay: marker }, "");
 
-    const pop = (event) => {\n      if (event.state?.viOverlay !== marker) closeRef.current?.();\n    };
+    const pop = (event) => {
+      if (event.state?.viOverlay !== marker) closeRef.current?.();
+    };
+
     const key = (event) => {
       if (event.key === "Escape") {
         history.back();
         return;
       }
       if (event.key === "Tab" && root.current) {
-        const nodes = [...root.current.querySelectorAll('button,[href],input,[tabindex]:not([tabindex="-1"])')].filter((node) => !node.disabled);
+        const nodes = [
+          ...root.current.querySelectorAll(
+            'button,[href],input,[tabindex]:not([tabindex="-1"])',
+          ),
+        ].filter((node) => !node.disabled);
         if (!nodes.length) return;
         const first = nodes[0];
         const last = nodes[nodes.length - 1];
@@ -38,7 +46,10 @@ export default function OverlayPortal({ children, onClose }) {
 
     addEventListener("popstate", pop);
     document.addEventListener("keydown", key);
-    setTimeout(() => root.current?.querySelector("button,input,[tabindex]")?.focus(), 0);
+    setTimeout(
+      () => root.current?.querySelector("button,input,[tabindex]")?.focus(),
+      0,
+    );
 
     return () => {
       document.body.style.overflow = oldOverflow;
