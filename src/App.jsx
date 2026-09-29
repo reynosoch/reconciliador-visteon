@@ -15,6 +15,7 @@ import NotificationCenter from "./components/shell/NotificationCenter";
 import BotControlModal from "./components/shell/BotControlModal";
 import ConfirmDialog from "./components/shell/ConfirmDialog";
 import MainMenu, { AnimationOnlyView } from "./components/shell/MainMenu";
+import DevFeedback from "./components/shell/DevFeedback";
 import { useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
 import { AmbientChase } from "./components/visual/PacmanGlyphs";
@@ -359,6 +360,7 @@ export default function App() {
         }}
       />}
       <MainMenu open={menuOpen} onClose={() => setMenuOpen(false)} onAnimationOnly={() => setAnimationOnly(true)} />
+      <DevFeedback inventoryId={identity.id} />
     </div>
   );
 }
