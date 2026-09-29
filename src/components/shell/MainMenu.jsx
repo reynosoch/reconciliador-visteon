@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 
 const DEV_ITEMS = [
@@ -7,13 +8,29 @@ const DEV_ITEMS = [
 ];
 
 export default function MainMenu({ open, onClose, onAnimationOnly }) {
+  const touchStart = useRef(null);
   if (!open) return null;
   return (
     <OverlayPortal onClose={onClose}>
       <div className="vi-global-overlay vi-menu-overlay" onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}>
-        <aside className="vi-menu-panel vi-liquid-drawer">
+        <aside
+          className="vi-menu-panel vi-liquid-drawer"
+          onTouchStart={(event) => {
+            const touch = event.touches?.[0];
+            if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
+          }}
+          onTouchEnd={(event) => {
+            const origin = touchStart.current;
+            touchStart.current = null;
+            const touch = event.changedTouches?.[0];
+            if (!origin || !touch) return;
+            const dx = touch.clientX - origin.x;
+            const dy = Math.abs(touch.clientY - origin.y);
+            if (dx > 55 && dy < 70) onClose?.();
+          }}
+        >
           <div className="vi-menu-head">
             <div>
               <p className="vi-eyebrow">MENÚ</p>
