@@ -69,6 +69,7 @@ export default function NotificationCenter({
   const [record, setRecord] = useState({ inventoryId: null, value: {} });
   const stateRef = useRef({});
   const [page, setPage] = useState(0);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [readNews, setReadNews] = useState(() => {
     const stored = safeReadJson(READ_NEWS_KEY, []).value;
     return new Set(Array.isArray(stored) ? stored : []);
@@ -99,6 +100,7 @@ export default function NotificationCenter({
     if (open) {
       setTab(initialTab);
       setPage(0);
+      setSelectedGroup(null);
     }
   }, [open, initialTab]);
   useEffect(() => {
@@ -152,17 +154,23 @@ export default function NotificationCenter({
     onOpenFinding?.(alert.id);
     onClose?.();
   };
-  const currentPage = Math.min(
-    page,
-    Math.max(0, Math.ceil(active.length / PAGE) - 1),
-  );
-  const visible = active.slice(currentPage * PAGE, (currentPage + 1) * PAGE);
   const groups = Object.entries(
     active.reduce((a, x) => {
       const label = LABEL[x.ruleCode] || "Por revisar";
       a[label] = (a[label] || 0) + 1;
       return a;
     }, {}),
+  );
+  const groupedAlerts = selectedGroup
+    ? active.filter((x) => (LABEL[x.ruleCode] || "Por revisar") === selectedGroup)
+    : active;
+  const currentPage = Math.min(
+    page,
+    Math.max(0, Math.ceil(groupedAlerts.length / PAGE) - 1),
+  );
+  const visible = groupedAlerts.slice(
+    currentPage * PAGE,
+    (currentPage + 1) * PAGE,
   );
   if (!open) return null;
   return (
@@ -254,13 +262,41 @@ export default function NotificationCenter({
                     números de parte por revisar. Un número de parte puede tener
                     varios avisos.
                   </p>
-                  <div className="vi-alert-summary">
+                  <div className="vi-alert-summary" aria-label="Tipos de alertas">
+                    <button
+                      type="button"
+                      className={!selectedGroup ? "is-active" : ""}
+                      onClick={() => {
+                        setSelectedGroup(null);
+                        setPage(0);
+                      }}
+                    >
+                      <b>{active.length.toLocaleString("es-MX")}</b> TODAS
+                    </button>
                     {groups.map(([label, n]) => (
-                      <span key={label}>
+                      <button
+                        type="button"
+                        className={selectedGroup === label ? "is-active" : ""}
+                        key={label}
+                        onClick={() => {
+                          setSelectedGroup(label);
+                          setPage(0);
+                        }}
+                      >
                         <b>{n.toLocaleString("es-MX")}</b> {label}
-                      </span>
+                      </button>
                     ))}
                   </div>
+                  {selectedGroup && (
+                    <div className="vi-alert-group-head">
+                      <strong>{selectedGroup}</strong>
+                      <span>
+                        {groupedAlerts.length.toLocaleString("es-MX")} avisos.
+                        Selecciona un número de parte para abrir el detalle y ver
+                        qué encontramos y qué revisar.
+                      </span>
+                    </div>
+                  )}
                   {!active.length && (
                     <p>No encontramos alertas con estos archivos.</p>
                   )}
@@ -276,7 +312,7 @@ export default function NotificationCenter({
                       <small>{a.read ? "VISTA" : "NUEVA"}</small>
                     </button>
                   ))}
-                  {active.length > PAGE && (
+                  {groupedAlerts.length > PAGE && (
                     <div className="vi-pager">
                       <button
                         disabled={!currentPage}
@@ -285,10 +321,10 @@ export default function NotificationCenter({
                         ANTERIOR
                       </button>
                       <span>
-                        {currentPage + 1}/{Math.ceil(active.length / PAGE)}
+                        {currentPage + 1}/{Math.ceil(groupedAlerts.length / PAGE)}
                       </span>
                       <button
-                        disabled={(currentPage + 1) * PAGE >= active.length}
+                        disabled={(currentPage + 1) * PAGE >= groupedAlerts.length}
                         onClick={() => setPage(currentPage + 1)}
                       >
                         SIGUIENTE

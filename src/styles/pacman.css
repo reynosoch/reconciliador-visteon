@@ -361,3 +361,15 @@ button:disabled:hover { transform: none; }
 .vi-notification-tabs { flex-wrap: wrap; }
 .vi-notification-tabs button { white-space: normal; }
 @media (prefers-reduced-motion: reduce) { .vi-random-chase { display: none; } }
+
+/* Alertas: los contadores ahora sirven como navegación al detalle. */
+.vi-alert-summary button{border:1px solid #cbd9de;background:#fff;color:#294653;padding:7px 9px;font-size:11px;cursor:pointer;text-align:left}
+.vi-alert-summary button:hover,.vi-alert-summary button.is-active{border-color:#f5821f;background:#fff3e8;color:#7a3d08}
+.vi-alert-group-head{margin:0 12px 10px;padding:10px 12px;border-left:3px solid #f5821f;background:#eef3f4;color:#294653;display:grid;gap:3px}
+.vi-alert-group-head strong{font-size:12px}.vi-alert-group-head span{font-size:11px;line-height:1.4}
+
+/* Power mode: Pac-Man persigue fantasmas azules. */
+.ghost-power{color:#2458d3!important;background:#2458d3!important;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 0 12px rgba(55,105,255,.32)}
+.ghost-power .ghost-eye{background:#fff}
+.vi-powered-hunter .vi-pac-hunter{filter:drop-shadow(0 0 6px rgba(255,220,70,.45))}
+.vi-frightened-ghost{opacity:.92}

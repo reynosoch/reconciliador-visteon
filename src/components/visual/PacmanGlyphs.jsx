@@ -64,33 +64,42 @@ export function AmbientChase() {
     });
     target = randomPoint();
     const tick = (now) => {
-      if (motion.matches || document.hidden) {
+      if (motion.matches || document.hidden || !root.current) {
         last = now;
         frame = requestAnimationFrame(tick);
         return;
       }
       const elapsed = last ? Math.min(now - last, 64) / 1000 : 0;
       last = now;
-      const dx = target.x - point.x,
-        dy = target.y - point.y;
+      const dx = target.x - point.x;
+      const dy = target.y - point.y;
       const distance = Math.hypot(dx, dy);
-      const step = Math.min(distance, 65 * elapsed);
+      const step = Math.min(distance, 82 * elapsed);
       if (distance < 2) target = randomPoint();
-      else
+      else {
         point = {
           x: point.x + (dx / distance) * step,
           y: point.y + (dy / distance) * step,
         };
+      }
       trail.push({ ...point, time: now, left: dx < 0 });
-      trail = trail.filter((p) => now - p.time < 2100);
-      [...root.current.children].forEach((sprite, index) => {
-        const wanted = now - index * 450;
-        const p = trail.findLast((p) => p.time <= wanted) || trail[0];
-        sprite.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
-        if (index === 0)
-          sprite.firstElementChild.style.transform = p.left
-            ? "scaleX(-1)"
-            : "scaleX(1)";
+      trail = trail.filter((sample) => now - sample.time < 2600);
+
+      const sprites = [...root.current.children];
+      // Los fantasmas van delante; Pac-Man con poder los persigue.
+      sprites.forEach((sprite, index) => {
+        const delay = index === sprites.length - 1 ? 520 : index * 115;
+        const wanted = now - delay;
+        const sample =
+          trail.findLast((candidate) => candidate.time <= wanted) || trail[0];
+        if (!sample) return;
+        const offsetY = index < sprites.length - 1 ? (index - 1) * 9 : 0;
+        sprite.style.transform =
+          `translate3d(${sample.x}px, ${sample.y + offsetY}px, 0)`;
+        if (index === sprites.length - 1) {
+          const pac = sprite.firstElementChild;
+          if (pac) pac.style.transform = sample.left ? "scaleX(-1)" : "scaleX(1)";
+        }
       });
       frame = requestAnimationFrame(tick);
     };
@@ -112,20 +121,20 @@ export function AmbientChase() {
   return (
     <div
       ref={root}
-      className="vi-ambient-chase vi-random-chase"
+      className="vi-ambient-chase vi-random-chase vi-power-chase"
       aria-hidden="true"
     >
-      <span className="vi-ambient-hunter">
+      <span className="vi-ambient-ghost vi-frightened-ghost">
+        <Ghost size={16} tone="power" />
+      </span>
+      <span className="vi-ambient-ghost vi-frightened-ghost">
+        <Ghost size={16} tone="power" />
+      </span>
+      <span className="vi-ambient-ghost vi-frightened-ghost">
+        <Ghost size={16} tone="power" />
+      </span>
+      <span className="vi-ambient-hunter vi-powered-hunter">
         <span className="vi-pac-hunter" />
-      </span>
-      <span className="vi-ambient-ghost">
-        <Ghost size={16} tone="violet" />
-      </span>
-      <span className="vi-ambient-ghost">
-        <Ghost size={16} tone="cyan" />
-      </span>
-      <span className="vi-ambient-ghost">
-        <Ghost size={16} tone="pink" />
       </span>
     </div>
   );

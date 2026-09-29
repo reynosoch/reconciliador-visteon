@@ -30,15 +30,15 @@ export const DEPARTMENT_QUESTIONS = [
   },
   {
     id: "swing",
-    q: "¿Podemos revisar juntos un ejemplo de SWING?",
-    why: "Quiero que el número de la pantalla se entienda igual que en nuestras juntas.",
+    q: "¿Cómo debemos interpretar SWING en las juntas?",
+    why: "Necesitamos que el número de la pantalla signifique exactamente lo mismo que usa Finanzas.",
     example:
       "Faltan 10 piezas en un lugar y sobran 10 en otro. La fórmula actual suma ambas diferencias: 20 piezas.",
     need: "Un ejemplo resuelto y los lugares que debemos comparar.",
   },
   {
     id: "bom",
-    q: "¿Podemos revisar un phantom con un ejemplo real?",
+    q: "¿Cómo debemos tratar un phantom durante el inventario?",
     why: "Algunas piezas se calculan a partir del ensamble que las contiene.",
     example:
       "Si contamos 10 ensambles y cada uno contiene 2 componentes, serían 20 componentes. Hay que revisar si ya se contaron por separado.",
@@ -54,10 +54,10 @@ export const DEPARTMENT_QUESTIONS = [
   },
   {
     id: "thresholds",
-    q: "¿Desde qué monto revisamos una diferencia y quién se encarga?",
-    why: "Así podemos mostrar primero los casos que necesitan atención en la junta.",
+    q: "¿A partir de cuántos dólares una diferencia debe investigarse en la junta?",
+    why: "Necesitamos un límite claro para ordenar primero las diferencias que Finanzas considera importantes. Este límite solo prioriza la revisión; no cambia el cálculo.",
     example:
-      "Una sola pieza cara puede importar más que muchas piezas baratas.",
-    need: "Monto a partir del cual investigar y persona o equipo que revisa cada área.",
+      "Por ejemplo: definir si se investigan primero diferencias mayores a $100, $500, $1,000 u otro monto, y si el límite cambia según el área.",
+    need: "Monto exacto en dólares que activa la revisión, si existe más de un nivel de prioridad y qué área o puesto atiende cada caso.",
   },
 ];

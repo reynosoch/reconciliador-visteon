@@ -304,7 +304,6 @@ export default function App() {
         onConfirm={() => {
           setConfirmNew(false);
           saveIdentity({ id: newId(), name: "Nuevo inventario" });
-          references.clearAll();
           setPreviousCut(null);
           setOperationalState({});
         }}
