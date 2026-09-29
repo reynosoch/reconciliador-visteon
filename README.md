@@ -32,11 +32,12 @@ La aplicación incluye:
 - Alertas operativas con IDs estables por inventario.
 - Preguntas pendientes para Finanzas disponibles desde la campana.
 - Historial de juntas almacenado localmente en IndexedDB.
-- Respaldo descargable del historial local.
+- Exportación de un Excel único para juntas, con dashboard, fecha/hora, conciliación, localidades, hallazgos, 4Wall, fuentes y guía de interpretación.
 - Control local del bot con estado de proceso y último resultado publicado.
 - Manejo de fallos de almacenamiento y Error Boundary.
 - Diseño responsive para laptop, iPad y móvil.
 - Referencias visuales sutiles de Pac-Man.
+- Superficies principales con tratamiento Liquid Glass: blur, transparencia, reflejos suaves y profundidad, manteniendo el contenido legible y evitando apilar vidrio sobre vidrio.
 
 ## Arquitectura
 
@@ -215,7 +216,7 @@ Si una columna necesaria para calcular está duplicada de forma ambigua, la fuen
 
 El **nombre del inventario** y su **ID interno** son independientes. Renombrar no cambia los IDs de los hallazgos.
 
-Los cortes grandes y alertas se guardan en IndexedDB. `localStorage` se reserva para preferencias pequeñas.
+Los cortes grandes y alertas se guardan en IndexedDB. `localStorage` se reserva para preferencias pequeñas. La sección de juntas expone solo dos acciones principales: **Guardar resultados en navegador** y **Exportar Excel completo**.
 
 Cada corte conserva información suficiente para validar comparabilidad, incluyendo:
 
@@ -226,7 +227,7 @@ Cada corte conserva información suficiente para validar comparabilidad, incluye
 - resumen;
 - detalle requerido para comparación.
 
-Si IndexedDB falla, la aplicación intenta conservar el trabajo en memoria y muestra una advertencia. El historial local **no se sincroniza entre computadoras**.
+Si IndexedDB falla, la aplicación intenta conservar el trabajo en memoria y muestra una advertencia. El historial local **no se sincroniza entre computadoras**. El Excel sirve como copia compartible del corte y contiene una hoja `Dashboard` pensada para un lector que no conoce el desarrollo: cada KPI incluye una explicación de qué significa y cómo debe leerse en junta. También incluye `Conciliacion`, `Localidades`, `Hallazgos`, `4Wall actual`, `Fuentes` y `Guia`.
 
 Crear otro inventario no borra los archivos de referencia que ya están cargados en la sesión.
 
@@ -291,7 +292,7 @@ Verificación y build:
 npm.cmd run build
 ```
 
-El build ejecuta primero verificaciones de Finanzas, discrepancias, seguridad de UI e IndexedDB y después compila Vite.
+El build ejecuta primero verificaciones de Finanzas, discrepancias, seguridad de UI, IndexedDB y generación XLSX; después compila Vite.
 
 ## Variables del frontend
 
