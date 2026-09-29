@@ -15,7 +15,7 @@ export default function OverlayPortal({ children, onClose }) {
     const currentState = history.state && typeof history.state === "object" ? history.state : {};
     history.pushState({ ...currentState, viOverlay: marker }, "");
 
-    const pop = () => closeRef.current?.();
+    const pop = (event) => {\n      if (event.state?.viOverlay !== marker) closeRef.current?.();\n    };
     const key = (event) => {
       if (event.key === "Escape") {
         history.back();
