@@ -5,6 +5,7 @@ import React, {
 } from "react";
 import { HelpButton } from "../help/HelpDrawer";
 import ConfirmDialog from "./ConfirmDialog.jsx";
+import OverlayPortal from "./OverlayPortal.jsx";
 import {
  REFERENCE_SOURCE_TYPES,
 } from "../../hooks/useReferenceFiles";
@@ -201,6 +202,7 @@ function SourceLine({
    useRef(null);
 
  return (
+<OverlayPortal onClose={onClose}>
 <div
      className="vi-source-line grid grid-cols-[1fr_auto] gap-3"
 >
@@ -503,13 +505,7 @@ export default function SourcesDrawer({
 </p>
 </div>
 
-<button
-             type="button"
-             onClick={onClose}
-             className="vi-button"
->
-             CERRAR
-</button>
+<button type="button" onClick={onClose} className="vi-icon-close" aria-label="Cerrar fuentes">×</button>
 </div>
 
 <button
@@ -680,5 +676,6 @@ export default function SourcesDrawer({
 </aside>
 <ConfirmDialog open={Boolean(pendingClear)} title="¿Quitar información cargada?" message="Estos archivos están solo en memoria. Si continúas tendrás que seleccionarlos otra vez." confirmLabel="Quitar información" onCancel={()=>setPendingClear(null)} onConfirm={()=>{const action=pendingClear;setPendingClear(null);if(action?.kind==="all")clearAll();else if(action?.type)clearFile(action.type);}}/>
 </div>
+</OverlayPortal>
  );
 }
