@@ -366,3 +366,57 @@ La referencia Pac-Man es ambiental, no arcade: normalmente Pac-Man huye mientras
 ---
 
 Proyecto PoC de conciliación de inventario para Visteon. El dashboard apoya la investigación; no sustituye la validación operativa ni las decisiones de Finanzas.
+
+## UX de investigación y trazabilidad
+
+La interfaz usa una temática **Liquid Glass** como sistema visual global: paneles principales, botones, menús laterales, diálogos y controles comparten transparencia, blur, reflejos suaves y bordes translúcidos. El objetivo es mantener visible el ambiente Pac-Man sin sacrificar lectura financiera.
+
+El menú hamburguesa contiene opciones futuras marcadas como **DEVELOPMENT** y una entrada discreta de laboratorio para activar **Modo animación**, que oculta el dashboard y deja únicamente el ambiente visual hasta cerrar con `×`.
+
+### Discrepancias por investigar
+
+- El encabezado ya no asume una frecuencia fija de juntas.
+- El botón `?` abre un menú compacto con la explicación de Posible ubicación, Cantidad, Calidad de datos y Falta de costo.
+- Cada hallazgo abre un drawer con `×` y un botón **Ver evidencia en Excel**.
+- Para `SIN FÍSICO`, la evidencia abre QAD y 4Wall lado a lado y avisa cuando el snapshot físico no contiene el PN.
+- Otras reglas abren las fuentes relevantes: Cost Part, BOM, diccionario 4Wall-Area o comparación 4Wall/QAD según corresponda.
+- El panel puede exportarse por separado a `Visteon-Discrepancias-*.xlsx`.
+
+### Visor tipo Excel
+
+`Estado de datos` usa un visor con letras de columna, números de fila, barra de búsqueda y pestaña de hoja.
+
+Para 4Wall, el pipeline nuevo preserva el registro original en `raw_record` y guarda en `source_columns` qué columnas del archivo fueron utilizadas como Part Number, cantidad y área. El visor marca esas columnas con `★ USADO`.
+
+> Compatibilidad: los snapshots publicados antes de esta ampliación solo contienen `id`, `numero_parte`, `cantidad` y `area_escaneo`. El visor los muestra sin inventar columnas faltantes.
+
+La migración preparada para habilitar el registro original completo está en:
+
+```text
+supabase/migrations/20260929_preserve_4wall_raw_record.sql
+```
+
+Debe aplicarse con permisos administrativos de Supabase. Después, el bot debe publicar un snapshot nuevo para que aparezcan las columnas originales completas.
+
+### Excel ejecutivo
+
+`Visteon-Inventario-*.xlsx` mantiene siete hojas, pero el Dashboard ya no incluye una columna de “Cómo leerlo en junta” ni preguntas pendientes con Finanzas.
+
+La hoja `Conciliacion` identifica en cada encabezado la fuente que alimenta el dato, por ejemplo 4Wall, QAD 3.2, Cost Part, ISPBB o BOM.
+
+La hoja `Localidades` muestra de forma explícita:
+
+```text
+Área 4Wall → diccionario 4Wall-Area → Localidad QAD
+```
+
+y después compara el físico contra la cantidad de esa misma Localidad QAD.
+
+### Radar lateral
+
+En el área de conciliación, el bloque lateral se mantiene visible mientras se recorre la tabla e incluye:
+
+- `PHANTOM RADAR`: principales Phantom por impacto NET absoluto.
+- `OBSOLETOS +`: principales materiales obsoletos con sobrante valorizado.
+
+Ambos bloques abren el detalle normal del Part Number.
