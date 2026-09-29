@@ -60,7 +60,7 @@ const HELP = {
  },
  dataHealth: {
   eyebrow: "FUENTES DEL CORTE", title: "Estado de datos",
-  description: "Cada indicador resume una fuente o una lista de revisión. Selecciónalo para ver sus registros aquí mismo; selecciónalo otra vez o pulsa CERRAR para regresar al tablero.",
+  description: "Cada indicador resume una fuente o una lista de revisión. Selecciónalo para ver sus registros aquí mismo; selecciónalo otra vez o pulsa × para regresar al tablero.",
   source: "Reporte de escaneos 4Wall, archivos QAD y revisión de los datos.",
   formula: "Los números indican filas o Part Numbers, según la etiqueta. Alertas suma áreas sin mapeo, partes sin costo, material inesperado y diferencias de definición Phantom.",
   notes: ["Un mismo número de parte puede tener varios avisos.", "El panel muestra 50 filas por página y permite buscar sin cargar miles de renglones a la vez.", "Las alertas esperan a que se carguen los cinco archivos de referencia."],
@@ -200,13 +200,7 @@ export default function HelpDrawer({
                {info.title}
 </h2>
 </div>
-<button
-             type="button"
-             onClick={onClose}
-             className="vi-button"
->
-             CERRAR
-</button>
+<button type="button" onClick={onClose} className="vi-icon-close" aria-label="Cerrar ayuda">×</button>
 </div>
 </div>
 <div className="p-6">
