@@ -29,3 +29,22 @@ export async function fetch4WallScans({signal,pageSize=1000,maxConsistencyRetrie
  throw new Error("4Wall cambió mientras se descargaban las páginas. Se descartó el corte para no mezclar snapshots.");
 }
 export async function checkSupabaseConnection({signal}={}){validateConfig();const response=await fetch(`${SUPABASE_URL}/rest/v1/escaneos_4wall?select=id&limit=1`,{headers:authHeaders(),signal});return response.ok;}
+
+
+export async function submitDevelopmentFeedback(payload,{signal}={}){
+ validateConfig();
+ const response=await fetch(`${SUPABASE_URL}/rest/v1/development_feedback`,{
+  method:"POST",
+  headers:authHeaders({"Content-Type":"application/json",Prefer:"return=minimal"}),
+  body:JSON.stringify(payload),
+  signal,
+ });
+ if(!response.ok){
+  const detail=await response.text().catch(()=>"");
+  if(response.status===404||detail.includes("development_feedback")){
+   throw new Error("El buzón de reportes todavía no está habilitado en la base de datos. No se borró lo que escribiste.");
+  }
+  throw new Error(`No pudimos enviar el reporte (HTTP ${response.status}). No se borró lo que escribiste.`);
+ }
+ return {ok:true};
+}
