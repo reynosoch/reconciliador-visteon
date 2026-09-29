@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
 import { groupFindingsByPart } from "../../domain/buildDiscrepancyFindings.js";
+import { exportDiscrepanciesWorkbook } from "../../services/exportInventoryWorkbook.js";
 
 const money = (v) =>
     v === null
@@ -29,78 +30,88 @@ const money = (v) =>
     UNUSUAL_CHANGE: "Cambio para revisar",
   };
 
-function LocationSentence({ finding, onOpenExcel }) {
+const HELP_ROWS = [
+  {
+    title: "Posible ubicación",
+    subtitle: "Compara el mismo PN localidad por localidad.",
+    detail:
+      "Delta local = Físico − QAD. Los deltas positivos forman sobrantes; los negativos, en valor absoluto, forman faltantes. Potencialmente compensable = el menor entre ambos. Es una pista: no mueve material ni cambia NET o SWING.",
+  },
+  {
+    title: "Cantidad",
+    subtitle: "Detecta diferencias entre físico total y QAD total.",
+    detail:
+      "Diferencia de piezas = Físico total − QAD total. También separa casos donde QAD tiene saldo pero todavía no existe físico reconocido, y casos donde hay físico con QAD total en cero.",
+  },
+  {
+    title: "Calidad de datos",
+    subtitle: "Señala información que impide interpretar bien el resultado.",
+    detail:
+      "Incluye áreas sin localidad válida, referencias BOM que requieren revisión y otros datos que necesitan trazabilidad antes de sacar una conclusión operativa.",
+  },
+  {
+    title: "Falta de costo",
+    subtitle: "Hay diferencia en piezas pero no existe un costo confiable.",
+    detail:
+      "El PN se mantiene separado como SIN VALORAR. No se convierte a USD 0. La valoración solo aparece cuando Cost Part entrega un costo válido y no contradictorio.",
+  },
+];
+
+function FindingText({ finding }) {
+  if (finding.ruleCode !== "LOCATION_CANDIDATE" || !finding.locationAnalysis) {
+    return <p>{finding.whatFound}</p>;
+  }
   const a = finding.locationAnalysis;
-  if (!a) return <p>{finding.whatFound}</p>;
   return (
     <p>
-      Hay sobrantes locales por{" "}
-      <button
-        type="button"
-        className="vi-inline-data-link"
-        onClick={() => onOpenExcel?.(finding.partNumber, finding.id)}
-        title="Ver las localidades que forman este sobrante"
-      >
-        {number(a.surplus)} piezas
-      </button>{" "}
-      y faltantes locales por{" "}
-      <button
-        type="button"
-        className="vi-inline-data-link"
-        onClick={() => onOpenExcel?.(finding.partNumber, finding.id)}
-        title="Ver las localidades que forman este faltante"
-      >
-        {number(a.shortage)}
-      </button>
-      . Hasta{" "}
-      <button
-        type="button"
-        className="vi-inline-data-link"
-        onClick={() => onOpenExcel?.(finding.partNumber, finding.id)}
-        title="Ver el detalle por localidad"
-      >
-        {number(a.compensable)} piezas
-      </button>{" "}
-      son potencialmente compensables entre localidades.
+      Hay sobrantes locales por <strong>{number(a.surplus)} piezas</strong> y
+      faltantes locales por <strong>{number(a.shortage)} piezas</strong>. Hasta{" "}
+      <strong>{number(a.compensable)} piezas</strong> son potencialmente
+      compensables entre localidades.
     </p>
   );
 }
 
-function Detail({ f, onClose, onOpenExcel }) {
-  if (!f) return null;
+function Detail({ finding, onClose, onOpenExcel }) {
+  if (!finding) return null;
   return (
     <OverlayPortal onClose={onClose}>
       <div className="vi-global-overlay">
-        <aside className="vi-drawer-panel vi-global-drawer">
-          <div className="sticky top-0 z-10 px-5 py-5 bg-white vi-finding-drawer-head">
-            <button className="vi-back-link" onClick={onClose}>
-              ← REGRESAR A DISCREPANCIAS
+        <aside className="vi-drawer-panel vi-global-drawer vi-liquid-drawer">
+          <div className="vi-drawer-glass-head">
+            <div>
+              <p className="vi-eyebrow">{RULE[finding.ruleCode] || finding.ruleCode}</p>
+              <h2>{finding.partNumber}</h2>
+            </div>
+            <button
+              type="button"
+              className="vi-icon-close"
+              onClick={onClose}
+              aria-label="Cerrar detalle"
+            >
+              ×
             </button>
-            <p className="vi-eyebrow">{RULE[f.ruleCode] || f.ruleCode}</p>
-            <h2>{f.partNumber}</h2>
           </div>
+
           <div className="vi-finding-detail">
             <section>
               <h3>Qué encontramos</h3>
-              {f.ruleCode === "LOCATION_CANDIDATE" ? (
-                <LocationSentence finding={f} onOpenExcel={onOpenExcel} />
-              ) : (
-                <p>{f.whatFound}</p>
-              )}
+              <FindingText finding={finding} />
             </section>
             <section>
               <h3>Qué podría explicarlo</h3>
-              <p>{f.possibleExplanation}</p>
+              <p>{finding.possibleExplanation}</p>
             </section>
             <section>
               <h3>Qué revisar</h3>
-              <p>{f.nextAction}</p>
+              <p>{finding.nextAction}</p>
             </section>
-            {f.evidence?.length > 0 && (
+
+            {finding.evidence?.length > 0 && (
               <section>
                 <h3>Evidencia observada</h3>
                 <div className="vi-finding-evidence">
-                  {f.evidence.map((e, index) => (
+                  {finding.evidence.map((e, index) => (
                     <div key={`${e.source}-${index}`}>
                       <strong>{e.source}</strong>
                       <span>{e.detail}</span>
@@ -109,25 +120,25 @@ function Detail({ f, onClose, onOpenExcel }) {
                 </div>
               </section>
             )}
-            {f.ruleCode === "LOCATION_CANDIDATE" && (
-              <button
-                type="button"
-                className="vi-button vi-button-primary vi-view-excel-button"
-                onClick={() => onOpenExcel?.(f.partNumber, f.id)}
-              >
-                VER EN EXCEL
-              </button>
-            )}
+
+            <button
+              type="button"
+              className="vi-button vi-button-primary vi-view-excel-button"
+              onClick={() => onOpenExcel?.(finding)}
+            >
+              VER EVIDENCIA EN EXCEL
+            </button>
+
             <section>
               <h3>Estado</h3>
               <p>
-                {f.valuationState === "VALORADO"
+                {finding.valuationState === "VALORADO"
                   ? "Valorado"
                   : "Falta un costo confiable"}{" "}
                 ·{" "}
-                {f.countState === "DESCONOCIDO"
+                {finding.countState === "DESCONOCIDO"
                   ? "No sabemos si ya terminó el conteo"
-                  : f.countState}
+                  : finding.countState}
               </p>
             </section>
           </div>
@@ -144,10 +155,13 @@ export default function DiscrepancyFindingsPanel({
   focusFindingId,
   onFocusHandled,
   onOpenExcel,
+  inventoryName = "Inventario",
+  lastUpdated = null,
 }) {
   const [filter, setFilter] = useState("ALL"),
     [detail, setDetail] = useState(null),
-    [showLocationMath, setShowLocationMath] = useState(false);
+    [helpOpen, setHelpOpen] = useState(false),
+    [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (focusFindingId) {
@@ -180,51 +194,74 @@ export default function DiscrepancyFindingsPanel({
       [findings],
     );
 
-  const openExcel = (partNumber, findingId) => {
-    setDetail(null);
-    onOpenExcel?.(partNumber, findingId);
+  const exportExcel = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await exportDiscrepanciesWorkbook({
+        findings: filtered,
+        inventoryName,
+        lastUpdated,
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
     <section className="vi-panel vi-findings">
       <div className="vi-findings-head">
         <div>
-          <p className="vi-eyebrow">JUNTAS CADA ~2 HORAS</p>
           <h2>Discrepancias por investigar</h2>
           <p>
             Cada número de parte aparece una sola vez, aunque tenga varios
             avisos.
           </p>
         </div>
-        <button
-          type="button"
-          className="vi-button vi-location-math-button"
-          onClick={() => setShowLocationMath((value) => !value)}
-          aria-expanded={showLocationMath}
-        >
-          ¿CÓMO SE CALCULA POSIBLE UBICACIÓN?
-        </button>
-      </div>
 
-      {showLocationMath && (
-        <div className="vi-location-math">
-          <strong>Posible ubicación compara el mismo PN localidad por localidad.</strong>
-          <span>
-            1. Se calcula <b>delta = físico − QAD</b> en cada localidad válida.
-            Los deltas positivos forman los sobrantes locales y los negativos,
-            en valor absoluto, forman los faltantes locales.
-          </span>
-          <span>
-            2. <b>Potencialmente compensable = el menor entre sobrantes y faltantes.</b>{" "}
-            Ejemplo: si sobran 5 y faltan 107,514, como máximo 5 piezas podrían
-            explicarse por una diferencia de ubicación.
-          </span>
-          <span>
-            3. Esto es una <b>pista para investigar</b>: no confirma un traslado,
-            no mueve piezas automáticamente y no cambia NET ni SWING.
-          </span>
+        <div className="vi-findings-head-actions">
+          <div className="vi-findings-help-wrap">
+            <button
+              type="button"
+              className="vi-round-help"
+              onClick={() => setHelpOpen((value) => !value)}
+              aria-expanded={helpOpen}
+              aria-label="Cómo se calculan las categorías"
+            >
+              ?
+            </button>
+            {helpOpen && (
+              <div className="vi-iphone-popover">
+                <div className="vi-popover-title">
+                  <strong>Cómo se genera cada categoría</strong>
+                  <span>Abre una para ver el cálculo.</span>
+                </div>
+                {HELP_ROWS.map((item) => (
+                  <details key={item.title} className="vi-popover-row">
+                    <summary>
+                      <span>
+                        <strong>{item.title}</strong>
+                        <small>{item.subtitle}</small>
+                      </span>
+                      <b>›</b>
+                    </summary>
+                    <p>{item.detail}</p>
+                  </details>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="vi-button vi-button-glass"
+            onClick={exportExcel}
+            disabled={exporting || !findings.length}
+          >
+            {exporting ? "CREANDO EXCEL…" : "DESCARGAR EXCEL"}
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="vi-findings-filters">
         {FILTERS.map(([id, label]) => (
@@ -261,52 +298,42 @@ export default function DiscrepancyFindingsPanel({
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => {
-                const locationFinding = r.findings.find(
-                  (f) => f.ruleCode === "LOCATION_CANDIDATE",
-                );
-                return (
-                  <tr key={r.partNumber}>
-                    <td>
-                      <button onClick={() => setDetail(r.findings[0])}>
-                        {r.partNumber}
+              {rows.map((r) => (
+                <tr key={r.partNumber}>
+                  <td>
+                    <button onClick={() => setDetail(r.findings[0])}>
+                      {r.partNumber}
+                    </button>
+                  </td>
+                  <td>
+                    {r.findings.map((f) => (
+                      <button
+                        type="button"
+                        className="vi-finding-tag"
+                        key={f.id}
+                        onClick={() => setDetail(f)}
+                      >
+                        {RULE[f.ruleCode] || f.ruleCode}
                       </button>
-                    </td>
-                    <td>
-                      {r.findings.map((f) => (
-                        <button
-                          type="button"
-                          className="vi-finding-tag"
-                          key={f.id}
-                          onClick={() => setDetail(f)}
-                        >
-                          {RULE[f.ruleCode] || f.ruleCode}
-                        </button>
-                      ))}
-                      {locationFinding && (
-                        <button
-                          type="button"
-                          className="vi-excel-inline-button"
-                          onClick={() => openExcel(r.partNumber, locationFinding.id)}
-                        >
-                          VER EN EXCEL
-                        </button>
-                      )}
-                    </td>
-                    <td>{money(r.netUsd)}</td>
-                    <td>{r.locations.join(", ") || "—"}</td>
-                    <td>{r.findings[0]?.nextAction}</td>
-                  </tr>
-                );
-              })}
+                    ))}
+                  </td>
+                  <td>{money(r.netUsd)}</td>
+                  <td>{r.locations.join(", ") || "—"}</td>
+                  <td>{r.findings[0]?.nextAction}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       )}
+
       <Detail
-        f={detail}
+        finding={detail}
         onClose={() => setDetail(null)}
-        onOpenExcel={openExcel}
+        onOpenExcel={(finding) => {
+          setDetail(null);
+          onOpenExcel?.(finding);
+        }}
       />
     </section>
   );
