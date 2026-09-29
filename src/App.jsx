@@ -14,6 +14,7 @@ import HelpDrawer from "./components/help/HelpDrawer";
 import NotificationCenter from "./components/shell/NotificationCenter";
 import BotControlModal from "./components/shell/BotControlModal";
 import ConfirmDialog from "./components/shell/ConfirmDialog";
+import MainMenu, { AnimationOnlyView } from "./components/shell/MainMenu";
 import { useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
 import { AmbientChase } from "./components/visual/PacmanGlyphs";
@@ -60,7 +61,9 @@ export default function App() {
     [previousCut, setPreviousCut] = useState(null),
     [identity, setIdentity] = useState(initial),
     [warning, setWarning] = useState(""),
-    [confirmNew, setConfirmNew] = useState(false);
+    [confirmNew, setConfirmNew] = useState(false),
+    [menuOpen, setMenuOpen] = useState(false),
+    [animationOnly, setAnimationOnly] = useState(false);
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
       areaRows: references.areaRows,
@@ -197,10 +200,12 @@ export default function App() {
           setNotificationsOpen(true);
         }}
         onOpenBot={() => setBotOpen(true)}
+        onOpenMenu={() => setMenuOpen(true)}
         notificationCount={notificationCount}
       />
-      {warning && <div className="vi-persistence-warning">{warning}</div>}
-      <main className="vi-main">
+      {animationOnly && <AnimationOnlyView onClose={() => setAnimationOnly(false)} />}
+      {!animationOnly && warning && <div className="vi-persistence-warning">{warning}</div>}
+      {!animationOnly && <main className="vi-main">
         <section className="vi-intro">
           <div>
             <p className="vi-eyebrow">PLANTA 179A / INVENTARIO FÍSICO</p>
@@ -286,8 +291,8 @@ export default function App() {
           onSelectPart={setSelectedPart}
           onHelp={setHelpTopic}
         />
-      </main>
-      <SourcesDrawer
+      </main>}
+      {!animationOnly && <SourcesDrawer
         open={sourcesOpen}
         sources={references.sources}
         status={references.status}
@@ -296,14 +301,14 @@ export default function App() {
         clearAll={references.clearAll}
         onHelp={setHelpTopic}
         onClose={() => setSourcesOpen(false)}
-      />
-      <PartDetailDrawer
+      />}
+      {!animationOnly && <PartDetailDrawer
         item={selectedPart}
         onHelp={setHelpTopic}
         onClose={() => setSelectedPart(null)}
-      />
-      <HelpDrawer topic={helpTopic} onClose={() => setHelpTopic(null)} />
-      <NotificationCenter
+      />}
+      {!animationOnly && <HelpDrawer topic={helpTopic} onClose={() => setHelpTopic(null)} />}
+      {!animationOnly && <NotificationCenter
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
         findings={base}
@@ -314,9 +319,9 @@ export default function App() {
         onCountChange={setNotificationCount}
         onOperationalStateChange={setOperationalState}
         onPersistenceError={setWarning}
-      />
-      <BotControlModal open={botOpen} onClose={() => setBotOpen(false)} />
-      <ConfirmDialog
+      />}
+      {!animationOnly && <BotControlModal open={botOpen} onClose={() => setBotOpen(false)} />}
+      {!animationOnly && <ConfirmDialog
         open={confirmNew}
         title="¿Crear otro inventario?"
         message="Los cortes y alertas del inventario actual se conservarán. Los archivos que están solo en memoria no se copian."
@@ -328,7 +333,8 @@ export default function App() {
           setPreviousCut(null);
           setOperationalState({});
         }}
-      />
+      />}
+      <MainMenu open={menuOpen} onClose={() => setMenuOpen(false)} onAnimationOnly={() => setAnimationOnly(true)} />
     </div>
   );
 }
