@@ -150,7 +150,7 @@ SWING piezas = Σ ABS(Físico(localidad) - QAD(localidad))
 SWING USD    = SWING piezas × costo unitario
 ```
 
-No se divide entre dos. El alcance final de localidades para SWING sigue pendiente de confirmación con Finanzas.
+No se divide entre dos. El alcance final de localidades para SWING sigue pendiente de confirmación con el departamento.
 
 ### Phantom
 
@@ -344,7 +344,7 @@ La referencia Pac-Man es ambiental, no arcade: normalmente Pac-Man huye mientras
 
 ## Pendientes técnicos/funcionales
 
-- Confirmar alcance final de localidades/sitios con Finanzas.
+- Confirmar alcance final de localidades/sitios con el departamento.
 - Confirmar costo y moneda oficiales.
 - Confirmar interpretación operativa final de SWING.
 - Validar la regla acordada (.2 / NO) con los nuevos escaneos y BOM de prueba.
@@ -391,7 +391,7 @@ Debe aplicarse con permisos administrativos de Supabase. Después, el bot debe p
 
 ### Excel ejecutivo
 
-`Visteon-Inventario-*.xlsx` mantiene siete hojas, pero el Dashboard ya no incluye una columna de “Cómo leerlo en junta” ni preguntas pendientes con Finanzas.
+`Visteon-Inventario-*.xlsx` mantiene siete hojas, pero el Dashboard ya no incluye una columna de “Cómo leerlo en junta” ni preguntas pendientes con el departamento.
 
 La hoja `Conciliacion` identifica en cada encabezado la fuente que alimenta el dato, por ejemplo 4Wall, QAD 3.2, Cost Part, ISPBB o BOM.
 
@@ -435,7 +435,7 @@ Ejemplo de la junta: 48 escaneos de `VPTBFF-10849-ABT`. Para sus filas válidas,
 - La misma versión de un Parent Item no se suma dos veces. Un archivo que cambia un BOM existente se rechaza completo con un mensaje, manteniendo la colección anterior. No se elige silenciosamente una versión ni se deduplican componentes legítimos dentro de un BOM.
 - `RESPALDAR BOM` descarga la colección como JSON, que se puede volver a cargar con AGREGAR BOM. Conservar también los TXT originales. Quitar las demás fuentes no borra la colección BOM.
 - Falta BOM y BOM existente sin filas aplicables son estados diferentes. Ambos conservan el escaneo pendiente y advierten que las cantidades aún pueden estar incompletas.
-- **No hay sincronización BOM entre equipos.** No confundir Dexie local con una base compartida. El trabajo de almacenamiento compartido queda pendiente de definir.
+- **Actualización del 30/09:** hay sincronización BOM con Supabase, sujeta a activar las tablas y autorizar las cuentas. Ver instrucciones al final. Dexie conserva la copia local.
 
 ### Uso de escaneos manuales
 
@@ -456,3 +456,40 @@ En Fuentes, cargar `Escaneos 4Wall (archivo manual)`. El encabezado identifica e
 `npm.cmd install` y `npm.cmd run build` en Windows. Las pruebas incluyen casos sintéticos de la nueva regla, niveles ignorados, cantidades fraccionarias, conservación de QAD y acumulación/conflictos BOM.
 
 Esta actualización se sube a **main solamente**. No ejecutar el despliegue manual de Pages hasta que se solicite. El workflow de verificación de main puede ejecutarse sin publicar Pages.
+
+
+## Actualización 30/09/2026: archivos, respaldo y visor
+
+- Se aceptan CSV, TXT delimitado y XLSX en todas las fuentes. Excel se lee directamente en memoria; no se vuelve a convertir y leer para calcular. Para repetir cargas, usar CSV (evita abrir/descomprimir un libro). TXT delimitado tiene un costo de lectura parecido; la extensión por sí sola no garantiza velocidad.
+- Se busca una hoja con las columnas de la fuente entre sus primeras 50 filas. Si dos hojas coinciden, se pide separar la hoja correcta. Se conservan ceros formateados en identificadores y precisión numérica en costos. Excel no ejecuta fórmulas en esta app: necesita sus valores guardados.
+- Las fuentes XLSX ofrecen descarga CSV. La colección BOM también puede descargarse como CSV o como respaldo JSON. El CSV protege texto que Excel pudiera interpretar como fórmula.
+- Los escaneos manuales se muestran en el visor y en el Excel exportado, con cantidad, parte, área y columnas adicionales. Reemplazan el reporte completo; no se suman al del bot.
+- El visor tiene fondo opaco; Para la junta separa los dos top 10 y muestra la suma de **cada lista**, no la del inventario completo. Phantom Radar y Obsoletos + conservan sus reglas y tienen tarjetas más legibles.
+- Reportar distingue errores de configuración/permisos, evita envíos simultáneos y conserva el formulario si falla. Sus opciones Tipo/Área tienen fondo y texto oscuros/claros definidos.
+
+### Activar Supabase (pendiente en el proyecto real)
+
+El proyecto de la aplicación es `uukhwkywmnarcfruerpp`. La conexión disponible durante este cambio no tenía permisos sobre él. **No se aplicaron migraciones remotas ni se modificó el proyecto distinto que sí aparecía conectado.** El respaldo remoto y la recepción de reportes no se consideran verificados en producción.
+
+Un administrador de ese proyecto debe:
+
+1. Aplicar `supabase/migrations/20260929_development_feedback.sql` para el botón Reportar, si aún falta esa tabla.
+2. Aplicar `supabase/migrations/20260930205730_inventory_bom_cloud_and_feedback.sql` una sola vez para el respaldo BOM.
+3. Crear o invitar las cuentas del equipo mediante Supabase Auth y marcar **app_metadata.inventory_access = true** con la API administrativa de Auth. `user_metadata` no sirve para otorgar este permiso. No colocar claves administrativas en el navegador ni en Git.
+4. Configurar las variables públicas `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` del proyecto correcto. En Fuentes → Respaldo de BOM, entrar con una cuenta autorizada.
+5. Subir un BOM de prueba: debe aparecer “BOM comparados y respaldados en Supabase”. Abrir otra computadora/cuenta autorizada y comprobar que aparece la misma colección. Repetir el archivo no debe duplicar piezas. Un BOM distinto del mismo padre debe mostrar conflicto.
+6. Enviar un reporte de prueba y comprobar su fila en `development_feedback` desde el panel administrativo. La web puede enviar reportes, pero no leer los de otros usuarios.
+
+### Cómo se guarda el BOM
+
+Se conserva primero en IndexedDB. Al cargar un BOM, iniciar sesión, recuperar conexión y cada dos minutos, se compara con la colección compartida. Si no hay cambios no se crea otra versión. Los archivos nuevos se acumulan; si un padre tiene una definición distinta, se conserva la copia existente y se pide decidir qué versión usar. Ese caso no se resuelve sumando versiones.
+
+`inventory_bom_current` contiene la colección actual. `inventory_bom_backups` conserva una copia por cambio confirmado (filas normalizadas y datos de procedencia, no el archivo binario original). El guardado compara la versión actual dentro de una transacción: si otra computadora llegó antes, vuelve a comparar. La app no tiene permiso para borrar el historial. Solo cuentas del equipo pueden leer los BOM o usar la función de guardado. Los reportes siguen con permiso público de inserción únicamente, como en la migración anterior.
+
+Sin conexión o sin permisos, aparece **respaldo pendiente** y permanece la copia local. Mientras haya conflicto/pendiente, usa también Descargar copia BOM. Este respaldo no incluye otros archivos ni el historial de juntas. Cada versión completa tiene un límite de 25 MB; vigilar el espacio del proyecto a medida que crezca el historial. La app no borra versiones automáticamente.
+
+### Validación de este cambio
+
+`npm.cmd run build` también prueba importación XLSX, ceros iniciales, precisión, hojas ambiguas, escaneos manuales y conflictos entre colecciones. Las migraciones se ejecutan en Postgres local mediante PGlite para verificar permisos, reportes de solo inserción, historial y rechazo de versiones viejas. Eso no sustituye la prueba de conexión en el proyecto real.
+
+Después de bajar main: `npm.cmd install` y `npm.cmd run dev`. GitHub Pages sigue siendo publicación manual; este cambio no lo despliega.

@@ -1,3 +1,4 @@
+import { rawScanObject } from "../domain/scanView.js";
 const enc = new TextEncoder();
 const xml = (value) => String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&apos;");
 const safe = (value) => value == null ? "" : typeof value === "boolean" ? (value ? "Sí" : "No") : String(value);
@@ -87,15 +88,13 @@ function locationRows(rows=[]){
 function findingRows(findings=[]){return findings.map(f=>({
   "Part Number":f.partNumber,"Tipo":f.ruleCode,"Categoría":f.category,"Etiquetas":(f.tags||[]).join(" | "),"NET piezas":n(f.netPieces),"NET USD":f.netUsd,"Localidades":(f.locations||[]).join(" | "),"Qué encontramos":f.whatFound,"Qué podría explicarlo":f.possibleExplanation,"Qué revisar":f.nextAction,"Valoración":f.valuationState,"Estado de conteo":f.countState
 }));}
-function rawScanRows(scanRows=[]){
-  return scanRows.map(row=>{
-    const raw=row.raw_record&&typeof row.raw_record==="object"?row.raw_record:null;
-    return raw ? {...raw,"[USADO] Part Number":row.numero_parte,"[USADO] Cantidad":row.cantidad,"[USADO] Área":row.area_escaneo} : {
-      ID:row.id,"[USADO] Part Number":row.numero_parte,"[USADO] Cantidad":row.cantidad,"[USADO] Área":row.area_escaneo,
-      "Nota":"El snapshot publicado actualmente no conserva todavía las demás columnas del Excel original."
-    };
+function rawScanRows(scanRows=[]) {
+  return scanRows.map(row => {
+    const raw = rawScanObject(row);
+    return {...raw, "[USADO] Part Number":raw["Número Parte QAD"], "[USADO] Cantidad":raw.Quantity, "[USADO] Área":raw.AreaName};
   });
 }
+
 function buildPackage(sheets,title,filePrefix){
   const entries=[];
   entries.push({name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("")}<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`});

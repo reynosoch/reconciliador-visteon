@@ -1,3 +1,4 @@
+import { rawScanObject } from "../../domain/scanView.js";
 import { useEffect, useMemo, useState } from "react";
 
 const PAGE_SIZE = 50;
@@ -19,7 +20,7 @@ const VIEW_TITLES = {
   scans: "Escaneos 4Wall",
   alerts: "Alertas del corte",
   areas: "Diccionario de áreas 4Wall",
-  qad: "Inventario QAD 3.2",
+  qad: "Inventario QAD",
   cost: "Cost Part",
   bom: "Relaciones BOM",
   parents: "Padres BOM escaneados",
@@ -62,17 +63,6 @@ const FOUR_WALL_COLUMNS = [
   "serial",
 ];
 
-function rawScanObject(row) {
-  const raw = row?.raw_record && typeof row.raw_record === "object" ? row.raw_record : {};
-  const normalizedFallback = {
-    "Número Parte QAD": row?.numero_parte,
-    Quantity: row?.cantidad,
-    AreaName: row?.area_escaneo,
-  };
-  return Object.fromEntries(
-    FOUR_WALL_COLUMNS.map((key) => [key, raw[key] ?? normalizedFallback[key] ?? ""]),
-  );
-}
 
 function scanColumns(scanRows = []) {
   const sourceColumns = scanRows.find((row) => row?.source_columns)?.source_columns || {};
@@ -81,7 +71,7 @@ function scanColumns(scanRows = []) {
     [String(sourceColumns.quantity || "Quantity"), "Cantidad"],
     [String(sourceColumns.area || "AreaName"), "Área 4Wall"],
   ]);
-  return FOUR_WALL_COLUMNS.map((key) => ({
+  return [...new Set([...FOUR_WALL_COLUMNS, ...scanRows.flatMap(row => Object.keys(rawScanObject(row)))])].map((key) => ({
     key,
     label: usedKeys.has(key) ? `${key}  ★ USADO: ${usedKeys.get(key)}` : key,
     used: usedKeys.has(key),
@@ -125,9 +115,9 @@ function getView(view, { scanRows, diagnostics, reconciliation, referenceRows, s
   switch (view) {
     case "overview": {
       const list = [
-        { name: "4Wall en vivo", file: "Snapshot de Supabase", rows: scanRows.length, state: scanRows.length ? "DISPONIBLE" : "EN ESPERA" },
+        { name: sources?.scans?.loaded ? "4Wall · archivo manual" : "4Wall en vivo", file: sources?.scans?.loaded ? sources.scans.fileName : "Escaneos de Supabase", rows: scanRows.length, state: scanRows.length ? "DISPONIBLE" : "EN ESPERA" },
         ...[
-          ["areas", "Diccionario 4Wall"], ["qad", "QAD 3.2"], ["ispbb", "ISPBB"], ["bom", "BOM"], ["cost", "Cost Part"],
+          ["areas", "Diccionario 4Wall"], ["qad", "QAD"], ["ispbb", "ISPBB"], ["bom", "BOM"], ["cost", "Cost Part"],
         ].map(([key, name]) => ({
           name, file: sources?.[key]?.fileName || "Archivo pendiente",
           rows: sources?.[key]?.rows?.length || 0,
@@ -144,7 +134,7 @@ function getView(view, { scanRows, diagnostics, reconciliation, referenceRows, s
       const rows = scanViewRows(scanRows);
       return {
         rows,
-        description: scanRows.some((row) => row?.raw_record)
+        description: sources?.scans?.loaded ? `Archivo manual: ${sources.scans.fileName}. Estas son las cantidades que usa el comparativo; el bot está en pausa.` : scanRows.some((row) => row?.raw_record)
           ? "Vista del archivo 4Wall conservado por el pipeline. Las columnas con ★ USADO alimentan Part Number, cantidad o área en la conciliación."
           : "El snapshot actual solo conserva las columnas publicadas por el pipeline anterior. Cuando el bot publique raw_record se mostrará aquí el archivo original completo y se marcarán las columnas usadas.",
         columns: scanColumns(scanRows),
@@ -271,7 +261,7 @@ function FindingEvidenceView({ finding, scanRows, referenceRows, reconciliation,
   const areaRows = (referenceRows.areas || []).filter((row) => areaNames.has(clean(row.Nombre)));
   const item = reconciliation.find((row) => clean(row.partNumber) === pn);
 
-  let left = { title: "QAD 3.2", rows: qadRows, columns: [{label:"Part Number",key:"Item Number"},{label:"Localidad",key:"Location"},{label:"Cantidad",key:"Quantity On Hand"},{label:"Sitio",key:"Site"}] };
+  let left = { title: "QAD", rows: qadRows, columns: [{label:"Part Number",key:"Item Number"},{label:"Localidad",key:"Location"},{label:"Cantidad",key:"Quantity On Hand"},{label:"Sitio",key:"Site"}] };
   let right = { title: "4Wall", rows: scanViewRows(physicalRows), columns: scanColumns(physicalRows) };
   let message = "";
 

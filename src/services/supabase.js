@@ -32,6 +32,7 @@ export async function checkSupabaseConnection({signal}={}){validateConfig();cons
 
 
 export async function submitDevelopmentFeedback(payload,{signal}={}){
+ signal ??= AbortSignal.timeout(20000);
  validateConfig();
  const response=await fetch(`${SUPABASE_URL}/rest/v1/development_feedback`,{
   method:"POST",
@@ -41,9 +42,10 @@ export async function submitDevelopmentFeedback(payload,{signal}={}){
  });
  if(!response.ok){
   const detail=await response.text().catch(()=>"");
-  if(response.status===404||detail.includes("development_feedback")){
+  if(response.status===404 || detail.includes("PGRST205")){
    throw new Error("El buzón de reportes todavía no está habilitado en la base de datos. No se borró lo que escribiste.");
   }
+  if (response.status === 401 || response.status === 403) throw new Error("El buzón no tiene permiso para recibir reportes. Pide revisar su configuración en Supabase; tu texto sigue aquí.");
   throw new Error(`No pudimos enviar el reporte (HTTP ${response.status}). No se borró lo que escribiste.`);
  }
  return {ok:true};

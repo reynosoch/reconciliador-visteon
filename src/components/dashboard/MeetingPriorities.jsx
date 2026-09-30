@@ -61,11 +61,12 @@ export default function MeetingPriorities({
       )}
       <div className="vi-meeting-columns">
         {[
-          ["Top 10 pérdidas por revisar", losses],
-          ["Top 10 ganancias por revisar", gains],
-        ].map(([title, items]) => (
-          <div key={title}>
-            <h3>{title}</h3>
+          ["Pérdidas por revisar", losses, "loss"],
+          ["Ganancias por revisar", gains, "gain"],
+        ].map(([title, items, tone]) => (
+          <div key={title} className={`vi-meeting-card is-${tone}`}>
+            <header><div><span className="vi-eyebrow">TOP 10 · USD</span><h3>{title}</h3></div><strong>{money(items.reduce((total, row) => total + row.financial.netUsd, 0))}</strong></header>
+            <p className="vi-meeting-note">Suma de las {items.length} partes de esta lista</p>
             {!items.length && <p>Sin diferencias valoradas de este tipo.</p>}
             {items.map((r, i) => (
               <button
@@ -74,10 +75,10 @@ export default function MeetingPriorities({
                 onClick={() => onSelectPart(r)}
               >
                 <span>
-                  {i + 1}. {r.partNumber}
+                  <span className="vi-meeting-rank">{i + 1}</span> {r.partNumber}
                   <small>
                     {r.physical.scanCount || r.physical.bomContribution
-                      ? "Con registros físicos; conteo no confirmado"
+                      ? "Con escaneos · falta confirmar el cierre"
                       : "Aún sin conteo registrado"}
                     {r.flags.phantomQadBalance
                       ? " · Phantom con saldo QAD por revisar"

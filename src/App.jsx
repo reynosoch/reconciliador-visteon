@@ -328,6 +328,8 @@ export default function App() {
         clearFile={references.clearFile}
         clearAll={references.clearAll}
         backupBom={references.backupBom}
+        cloudStatus={references.cloudStatus}
+        syncCloud={references.syncCloud}
         onHelp={setHelpTopic}
         onClose={() => setSourcesOpen(false)}
       />}

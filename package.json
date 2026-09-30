@@ -5,20 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/verify-finance.mjs && node scripts/verify-discrepancies.mjs && node scripts/verify-ui-safety.mjs && node scripts/verify-dexie.mjs && node scripts/verify-export.mjs && node scripts/verify-meeting-rules.mjs && vite build",
+    "build": "node scripts/verify-finance.mjs && node scripts/verify-discrepancies.mjs && node scripts/verify-ui-safety.mjs && node scripts/verify-dexie.mjs && node scripts/verify-export.mjs && node scripts/verify-meeting-rules.mjs && node scripts/verify-imports.mjs && node scripts/verify-supabase.mjs && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.117.2",
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
     "papaparse": "^5.7.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",

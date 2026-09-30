@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseDelimitedFile } from "../parsers/parseDelimitedFile.js";
 import { mergeBomLibrary } from "../domain/bomLibrary.js";
 import { idbGet, idbSet, downloadJson } from "../services/browserStorage.js";
+import { bomClient, syncBomLibrary } from "../services/bomCloud.js";
 const BOM_KEY = "reference:bom-library.v1";
 const empty = () => ({
   rows: [],
@@ -52,7 +53,7 @@ const REQUIRED = {
   ],
 };
 async function parseReferenceFile(type, file) {
-  if (type !== 'bom' || !file.name.toLowerCase().endsWith('.json')) return parseDelimitedFile(file);
+  if (type !== 'bom' || !file.name.toLowerCase().endsWith('.json')) return parseDelimitedFile(file, { requiredFields: REQUIRED[type] });
   const value=JSON.parse(await file.text());
   if (!Array.isArray(value.rows) || value.rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) throw new Error('El respaldo BOM no tiene un formato válido.');
   const fields=[...new Set(value.rows.flatMap(row => Object.keys(row)))];
@@ -82,9 +83,32 @@ function bomSource(library) {
 }
 export function useReferenceFiles() {
   const [sources, setSources] = useState(initial);
+  const [cloudStatus, setCloudStatus] = useState({ state: "pending", message: "BOM guardados en esta computadora; respaldo compartido pendiente.", email: "" });
   const library = useRef({ rows: [], files: [] }),
     queue = useRef(Promise.resolve()),
     mounted = useRef(false);
+  const syncCloud = useCallback(() => {
+    const operation = queue.current.then(async () => {
+      setCloudStatus(s => ({ ...s, state: "syncing", message: "Comparando y respaldando BOM…" }));
+      try {
+        const local = await idbGet(BOM_KEY, { rows: [], files: [] });
+        if (!local.ok) throw new Error("No se pudo abrir la copia local. Reintenta antes de respaldar.");
+        const merged = await syncBomLibrary(local.value);
+        const changed = bomSource(merged).fingerprint !== bomSource(library.current).fingerprint;
+        const saved = changed ? await idbSet(BOM_KEY, merged) : { ok: true };
+        if (!saved.ok) throw new Error("El respaldo compartido está guardado, pero no pudimos actualizar la copia local.");
+        library.current = merged;
+        if (mounted.current) {
+          if (changed) setSources(s => ({ ...s, bom: bomSource(merged) }));
+          setCloudStatus(s => ({ ...s, state: "saved", message: "BOM comparados y respaldados en Supabase." }));
+        }
+      } catch (error) {
+        if (mounted.current) setCloudStatus(s => ({ ...s, state: "pending", message: error.message }));
+      }
+    });
+    queue.current = operation.catch(() => {});
+    return operation;
+  }, []);
   useEffect(() => {
     mounted.current = true;
     queue.current = queue.current.then(async () => {
@@ -109,6 +133,18 @@ export function useReferenceFiles() {
       mounted.current = false;
     };
   }, []);
+  useEffect(() => {
+    const retry = () => { void syncCloud(); };
+    const subscription = bomClient?.auth.onAuthStateChange((_event, session) => {
+      setCloudStatus(s => ({ ...s, email: session?.user?.email || "" }));
+      // Do not call Supabase async operations inside its auth callback lock.
+      queueMicrotask(retry);
+    });
+    if (!bomClient) queueMicrotask(retry);
+    window.addEventListener("online", retry);
+    const timer = window.setInterval(retry, 120000);
+    return () => { subscription?.data.subscription.unsubscribe(); window.removeEventListener("online", retry); window.clearInterval(timer); };
+  }, [syncCloud]);
   const loadFile = useCallback((type, file) => {
     const operation = queue.current.then(async () => {
       if (!REQUIRED[type] || !file)
@@ -188,6 +224,7 @@ export function useReferenceFiles() {
             );
           library.current = next;
           source = bomSource(next);
+          source.delimiter = parsed.delimiter;
           source.warnings = [
             {
               message: next.addedParents
@@ -207,8 +244,9 @@ export function useReferenceFiles() {
       }
     });
     queue.current = operation.catch(() => {});
+    if (type === "bom") void operation.then(() => syncCloud(), () => {});
     return operation;
-  }, []);
+  }, [syncCloud]);
   const clearFile = useCallback((type) => {
     if (type === "bom") return;
     setSources((s) => ({ ...s, [type]: empty() }));
@@ -247,5 +285,7 @@ export function useReferenceFiles() {
     clearFile,
     clearAll,
     backupBom,
+    cloudStatus,
+    syncCloud,
   };
 }

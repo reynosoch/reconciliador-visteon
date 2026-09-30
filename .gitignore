@@ -26,3 +26,6 @@ descarga_4wall.xlsx
 *.sw?
 
 bot_snapshot_status.json
+
+# Supabase CLI cache
+supabase/.temp/

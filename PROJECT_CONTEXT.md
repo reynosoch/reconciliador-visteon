@@ -45,4 +45,7 @@ npm.cmd install paquete
 ```
 
 ## Regla vigente: junta 29/09/2026
-Leer la sección de acuerdos del 29/09 en README.md. Sustituye la antigua explosión: escaneo ISPBB YES → Parent Item B → solo F=.2/0.2 y M=NO → Usage I × escaneo. No recursión. Phantom escaneado no suma directo; conservar origen y QAD sin alteraciones. BOM acumulativos locales con conflictos explícitos; escaneos completos se reemplazan. USD, costo visible con dos decimales sin redondear el cálculo, top 10 por NET USD. Pages solo por instrucción explícita.
+Leer la sección de acuerdos del 29/09 en README.md. Sustituye la antigua explosión: escaneo ISPBB YES → Parent Item B → solo F=.2/0.2 y M=NO → Usage I × escaneo. No recursión. Phantom escaneado no suma directo; conservar origen y QAD sin alteraciones. BOM acumulativos con copia local y respaldo Supabase (requiere activar migraciones y cuentas autorizadas), con conflictos explícitos; escaneos completos se reemplazan. USD, costo visible con dos decimales sin redondear el cálculo, top 10 por NET USD. Pages solo por instrucción explícita.
+
+## Archivos y respaldo 30/09/2026
+Leer la activación de Supabase al final del README. CSV/TXT y XLSX se normalizan en memoria; conservar identificadores y precisión. BOM privados mediante app_metadata.inventory_access y RPC con revisión de versión. No afirmar respaldo remoto hasta confirmar guardado; acceso al proyecto real pendiente en esta sesión. Reportes: inserción pública, sin lectura pública.

@@ -1,3 +1,5 @@
+import BomCloudStatus from "./BomCloudStatus.jsx";
+import { downloadSourceCsv } from "../../parsers/parseDelimitedFile.js";
 // src/components/shell/SourcesDrawer.jsx
 import React, { useRef, useState } from "react";
 import { HelpButton } from "../help/HelpDrawer";
@@ -43,7 +45,7 @@ const SOURCE_CONFIG = [
     type: REFERENCE_SOURCE_TYPES.BOM,
     label: "BOM Export",
     description:
-      "Agrega BOM sin perder los anteriores. Acepta el TXT original del correo.",
+      "Agrega BOM sin perder los anteriores. Acepta TXT, CSV y Excel.",
     topic: "bomReview",
     short: "BOM",
     suggested: "BOM*.txt, BOM*.csv o respaldo-bom.json",
@@ -78,7 +80,7 @@ async function detectSource(file) {
     return "bom";
   }
 
-  if (/qad.*3[._ -]?2|congelado.*qad|inventory.*detail/.test(name)) {
+  if (/qad.*3[._ -]?(?:12|2)|congelado.*qad|inventory.*detail/.test(name)) {
     return "qad";
   }
 
@@ -126,7 +128,7 @@ function SourceLine({ config, source, loadFile, clearFile, onHelp }) {
       <input
         ref={input}
         type="file"
-        accept=".csv,.txt,.json"
+        accept=".csv,.txt,.xlsx,.json"
         className="hidden"
         onChange={async (event) => {
           const file = event.target.files?.[0];
@@ -271,6 +273,8 @@ export default function SourcesDrawer({
   clearFile,
   clearAll,
   backupBom,
+  cloudStatus,
+  syncCloud,
   onHelp,
   onClose,
 }) {
@@ -358,7 +362,7 @@ export default function SourcesDrawer({
           <input
             ref={bulkInput}
             type="file"
-            accept=".csv,.txt,.json"
+            accept=".csv,.txt,.xlsx,.json"
             multiple
             className="hidden"
             onChange={handleBulkFiles}
@@ -504,6 +508,7 @@ export default function SourcesDrawer({
            bg-black/10
          "
           >
+            <BomCloudStatus status={cloudStatus} onSync={syncCloud} />
             <p className="help-label">NOMBRES SUGERIDOS</p>
             <div
               className="
@@ -519,9 +524,12 @@ export default function SourcesDrawer({
               <p>ISPBB 179A 09.24.26.csv</p>
               <p>BOM_Extract.txt</p>
               <button className="vi-button" onClick={backupBom}>
-                RESPALDAR BOM
+                DESCARGAR COPIA BOM
               </button>
+              {sources?.bom?.rows?.length > 0 && <button className="vi-button" onClick={() => downloadSourceCsv({ ...sources.bom, fileName: "BOM-acumulados.csv" })}>Descargar BOM como CSV</button>}
               <p>Cost Part Browse.csv</p>
+<p>También puedes cargar Excel (.xlsx). CSV es la opción más ligera para cargas repetidas.</p>
+{Object.entries(sources || {}).filter(([,source]) => source.loaded && source.delimiter === "xlsx").map(([key,source]) => <button key={key} className="vi-button" onClick={() => downloadSourceCsv(source)}>Descargar {source.fileName} como CSV</button>)}
             </div>
           </div>
 

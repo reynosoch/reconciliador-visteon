@@ -74,6 +74,7 @@ function readImage(file) {
 
 export default function DevFeedback({ inventoryId }) {
   const fileInput = useRef(null);
+  const inFlight = useRef(false);
   const [open, setOpen] = useState(false);
   const [type, setType] = useState(TYPES[0]);
   const [area, setArea] = useState(AREAS[0]);
@@ -120,10 +121,12 @@ export default function DevFeedback({ inventoryId }) {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (inFlight.current) return;
     if (!opportunity.trim()) {
       setStatus("Escribe qué encontraste o qué oportunidad ves.");
       return;
     }
+    inFlight.current = true;
     setSending(true);
     setStatus("");
     try {
@@ -146,6 +149,7 @@ export default function DevFeedback({ inventoryId }) {
     } catch (error) {
       setStatus(error.message || "No pudimos enviar el reporte. No se borró lo que escribiste.");
     } finally {
+      inFlight.current = false;
       setSending(false);
     }
   };

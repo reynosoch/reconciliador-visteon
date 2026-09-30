@@ -151,8 +151,8 @@ function Radar({
 </div>
 <HelpButton topic="phantomRadar" onHelp={onHelp}/>
 </header>
-<p className="vi-radar-caption">Top Phantom por impacto NET absoluto.</p>
-<div className="vi-radar-card-body">{list(ghosts,"SIN PART NUMBERS PHANTOM")}</div>
+<p className="vi-radar-caption">Phantoms con las mayores diferencias en dólares.</p>
+<div className="vi-radar-card-body">{list(ghosts,"No hay phantoms para mostrar.")}</div>
 </section>
 
 <section className="vi-radar-card vi-liquid-mini vi-obsolete-radar">
@@ -163,8 +163,8 @@ function Radar({
 </div>
 <HelpButton topic="obsolete" onHelp={onHelp}/>
 </header>
-<p className="vi-radar-caption">Top obsoletos con sobrante valorizado.</p>
-<div className="vi-radar-card-body">{list(obsolete,"SIN OBSOLETOS CON GANANCIA")}</div>
+<p className="vi-radar-caption">Material obsoleto con sobrante en dólares.</p>
+<div className="vi-radar-card-body">{list(obsolete,"No hay obsoletos con sobrante.")}</div>
 </section>
 </aside>
  );
