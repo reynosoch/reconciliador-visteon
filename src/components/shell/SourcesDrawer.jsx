@@ -389,8 +389,8 @@ export default function SourcesDrawer({
                 </h2>
                 <p className="mt-1 text-[11px] text-slate-600">
                   Carga referencias y, si lo necesitas, escaneos manuales. Los
-                  BOM se conservan en este navegador; aún no se comparten entre
-                  equipos.
+                  BOM se conservan localmente y se sincronizan con Supabase al
+                  iniciar sesión con una cuenta autorizada.
                 </p>
               </div>
 

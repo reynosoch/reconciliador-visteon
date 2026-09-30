@@ -53,7 +53,7 @@ export default function MeetingPriorities({
                 ·{" "}
                 {r.flags.missingBom
                   ? "Falta su BOM"
-                  : "BOM sin filas NO de nivel .2 con Usage válido"}
+                  : "BOM sin componentes Level .2 / 0.2, Comp Phantom = NO y Usage válido"}
               </p>
             ))}
           </details>
