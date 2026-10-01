@@ -30,7 +30,7 @@ La aplicación incluye:
 - Detección de material inesperado y QAD positivo sin físico.
 - Motor de **Discrepancias por investigar** separado de React.
 - Alertas operativas con IDs estables por inventario.
-- Preguntas pendientes para Finanzas disponibles desde la campana.
+- Preguntas de lógica documentadas únicamente en este README; no ocupan espacio en la interfaz de notificaciones.
 - Historial de juntas almacenado localmente en IndexedDB.
 - Exportación de un Excel único para juntas, con dashboard, fecha/hora, conciliación, localidades, hallazgos, 4Wall, fuentes y guía de interpretación.
 - Control local del bot con estado de proceso y último resultado publicado.
@@ -236,7 +236,7 @@ Crear otro inventario no borra los archivos de referencia que ya están cargados
 
 ## Preguntas pendientes con el departamento
 
-Las preguntas vigentes están únicamente en la campana y en la sección de acuerdos del 29/09 al final de este documento. Se confirmaron USD, actualización por reemplazo de escaneos, Top 10 y selección BOM nivel .2 / componente NO. No volver a presentar esas decisiones como pendientes.
+Las preguntas vigentes no se muestran en la interfaz. Se documentan en este README para revisarlas fuera del flujo operativo del dashboard. Se confirmaron USD, actualización por reemplazo de escaneos, Top 10 y selección BOM nivel .2 / componente NO. No volver a presentar esas decisiones como pendientes.
 
 ## Bot 4Wall
 
@@ -247,7 +247,7 @@ Las preguntas vigentes están únicamente en la campana y en la sección de acue
 - evita arranques concurrentes;
 - valida que exista el extractor;
 - diferencia solicitud aceptada de snapshot publicado;
-- expone estado y último resultado sin devolver credenciales;
+- expone estado y último resultado sin devolver credenciales;\n- permite detener de forma controlada el proceso antes de usar escaneos manuales;
 - usa contraseña desde `BOT_CONTROL_PASSWORD`;
 - por defecto solo escucha en loopback.
 
@@ -486,3 +486,13 @@ SheetJS 0.20.3 está fijado como `file:vendor/xlsx-0.20.3.tgz`, copia del paquet
 `npm.cmd run build` también prueba importación XLSX, ceros iniciales, precisión, hojas ambiguas, escaneos manuales y conflictos entre colecciones. Las migraciones se ejecutan en Postgres local mediante PGlite para verificar permisos, reportes de solo inserción, historial y rechazo de versiones viejas. Eso no sustituye la prueba de conexión en el proyecto real.
 
 Después de bajar main: `npm.cmd install` y `npm.cmd run dev`. GitHub Pages sigue siendo publicación manual; este cambio no lo despliega.
+
+
+## Preguntas de lógica para próxima revisión
+
+Estas preguntas se mantienen fuera del dashboard para no mezclarlas con alertas operativas:
+
+- Definir el agrupamiento final de localidades para reportes ejecutivos (externos, docks, holds, 800 y cualquier grupo especial).
+- Definir cómo presentar durante el día los Part Numbers de QAD que todavía no han sido escaneados, sin tratarlos prematuramente como pérdida confirmada.
+- Mantener documentado cualquier cambio futuro de filtros QAD (Site / Item Type) antes de modificar la lógica.
+- Cuando cambie una regla financiera o BOM, registrar aquí la decisión, la fecha y el responsable antes de desplegarla.
