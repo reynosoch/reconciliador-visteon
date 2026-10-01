@@ -16,13 +16,12 @@ import NotificationCenter from "./components/shell/NotificationCenter";
 import BotControlModal from "./components/shell/BotControlModal";
 import ConfirmDialog from "./components/shell/ConfirmDialog";
 import OverlayPortal, { forceUnlockPageScroll } from "./components/shell/OverlayPortal.jsx";
-import MainMenu, { AnimationOnlyView } from "./components/shell/MainMenu";
+import MainMenu from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
 import SnapshotStamp from "./components/shell/SnapshotStamp.jsx";
 import PartLogicTracer from "./components/shell/PartLogicTracer.jsx";
 import { REFERENCE_SOURCE_LABELS, useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
-import { AmbientChase } from "./components/visual/PacmanGlyphs";
 import {
   buildDiscrepancyFindings,
   buildSnapshot,
@@ -74,7 +73,6 @@ export default function App() {
     [confirmNew, setConfirmNew] = useState(false),
     [menuOpen, setMenuOpen] = useState(false),
     [logicTracerOpen, setLogicTracerOpen] = useState(false),
-    [animationOnly, setAnimationOnly] = useState(false),
     [detailFromNotifications, setDetailFromNotifications] = useState(false);
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
@@ -347,7 +345,7 @@ export default function App() {
   }, [references.status.loadedCount, warning]);
   useEffect(() => {
     const start = (event) => {
-      if (window.innerWidth > 760 || sourcesOpen || notificationsOpen || botOpen || helpTopic || selectedPart || menuOpen || logicTracerOpen || animationOnly) return;
+      if (window.innerWidth > 760 || sourcesOpen || notificationsOpen || botOpen || helpTopic || selectedPart || menuOpen || logicTracerOpen) return;
       const touch = event.touches?.[0];
       if (!touch || touch.clientX < window.innerWidth - 28) return;
       mobileSwipeStart.current = { x: touch.clientX, y: touch.clientY };
@@ -368,7 +366,7 @@ export default function App() {
       removeEventListener("touchstart", start);
       removeEventListener("touchend", end);
     };
-  }, [sourcesOpen, notificationsOpen, botOpen, helpTopic, selectedPart, menuOpen, logicTracerOpen, animationOnly]);
+  }, [sourcesOpen, notificationsOpen, botOpen, helpTopic, selectedPart, menuOpen, logicTracerOpen]);
   const openPartFromNotification = (alert) => {
     const item = inventory.reconciliation.find(
       (row) => row.partNumber === alert?.partNumber,
@@ -441,8 +439,7 @@ export default function App() {
             : "";
   return (
     <div className="vi-shell" ref={shellRef}>
-      <AmbientChase />
-      {!animationOnly && <CommandHeader
+      <CommandHeader
         connectionStatus={inventory.connectionStatus}
         scanCount={inventory.scanCount}
         lastUpdated={inventory.lastUpdated}
@@ -459,10 +456,9 @@ export default function App() {
         onOpenBot={() => setBotOpen(true)}
         onOpenMenu={() => setMenuOpen(true)}
         notificationCount={notificationCount}
-      />}
-      {animationOnly && <AnimationOnlyView onClose={() => setAnimationOnly(false)} />}
-      {!animationOnly && warning && <div className="vi-persistence-warning">{warning}</div>}
-      {!animationOnly && <main className="vi-main">
+      />
+      {warning && <div className="vi-persistence-warning">{warning}</div>}
+      {<main className="vi-main">
         <section className="vi-intro">
           <div>
             <p className="vi-eyebrow">PLANTA 179A / INVENTARIO FÍSICO</p>
@@ -571,7 +567,7 @@ export default function App() {
           onHelp={setHelpTopic}
         />
       </main>}
-      {!animationOnly && (
+      {(
         <footer className="vi-page-snapshot-footer">
           <SnapshotStamp
             snapshotMeta={inventory.snapshotMeta}
@@ -580,7 +576,7 @@ export default function App() {
           />
         </footer>
       )}
-      {!animationOnly && <SourcesDrawer
+      {<SourcesDrawer
         open={sourcesOpen}
         sources={references.sources}
         status={references.status}
@@ -591,7 +587,7 @@ export default function App() {
         onHelp={setHelpTopic}
         onClose={() => setSourcesOpen(false)}
       />}
-      {!animationOnly && <PartDetailDrawer
+      {<PartDetailDrawer
         item={selectedPart}
         onHelp={setHelpTopic}
         fromNotifications={detailFromNotifications}
@@ -601,12 +597,12 @@ export default function App() {
           setDetailFromNotifications(false);
         }}
       />}
-      {!animationOnly && <HelpDrawer
+      {<HelpDrawer
         topic={helpTopic}
         sources={references.sources}
         onClose={() => setHelpTopic(null)}
       />}
-      {!animationOnly && <NotificationCenter
+      {<NotificationCenter
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
         findings={base}
@@ -622,14 +618,14 @@ export default function App() {
         onOperationalStateChange={setOperationalState}
         onPersistenceError={setWarning}
       />}
-      {!animationOnly && <BotControlModal
+      {<BotControlModal
         open={botOpen}
         onClose={() => setBotOpen(false)}
         onStatusChange={(status) =>
           setBotRunning(status?.processState === "running")
         }
       />}
-      {!animationOnly && <ConfirmDialog
+      {<ConfirmDialog
         open={confirmNew}
         title="¿Crear otro inventario?"
         message="Los cortes y alertas del inventario actual se conservarán. Los archivos que están solo en memoria no se copian."
@@ -645,7 +641,6 @@ export default function App() {
       <MainMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
-        onAnimationOnly={() => setAnimationOnly(true)}
         onOpenLogicTracer={() => setLogicTracerOpen(true)}
         snapshotMeta={inventory.snapshotMeta}
         scanCount={inventory.scanCount}
