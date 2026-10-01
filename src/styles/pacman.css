@@ -1056,22 +1056,6 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
 .vi-menu-item small{color:#91aab5;font-size:10px;line-height:1.35}
 .vi-menu-item em{flex:none;color:#698795;font-size:8px;font-style:normal;font-weight:900;letter-spacing:.08em}
 .vi-menu-item:disabled{opacity:.55}
-.vi-menu-secret{padding-top:18px}
-.vi-animation-entry{cursor:pointer;opacity:.70}
-.vi-animation-entry:hover{opacity:1;background:rgba(255,255,255,.075)}
-.vi-animation-entry>b{font-size:24px;font-weight:300;color:#8fd1ff}
-.vi-animation-only{
-  position:fixed;inset:0;z-index:40;pointer-events:none;
-  background:radial-gradient(circle at center,transparent 0 54%,rgba(0,9,15,.18) 100%);
-}
-.vi-animation-exit{
-  position:fixed;z-index:45;top:18px;right:18px;pointer-events:auto;
-  width:48px;height:48px;border:1px solid rgba(255,255,255,.16);border-radius:999px;
-  background:rgba(7,40,55,.38);color:#fff;font-size:30px;
-  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
-}
-.vi-animation-only-copy{position:fixed;left:20px;bottom:20px;display:grid;color:rgba(255,255,255,.56);font-size:9px;letter-spacing:.15em}
-.vi-animation-only-copy small{margin-top:4px;color:rgba(255,255,255,.28)}
 
 /* Discrepancy help popover */
 .vi-findings-head-actions{display:flex;align-items:center;gap:9px}
@@ -1637,15 +1621,6 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
 .vi-radar-empty { color: #afc7d6; padding: 16px 0; line-height: 1.5; }
 .vi-dev-feedback-form select { color-scheme: dark; background-color: #142f41 !important; color: #f1f5f9 !important; }
 .vi-dev-feedback-form select option { background: #142f41; color: #f1f5f9; }
-.vi-bom-cloud { padding: 18px; margin-bottom: 24px; border: 1px solid #376074; border-radius: 14px; background: #102d40; color: #dceaf2; }
-.vi-bom-cloud h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-.vi-bom-cloud p { font-size: 13px; line-height: 1.6; }
-.vi-bom-cloud-state { padding: 10px 0; color: #fcd491; }
-.vi-bom-cloud-state.is-saved { color: #7ce6ba; }
-.vi-bom-cloud form, .vi-bom-cloud-actions { display: grid; gap: 10px; }
-.vi-bom-cloud label { display: grid; gap: 5px; font-size: 12px; }
-.vi-bom-cloud input { width: 100%; border: 1px solid #4e7086; background: #0a2030; color: #f1f5f9; border-radius: 6px; padding: 10px; }
-.vi-bom-cloud small { color: #b5c9d6; line-height: 1.5; }
 @media (max-width: 900px) { .vi-meeting-columns { grid-template-columns: 1fr; } .vi-radar-slot { position: static !important; } }
 @media (max-width: 480px) { .vi-meeting-priorities { padding: 16px; } .vi-meeting-card { padding: 12px; } .vi-meeting-row { align-items: flex-start; } }
 
@@ -2413,14 +2388,6 @@ body.vi-overlay-open .vi-shell {
 }
 
 
-/* Free the compositor while the user is actively moving through the dashboard. */
-.vi-shell.vi-scroll-moving .vi-ambient-hunter,
-.vi-shell.vi-scroll-moving .vi-ambient-ghost,
-.vi-shell.vi-scroll-moving .vi-arcade-fruit,
-.vi-shell.vi-scroll-moving .vi-arcade-score {
-  animation-play-state: paused !important;
-}
-
 /* Blur is pretty but expensive while a long drawer is moving. Restore it as soon as movement ends. */
 .vi-sources-drawer.vi-scroll-moving .vi-sources-head,
 .vi-notification-drawer.vi-scroll-moving .vi-notification-head,
@@ -3058,56 +3025,6 @@ body.vi-overlay-open .vi-shell {
 
 /* 2026-10-01 · Stable native scroll + logic tracer + product updates */
 /* Scroll stability: never transform the element that owns native scrolling. */
-:is(
-  .vi-shell,
-  .vi-drawer-panel,
-  .vi-detail-drawer,
-  .vi-global-drawer,
-  .vi-menu-panel,
-  .vi-logic-tracer,
-  .vi-source-preview-table-wrap,
-  .vi-inspection-scroll,
-  .vi-excel-grid-wrap,
-  .vi-dual-sheet-scroll,
-  .vi-findings-table-wrap,
-  .vi-table-shell
-) {
-  position: relative;
-  transform: none !important;
-  transition: none !important;
-  scroll-behavior: auto !important;
-}
-
-:is(
-  .vi-shell,
-  .vi-drawer-panel,
-  .vi-detail-drawer,
-  .vi-global-drawer,
-  .vi-menu-panel,
-  .vi-logic-tracer,
-  .vi-source-preview-table-wrap,
-  .vi-inspection-scroll,
-  .vi-excel-grid-wrap,
-  .vi-dual-sheet-scroll,
-  .vi-findings-table-wrap,
-  .vi-table-shell
-).vi-elastic-top,
-:is(
-  .vi-shell,
-  .vi-drawer-panel,
-  .vi-detail-drawer,
-  .vi-global-drawer,
-  .vi-menu-panel,
-  .vi-logic-tracer,
-  .vi-source-preview-table-wrap,
-  .vi-inspection-scroll,
-  .vi-excel-grid-wrap,
-  .vi-dual-sheet-scroll,
-  .vi-findings-table-wrap,
-  .vi-table-shell
-).vi-elastic-bottom {
-  transform: none !important;
-}
 
 /* Remove expensive visual work from the hot scrolling path. */
 .vi-command-header,
@@ -3751,26 +3668,6 @@ body.vi-overlay-open .vi-shell {
 .vi-shell {
   overscroll-behavior-y: contain !important;
 }
-.vi-pacman-toggle { width: 100%; cursor: pointer; text-align: left; }
-.vi-switch-track {
-  display: inline-flex;
-  flex: 0 0 44px;
-  width: 44px;
-  height: 26px;
-  padding: 3px;
-  border-radius: 999px;
-  background: #456070;
-}
-.vi-switch-track > span {
-  display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fff;
-}
-.vi-pacman-toggle[aria-checked="true"] .vi-switch-track { background: #f5821f; }
-.vi-pacman-toggle[aria-checked="true"] .vi-switch-track > span { transform: translateX(18px); }
-.vi-pacman-toggle:focus-visible { outline: 2px solid #f5821f; outline-offset: 3px; }
 
 /* Solid dashboard cards: Pac-Man stays in the gutters, not behind the figures. */
 .vi-main :is(.vi-financial-shell,.vi-findings,.vi-health-bar,.vi-reconciliation-shell,
