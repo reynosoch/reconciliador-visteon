@@ -1,9 +1,12 @@
 const unitMoney = value => new Intl.NumberFormat("en-US", {style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(value);
 // src/components/dashboard/InventoryWorkspace.jsx
 import React, {
+ useEffect,
  useMemo,
+ useRef,
  useState,
 } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
  Ghost,
 } from "../visual/PacmanGlyphs";
@@ -217,7 +220,7 @@ export default function InventoryWorkspace({
    filter,
    setFilter,
  ] = useState("ALL");
- const [page, setPage] = useState(0);
+ const tableScrollRef = useRef(null);
 
  const filtered =
    useMemo(() => {
@@ -287,9 +290,26 @@ export default function InventoryWorkspace({
      filter,
    ]);
 
- const lastPage = Math.max(0, Math.ceil(filtered.length / 50) - 1);
- const currentPage = Math.min(page, lastPage);
- const visibleRows = filtered.slice(currentPage * 50, (currentPage + 1) * 50);
+ const rowVirtualizer = useVirtualizer({
+   count: filtered.length,
+   getScrollElement: () => tableScrollRef.current,
+   estimateSize: () => 62,
+   overscan: 10,
+   useFlushSync: false,
+   directDomUpdates: true,
+   getItemKey: (index) => filtered[index]?.partNumber || index,
+ });
+
+ const virtualRows = rowVirtualizer.getVirtualItems();
+ const paddingTop = virtualRows.length ? virtualRows[0].start : 0;
+ const paddingBottom = virtualRows.length
+   ? Math.max(0, rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end)
+   : 0;
+
+ useEffect(() => {
+   if (!filtered.length) return;
+   rowVirtualizer.scrollToIndex(0, { align: "start" });
+ }, [search, filter]);
 
  return (
 <section
@@ -334,9 +354,7 @@ export default function InventoryWorkspace({
 <input
            value={search}
            disabled={!ready}
-           onChange={(event) =>
-             { setSearch(event.target.value); setPage(0); }
-           }
+           onChange={(event) => setSearch(event.target.value)}
            className="
              vi-input
              lg:max-w-[310px]
@@ -361,7 +379,7 @@ option.id
                }
                type="button"
                disabled={!ready}
-               onClick={() => { setFilter(option.id); setPage(0); }}
+               onClick={() => setFilter(option.id)}
                className={`
                  workspace-filter
                  ${
@@ -434,9 +452,11 @@ option.id
          className="vi-workspace-grid"
 >
 <div
+           ref={tableScrollRef}
            className="
+             vi-table-virtual-scroll
              min-w-0
-             overflow-x-auto
+             overflow-auto
            "
 >
 <table className="vi-table">
@@ -508,8 +528,14 @@ option.id
 </thead>
 
 <tbody>
-               {visibleRows.map(
-                 (item) => {
+               {paddingTop > 0 && (
+                 <tr className="vi-virtual-spacer" aria-hidden="true">
+                   <td colSpan={7} style={{ height: `${paddingTop}px` }} />
+                 </tr>
+               )}
+               {virtualRows.map(
+                 (virtualRow) => {
+                   const item = filtered[virtualRow.index];
                    const financial =
                      item.financial ||
                      {};
@@ -665,12 +691,14 @@ option.id
                    );
                  }
                )}
+               {paddingBottom > 0 && (
+                 <tr className="vi-virtual-spacer" aria-hidden="true">
+                   <td colSpan={7} style={{ height: `${paddingBottom}px` }} />
+                 </tr>
+               )}
 </tbody>
 </table>
-{filtered.length > 50 && <div className="vi-table-pagination">
-  <span>{(currentPage * 50 + 1).toLocaleString("es-MX")}–{Math.min((currentPage + 1) * 50, filtered.length).toLocaleString("es-MX")} de {filtered.length.toLocaleString("es-MX")}</span>
-  <div><button type="button" className="vi-button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>ANTERIOR</button><span>{currentPage + 1} / {lastPage + 1}</span><button type="button" className="vi-button" disabled={currentPage === lastPage} onClick={() => setPage(currentPage + 1)}>SIGUIENTE</button></div>
-</div>}
+
 </div>
 
 <div className="vi-radar-slot">
