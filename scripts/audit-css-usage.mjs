@@ -19,7 +19,26 @@ sourceFiles.push("index.html");
 const source = (await Promise.all(sourceFiles.map((file) => readFile(file, "utf8")))).join("\n");
 
 const classes = [...new Set([...css.matchAll(/\.((?:vi)-[A-Za-z0-9_-]+)/g)].map((match) => match[1]))].sort();
-const unused = classes.filter((name) => !source.includes(name));
 
-console.log(`Custom CSS audit: ${classes.length} vi-* classes, ${unused.length} not referenced outside CSS.`);
-if (unused.length) console.log(unused.join("\n"));
+// DataHealthBar intentionally builds these from the pattern vi-health-${tone}.
+const dynamicClasses = new Set([
+  "vi-health-frozen",
+  "vi-health-live",
+  "vi-health-phantom",
+  "vi-health-warning",
+]);
+
+const unused = classes.filter(
+  (name) => !source.includes(name) && !dynamicClasses.has(name),
+);
+
+if (unused.length) {
+  throw new Error(
+    `Unused custom CSS classes found:\n- ${unused.join("\n- ")}\n` +
+    "Delete the stale rules or document an intentional dynamic class in this audit.",
+  );
+}
+
+console.log(
+  `Custom CSS audit OK: ${classes.length} vi-* classes; only documented dynamic classes bypass literal lookup.`,
+);
