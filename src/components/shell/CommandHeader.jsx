@@ -48,8 +48,8 @@ export default function CommandHeader({
   notificationCount = 0,
 }) {
   const manual = connectionStatus?.state === "MANUAL";
-  const live = ["LIVE", "REFRESHING"].includes(connectionStatus?.state);
   const liveError = connectionStatus?.state === "ERROR";
+  const devSnapshot = ["DEV_LOADING", "DEV_SNAPSHOT"].includes(connectionStatus?.state);
   const referencesReady = referenceStatus?.allLoaded === true;
   const loaded = referenceStatus?.loadedCount || 0;
   const total = referenceStatus?.totalSources || 5;
@@ -68,9 +68,6 @@ export default function CommandHeader({
             <small>ÚLTIMA CONSULTA</small>
             <strong>{formatTime(lastUpdated)}</strong>
           </span>
-          <div className="vi-language-dev" title="Selector EN/ESP en desarrollo" aria-label="Idioma, función en desarrollo">
-            <span>ES</span><i>/</i><span>EN</span><small>DEV</small>
-          </div>
           <button type="button" onClick={onOpenNotifications} className="vi-button vi-button-light vi-icon-button" aria-label="Abrir notificaciones">
             <Bell />
             {notificationCount > 0 && <b className="vi-notification-badge">{notificationCount}</b>}
@@ -93,7 +90,13 @@ export default function CommandHeader({
       <div className="vi-source-ribbon">
         <div className="vi-source-ribbon-inner">
           <span className="vi-flow-label">FLUJO DE DATOS</span>
-          <SourceState label="4WALL" state={manual ? "ARCHIVO MANUAL" : live ? "EN VIVO" : liveError ? "ERROR" : "EN ESPERA"} detail={manual ? connectionStatus.detail : liveError ? (connectionStatus?.detail || "No se pudo actualizar") : `${scanCount.toLocaleString("es-MX")} escaneos`} live={live} ready={manual} error={liveError} />
+          <SourceState
+            label="4WALL"
+            state={manual ? "ARCHIVO MANUAL" : liveError ? "ERROR" : devSnapshot ? "SNAPSHOT DEV" : "BOT NO OPERATIVO"}
+            detail={manual ? connectionStatus.detail : (connectionStatus?.detail || "Carga un archivo manual")}
+            ready={manual}
+            error={liveError}
+          />
           <span className="vi-ribbon-flow" aria-hidden="true" />
           <SourceState label="QAD" state={referencesReady ? "CONGELADO" : "PENDIENTE"} detail="Planta 179A" ready={referencesReady} />
           <span className="vi-ribbon-separator" aria-hidden="true" />
