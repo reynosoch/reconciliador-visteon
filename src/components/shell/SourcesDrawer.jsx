@@ -1,5 +1,4 @@
 import BomCloudStatus from "./BomCloudStatus.jsx";
-import { downloadSourceCsv } from "../../parsers/parseDelimitedFile.js";
 // src/components/shell/SourcesDrawer.jsx
 import React, { useRef, useState } from "react";
 import { HelpButton } from "../help/HelpDrawer";
@@ -164,7 +163,6 @@ function SourceLine({ config, source, loadFile, clearFile, onHelp }) {
           <span className="text-xs font-bold text-slate-200">
             {config.label}
           </span>
-          <HelpButton topic={config.topic} onHelp={onHelp} />
 
           <span
             className="
@@ -235,7 +233,8 @@ function SourceLine({ config, source, loadFile, clearFile, onHelp }) {
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="vi-source-actions">
+        <HelpButton topic={config.topic} onHelp={onHelp} />
         <button
           type="button"
           onClick={() => input.current?.click()}
@@ -271,7 +270,6 @@ export default function SourcesDrawer({
   status,
   loadFile,
   clearFile,
-  clearAll,
   backupBom,
   cloudStatus,
   syncCloud,
@@ -389,8 +387,8 @@ export default function SourcesDrawer({
                 </h2>
                 <p className="mt-1 text-[11px] text-slate-600">
                   Carga referencias y, si lo necesitas, escaneos manuales. Los
-                  BOM se conservan localmente y se sincronizan con Supabase al
-                  iniciar sesión con una cuenta autorizada.
+                  BOM se comparan y respaldan automáticamente, sin iniciar sesión.
+                  Excel se convierte a CSV al cargarlo. Trabajamos con sus filas, sin guardar el libro original.
                 </p>
               </div>
 
@@ -524,30 +522,12 @@ export default function SourcesDrawer({
               <p>ISPBB 179A 09.24.26.csv</p>
               <p>BOM_Extract.txt</p>
               <button className="vi-button" onClick={backupBom}>
-                DESCARGAR COPIA BOM
+                DESCARGAR BOM REGISTRADOS (.XLSX)
               </button>
-              {sources?.bom?.rows?.length > 0 && <button className="vi-button" onClick={() => downloadSourceCsv({ ...sources.bom, fileName: "BOM-acumulados.csv" })}>Descargar BOM como CSV</button>}
               <p>Cost Part Browse.csv</p>
-<p>También puedes cargar Excel (.xlsx). CSV es la opción más ligera para cargas repetidas.</p>
-{Object.entries(sources || {}).filter(([,source]) => source.loaded && source.delimiter === "xlsx").map(([key,source]) => <button key={key} className="vi-button" onClick={() => downloadSourceCsv(source)}>Descargar {source.fileName} como CSV</button>)}
             </div>
           </div>
 
-          {loaded > 0 && (
-            <div className="p-5">
-              <button
-                type="button"
-                onClick={() => setPendingClear({ kind: "all" })}
-                className="
-               vi-button
-               w-full
-               text-rose-400
-             "
-              >
-                QUITAR REFERENCIAS Y ESCANEOS (CONSERVAR BOM)
-              </button>
-            </div>
-          )}
         </aside>
         <ConfirmDialog
           open={Boolean(pendingClear)}
@@ -558,8 +538,7 @@ export default function SourcesDrawer({
           onConfirm={() => {
             const action = pendingClear;
             setPendingClear(null);
-            if (action?.kind === "all") clearAll();
-            else if (action?.type) clearFile(action.type);
+            if (action?.type) clearFile(action.type);
           }}
         />
       </div>

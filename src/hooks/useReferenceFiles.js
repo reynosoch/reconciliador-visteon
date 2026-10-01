@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseDelimitedFile } from "../parsers/parseDelimitedFile.js";
 import { mergeBomLibrary } from "../domain/bomLibrary.js";
-import { idbGet, idbSet, downloadJson } from "../services/browserStorage.js";
-import { bomClient, syncBomLibrary } from "../services/bomCloud.js";
+import { idbGet, idbSet } from "../services/browserStorage.js";
+import { syncBomLibrary } from "../services/bomCloud.js";
+import { downloadBomWorkbook } from "../services/exportBomWorkbook.js";
 const BOM_KEY = "reference:bom-library.v1";
 const empty = () => ({
   rows: [],
@@ -83,7 +84,7 @@ function bomSource(library) {
 }
 export function useReferenceFiles() {
   const [sources, setSources] = useState(initial);
-  const [cloudStatus, setCloudStatus] = useState({ state: "pending", message: "BOM guardados en esta computadora; respaldo compartido pendiente.", email: "" });
+  const [cloudStatus, setCloudStatus] = useState({ state: "pending", message: "BOM guardados en esta computadora; respaldo compartido pendiente." });
   const library = useRef({ rows: [], files: [] }),
     queue = useRef(Promise.resolve()),
     mounted = useRef(false);
@@ -135,15 +136,10 @@ export function useReferenceFiles() {
   }, []);
   useEffect(() => {
     const retry = () => { void syncCloud(); };
-    const subscription = bomClient?.auth.onAuthStateChange((_event, session) => {
-      setCloudStatus(s => ({ ...s, email: session?.user?.email || "" }));
-      // Do not call Supabase async operations inside its auth callback lock.
-      queueMicrotask(retry);
-    });
-    if (!bomClient) queueMicrotask(retry);
+    queueMicrotask(retry);
     window.addEventListener("online", retry);
     const timer = window.setInterval(retry, 120000);
-    return () => { subscription?.data.subscription.unsubscribe(); window.removeEventListener("online", retry); window.clearInterval(timer); };
+    return () => { window.removeEventListener("online", retry); window.clearInterval(timer); };
   }, [syncCloud]);
   const loadFile = useCallback((type, file) => {
     const operation = queue.current.then(async () => {
@@ -251,12 +247,8 @@ export function useReferenceFiles() {
     if (type === "bom") return;
     setSources((s) => ({ ...s, [type]: empty() }));
   }, []);
-  const clearAll = useCallback(
-    () => setSources((s) => ({ ...initial(), bom: s.bom })),
-    [],
-  );
   const backupBom = useCallback(
-    () => downloadJson("respaldo-bom.json", library.current),
+    () => downloadBomWorkbook(library.current),
     [],
   );
   const status = useMemo(() => {
@@ -283,7 +275,6 @@ export function useReferenceFiles() {
     manualScans: sources.scans.loaded ? sources.scans : null,
     loadFile,
     clearFile,
-    clearAll,
     backupBom,
     cloudStatus,
     syncCloud,

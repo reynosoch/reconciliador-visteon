@@ -326,7 +326,6 @@ export default function App() {
         status={references.status}
         loadFile={references.loadFile}
         clearFile={references.clearFile}
-        clearAll={references.clearAll}
         backupBom={references.backupBom}
         cloudStatus={references.cloudStatus}
         syncCloud={references.syncCloud}

@@ -462,31 +462,24 @@ Esta actualización se sube a **main solamente**. No ejecutar el despliegue manu
 
 - Se aceptan CSV, TXT delimitado y XLSX en todas las fuentes. Excel se lee directamente en memoria; no se vuelve a convertir y leer para calcular. Para repetir cargas, usar CSV (evita abrir/descomprimir un libro). TXT delimitado tiene un costo de lectura parecido; la extensión por sí sola no garantiza velocidad.
 - Se busca una hoja con las columnas de la fuente entre sus primeras 50 filas. Si dos hojas coinciden, se pide separar la hoja correcta. Se conservan ceros formateados en identificadores y precisión numérica en costos. Excel no ejecuta fórmulas en esta app: necesita sus valores guardados.
-- Las fuentes XLSX ofrecen descarga CSV. La colección BOM también puede descargarse como CSV o como respaldo JSON. El CSV protege texto que Excel pudiera interpretar como fórmula.
+- Excel se descomprime y convierte a CSV una sola vez al cargarlo. La app conserva sus filas y descarta el libro y el texto CSV temporales. Los BOM registrados se descargan como Excel (.xlsx).
 - Los escaneos manuales se muestran en el visor y en el Excel exportado, con cantidad, parte, área y columnas adicionales. Reemplazan el reporte completo; no se suman al del bot.
 - El visor tiene fondo opaco; Para la junta separa los dos top 10 y muestra la suma de **cada lista**, no la del inventario completo. Phantom Radar y Obsoletos + conservan sus reglas y tienen tarjetas más legibles.
 - Reportar distingue errores de configuración/permisos, evita envíos simultáneos y conserva el formulario si falla. Sus opciones Tipo/Área tienen fondo y texto oscuros/claros definidos.
 
-### Activar Supabase (pendiente en el proyecto real)
+### Respaldo BOM sin login (01/10/2026)
 
-El proyecto de la aplicación es `uukhwkywmnarcfruerpp`. La conexión disponible durante este cambio no tenía permisos sobre él. **No se aplicaron migraciones remotas ni se modificó el proyecto distinto que sí aparecía conectado.** El respaldo remoto y la recepción de reportes no se consideran verificados en producción.
+La app usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` para escaneos, BOM y reportes. El proyecto usado por Pages es `uukhwkywmnarcfruerpp` (`visteon-demo`). Las 97 columnas de fuentes y la limpieza de tablas se verificaron allí el 01/10/2026. El respaldo BOM sin login requiere su esquema y permiso de lectura/guardado incremental.
 
-Un administrador de ese proyecto debe:
+Aplicar, en orden y solo si faltan, las migraciones de feedback y BOM existentes, y después `supabase/migrations/20261001140733_inventory_bom_incremental_no_login.sql`. No se necesita correo, contraseña ni habilitar usuarios anónimos en Auth. Se permite consultar el consolidado y agregar padres nuevos mediante `merge_inventory_bom`; las tablas no admiten escrituras directas desde el cliente y el historial sigue privado. Este flujo sin login permite a quien tenga la configuración pública consultar el consolidado y añadir BOM: el enlace por sí solo no limita acceso a empleados.
 
-1. Aplicar `supabase/migrations/20260929_development_feedback.sql` para el botón Reportar, si aún falta esa tabla.
-2. Aplicar `supabase/migrations/20260930205730_inventory_bom_cloud_and_feedback.sql` una sola vez para el respaldo BOM.
-3. Crear o invitar las cuentas del equipo mediante Supabase Auth y marcar **app_metadata.inventory_access = true** con la API administrativa de Auth. `user_metadata` no sirve para otorgar este permiso. No colocar claves administrativas en el navegador ni en Git.
-4. Configurar las variables públicas `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` del proyecto correcto. En Fuentes → Respaldo de BOM, entrar con una cuenta autorizada.
-5. Subir un BOM de prueba: debe aparecer “BOM comparados y respaldados en Supabase”. Abrir otra computadora/cuenta autorizada y comprobar que aparece la misma colección. Repetir el archivo no debe duplicar piezas. Un BOM distinto del mismo padre debe mostrar conflicto.
-6. Enviar un reporte de prueba y comprobar su fila en `development_feedback` desde el panel administrativo. La web puede enviar reportes, pero no leer los de otros usuarios.
+El respaldo local se guarda primero en IndexedDB. Al cargar un BOM, abrir la app, recuperar conexión o cada dos minutos, se compara contra Supabase. Solo se envían padres nuevos y metadata de procedencia, sin duplicar las filas dentro de cada archivo. Repetir un archivo no crea filas ni revisiones. Si cambia la definición de un padre existente, se conserva y se muestra conflicto. Las escrituras usan bloqueo y revisión para impedir que dos equipos se sobrescriban.
 
-### Cómo se guarda el BOM
+REPORTAR usa `development_feedback` con permiso de inserción y sin lectura desde el navegador. Para verificarlo en el proyecto correcto, enviar un reporte de prueba y comprobarlo desde el panel administrativo. Una configuración de otro proyecto no valida la instalación local.
 
-Se conserva primero en IndexedDB. Al cargar un BOM, iniciar sesión, recuperar conexión y cada dos minutos, se compara con la colección compartida. Si no hay cambios no se crea otra versión. Los archivos nuevos se acumulan; si un padre tiene una definición distinta, se conserva la copia existente y se pide decidir qué versión usar. Ese caso no se resuelve sumando versiones.
+### Instalación en redes corporativas
 
-`inventory_bom_current` contiene la colección actual. `inventory_bom_backups` conserva una copia por cambio confirmado (filas normalizadas y datos de procedencia, no el archivo binario original). El guardado compara la versión actual dentro de una transacción: si otra computadora llegó antes, vuelve a comparar. La app no tiene permiso para borrar el historial. Solo cuentas del equipo pueden leer los BOM o usar la función de guardado. Los reportes siguen con permiso público de inserción únicamente, como en la migración anterior.
-
-Sin conexión o sin permisos, aparece **respaldo pendiente** y permanece la copia local. Mientras haya conflicto/pendiente, usa también Descargar copia BOM. Este respaldo no incluye otros archivos ni el historial de juntas. Cada versión completa tiene un límite de 25 MB; vigilar el espacio del proyecto a medida que crezca el historial. La app no borra versiones automáticamente.
+SheetJS 0.20.3 está fijado como `file:vendor/xlsx-0.20.3.tgz`, copia del paquete oficial. `npm ci` no contacta `cdn.sheetjs.com`, conserva la versión actual y mantiene la validación TLS. Ver `vendor/README.md` para origen y hash. El resto de paquetes se instala desde sus orígenes del lockfile.
 
 ### Validación de este cambio
 

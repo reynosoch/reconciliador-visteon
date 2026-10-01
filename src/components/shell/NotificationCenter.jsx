@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
-import { DEPARTMENT_QUESTIONS } from "../dashboard/PendingDecisions.jsx";
 import {
   READ_NEWS_KEY,
   syncOperationalAlerts,
@@ -23,7 +22,7 @@ export const CHANGELOG = [
   {
     id: "copy-20260929",
     title: "Explicaciones más claras",
-    body: "Las preguntas para confirmar con el departamento están en esta campana. Todos los importes están en dólares.",
+    body: "Las alertas explican qué revisar en cada parte. Todos los importes están en dólares.",
   },
 ];
 export function Bell() {
@@ -216,12 +215,6 @@ export default function NotificationCenter({
                 <span>ALERTAS</span><b>{unread}</b>
               </button>
               <button
-                className={tab === "DEPARTAMENTO" ? "is-active" : ""}
-                onClick={() => { setTab("DEPARTAMENTO"); setSelectedGroup(null); }}
-              >
-                <span>CONFIRMAR</span><small>Departamento</small>
-              </button>
-              <button
                 className={tab === "NOVEDADES" ? "is-active" : ""}
                 onClick={() => { setTab("NOVEDADES"); setSelectedGroup(null); }}
               >
@@ -229,28 +222,7 @@ export default function NotificationCenter({
               </button>
             </div>
           </div>
-          {tab === "DEPARTAMENTO" ? (
-            <div className="vi-notification-list">
-              <p>
-                Estas preguntas nos ayudan a acordar cómo revisar el inventario.
-                Todos los importes están en dólares.
-              </p>
-              {DEPARTMENT_QUESTIONS.map((q) => (
-                <article className="vi-finance-question" key={q.id}>
-                  <strong>{q.q}</strong>
-                  <p>
-                    <b>Por qué lo necesitamos:</b> {q.why}
-                  </p>
-                  <p>
-                    <b>Ejemplo:</b> {q.example}
-                  </p>
-                  <p>
-                    <b>Qué falta confirmar:</b> {q.need}
-                  </p>
-                </article>
-              ))}
-            </div>
-          ) : tab === "NOVEDADES" ? (
+          {tab === "NOVEDADES" ? (
             <div className="vi-notification-list">
               {CHANGELOG.map((x) => (
                 <article className="vi-notification-item" key={x.id}>

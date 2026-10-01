@@ -55,14 +55,14 @@ export async function parseDelimitedFile(file, { requiredFields = [] } = {}) {
       candidates.push({ ...fromMatrix(matrix, file.name, "xlsx", [], start), sheetName: name });
     }
     if (candidates.length !== 1) throw new Error(candidates.length ? "Hay varias hojas con estas columnas. Guarda la hoja que necesitas en otro XLSX o CSV." : "No encontramos una hoja con las columnas necesarias en este Excel.");
-    return candidates[0];
+    const source = candidates[0];
+    // Convert once on import, then discard the workbook and CSV buffer.
+    // All downstream parsers/storage work with lightweight CSV rows.
+    const csv = Papa.unparse({ fields: source.fields, data: source.rows }, { newline: "\n" });
+    const normalized = Papa.parse(csv, { header: true, skipEmptyLines: true });
+    if (normalized.errors.length) throw new Error("No pudimos convertir este Excel a CSV. Conservamos la fuente anterior.");
+    return { ...source, rows: normalized.data, delimiter: ",", originalFormat: "xlsx", convertedTo: "csv" };
   }
   const parsed = Papa.parse(decode(bytes), { header: false, delimiter: "", skipEmptyLines: true });
   return fromMatrix(parsed.data || [], file.name, parsed.meta.delimiter, parsed.errors || []);
-}
-export function downloadSourceCsv(source) {
-  const csv = Papa.unparse({ fields: source.fields, data: source.rows.map(row => source.fields.map(key => row[key] ?? "")) }, { escapeFormulae: true });
-  const url = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
-  const a = document.createElement("a"); a.href = url; a.download = source.fileName.replace(/\.[^.]+$/, "") + ".csv"; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

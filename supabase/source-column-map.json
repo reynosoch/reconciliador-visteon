@@ -1,0 +1,529 @@
+[
+  {
+    "file": "4Wall-Area(1).csv",
+    "table": "inventory_4wall_areas",
+    "rows": 824,
+    "columns": [
+      {
+        "original": "Id",
+        "database": "Id",
+        "type": "text"
+      },
+      {
+        "original": "Nombre",
+        "database": "Nombre",
+        "type": "text"
+      },
+      {
+        "original": "Descripcion",
+        "database": "Descripcion",
+        "type": "text"
+      },
+      {
+        "original": "Localidad QAD",
+        "database": "Localidad QAD",
+        "type": "text"
+      },
+      {
+        "original": "Responsable",
+        "database": "Responsable",
+        "type": "text"
+      },
+      {
+        "original": "Área General",
+        "database": "Área General",
+        "type": "text"
+      },
+      {
+        "original": "Etiquetas",
+        "database": "Etiquetas",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "file": "4wScJREYNOS120260924100640(1).csv",
+    "table": "escaneos_4wall",
+    "rows": 6377,
+    "columns": [
+      {
+        "original": "Ticket/FIFO",
+        "database": "Ticket/FIFO",
+        "type": "text"
+      },
+      {
+        "original": "AreaName",
+        "database": "AreaName",
+        "type": "text"
+      },
+      {
+        "original": "subArea",
+        "database": "subArea",
+        "type": "text"
+      },
+      {
+        "original": "Escaneador",
+        "database": "Escaneador",
+        "type": "text"
+      },
+      {
+        "original": "auditor",
+        "database": "auditor",
+        "type": "text"
+      },
+      {
+        "original": "Numero de parte",
+        "database": "Numero de parte",
+        "type": "text"
+      },
+      {
+        "original": "Número Parte QAD",
+        "database": "Número Parte QAD",
+        "type": "text"
+      },
+      {
+        "original": "Quantity",
+        "database": "Quantity",
+        "type": "text"
+      },
+      {
+        "original": "Costo Estándar",
+        "database": "Costo Estándar",
+        "type": "text"
+      },
+      {
+        "original": "Costo Total",
+        "database": "Costo Total",
+        "type": "text"
+      },
+      {
+        "original": "Responsable",
+        "database": "Responsable",
+        "type": "text"
+      },
+      {
+        "original": "Área General",
+        "database": "Área General",
+        "type": "text"
+      },
+      {
+        "original": "Fecha agregado",
+        "database": "Fecha agregado",
+        "type": "text"
+      },
+      {
+        "original": "serial",
+        "database": "serial",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "file": "Congelado QAD 3.2 09.10 (1).csv",
+    "table": "inventory_qad_frozen",
+    "rows": 15698,
+    "columns": [
+      {
+        "original": "Item Number",
+        "database": "Item Number",
+        "type": "text"
+      },
+      {
+        "original": "Site",
+        "database": "Site",
+        "type": "text"
+      },
+      {
+        "original": "Qty On Hand - Inv Mstr",
+        "database": "Qty On Hand - Inv Mstr",
+        "type": "text"
+      },
+      {
+        "original": "Quantity On Hand",
+        "database": "Quantity On Hand",
+        "type": "text"
+      },
+      {
+        "original": "Location",
+        "database": "Location",
+        "type": "text"
+      },
+      {
+        "original": "Lot/Serial",
+        "database": "Lot/Serial",
+        "type": "text"
+      },
+      {
+        "original": "Reference",
+        "database": "Reference",
+        "type": "text"
+      },
+      {
+        "original": "Inventory Status",
+        "database": "Inventory Status",
+        "type": "text"
+      },
+      {
+        "original": "Status",
+        "database": "Status",
+        "type": "text"
+      },
+      {
+        "original": "Item Type",
+        "database": "Item Type",
+        "type": "text"
+      },
+      {
+        "original": "Expire Date",
+        "database": "Expire Date",
+        "type": "text"
+      },
+      {
+        "original": "Date Created",
+        "database": "Date Created",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "file": "ISPBB 179A 09.24.26(1).csv",
+    "table": "inventory_ispbb",
+    "rows": 45826,
+    "columns": [
+      {
+        "original": "Site",
+        "database": "Site",
+        "type": "text"
+      },
+      {
+        "original": "Location",
+        "database": "Location",
+        "type": "text"
+      },
+      {
+        "original": "Item Number",
+        "database": "Item Number",
+        "type": "text"
+      },
+      {
+        "original": "Description",
+        "database": "Description",
+        "type": "text"
+      },
+      {
+        "original": "Status",
+        "database": "Status",
+        "type": "text"
+      },
+      {
+        "original": "Item Type",
+        "database": "Item Type",
+        "type": "text"
+      },
+      {
+        "original": "Master Schedule",
+        "database": "Master Schedule",
+        "type": "text"
+      },
+      {
+        "original": "Plan Orders",
+        "database": "Plan Orders",
+        "type": "text"
+      },
+      {
+        "original": "Order Policy",
+        "database": "Order Policy",
+        "type": "text"
+      },
+      {
+        "original": "Order Period",
+        "database": "Order Period",
+        "type": "text"
+      },
+      {
+        "original": "Safety Stock",
+        "database": "Safety Stock",
+        "type": "text"
+      },
+      {
+        "original": "Safety Time",
+        "database": "Safety Time",
+        "type": "text"
+      },
+      {
+        "original": "Buyer/Planner",
+        "database": "Buyer/Planner",
+        "type": "text"
+      },
+      {
+        "original": "Issue Policy",
+        "database": "Issue Policy",
+        "type": "text"
+      },
+      {
+        "original": "Phantom",
+        "database": "Phantom",
+        "type": "text"
+      },
+      {
+        "original": "Order Multiple",
+        "database": "Order Multiple",
+        "type": "text"
+      },
+      {
+        "original": "Network Code",
+        "database": "Network Code",
+        "type": "text"
+      },
+      {
+        "original": "Purchase/Manufacture",
+        "database": "Purchase/Manufacture",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "file": "BOM_Extract15_48_30(1).txt",
+    "table": "inventory_bom_rows",
+    "rows": 1172,
+    "columns": [
+      {
+        "original": "Seq  ",
+        "database": "Seq",
+        "type": "text"
+      },
+      {
+        "original": "Parent Item",
+        "database": "Parent Item",
+        "type": "text"
+      },
+      {
+        "original": "Parent Item Description",
+        "database": "Parent Item Description",
+        "type": "text"
+      },
+      {
+        "original": "Parent UOM",
+        "database": "Parent UOM",
+        "type": "text"
+      },
+      {
+        "original": "Parent Phantom",
+        "database": "Parent Phantom",
+        "type": "text"
+      },
+      {
+        "original": "Level",
+        "database": "Level",
+        "type": "text"
+      },
+      {
+        "original": "Component",
+        "database": "Component",
+        "type": "text"
+      },
+      {
+        "original": "Component Description",
+        "database": "Component Description",
+        "type": "text"
+      },
+      {
+        "original": "Usage",
+        "database": "Usage",
+        "type": "text"
+      },
+      {
+        "original": "Grossed up Usage",
+        "database": "Grossed up Usage",
+        "type": "text"
+      },
+      {
+        "original": "Comp UOM",
+        "database": "Comp UOM",
+        "type": "text"
+      },
+      {
+        "original": "Op",
+        "database": "Op",
+        "type": "text"
+      },
+      {
+        "original": "Comp Phantom",
+        "database": "Comp Phantom",
+        "type": "text"
+      },
+      {
+        "original": "Start Date",
+        "database": "Start Date",
+        "type": "text"
+      },
+      {
+        "original": "End Date",
+        "database": "End Date",
+        "type": "text"
+      },
+      {
+        "original": "Product Line",
+        "database": "Product Line",
+        "type": "text"
+      },
+      {
+        "original": "Item Type",
+        "database": "Item Type",
+        "type": "text"
+      },
+      {
+        "original": "P/M",
+        "database": "P/M",
+        "type": "text"
+      },
+      {
+        "original": "Part Status",
+        "database": "Part Status",
+        "type": "text"
+      },
+      {
+        "original": "Cost Total",
+        "database": "Cost Total",
+        "type": "text"
+      },
+      {
+        "original": "Ext Cost Total",
+        "database": "Ext Cost Total",
+        "type": "text"
+      },
+      {
+        "original": "BOH",
+        "database": "BOH",
+        "type": "text"
+      },
+      {
+        "original": "Supplier",
+        "database": "Supplier",
+        "type": "text"
+      },
+      {
+        "original": "Name",
+        "database": "Name",
+        "type": "text"
+      },
+      {
+        "original": "Site ",
+        "database": "Site",
+        "type": "text"
+      }
+    ]
+  },
+  {
+    "file": "Cost Part Browse 09.23.2026(1).csv",
+    "table": "inventory_cost_parts",
+    "rows": 95979,
+    "columns": [
+      {
+        "original": "Site",
+        "database": "Site",
+        "type": "text"
+      },
+      {
+        "original": "Item Number",
+        "database": "Item Number",
+        "type": "text"
+      },
+      {
+        "original": "Description",
+        "database": "Description",
+        "type": "text"
+      },
+      {
+        "original": "Description",
+        "database": "Description__2",
+        "type": "text"
+      },
+      {
+        "original": "Unit of Measure",
+        "database": "Unit of Measure",
+        "type": "text"
+      },
+      {
+        "original": "Prod Line",
+        "database": "Prod Line",
+        "type": "text"
+      },
+      {
+        "original": "Item Type",
+        "database": "Item Type",
+        "type": "text"
+      },
+      {
+        "original": "Status",
+        "database": "Status",
+        "type": "text"
+      },
+      {
+        "original": "Group",
+        "database": "Group",
+        "type": "text"
+      },
+      {
+        "original": "Purchase/Manufacture",
+        "database": "Purchase/Manufacture",
+        "type": "text"
+      },
+      {
+        "original": "Cost Total",
+        "database": "Cost Total",
+        "type": "text"
+      },
+      {
+        "original": "Material",
+        "database": "Material",
+        "type": "text"
+      },
+      {
+        "original": "Material LL",
+        "database": "Material LL",
+        "type": "text"
+      },
+      {
+        "original": "Subcontract",
+        "database": "Subcontract",
+        "type": "text"
+      },
+      {
+        "original": "Subcontract LL",
+        "database": "Subcontract LL",
+        "type": "text"
+      },
+      {
+        "original": "Overhead",
+        "database": "Overhead",
+        "type": "text"
+      },
+      {
+        "original": "Overhead LL",
+        "database": "Overhead LL",
+        "type": "text"
+      },
+      {
+        "original": "Labor",
+        "database": "Labor",
+        "type": "text"
+      },
+      {
+        "original": "Labor LL",
+        "database": "Labor LL",
+        "type": "text"
+      },
+      {
+        "original": "Burden",
+        "database": "Burden",
+        "type": "text"
+      },
+      {
+        "original": "Burden LL",
+        "database": "Burden LL",
+        "type": "text"
+      }
+    ]
+  }
+]

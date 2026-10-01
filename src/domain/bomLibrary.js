@@ -66,7 +66,7 @@ export function mergeBomLibrary(
         fileName,
         fingerprint,
         loadedAt: new Date().toISOString(),
-        rows: incoming,
+        rowCount: additions.length,
       },
     ],
     addedParents: [...next.keys()].filter((key) => !existing.has(key)).length,
