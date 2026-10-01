@@ -1,3 +1,10 @@
+import { useCallback, useEffect, useRef } from "react";
+import {
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useSpring,
+} from "motion/react";
 import { Bell } from "./NotificationCenter";
 
 function formatTime(date) {
@@ -45,6 +52,7 @@ export default function CommandHeader({
   onOpenBot,
   onOpenMenu,
   notificationCount = 0,
+  scrollViewportRef,
 }) {
   const manual = connectionStatus?.state === "MANUAL";
   const liveError = connectionStatus?.state === "ERROR";
@@ -52,6 +60,134 @@ export default function CommandHeader({
   const referencesReady = referenceStatus?.allLoaded === true;
   const loaded = referenceStatus?.loadedCount || 0;
   const total = referenceStatus?.totalSources || 5;
+  const ribbonRef = useRef(null);
+  const ribbonHeightRef = useRef(51);
+  const reduceMotion = useReducedMotion();
+  const ribbonTarget = useMotionValue(1);
+  const ribbonSpring = useSpring(ribbonTarget, {
+    stiffness: 520,
+    damping: 34,
+    mass: 0.55,
+    restDelta: 0.002,
+    restSpeed: 0.02,
+  });
+
+  const measureRibbon = useCallback(() => {
+    const ribbon = ribbonRef.current;
+    const inner = ribbon?.querySelector(".vi-source-ribbon-inner");
+    if (!ribbon || !inner) return;
+    const measured = inner.getBoundingClientRect().height;
+    if (measured > 0) ribbonHeightRef.current = measured;
+  }, []);
+
+  useMotionValueEvent(ribbonSpring, "change", (latest) => {
+    const ribbon = ribbonRef.current;
+    if (!ribbon) return;
+
+    const progress = Math.max(0, Math.min(1, latest));
+    const height = ribbonHeightRef.current * progress;
+    ribbon.style.height = `${height.toFixed(2)}px`;
+    ribbon.style.opacity = progress.toFixed(3);
+    ribbon.style.transform =
+      `translate3d(0,${(-7 * (1 - progress)).toFixed(2)}px,0)`;
+    ribbon.style.pointerEvents = progress < 0.12 ? "none" : "auto";
+
+    if (progress > 0.995 || progress < 0.005) {
+      ribbon.style.removeProperty("will-change");
+    } else {
+      ribbon.style.willChange = "height, opacity, transform";
+    }
+  });
+
+  useEffect(() => {
+    const viewport = scrollViewportRef?.current;
+    const ribbon = ribbonRef.current;
+    if (!viewport || !ribbon) return undefined;
+
+    measureRibbon();
+
+    let previousY = viewport.scrollTop;
+    let direction = 0;
+    let travel = 0;
+    let hidden = false;
+    let frame = 0;
+
+    const setHidden = (next) => {
+      if (next === hidden) return;
+      hidden = next;
+      if (reduceMotion) {
+        ribbonTarget.jump(next ? 0 : 1);
+        ribbonSpring.jump(next ? 0 : 1);
+      } else {
+        ribbonTarget.set(next ? 0 : 1);
+      }
+    };
+
+    const evaluate = () => {
+      frame = 0;
+      const y = viewport.scrollTop;
+      const delta = y - previousY;
+      previousY = y;
+
+      if (y <= 12) {
+        direction = 0;
+        travel = 0;
+        setHidden(false);
+        return;
+      }
+
+      if (Math.abs(delta) < 0.65) return;
+
+      const nextDirection = delta > 0 ? 1 : -1;
+      if (nextDirection !== direction) {
+        direction = nextDirection;
+        travel = 0;
+      }
+
+      travel += Math.abs(delta);
+
+      // A little more intent is required to hide than to reveal. This keeps
+      // the ribbon stable on trackpad noise but makes it return immediately.
+      if (!hidden && direction > 0 && y > 72 && travel >= 13) {
+        travel = 0;
+        setHidden(true);
+      } else if (hidden && direction < 0 && travel >= 7) {
+        travel = 0;
+        setHidden(false);
+      }
+    };
+
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(evaluate);
+    };
+
+    const onResize = () => {
+      measureRibbon();
+      ribbonSpring.jump(hidden ? 0 : 1);
+    };
+
+    viewport.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      ribbonTarget.jump(1);
+      ribbonSpring.jump(1);
+      ribbon.style.removeProperty("height");
+      ribbon.style.removeProperty("opacity");
+      ribbon.style.removeProperty("transform");
+      ribbon.style.removeProperty("pointer-events");
+      ribbon.style.removeProperty("will-change");
+    };
+  }, [
+    scrollViewportRef,
+    measureRibbon,
+    reduceMotion,
+    ribbonTarget,
+    ribbonSpring,
+  ]);
 
   return (
     <header className="vi-command-header">
@@ -86,7 +222,7 @@ export default function CommandHeader({
         </div>
       </div>
 
-      <div className="vi-source-ribbon">
+      <div ref={ribbonRef} className="vi-source-ribbon">
         <div className="vi-source-ribbon-inner">
           <span className="vi-flow-label">FLUJO DE DATOS</span>
           <SourceState
