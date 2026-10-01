@@ -11,6 +11,15 @@ const forbiddenFiles = [
   "src/components/FinancialKpis.jsx",
   "src/components/ReconciliationTable.jsx",
   "public/icons.svg",
+  "src/components/shell/BomCloudStatus.jsx",
+  "public/favicon.svg",
+  "PROJECT_CONTEXT.md",
+  "SECURITY_REVIEW.md",
+  "BOT_CONTROL_SETUP.md",
+  "supabase/bom-protected-setup.sql",
+  "supabase/bom-verify-transaction.sql",
+  "supabase/bom-enable-no-login.sql",
+  "supabase/bom-delete-no-login.sql",
 ];
 
 const junkNamePatterns = [
