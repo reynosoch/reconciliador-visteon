@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link rel="icon" type="image/svg+xml" href="%BASE_URL%phantom.svg" />
+<link id="app-favicon" rel="icon" type="image/svg+xml" href="%BASE_URL%phantom.svg" data-pages="%BASE_URL%phantom.svg" data-local="%BASE_URL%phantom-local.svg" />
+<script>
+  (() => {
+    const link = document.getElementById("app-favicon");
+    if (!link) return;
+    const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+    link.href = localHosts.has(location.hostname) ? link.dataset.local : link.dataset.pages;
+  })();
+</script>
 <title>Visteon Inventory Reconciler</title>
 </head>
 <body class="bg-slate-900">
