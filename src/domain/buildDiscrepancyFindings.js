@@ -48,7 +48,6 @@ function baseFinding({campaignId,ruleCode,category,item,locations=[],tags=[],wha
 }
 export function buildDiscrepancyFindings({
   reconciliation = [],
-  sources = {},
   sourceFiles = {},
   campaignId = "",
   quantityTolerance = DEFAULT_TOLERANCE,
