@@ -33,7 +33,7 @@ body { margin: 0; background: #092534; color: var(--vi-ink); font-family: Roboto
 .vi-fetch-time { min-width: 112px; padding-right: 12px; display: grid; gap: 3px; text-align: right; color: #f3f8f8; }
 .vi-fetch-time small { font-size: 10px; letter-spacing: .05em; color: #bbd0d7; font-weight: 700; }
 .vi-fetch-time strong { font-size: 13px; font-variant-numeric: tabular-nums; }
-.vi-source-ribbon { background: var(--vi-navy); border-bottom: 1px solid #23536b; }
+.vi-source-ribbon { background: var(--vi-navy); border-bottom: 1px solid #23536b; overflow: hidden; contain: layout paint; transform-origin: top center; }
 .vi-source-ribbon-inner { min-height: 51px; max-width: 1540px; margin: auto; padding: 7px clamp(18px, 3vw, 48px); display: flex; align-items: center; gap: clamp(12px, 2.5vw, 32px); }
 .vi-flow-label { white-space: nowrap; color: #7fa7b5; font-size: 10px; font-weight: 700; letter-spacing: .13em; }
 .vi-source-state { min-width: 0; display: flex; align-items: center; gap: 9px; white-space: nowrap; }
