@@ -51,6 +51,9 @@ function initial() {
 }
 export default function App() {
   const mobileSwipeStart = useRef(null);
+  const shellRef = useRef(null);
+  const scrollFrame = useRef(null);
+  const previousScrollTop = useRef(0);
   const [sourcesOpen, setSourcesOpen] = useState(false),
     [selectedPart, setSelectedPart] = useState(null),
     [helpTopic, setHelpTopic] = useState(null),
@@ -70,7 +73,8 @@ export default function App() {
     [warning, setWarning] = useState(""),
     [confirmNew, setConfirmNew] = useState(false),
     [menuOpen, setMenuOpen] = useState(false),
-    [animationOnly, setAnimationOnly] = useState(false);
+    [animationOnly, setAnimationOnly] = useState(false),
+    [headerScrollMode, setHeaderScrollMode] = useState("top");
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
       manualScans: references.manualScans,
@@ -150,6 +154,38 @@ export default function App() {
   }, [identity]);
   useEffect(() => {
     archiveLegacyStorage().catch(() => setWarning(STORAGE_WARNING));
+  }, []);
+  useEffect(() => {
+    const scroller = shellRef.current;
+    if (!scroller) return undefined;
+
+    previousScrollTop.current = scroller.scrollTop;
+
+    const handleScroll = () => {
+      if (scrollFrame.current) return;
+      scrollFrame.current = requestAnimationFrame(() => {
+        scrollFrame.current = null;
+        const nextTop = Math.max(0, scroller.scrollTop);
+        const delta = nextTop - previousScrollTop.current;
+
+        if (nextTop <= 18) {
+          setHeaderScrollMode((current) => current === "top" ? current : "top");
+        } else if (delta > 4) {
+          setHeaderScrollMode((current) => current === "compact" ? current : "compact");
+        } else if (delta < -4) {
+          setHeaderScrollMode((current) => current === "expanded" ? current : "expanded");
+        }
+
+        previousScrollTop.current = nextTop;
+      });
+    };
+
+    scroller.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      scroller.removeEventListener("scroll", handleScroll);
+      if (scrollFrame.current) cancelAnimationFrame(scrollFrame.current);
+      scrollFrame.current = null;
+    };
   }, []);
   useEffect(() => {
     const overlayOpen =
@@ -295,7 +331,7 @@ export default function App() {
             ? "No se confirmó un corte de datos completo."
             : "";
   return (
-    <div className="vi-shell">
+    <div className="vi-shell" ref={shellRef}>
       <AmbientChase />
       {!animationOnly && <CommandHeader
         connectionStatus={inventory.connectionStatus}
@@ -314,6 +350,7 @@ export default function App() {
         onOpenBot={() => setBotOpen(true)}
         onOpenMenu={() => setMenuOpen(true)}
         notificationCount={notificationCount}
+        scrollMode={headerScrollMode}
       />}
       {animationOnly && <AnimationOnlyView onClose={() => setAnimationOnly(false)} />}
       {!animationOnly && warning && <div className="vi-persistence-warning">{warning}</div>}
