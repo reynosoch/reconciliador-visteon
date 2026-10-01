@@ -61,6 +61,9 @@ export default function App() {
     [notificationCount, setNotificationCount] = useState(0),
     [operationalState, setOperationalState] = useState({}),
     [focusFindingId, setFocusFindingId] = useState(null),
+    [focusFindingOrigin, setFocusFindingOrigin] = useState(null),
+    [notificationReturnToken, setNotificationReturnToken] = useState(0),
+    [botRunning, setBotRunning] = useState(false),
     [previousCut, setPreviousCut] = useState(null),
     [identity, setIdentity] = useState(initial),
     [warning, setWarning] = useState(""),
@@ -118,6 +121,7 @@ export default function App() {
           ? buildDiscrepancyFindings({
               reconciliation: inventory.reconciliation,
               sources: inventory.engine.sources,
+              sourceFiles: references.sources,
               campaignId: identity.id,
               quantityTolerance: { default: 0, PCS: 0 },
               previousSnapshot: previousCut,
@@ -190,8 +194,17 @@ export default function App() {
       setIdentity(n);
       if (!safeWriteJson(KEY, n).ok) setWarning(STORAGE_WARNING);
     },
-    openExcelForFinding = (finding) => {
-      setDataNavigation({ finding, returnY: window.scrollY });
+    returnToNotifications = () => {
+      setNotificationTab("OPERATIVAS");
+      setNotificationReturnToken((value) => value + 1);
+      setNotificationsOpen(true);
+    },
+    openExcelForFinding = (finding, context = {}) => {
+      setDataNavigation({
+        finding,
+        returnY: window.scrollY,
+        origin: context.origin || null,
+      });
       setActiveDataView("findingEvidence");
       setTimeout(() => document.getElementById("vi-data-inspection")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
     },
@@ -258,10 +271,15 @@ export default function App() {
             view={activeDataView}
             onClose={() => {
               const returnY = dataNavigation?.returnY;
+              const origin = dataNavigation?.origin;
               setActiveDataView(null);
               setDataNavigation(null);
-              if (Number.isFinite(returnY)) {
-                requestAnimationFrame(() => window.scrollTo({ top: returnY, behavior: "smooth" }));
+              if (origin === "notifications") {
+                returnToNotifications();
+              } else if (Number.isFinite(returnY)) {
+                requestAnimationFrame(() =>
+                  window.scrollTo({ top: returnY, behavior: "smooth" }),
+                );
               }
             }}
             onSelectPart={setSelectedPart}
@@ -293,7 +311,12 @@ export default function App() {
           evaluationValid={valid}
           evaluationReason={reason}
           focusFindingId={focusFindingId}
-          onFocusHandled={() => setFocusFindingId(null)}
+          focusFindingOrigin={focusFindingOrigin}
+          onFocusHandled={() => {
+            setFocusFindingId(null);
+            setFocusFindingOrigin(null);
+          }}
+          onReturnToNotifications={returnToNotifications}
           onOpenExcel={openExcelForFinding}
           inventoryName={identity.name}
           lastUpdated={inventory.lastUpdated}
@@ -326,9 +349,7 @@ export default function App() {
         status={references.status}
         loadFile={references.loadFile}
         clearFile={references.clearFile}
-        backupBom={references.backupBom}
-        cloudStatus={references.cloudStatus}
-        syncCloud={references.syncCloud}
+        botRunning={botRunning}
         onHelp={setHelpTopic}
         onClose={() => setSourcesOpen(false)}
       />}
@@ -337,7 +358,11 @@ export default function App() {
         onHelp={setHelpTopic}
         onClose={() => setSelectedPart(null)}
       />}
-      {!animationOnly && <HelpDrawer topic={helpTopic} onClose={() => setHelpTopic(null)} />}
+      {!animationOnly && <HelpDrawer
+        topic={helpTopic}
+        sources={references.sources}
+        onClose={() => setHelpTopic(null)}
+      />}
       {!animationOnly && <NotificationCenter
         open={notificationsOpen}
         onClose={() => setNotificationsOpen(false)}
@@ -345,12 +370,22 @@ export default function App() {
         evaluationValid={valid}
         inventoryId={identity.id}
         initialTab={notificationTab}
-        onOpenFinding={setFocusFindingId}
+        returnPulse={notificationReturnToken}
+        onOpenFinding={(id) => {
+          setFocusFindingOrigin("notifications");
+          setFocusFindingId(id);
+        }}
         onCountChange={setNotificationCount}
         onOperationalStateChange={setOperationalState}
         onPersistenceError={setWarning}
       />}
-      {!animationOnly && <BotControlModal open={botOpen} onClose={() => setBotOpen(false)} />}
+      {!animationOnly && <BotControlModal
+        open={botOpen}
+        onClose={() => setBotOpen(false)}
+        onStatusChange={(status) =>
+          setBotRunning(status?.processState === "running")
+        }
+      />}
       {!animationOnly && <ConfirmDialog
         open={confirmNew}
         title="¿Crear otro inventario?"
