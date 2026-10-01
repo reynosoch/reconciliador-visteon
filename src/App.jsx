@@ -261,7 +261,8 @@ export default function App() {
     openExcelForFinding = (finding, context = {}) => {
       setDataNavigation({
         finding,
-        returnY: window.scrollY,
+        returnY:
+          document.querySelector(".vi-shell")?.scrollTop ?? window.scrollY,
         origin: context.origin || null,
       });
       setActiveDataView("findingEvidence");
@@ -274,9 +275,14 @@ export default function App() {
       if (origin === "notifications") {
         returnToNotifications();
       } else if (Number.isFinite(returnY)) {
-        requestAnimationFrame(() =>
-          window.scrollTo({ top: returnY, behavior: "smooth" }),
-        );
+        requestAnimationFrame(() => {
+          const scroller = document.querySelector(".vi-shell");
+          if (scroller) {
+            scroller.scrollTo({ top: returnY, behavior: "smooth" });
+          } else {
+            window.scrollTo({ top: returnY, behavior: "smooth" });
+          }
+        });
       }
     },
     reason = !referencesReady
