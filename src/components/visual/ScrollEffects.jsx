@@ -7,9 +7,9 @@ import {
   useSpring,
 } from "motion/react";
 
-const RUBBER_MAX_PX = 52;
-const RUBBER_CURVE = 150;
-const RAW_LIMIT = 320;
+const RUBBER_MAX_PX = 54;
+const RUBBER_CURVE = 122;
+const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
 const MOMENTUM_GUARD_MS = 90;
 const MOMENTUM_GUARD_DELTA = 2.4;
@@ -209,7 +209,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       if (mode === "wheel") {
         // Trackpads emit uneven momentum packets. Decay prior energy and feed
         // the spring a stable target instead of exposing every packet visually.
-        raw = raw * 0.72 + bounded * 1.05;
+        raw = raw * 0.7 + bounded * 1.18;
       } else {
         raw += bounded;
       }
