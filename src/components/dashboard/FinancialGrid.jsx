@@ -239,7 +239,7 @@ export default function FinancialGrid({
                ? "gain"
                : "neutral"
          }
-         topic="net"
+         topic="financialNet"
          onHelp={
            onHelp
          }
@@ -256,7 +256,7 @@ export default function FinancialGrid({
          }
          detail="TOTAL DE DIFERENCIAS NEGATIVAS"
          tone="loss"
-         topic="grossLoss"
+         topic="financialGrossLoss"
          onHelp={
            onHelp
          }
@@ -273,7 +273,7 @@ export default function FinancialGrid({
          }
          detail="TOTAL DE DIFERENCIAS POSITIVAS"
          tone="gain"
-         topic="grossGain"
+         topic="financialGrossGain"
          onHelp={
            onHelp
          }
@@ -290,7 +290,7 @@ export default function FinancialGrid({
          }
          detail="SOBRANTE OBSOLETO"
          tone="gain"
-         topic="obsolete"
+         topic="financialObsolete"
          onHelp={
            onHelp
          }
@@ -313,7 +313,7 @@ export default function FinancialGrid({
              : "DIFERENCIA POR LOCALIDAD"
          }
          tone="swing"
-         topic="swing"
+         topic="financialSwing"
          onHelp={
            onHelp
          }
@@ -330,7 +330,7 @@ export default function FinancialGrid({
          }
          detail="DEFINIDOS EN ISPBB"
          tone="phantom"
-         topic="phantom"
+         topic="financialPhantom"
          onHelp={
            onHelp
          }
