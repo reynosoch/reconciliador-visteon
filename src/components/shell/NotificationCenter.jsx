@@ -171,7 +171,7 @@ export default function NotificationCenter({
         >
           <div className="vi-notification-head">
             <div className="vi-notification-navrow">
-              {selectedGroup ? (
+              {viewMode === "actions" && selectedGroup ? (
                 <button
                   type="button"
                   className="vi-back-button"
@@ -223,7 +223,11 @@ export default function NotificationCenter({
                 role="tab"
                 aria-selected={viewMode === "updates"}
                 className={viewMode === "updates" ? "is-active" : ""}
-                onClick={() => setViewMode("updates")}
+                onClick={() => {
+                  setSelectedGroup(null);
+                  setPage(0);
+                  setViewMode("updates");
+                }}
               >
                 NOVEDADES
               </button>
@@ -247,8 +251,8 @@ export default function NotificationCenter({
                   </article>
                 ))}
               </div>
-            ) : 
-            {!evaluationValid ? (
+            ) : (
+              !evaluationValid ? (
               <div className="vi-notification-empty-state">
                 <div className="vi-notification-phantom" aria-hidden="true">
                   <Ghost size={46} tone="violet" />
@@ -361,7 +365,7 @@ export default function NotificationCenter({
                   </div>
                 )}
               </>
-            )}
+            )
             )}
           </div>
         </aside>
