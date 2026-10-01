@@ -44,6 +44,23 @@ class BotController:
             except Exception as exc:
                 self.last_launch_error=type(exc).__name__
                 return {"state":"launch_failed","processState":"idle","message":"No se pudo lanzar el extractor.","lastSnapshot":read_snapshot()}
+    def stop(self):
+        with self.lock:
+            process=self.process
+            self.last_request=utcnow()
+            if not process or process.poll() is not None:
+                self.process=None
+                return {"state":"already_stopped","processState":"stopped","pid":None,"lastSnapshot":read_snapshot()}
+        try:
+            process.terminate()
+            process.wait(timeout=8)
+        except subprocess.TimeoutExpired:
+            process.kill();process.wait(timeout=3)
+        except Exception as exc:
+            return {"state":"stop_failed","processState":"running" if process.poll() is None else "stopped","pid":process.pid if process.poll() is None else None,"message":"No se pudo detener el extractor: "+type(exc).__name__,"lastSnapshot":read_snapshot()}
+        with self.lock:
+            if self.process is process:self.process=None
+        return {"state":"stopped","processState":"stopped","pid":None,"message":"Extractor detenido.","lastSnapshot":read_snapshot()}
 
 controller=BotController()
 class Handler(BaseHTTPRequestHandler):
@@ -61,11 +78,13 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:return None
     def do_POST(self):
         if not self._origin_ok():self.send_json(403,{"message":"Origen no autorizado."});return
-        if self.path not in {"/bot/start","/bot/status"}:self.send_json(404,{"message":"Ruta no encontrada."});return
+        if self.path not in {"/bot/start","/bot/status","/bot/stop"}:self.send_json(404,{"message":"Ruta no encontrada."});return
         data=self._body()
         if data is None:self.send_json(400,{"message":"Solicitud inválida."});return
         if not hmac.compare_digest(str(data.get("password","")),PASSWORD):self.send_json(401,{"message":"Autorización rechazada."});return
         if self.path=="/bot/status":self.send_json(200,controller.status());return
+        if self.path=="/bot/stop":
+            result=controller.stop();self.send_json(200 if result["state"] in {"stopped","already_stopped"} else 500,result);return
         result=controller.start();self.send_json(202 if result["state"]=="accepted" else 200 if result["state"]=="already_running" else 500,result)
 
 def serve():
