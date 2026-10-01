@@ -152,23 +152,29 @@ export default function DiscrepancyFindingsPanel({
   evaluationValid,
   evaluationReason,
   focusFindingId,
+  focusFindingOrigin,
   onFocusHandled,
+  onReturnToNotifications,
   onOpenExcel,
   inventoryName = "Inventario",
   lastUpdated = null,
 }) {
   const [filter, setFilter] = useState("ALL"),
     [detail, setDetail] = useState(null),
+    [detailOrigin, setDetailOrigin] = useState(null),
     [helpOpen, setHelpOpen] = useState(false),
     [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (focusFindingId) {
       const f = findings.find((x) => x.id === focusFindingId);
-      if (f) setDetail(f);
+      if (f) {
+        setDetail(f);
+        setDetailOrigin(focusFindingOrigin || null);
+      }
       onFocusHandled?.();
     }
-  }, [focusFindingId, findings, onFocusHandled]);
+  }, [focusFindingId, focusFindingOrigin, findings, onFocusHandled]);
 
   const filtered = useMemo(
       () =>
@@ -300,7 +306,10 @@ export default function DiscrepancyFindingsPanel({
               {rows.map((r) => (
                 <tr key={r.partNumber}>
                   <td>
-                    <button onClick={() => setDetail(r.findings[0])}>
+                    <button onClick={() => {
+                      setDetailOrigin(null);
+                      setDetail(r.findings[0]);
+                    }}>
                       {r.partNumber}
                     </button>
                   </td>
@@ -310,7 +319,10 @@ export default function DiscrepancyFindingsPanel({
                         type="button"
                         className="vi-finding-tag"
                         key={f.id}
-                        onClick={() => setDetail(f)}
+                        onClick={() => {
+                          setDetailOrigin(null);
+                          setDetail(f);
+                        }}
                       >
                         {RULE[f.ruleCode] || f.ruleCode}
                       </button>
@@ -328,10 +340,17 @@ export default function DiscrepancyFindingsPanel({
 
       <Detail
         finding={detail}
-        onClose={() => setDetail(null)}
-        onOpenExcel={(finding) => {
+        onClose={() => {
+          const origin = detailOrigin;
           setDetail(null);
-          onOpenExcel?.(finding);
+          setDetailOrigin(null);
+          if (origin === "notifications") onReturnToNotifications?.();
+        }}
+        onOpenExcel={(finding) => {
+          const origin = detailOrigin;
+          setDetail(null);
+          setDetailOrigin(null);
+          onOpenExcel?.(finding, { origin });
         }}
       />
     </section>
