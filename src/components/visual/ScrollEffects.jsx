@@ -1,11 +1,12 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 
-const RUBBER_MAX_PX = 58;
-const RUBBER_CURVE = 160;
-const RETURN_TAU_MS = 24;
-const WHEEL_RELEASE_MS = 22;
-const RAW_LIMIT = 420;
+const RUBBER_MAX_PX = 54;
+const RUBBER_CURVE = 155;
+const FOLLOW_TAU_MS = 14;
+const RETURN_TAU_MS = 22;
+const WHEEL_RELEASE_MS = 28;
+const RAW_LIMIT = 340;
 
 const rubberDistance = (distance) =>
   Math.sign(distance) * RUBBER_MAX_PX * (1 - Math.exp(-Math.abs(distance) / RUBBER_CURVE));
@@ -25,7 +26,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     if (!viewport.id) viewport.id = viewportId;
     rail.setAttribute("aria-controls", viewport.id);
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-    let raw = 0, pull = 0, frame = 0, timer = 0, returning = false;
+    let raw = 0, pull = 0, targetPull = 0, frame = 0, timer = 0;
     let previousTime = 0, touch = null, drag = null;
     let extent = 0, height = 0, track = 0, thumbSize = 0;
     const shell = viewport.classList.contains("vi-shell");
@@ -45,27 +46,36 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     };
     const paint = (time) => {
       frame = 0;
-      if (returning) {
-        const dt = previousTime ? Math.max(0, time - previousTime) : 16;
-        pull *= Math.exp(-dt / RETURN_TAU_MS);
-        if (Math.abs(pull) < 0.35) { pull = 0; returning = false; }
-      }
+      const dt = previousTime ? Math.min(34, Math.max(0, time - previousTime)) : 16;
       previousTime = time;
-      if (pull) {
+
+      const tau = Math.abs(targetPull) > 0.01 ? FOLLOW_TAU_MS : RETURN_TAU_MS;
+      const follow = 1 - Math.exp(-dt / tau);
+      pull += (targetPull - pull) * follow;
+
+      if (Math.abs(targetPull - pull) < 0.12) {
+        pull = targetPull;
+        if (targetPull === 0) raw = 0;
+      }
+
+      if (Math.abs(pull) > 0.01) {
         content.style.transformOrigin = pull > 0 ? "center top" : "center bottom";
-        content.style.transform = `translate3d(0,${pull}px,0) scaleY(${1 + Math.abs(pull) / 4000})`;
+        content.style.transform = `translate3d(0,${pull.toFixed(3)}px,0) scaleY(${(1 + Math.abs(pull) / 4300).toFixed(5)})`;
       } else {
+        pull = 0;
         content.style.removeProperty("transform");
         content.style.removeProperty("transform-origin");
       }
-      const compressed = Math.max(18, thumbSize - Math.abs(pull) * 0.55);
+
+      const compressed = Math.max(18, thumbSize - Math.abs(pull) * 0.42);
       const fraction = extent ? Math.max(0, Math.min(1, viewport.scrollTop / extent)) : 0;
       const y = fraction * (track - compressed);
-      thumb.style.height = `${compressed}px`;
-      thumb.style.transform = `translate3d(0,${y}px,0)`;
+      thumb.style.height = `${compressed.toFixed(2)}px`;
+      thumb.style.transform = `translate3d(0,${y.toFixed(2)}px,0)`;
       rail.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
       rail.classList.toggle("is-pulling", Math.abs(pull) > 0.5);
-      if (returning) schedule();
+
+      if (Math.abs(targetPull - pull) >= 0.12) schedule();
     };
     function schedule() { if (!frame) frame = requestAnimationFrame(paint); }
     const release = () => {
@@ -73,17 +83,18 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       timer = 0;
       touch = null;
       raw = 0;
-      if (Math.abs(pull) < 0.35) {
-        pull = 0;
-        returning = false;
-      } else {
-        returning = true;
-        previousTime = performance.now();
-      }
+      targetPull = 0;
+      previousTime = performance.now();
       schedule();
     };
     const reset = () => {
-      clearTimeout(timer); raw = 0; pull = 0; returning = false; schedule();
+      clearTimeout(timer);
+      timer = 0;
+      raw = 0;
+      pull = 0;
+      targetPull = 0;
+      previousTime = 0;
+      schedule();
     };
     const atEdge = (delta) => extent > 1 &&
       ((delta > 0 && viewport.scrollTop <= 1) ||
@@ -101,16 +112,14 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       if (reduced.matches) return;
       clearTimeout(timer);
       timer = 0;
-      if (returning || (raw && Math.sign(raw) !== Math.sign(delta))) raw = 0;
-      returning = false;
 
-      // Touch follows the finger. Wheel/touchpad momentum is damped so repeated
-      // edge events cannot saturate the rubber band and leave it hanging.
-      const nextRaw = mode === "wheel"
-        ? raw * 0.42 + delta
-        : raw + delta;
-      raw = Math.max(-RAW_LIMIT, Math.min(RAW_LIMIT, nextRaw));
-      pull = rubberDistance(raw);
+      if (raw && Math.sign(raw) !== Math.sign(delta)) raw = 0;
+
+      // Wheel momentum arrives in uneven packets. Accumulate a damped target,
+      // then let requestAnimationFrame interpolate the visible motion.
+      const contribution = mode === "wheel" ? delta * 0.48 : delta;
+      raw = Math.max(-RAW_LIMIT, Math.min(RAW_LIMIT, raw + contribution));
+      targetPull = rubberDistance(raw);
       schedule();
     };
     const wheel = (event) => {
