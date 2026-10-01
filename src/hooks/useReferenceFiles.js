@@ -72,7 +72,7 @@ function bomSource(library) {
     loaded: true,
     rows: library.rows,
     files: library.files,
-    fileName: `${library.files.length} archivos BOM guardados`,
+    fileName: library.files.length ? library.files.map((file) => file.fileName).join(", ") : "",
     fingerprint:
       library.files
         .map((f) => f.fingerprint)
