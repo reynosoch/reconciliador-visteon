@@ -49,6 +49,7 @@ function baseFinding({campaignId,ruleCode,category,item,locations=[],tags=[],wha
 export function buildDiscrepancyFindings({
   reconciliation = [],
   sources = {},
+  sourceFiles = {},
   campaignId = "",
   quantityTolerance = DEFAULT_TOLERANCE,
   previousSnapshot = null,
@@ -56,6 +57,18 @@ export function buildDiscrepancyFindings({
   unusualThresholds = DEFAULT_THRESHOLDS,
 } = {}) {
   const findings = [];
+  const fileName = (type, fallback) => {
+    const source = sourceFiles?.[type];
+    if (type === "bom" && Array.isArray(source?.files) && source.files.length) {
+      return source.files.map((file) => file.fileName).join(" + ");
+    }
+    return source?.loaded && source?.fileName ? source.fileName : fallback;
+  };
+  const scanFile = fileName("scans", "4Wall automático (snapshot Supabase)");
+  const areaFile = fileName("areas", "Áreas 4Wall");
+  const qadFile = fileName("qad", "QAD 3.2");
+  const bomFile = fileName("bom", "BOM");
+  const costFile = fileName("cost", "Cost Part");
 
   const byPart = new Map(reconciliation.map((item) => [item.partNumber, item]));
 
@@ -76,7 +89,7 @@ export function buildDiscrepancyFindings({
       ['phantomQadBalance','PHANTOM_QAD','QAD trae saldo para una parte marcada como phantom en ISPBB.','Confirmar el catálogo y el saldo QAD; no se modificó el archivo QAD.'],
       ['zeroCost','ZERO_COST','Cost Part contiene costo cero. Las cantidades siguen visibles, pero no generan importe.','Confirmar si el costo cero es correcto. No significa que no haya inventario.']
     ]) {
-      if (item.flags?.[flag]) findings.push(baseFinding({campaignId,ruleCode,category:'CALIDAD',item,tags:['REVISAR FUENTE'],whatFound:message,possibleExplanation:'Este dato requiere revisión antes de interpretar la diferencia.',nextAction:action,evidence:[{source:'4Wall / BOM / QAD / Cost Part',detail:`Escaneos originales: ${n(item.physical?.scannedTotal ?? item.physical?.directTotal)}; físico reconocido: ${physical}; QAD: ${qad}`}]}));
+      if (item.flags?.[flag]) findings.push(baseFinding({campaignId,ruleCode,category:'CALIDAD',item,tags:['REVISAR FUENTE'],whatFound:message,possibleExplanation:'Este dato requiere revisión antes de interpretar la diferencia.',nextAction:action,evidence:[{source:scanFile+" · "+qadFile+" · "+bomFile+" · "+costFile,detail:`Escaneos originales: ${n(item.physical?.scannedTotal ?? item.physical?.directTotal)}; físico reconocido: ${physical}; QAD: ${qad}`}]}));
     }
 
     if (Math.abs(netPieces) > tolerance) {
@@ -86,7 +99,7 @@ export function buildDiscrepancyFindings({
         whatFound:`Físico ${physical} vs QAD ${qad}; diferencia ${netPieces} piezas. Tolerancia aplicada: ±${tolerance}.`,
         possibleExplanation:"Puede corresponder a conteo pendiente, diferencia real o una regla operativa aún no confirmada.",
         nextAction:"Revisar el Part Number y su evidencia por localidad antes de clasificar la diferencia.",
-        evidence:[{source:"4Wall",detail:`Físico reconocido: ${physical}`},{source:"QAD 3.2",detail:`Cantidad On Hand: ${qad}`}],
+        evidence:[{source:scanFile,detail:`4Wall · físico reconocido: ${physical}`},{source:qadFile,detail:`QAD · Quantity On Hand total: ${qad}`}],
       }));
     }
 
@@ -97,7 +110,7 @@ export function buildDiscrepancyFindings({
         whatFound:`QAD tiene ${qad} piezas y no hay físico reconocido en el corte actual.`,
         possibleExplanation:"El material puede seguir pendiente de conteo. Este hallazgo no confirma una pérdida.",
         nextAction:"Confirmar estado/cierre del conteo y revisar las localidades QAD antes de tratarlo como faltante.",
-        evidence:[{source:"QAD 3.2",detail:`Saldo positivo: ${qad}`},{source:"4Wall",detail:"Sin físico registrado en este reporte."}],
+        evidence:[{source:qadFile,detail:`QAD · saldo positivo: ${qad}`},{source:scanFile,detail:"4Wall · sin físico reconocido en este reporte."}],
       }));
     }
 
@@ -109,7 +122,7 @@ export function buildDiscrepancyFindings({
         whatFound:`Hay ${physical} piezas físicas y QAD total es 0. ${qadKind}.`,
         possibleExplanation:"Puede ser material inesperado, una diferencia de alcance o un registro que requiere validación.",
         nextAction:"Confirmar el PN en QAD, el Site y las localidades antes de clasificarlo.",
-        evidence:[{source:"4Wall",detail:`Físico: ${physical}`},{source:"QAD 3.2",detail:qadKind}],
+        evidence:[{source:scanFile,detail:`4Wall · físico: ${physical}`},{source:qadFile,detail:"QAD · "+qadKind}],
       }));
     }
 
@@ -123,10 +136,10 @@ export function buildDiscrepancyFindings({
       findings.push(baseFinding({
         campaignId, ruleCode:"LOCATION_CANDIDATE", category:"UBICACION", item, locations:candidateLocations,
         tags:["POSIBLE UBICACIÓN", ...(coverageIncomplete?["COBERTURA INCOMPLETA"]:[])],
-        whatFound:`Hay sobrantes locales por ${surplus} piezas y faltantes locales por ${shortage}. Hasta ${compensable} piezas son potencialmente compensables entre localidades.`,
+        whatFound:`Hay sobrantes locales por ${surplus} piezas y faltantes locales por ${shortage}. Hasta ${compensable} piezas son potencialmente compensables entre localidades. Las localidades físicas salen de ${scanFile}, se traducen con ${areaFile} y se comparan contra las Location de ${qadFile}.`,
         possibleExplanation:"La distribución por localidad merece revisión; esto no demuestra un traslado y no modifica NET ni SWING.",
         nextAction:"Comparar las localidades candidatas y confirmar el movimiento/ubicación con una fuente operativa válida.",
-        evidence:mappedRows.filter((row)=>Math.abs(n(row.delta))>tolerance).map((row)=>({source:"4Wall vs QAD",detail:`${row.location}: físico ${n(row.physicalQty)}, QAD ${n(row.qadQty)}, delta ${n(row.delta)}`})),
+        evidence:mappedRows.filter((row)=>Math.abs(n(row.delta))>tolerance).map((row)=>({source:scanFile+" ↔ "+qadFile,detail:`${row.location}: físico ${n(row.physicalQty)}, QAD ${n(row.qadQty)}, delta ${n(row.delta)}`})),
         locationAnalysis:{surplus,shortage,compensable,coverageIncomplete,rows:mappedRows.filter((row)=>Math.abs(n(row.delta))>tolerance).map((row)=>({location:row.location,physicalQty:n(row.physicalQty),qadQty:n(row.qadQty),delta:n(row.delta)}))},
       }));
     }
@@ -138,7 +151,7 @@ export function buildDiscrepancyFindings({
         whatFound:"Existe una diferencia en piezas, pero no hay un costo confiable para convertirla a dinero.",
         possibleExplanation: costState === "COSTO_CONTRADICTORIO" ? "Cost Part contiene filas contradictorias para el PN." : costState === "COSTO_INVALIDO" ? "Cost Total está vacío o no es numérico." : "No se encontró un costo válido para el PN.",
         nextAction:"Revisar el costo en Cost Part antes de calcular la diferencia en dólares.",
-        evidence:[{source:"Cost Part",detail:`Estado de valoración: ${costState}`}],
+        evidence:[{source:costFile,detail:`Cost Part · estado de valoración: ${costState}`}],
       }));
     }
 
@@ -150,7 +163,7 @@ export function buildDiscrepancyFindings({
         whatFound:"Parte del físico o del detalle QAD no tiene una localidad válida para comparar.",
         possibleExplanation:"El área puede no existir en el diccionario o existir con Localidad QAD vacía.",
         nextAction:"Corregir/confirmar el diccionario de áreas antes de interpretar la distribución por localidad.",
-        evidence:[{source:"4Wall-Area",detail:`Áreas observadas: ${(item.physical?.areas||[]).join(", ") || "sin nombre"}`}],
+        evidence:[{source:areaFile,detail:`Áreas observadas: ${(item.physical?.areas||[]).join(", ") || "sin nombre"}`}],
       }));
     }
 
@@ -159,7 +172,7 @@ export function buildDiscrepancyFindings({
       const evidence = refs.slice(0,8).map((ref)=>{
         const parent = byPart.get(ref.parentPart);
         const parentEvidence = parent ? `padre físico ${n(parent.physical?.directTotal)}; escaneos ${n(parent.physical?.scanCount)}` : "padre sin evidencia en la conciliación actual";
-        return {source:"BOM",detail:`Padre ${ref.parentPart} → ${item.partNumber}; nivel ${ref.rawLevel || ref.level || "?"}; Usage ${n(ref.usage)}; Site ${ref.site || "?"}; ${parentEvidence}`};
+        return {source:bomFile,detail:`Padre ${ref.parentPart} → ${item.partNumber}; nivel ${ref.rawLevel || ref.level || "?"}; Usage ${n(ref.usage)}; Site ${ref.site || "?"}; ${parentEvidence}`};
       });
       findings.push(baseFinding({
         campaignId, ruleCode:"BOM_REVIEW", category:"CALIDAD", item,
