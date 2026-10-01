@@ -11,7 +11,6 @@ const DEV_ITEMS = [
 export default function MainMenu({
   open,
   onClose,
-  onAnimationOnly,
   onOpenLogicTracer,
   snapshotMeta,
   scanCount = 0,
@@ -99,39 +98,9 @@ export default function MainMenu({
             ))}
           </section>
 
-          <section className="vi-menu-section vi-menu-secret">
-            <span className="vi-menu-section-title">LAB</span>
-            <button
-              type="button"
-              className="vi-menu-item vi-animation-entry"
-              onClick={() => {
-                onClose?.();
-                onAnimationOnly?.();
-              }}
-            >
-              <span>
-                <strong>Modo animación</strong>
-                <small>Oculta el dashboard y deja únicamente el mundo Pac-Man.</small>
-              </span>
-              <b>›</b>
-            </button>
-          </section>
+
         </aside>
       </div>
     </OverlayPortal>
-  );
-}
-
-export function AnimationOnlyView({ onClose }) {
-  return (
-    <div className="vi-animation-only">
-      <button type="button" className="vi-animation-exit" onClick={onClose} aria-label="Volver al dashboard">
-        ×
-      </button>
-      <div className="vi-animation-only-copy">
-        <span>PAC-MAN LAB</span>
-        <small>Modo visual</small>
-      </div>
-    </div>
   );
 }
