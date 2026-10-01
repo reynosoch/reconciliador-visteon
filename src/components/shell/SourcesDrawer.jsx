@@ -1,5 +1,4 @@
 import BomCloudStatus from "./BomCloudStatus.jsx";
-import { downloadSourceCsv } from "../../parsers/parseDelimitedFile.js";
 // src/components/shell/SourcesDrawer.jsx
 import React, { useRef, useState } from "react";
 import { HelpButton } from "../help/HelpDrawer";
@@ -164,8 +163,6 @@ function SourceLine({ config, source, loadFile, clearFile, onHelp }) {
           <span className="text-xs font-bold text-slate-200">
             {config.label}
           </span>
-          <HelpButton topic={config.topic} onHelp={onHelp} />
-
           <span
             className="
              font-mono
@@ -207,6 +204,11 @@ function SourceLine({ config, source, loadFile, clearFile, onHelp }) {
             >
               {Number(source.rows?.length || 0).toLocaleString("en-US")} FILAS
             </p>
+            {source.optimizedFromExcel && (
+              <p className="vi-source-optimized">
+                XLSX procesado → filas normalizadas en memoria. El archivo Excel no se conserva en la app.
+              </p>
+            )}
             {source.warnings?.length > 0 && (
               <p className="vi-source-warning">
                 {source.warnings.map((w) => w.message).join(" ")}
@@ -235,7 +237,8 @@ function SourceLine({ config, source, loadFile, clearFile, onHelp }) {
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="vi-source-actions">
+        <HelpButton topic={config.topic} onHelp={onHelp} className="vi-source-help" />
         <button
           type="button"
           onClick={() => input.current?.click()}
@@ -271,7 +274,6 @@ export default function SourcesDrawer({
   status,
   loadFile,
   clearFile,
-  clearAll,
   backupBom,
   cloudStatus,
   syncCloud,
@@ -389,8 +391,8 @@ export default function SourcesDrawer({
                 </h2>
                 <p className="mt-1 text-[11px] text-slate-600">
                   Carga referencias y, si lo necesitas, escaneos manuales. Los
-                  BOM se conservan localmente y se sincronizan con Supabase al
-                  iniciar sesión con una cuenta autorizada.
+                  Excel se procesan una sola vez a filas normalizadas y los BOM
+                  se sincronizan automáticamente sin pedir inicio de sesión.
                 </p>
               </div>
 
@@ -520,46 +522,33 @@ export default function SourcesDrawer({
            "
             >
               <p>4Wall-Area.csv</p>
-              <p>Congelado QAD 3.2 09.24.csv</p>
-              <p>ISPBB 179A 09.24.26.csv</p>
-              <p>BOM_Extract.txt</p>
-              <button className="vi-button" onClick={backupBom}>
-                DESCARGAR COPIA BOM
-              </button>
-              {sources?.bom?.rows?.length > 0 && <button className="vi-button" onClick={() => downloadSourceCsv({ ...sources.bom, fileName: "BOM-acumulados.csv" })}>Descargar BOM como CSV</button>}
-              <p>Cost Part Browse.csv</p>
-<p>También puedes cargar Excel (.xlsx). CSV es la opción más ligera para cargas repetidas.</p>
-{Object.entries(sources || {}).filter(([,source]) => source.loaded && source.delimiter === "xlsx").map(([key,source]) => <button key={key} className="vi-button" onClick={() => downloadSourceCsv(source)}>Descargar {source.fileName} como CSV</button>)}
+              <p>Congelado QAD 3.2 09.24.csv / .xlsx</p>
+              <p>ISPBB 179A 09.24.26.csv / .xlsx</p>
+              <p>BOM_Extract.txt / .csv / .xlsx</p>
+              <p>Cost Part Browse.csv / .xlsx</p>
+              {sources?.bom?.rows?.length > 0 && (
+                <button className="vi-button vi-bom-download" onClick={backupBom}>
+                  DESCARGAR BOM REGISTRADOS (.XLSX)
+                </button>
+              )}
+              <p>
+                Los Excel se convierten internamente a filas normalizadas para trabajar más ligero;
+                no guardamos el archivo XLSX completo en memoria persistente ni en Supabase.
+              </p>
             </div>
           </div>
 
-          {loaded > 0 && (
-            <div className="p-5">
-              <button
-                type="button"
-                onClick={() => setPendingClear({ kind: "all" })}
-                className="
-               vi-button
-               w-full
-               text-rose-400
-             "
-              >
-                QUITAR REFERENCIAS Y ESCANEOS (CONSERVAR BOM)
-              </button>
-            </div>
-          )}
         </aside>
         <ConfirmDialog
           open={Boolean(pendingClear)}
           title="¿Quitar información cargada?"
-          message="Se quitarán las referencias seleccionadas. Los BOM guardados se conservan. Al quitar los escaneos manuales se vuelve a consultar el bot."
+          message="Se quitará esta fuente de la sesión actual. Al quitar los escaneos manuales se vuelve a consultar el bot."
           confirmLabel="Quitar información"
           onCancel={() => setPendingClear(null)}
           onConfirm={() => {
             const action = pendingClear;
             setPendingClear(null);
-            if (action?.kind === "all") clearAll();
-            else if (action?.type) clearFile(action.type);
+            if (action?.type) clearFile(action.type);
           }}
         />
       </div>
