@@ -30,7 +30,7 @@ await assert.rejects(db.query("delete from public.inventory_bom_backups"),/permi
 await db.exec("reset role");
 await db.exec("create table public.inventory_bom_rows (\"Seq\" text,\"Parent Item\" text,\"Parent Item Description\" text,\"Parent UOM\" text,\"Parent Phantom\" text,\"Level\" text,\"Component\" text,\"Component Description\" text,\"Usage\" text,\"Grossed up Usage\" text,\"Comp UOM\" text,\"Op\" text,\"Comp Phantom\" text,\"Start Date\" text,\"End Date\" text,\"Product Line\" text,\"Item Type\" text,\"P/M\" text,\"Part Status\" text,\"Cost Total\" text,\"Ext Cost Total\" text,\"BOH\" text,\"Supplier\" text,\"Name\" text,\"Site\" text,source_file text);");
 await db.exec(await readFile(new URL("../supabase/migrations/20261001140733_inventory_bom_incremental_no_login.sql",import.meta.url),"utf8"));
-await db.exec(await readFile(new URL("../supabase/bom-delete-no-login.sql",import.meta.url),"utf8"));
+await db.exec(await readFile(new URL("../supabase/migrations/20261001144500_inventory_bom_delete_no_login.sql",import.meta.url),"utf8"));
 await db.exec("set role anon; set request.uid=''; set request.jwt='{}'");
 assert.equal((await db.query("select * from public.inventory_bom_current")).rows.length,1);
 await assert.rejects(db.query("select public.save_inventory_bom(1,$1)",[value]),/permission denied/);
