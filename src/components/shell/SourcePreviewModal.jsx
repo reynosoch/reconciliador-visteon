@@ -47,7 +47,11 @@ export default function SourcePreviewModal({ selection, onClose }) {
     try {
       if (format === "xlsx") {
         const XLSX = await import("xlsx");
-        const sheet = XLSX.utils.json_to_sheet(rows.map(({ __sourceFile, ...row }) => row));
+        const sheet = XLSX.utils.json_to_sheet(
+          rows.map((row) =>
+            Object.fromEntries(columns.map((column) => [column, row[column]])),
+          ),
+        );
         const book = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(book, sheet, "Datos");
         XLSX.writeFile(book, base + ".xlsx", { compression: true });
