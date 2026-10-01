@@ -60,7 +60,7 @@ export default function CommandHeader({
         <div className="vi-header-brand">
           <img src={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`} alt="Visteon" className="vi-brand-logo" />
           <span className="vi-brand-divider" aria-hidden="true" />
-          <span className="vi-product-name">CONTROL DE INVENTARIO</span>
+          <span className="vi-product-name">INVENTORY RECONCILER</span>
         </div>
 
         <div className="vi-header-actions">
@@ -68,12 +68,15 @@ export default function CommandHeader({
             <small>ÚLTIMA CONSULTA</small>
             <strong>{formatTime(lastUpdated)}</strong>
           </span>
+          <div className="vi-language-dev" title="Selector EN/ESP en desarrollo" aria-label="Idioma, función en desarrollo">
+            <span>ES</span><i>/</i><span>EN</span><small>DEV</small>
+          </div>
           <button type="button" onClick={onOpenNotifications} className="vi-button vi-button-light vi-icon-button" aria-label="Abrir notificaciones">
             <Bell />
             {notificationCount > 0 && <b className="vi-notification-badge">{notificationCount}</b>}
           </button>
           <button type="button" onClick={onOpenBot} className="vi-button vi-button-light vi-bot-button" aria-label="Control del bot de escaneo 4Wall">
-            <span aria-hidden="true">▶</span><span>BOT ESCANEO 4WALL</span>
+            <span aria-hidden="true">▶</span><span>BOT ESCANEO 4WALL</span><small className="vi-dev-badge">DEV</small>
           </button>
           <button type="button" onClick={onToggleSources} className={`vi-button vi-button-light vi-sources-button ${sourcesOpen ? "is-selected" : ""}`} aria-expanded={sourcesOpen}>
             FUENTES <span className="vi-button-count">{loaded}/{total}</span>
