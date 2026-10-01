@@ -15,7 +15,7 @@ import HelpDrawer from "./components/help/HelpDrawer";
 import NotificationCenter from "./components/shell/NotificationCenter";
 import BotControlModal from "./components/shell/BotControlModal";
 import ConfirmDialog from "./components/shell/ConfirmDialog";
-import OverlayPortal from "./components/shell/OverlayPortal.jsx";
+import OverlayPortal, { forceUnlockPageScroll } from "./components/shell/OverlayPortal.jsx";
 import MainMenu, { AnimationOnlyView } from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
 import { useReferenceFiles } from "./hooks/useReferenceFiles";
@@ -151,6 +151,30 @@ export default function App() {
   useEffect(() => {
     archiveLegacyStorage().catch(() => setWarning(STORAGE_WARNING));
   }, []);
+  useEffect(() => {
+    const overlayOpen =
+      sourcesOpen ||
+      Boolean(selectedPart) ||
+      Boolean(helpTopic) ||
+      notificationsOpen ||
+      botOpen ||
+      confirmNew ||
+      menuOpen ||
+      Boolean(activeDataView);
+
+    if (!overlayOpen) {
+      forceUnlockPageScroll();
+    }
+  }, [
+    sourcesOpen,
+    selectedPart,
+    helpTopic,
+    notificationsOpen,
+    botOpen,
+    confirmNew,
+    menuOpen,
+    activeDataView,
+  ]);
   useEffect(() => {
     const endpoint = String(import.meta.env.VITE_BOT_CONTROL_URL || "").replace(/\/$/, "");
     if (!endpoint) return undefined;
@@ -306,6 +330,7 @@ export default function App() {
           lastUpdated={inventory.lastUpdated}
           referencesReady={referencesReady}
           liveReady={Boolean(inventory.lastUpdated)}
+          scanState={inventory.connectionStatus?.state}
           onHelp={setHelpTopic}
           activeView={activeDataView}
           onSelect={(view) => {
