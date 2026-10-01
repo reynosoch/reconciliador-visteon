@@ -15,6 +15,7 @@ import HelpDrawer from "./components/help/HelpDrawer";
 import NotificationCenter from "./components/shell/NotificationCenter";
 import BotControlModal from "./components/shell/BotControlModal";
 import ConfirmDialog from "./components/shell/ConfirmDialog";
+import OverlayPortal from "./components/shell/OverlayPortal.jsx";
 import MainMenu, { AnimationOnlyView } from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
 import { useReferenceFiles } from "./hooks/useReferenceFiles";
@@ -240,7 +241,19 @@ export default function App() {
         origin: context.origin || null,
       });
       setActiveDataView("findingEvidence");
-      setTimeout(() => document.getElementById("vi-data-inspection")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    },
+    closeDataInspection = () => {
+      const returnY = dataNavigation?.returnY;
+      const origin = dataNavigation?.origin;
+      setActiveDataView(null);
+      setDataNavigation(null);
+      if (origin === "notifications") {
+        returnToNotifications();
+      } else if (Number.isFinite(returnY)) {
+        requestAnimationFrame(() =>
+          window.scrollTo({ top: returnY, behavior: "smooth" }),
+        );
+      }
     },
     reason = !referencesReady
       ? "Faltan archivos de referencia válidos."
@@ -301,38 +314,43 @@ export default function App() {
           }}
         />
         {activeDataView && (
-          <DataInspectionPanel
-            view={activeDataView}
-            onClose={() => {
-              const returnY = dataNavigation?.returnY;
-              const origin = dataNavigation?.origin;
-              setActiveDataView(null);
-              setDataNavigation(null);
-              if (origin === "notifications") {
-                returnToNotifications();
-              } else if (Number.isFinite(returnY)) {
-                requestAnimationFrame(() =>
-                  window.scrollTo({ top: returnY, behavior: "smooth" }),
-                );
-              }
-            }}
-            onSelectPart={setSelectedPart}
-            initialQuery={dataNavigation?.finding?.partNumber || ""}
-            findingContext={dataNavigation?.finding || null}
-            scanRows={inventory.scanRows}
-            diagnostics={inventory.diagnostics}
-            reconciliation={inventory.reconciliation}
-            engineSources={inventory.engine.sources}
-            referenceRows={{
-              areas: references.areaRows,
-              qad: references.qadRows,
-              cost: references.costRows,
-              bom: references.bomRows,
-              ispbb: references.ispbbRows,
-            }}
-            sources={references.sources}
-            referencesReady={referencesReady}
-          />
+          <OverlayPortal onClose={closeDataInspection}>
+            <div
+              className="vi-data-modal-backdrop"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) closeDataInspection();
+              }}
+            >
+              <div
+                className="vi-data-modal-window"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Revisión y comparación de datos"
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <DataInspectionPanel
+                  view={activeDataView}
+                  onClose={closeDataInspection}
+                  onSelectPart={setSelectedPart}
+                  initialQuery={dataNavigation?.finding?.partNumber || ""}
+                  findingContext={dataNavigation?.finding || null}
+                  scanRows={inventory.scanRows}
+                  diagnostics={inventory.diagnostics}
+                  reconciliation={inventory.reconciliation}
+                  engineSources={inventory.engine.sources}
+                  referenceRows={{
+                    areas: references.areaRows,
+                    qad: references.qadRows,
+                    cost: references.costRows,
+                    bom: references.bomRows,
+                    ispbb: references.ispbbRows,
+                  }}
+                  sources={references.sources}
+                  referencesReady={referencesReady}
+                />
+              </div>
+            </div>
+          </OverlayPortal>
         )}
         <FinancialGrid
           summary={inventory.summary}
