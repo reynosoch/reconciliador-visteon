@@ -115,7 +115,12 @@ function getView(view, { scanRows, diagnostics, reconciliation, referenceRows, s
   switch (view) {
     case "overview": {
       const list = [
-        { name: sources?.scans?.loaded ? "4Wall · archivo manual" : "4Wall en vivo", file: sources?.scans?.loaded ? sources.scans.fileName : "Escaneos de Supabase", rows: scanRows.length, state: scanRows.length ? "DISPONIBLE" : "EN ESPERA" },
+        {
+          name: sources?.scans?.loaded ? "4Wall · archivo manual" : "4Wall · snapshot DEV",
+          file: sources?.scans?.loaded ? sources.scans.fileName : "Supabase · bot automático no operativo",
+          rows: scanRows.length,
+          state: sources?.scans?.loaded ? "CARGADO MANUALMENTE" : scanRows.length ? "DATOS DEV" : "EN ESPERA",
+        },
         ...[
           ["areas", "Diccionario 4Wall"], ["qad", "QAD"], ["ispbb", "ISPBB"], ["bom", "BOM"], ["cost", "Cost Part"],
         ].map(([key, name]) => ({
