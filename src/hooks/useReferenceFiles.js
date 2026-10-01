@@ -69,7 +69,7 @@ async function fingerprint(file) {
 function bomSource(library) {
   return {
     ...empty(),
-    loaded: true,
+    loaded: Boolean(library.files?.length && library.rows?.length),
     rows: library.rows,
     files: library.files,
     fileName: library.files.length ? library.files.map((file) => file.fileName).join(", ") : "",
