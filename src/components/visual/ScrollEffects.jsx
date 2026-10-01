@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   useMotionValue,
@@ -48,7 +48,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
   const pullTarget = useMotionValue(0);
   const pullSpring = useSpring(pullTarget, SPRING);
 
-  const paintThumb = () => {
+  const paintThumb = useCallback(() => {
     const viewport = viewportRef.current;
     const rail = railRef.current;
     const thumb = thumbRef.current;
@@ -64,7 +64,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     thumb.style.height = `${compressed.toFixed(2)}px`;
     thumb.style.transform = `translate3d(0,${y.toFixed(2)}px,0)`;
     rail.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
-  };
+  }, [viewportRef]);
 
   useMotionValueEvent(pullSpring, "change", (latest) => {
     const content = contentRef.current;
@@ -403,6 +403,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     reduceMotion,
     pullTarget,
     pullSpring,
+    paintThumb,
   ]);
 
   return createPortal(
