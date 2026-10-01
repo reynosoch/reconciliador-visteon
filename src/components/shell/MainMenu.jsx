@@ -16,6 +16,7 @@ export default function MainMenu({
   open,
   onClose,
   onOpenLogicTracer,
+  onOpenAnimationLab,
   snapshotMeta,
   scanCount = 0,
   lastUpdated,
@@ -87,7 +88,7 @@ export default function MainMenu({
           </section>
 
           <section className="vi-menu-section">
-            <span className="vi-menu-section-title">ENTENDER LA LÓGICA</span>
+            <span className="vi-menu-section-title">LAB</span>
             <button
               type="button"
               className="vi-menu-item vi-logic-entry"
@@ -99,6 +100,20 @@ export default function MainMenu({
               <span>
                 <strong>Trazador de pieza</strong>
                 <small>Elige un PN y mira paso a paso cómo 4Wall, QAD, ISPBB, BOM y Cost Part producen su resultado.</small>
+              </span>
+              <b>›</b>
+            </button>
+            <button
+              type="button"
+              className="vi-menu-item vi-animation-lab-entry"
+              onClick={() => {
+                onClose?.();
+                onOpenAnimationLab?.();
+              }}
+            >
+              <span>
+                <strong>Ver animación</strong>
+                <small>Oculta temporalmente el dashboard y deja solo el ambiente Pac-Man en pantalla completa.</small>
               </span>
               <b>›</b>
             </button>
