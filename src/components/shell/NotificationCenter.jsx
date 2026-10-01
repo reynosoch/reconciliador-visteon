@@ -1,52 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
-import {
-  READ_NEWS_KEY,
-  syncOperationalAlerts,
-} from "../../domain/notificationState.js";
+import { syncOperationalAlerts } from "../../domain/notificationState.js";
 import { currentAlerts } from "../../domain/visibleAlerts.js";
-import {
-  loadAlerts,
-  saveAlerts,
-  safeReadJson,
-  safeWriteJson,
-  STORAGE_WARNING,
-} from "../../services/browserStorage.js";
+import { loadAlerts, saveAlerts, STORAGE_WARNING } from "../../services/browserStorage.js";
 
-export const CHANGELOG = [
-  {
-    id: "dexie-20260929",
-    title: "Mejoras al guardar el historial",
-    body: "Mejoramos el guardado de resultados y alertas en este equipo. Sin archivos cargados, las alertas anteriores ya no aparecen como actuales.",
-  },
-  {
-    id: "copy-20260929",
-    title: "Explicaciones más claras",
-    body: "Las alertas explican qué revisar en cada parte. Todos los importes están en dólares.",
-  },
-];
 export function Bell() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      width="17"
-      height="17"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
       <path d="M10 21h4" />
     </svg>
   );
 }
+
 const LABEL = {
   MISSING_BOM: "Falta el BOM",
   EMPTY_BOM: "BOM sin componentes aplicables",
   PHANTOM_QAD: "Phantom con saldo QAD",
   ZERO_COST: "Costo en cero",
-  QTY_DIFF: "La cantidad no coincide",
+  QTY_DIFF: "Diferencia de cantidad",
   NO_PHYSICAL: "Aún no hay físico registrado",
   UNEXPECTED: "Material que QAD no esperaba",
   LOCATION_CANDIDATE: "Revisar dónde está el material",
@@ -56,28 +28,26 @@ const LABEL = {
   UNUSUAL_CHANGE: "Cambio desde la última junta",
 };
 const PAGE = 40;
+
 export default function NotificationCenter({
   open,
   onClose,
   findings = [],
   evaluationValid = false,
   inventoryId,
-  initialTab = "OPERATIVAS",
   onOpenFinding,
   onCountChange,
   onOperationalStateChange,
   onPersistenceError,
+  returnPulse = 0,
 }) {
-  const [tab, setTab] = useState(initialTab);
   const [record, setRecord] = useState({ inventoryId: null, value: {} });
   const stateRef = useRef({});
   const [page, setPage] = useState(0);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [readNews, setReadNews] = useState(() => {
-    const stored = safeReadJson(READ_NEWS_KEY, []).value;
-    return new Set(Array.isArray(stored) ? stored : []);
-  });
+  const [pulse, setPulse] = useState(false);
   const loaded = record.inventoryId === inventoryId;
+
   useEffect(() => {
     let cancelled = false;
     loadAlerts(inventoryId)
@@ -101,11 +71,22 @@ export default function NotificationCenter({
 
   useEffect(() => {
     if (open) {
-      setTab(initialTab);
       setPage(0);
       setSelectedGroup(null);
     }
-  }, [open, initialTab]);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !returnPulse) return;
+    setPulse(false);
+    const frame = requestAnimationFrame(() => setPulse(true));
+    const timer = setTimeout(() => setPulse(false), 950);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+    };
+  }, [open, returnPulse]);
+
   useEffect(() => {
     if (!loaded || !evaluationValid) return;
     const next = syncOperationalAlerts(
@@ -133,18 +114,12 @@ export default function NotificationCenter({
     () => currentAlerts(loaded ? record.value : {}, findings, evaluationValid),
     [record, loaded, findings, evaluationValid],
   );
-  const unread = active.filter((x) => !x.read).length;
-  const news = CHANGELOG.filter((x) => !readNews.has(x.id)).length;
+  const unread = active.filter((item) => !item.read).length;
+
   useEffect(() => {
-    onCountChange?.(unread + news);
-  }, [unread, news, onCountChange]);
-  useEffect(() => {
-    if (!open || tab !== "NOVEDADES") return;
-    const next = new Set(CHANGELOG.map((x) => x.id));
-    setReadNews(next);
-    if (!safeWriteJson(READ_NEWS_KEY, [...next]).ok)
-      onPersistenceError?.(STORAGE_WARNING);
-  }, [open, tab, onPersistenceError]);
+    onCountChange?.(unread);
+  }, [unread, onCountChange]);
+
   const openAlert = (alert) => {
     if (!loaded || !evaluationValid) return;
     const next = { ...stateRef.current, [alert.id]: { ...alert, read: true } };
@@ -157,170 +132,170 @@ export default function NotificationCenter({
     onOpenFinding?.(alert.id);
     onClose?.();
   };
+
   const groups = Object.entries(
-    active.reduce((a, x) => {
-      const label = LABEL[x.ruleCode] || "Por revisar";
-      a[label] = (a[label] || 0) + 1;
-      return a;
+    active.reduce((acc, item) => {
+      const label = LABEL[item.ruleCode] || "Por revisar";
+      acc[label] = (acc[label] || 0) + 1;
+      return acc;
     }, {}),
   );
-  const groupedAlerts = selectedGroup
-    ? active.filter((x) => (LABEL[x.ruleCode] || "Por revisar") === selectedGroup)
+
+  const grouped = selectedGroup
+    ? active.filter(
+        (item) => (LABEL[item.ruleCode] || "Por revisar") === selectedGroup,
+      )
     : active;
+
   const currentPage = Math.min(
     page,
-    Math.max(0, Math.ceil(groupedAlerts.length / PAGE) - 1),
+    Math.max(0, Math.ceil(grouped.length / PAGE) - 1),
   );
-  const visible = groupedAlerts.slice(
-    currentPage * PAGE,
-    (currentPage + 1) * PAGE,
-  );
+  const visible = grouped.slice(currentPage * PAGE, (currentPage + 1) * PAGE);
+
   if (!open) return null;
+
   return (
     <OverlayPortal onClose={onClose}>
       <div className="vi-global-overlay">
-        <aside className="vi-drawer-panel vi-global-drawer">
+        <aside
+          className={[
+            "vi-drawer-panel",
+            "vi-global-drawer",
+            "vi-notification-drawer",
+            pulse ? "is-return-pulse" : "",
+          ].filter(Boolean).join(" ")}
+        >
           <div className="vi-notification-head">
             <div className="vi-notification-navrow">
-              {(tab !== "OPERATIVAS" || selectedGroup) ? (
+              {selectedGroup ? (
                 <button
                   type="button"
                   className="vi-back-button"
                   onClick={() => {
-                    if (selectedGroup) {
-                      setSelectedGroup(null);
-                      setPage(0);
-                    } else {
-                      setTab("OPERATIVAS");
-                      setPage(0);
-                    }
+                    setSelectedGroup(null);
+                    setPage(0);
                   }}
-                  aria-label="Regresar"
+                  aria-label="Regresar a todas las notificaciones"
                 >
-                  <span aria-hidden="true">‹</span><strong>REGRESAR</strong>
+                  <span aria-hidden="true">‹</span>
+                  <strong>REGRESAR</strong>
                 </button>
-              ) : <span />}
-              <button type="button" className="vi-icon-close" onClick={onClose} aria-label="Cerrar notificaciones">×</button>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                className="vi-icon-close"
+                onClick={onClose}
+                aria-label="Cerrar notificaciones"
+              >
+                ×
+              </button>
             </div>
+
             <div className="vi-notification-heading-copy">
               <p className="vi-eyebrow">NOTIFICACIONES</p>
-              <h2>Por revisar</h2>
-              <p>El historial queda en este navegador. Las alertas se comprueban con los archivos cargados.</p>
-            </div>
-            <div className="vi-notification-tabs">
-              <button
-                className={tab === "OPERATIVAS" ? "is-active" : ""}
-                onClick={() => { setTab("OPERATIVAS"); setSelectedGroup(null); setPage(0); }}
-              >
-                <span>ALERTAS</span><b>{unread}</b>
-              </button>
-              <button
-                className={tab === "NOVEDADES" ? "is-active" : ""}
-                onClick={() => { setTab("NOVEDADES"); setSelectedGroup(null); }}
-              >
-                <span>NOVEDADES</span><b>{news}</b>
-              </button>
+              <h2>{selectedGroup || "Por revisar"}</h2>
+              <p>
+                Alertas del corte actual. Abre un Part Number para ver qué
+                encontramos, qué archivos originan la evidencia y qué revisar.
+              </p>
             </div>
           </div>
-          {tab === "NOVEDADES" ? (
-            <div className="vi-notification-list">
-              {CHANGELOG.map((x) => (
-                <article className="vi-notification-item" key={x.id}>
-                  <strong>{x.title}</strong>
-                  <p>{x.body}</p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="vi-notification-list">
-              {!evaluationValid ? (
-                <div className="vi-bot-status">
-                  Carga los archivos y espera a que termine la actualización
-                  para revisar las alertas. El historial anterior sigue
-                  guardado, pero no se cuenta como una alerta actual.
+
+          <div className="vi-notification-list">
+            {!evaluationValid ? (
+              <div className="vi-bot-status">
+                Carga las fuentes requeridas y espera a que termine la
+                actualización antes de interpretar alertas del corte actual.
+              </div>
+            ) : (
+              <>
+                <div className="vi-notification-summary">
+                  <strong>
+                    {new Set(active.map((item) => item.partNumber)).size.toLocaleString("es-MX")} PN
+                  </strong>
+                  <span>
+                    {active.length.toLocaleString("es-MX")} alertas ·{" "}
+                    {unread.toLocaleString("es-MX")} nuevas
+                  </span>
                 </div>
-              ) : (
-                <>
-                  <p>
-                    {new Set(
-                      active.map((x) => x.partNumber),
-                    ).size.toLocaleString("es-MX")}{" "}
-                    números de parte por revisar. Un número de parte puede tener
-                    varios avisos.
-                  </p>
-                  <div className="vi-alert-summary" aria-label="Tipos de alertas">
+
+                <div className="vi-alert-summary" aria-label="Tipos de alertas">
+                  <button
+                    type="button"
+                    className={!selectedGroup ? "is-active" : ""}
+                    onClick={() => {
+                      setSelectedGroup(null);
+                      setPage(0);
+                    }}
+                  >
+                    <b>{active.length.toLocaleString("es-MX")}</b>
+                    <span>TODAS</span>
+                  </button>
+                  {groups.map(([label, count]) => (
                     <button
                       type="button"
-                      className={!selectedGroup ? "is-active" : ""}
+                      className={selectedGroup === label ? "is-active" : ""}
+                      key={label}
                       onClick={() => {
-                        setSelectedGroup(null);
+                        setSelectedGroup(label);
                         setPage(0);
                       }}
                     >
-                      <b>{active.length.toLocaleString("es-MX")}</b> TODAS
+                      <b>{count.toLocaleString("es-MX")}</b>
+                      <span>{label}</span>
                     </button>
-                    {groups.map(([label, n]) => (
-                      <button
-                        type="button"
-                        className={selectedGroup === label ? "is-active" : ""}
-                        key={label}
-                        onClick={() => {
-                          setSelectedGroup(label);
-                          setPage(0);
-                        }}
-                      >
-                        <b>{n.toLocaleString("es-MX")}</b> {label}
-                      </button>
-                    ))}
-                  </div>
-                  {selectedGroup && (
-                    <div className="vi-alert-group-head">
-                      <strong>{selectedGroup}</strong>
-                      <span>
-                        {groupedAlerts.length.toLocaleString("es-MX")} avisos.
-                        Selecciona un número de parte para abrir el detalle y ver
-                        qué encontramos y qué revisar.
-                      </span>
-                    </div>
-                  )}
-                  {!active.length && (
-                    <p>No encontramos alertas con estos archivos.</p>
-                  )}
-                  {visible.map((a) => (
+                  ))}
+                </div>
+
+                {!active.length && (
+                  <p className="vi-notification-empty">
+                    No encontramos alertas con estos archivos.
+                  </p>
+                )}
+
+                <div className="vi-notification-cards">
+                  {visible.map((alert) => (
                     <button
                       disabled={!loaded}
                       className="vi-operational-alert"
-                      key={a.id}
-                      onClick={() => openAlert(a)}
+                      key={alert.id}
+                      onClick={() => openAlert(alert)}
                     >
-                      <strong>{a.partNumber}</strong>
-                      <span>{LABEL[a.ruleCode] || "Por revisar"}</span>
-                      <small>{a.read ? "VISTA" : "NUEVA"}</small>
+                      <span className="vi-alert-main">
+                        <strong>{alert.partNumber}</strong>
+                        <em>{LABEL[alert.ruleCode] || "Por revisar"}</em>
+                      </span>
+                      <small>{alert.read ? "VISTA" : "NUEVA"}</small>
+                      <b aria-hidden="true">›</b>
                     </button>
                   ))}
-                  {groupedAlerts.length > PAGE && (
-                    <div className="vi-pager">
-                      <button
-                        disabled={!currentPage}
-                        onClick={() => setPage(currentPage - 1)}
-                      >
-                        ANTERIOR
-                      </button>
-                      <span>
-                        {currentPage + 1}/{Math.ceil(groupedAlerts.length / PAGE)}
-                      </span>
-                      <button
-                        disabled={(currentPage + 1) * PAGE >= groupedAlerts.length}
-                        onClick={() => setPage(currentPage + 1)}
-                      >
-                        SIGUIENTE
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+                </div>
+
+                {grouped.length > PAGE && (
+                  <div className="vi-pager">
+                    <button
+                      disabled={!currentPage}
+                      onClick={() => setPage(currentPage - 1)}
+                    >
+                      ANTERIOR
+                    </button>
+                    <span>
+                      {currentPage + 1}/{Math.ceil(grouped.length / PAGE)}
+                    </span>
+                    <button
+                      disabled={(currentPage + 1) * PAGE >= grouped.length}
+                      onClick={() => setPage(currentPage + 1)}
+                    >
+                      SIGUIENTE
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </aside>
       </div>
     </OverlayPortal>
