@@ -85,6 +85,7 @@ export default function App() {
     [confirmNew, setConfirmNew] = useState(false),
     [menuOpen, setMenuOpen] = useState(false),
     [logicTracerOpen, setLogicTracerOpen] = useState(false),
+    [animationLabOpen, setAnimationLabOpen] = useState(false),
     [detailFromNotifications, setDetailFromNotifications] = useState(false);
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
@@ -335,6 +336,32 @@ export default function App() {
           : !inventory.snapshotMeta?.complete
             ? "No se confirmó un corte de datos completo."
             : "";
+  useEffect(() => {
+    if (!animationLabOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setAnimationLabOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [animationLabOpen]);
+
+  if (animationLabOpen) {
+    return (
+      <div className="vi-animation-lab" role="dialog" aria-modal="true" aria-label="Laboratorio de animación Pac-Man">
+        <AmbientChase />
+        <button
+          type="button"
+          className="vi-animation-lab-close"
+          onClick={() => setAnimationLabOpen(false)}
+          aria-label="Cerrar laboratorio de animación"
+          title="Volver al dashboard"
+        >
+          ×
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="vi-shell vi-rubber-viewport" ref={shellRef}>
       {pacmanEnabled && <AmbientChase />}
@@ -544,6 +571,7 @@ export default function App() {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         onOpenLogicTracer={() => setLogicTracerOpen(true)}
+        onOpenAnimationLab={() => setAnimationLabOpen(true)}
         snapshotMeta={inventory.snapshotMeta}
         scanCount={inventory.scanCount}
         lastUpdated={inventory.lastUpdated}
