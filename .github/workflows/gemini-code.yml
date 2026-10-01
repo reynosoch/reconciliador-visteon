@@ -1,0 +1,65 @@
+name: Gemini Auto Commit
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Escribe qué código o archivo quieres generar'
+        required: true
+        type: string
+      filename:
+        description: 'Nombre del archivo a crear o modificar (ejemplo: src/index.js)'
+        required: true
+        default: 'output.txt'
+        type: string
+
+jobs:
+  generate-code:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalar SDK de Gemini
+        run: pip install google-genai
+
+      - name: Consultar API de Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PROMPT: ${{ inputs.prompt }}
+          FILENAME: ${{ inputs.filename }}
+        run: |
+          python -c "
+          import os
+          from google import genai
+
+          client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
+          prompt_text = f'Genera el código para: {os.environ[\"PROMPT\"]}. Retorna únicamente el código final para el archivo, sin bloques markdown de explicaciones, ni ```.'
+          
+          response = client.models.generate_content(
+              model='gemini-2.5-flash',
+              contents=prompt_text
+          )
+          
+          filepath = os.environ['FILENAME']
+          os.makedirs(os.path.dirname(filepath), exist_ok=True) if '/' in filepath else None
+          
+          with open(filepath, 'w', encoding='utf-8') as f:
+              f.write(response.text)
+          "
+
+      - name: Realizar Commit y Push a main
+        run: |
+          git config --global user.name "Gemini Action Bot"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "feat: código generado por Gemini [${{ inputs.prompt }}]" || echo "Sin cambios detectados"
+          git push
