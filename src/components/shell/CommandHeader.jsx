@@ -46,6 +46,7 @@ export default function CommandHeader({
   onOpenBot,
   onOpenMenu,
   notificationCount = 0,
+  scrollMode = "top",
 }) {
   const manual = connectionStatus?.state === "MANUAL";
   const liveError = connectionStatus?.state === "ERROR";
@@ -55,7 +56,7 @@ export default function CommandHeader({
   const total = referenceStatus?.totalSources || 5;
 
   return (
-    <header className="vi-command-header">
+    <header className={`vi-command-header vi-header-${scrollMode}`}>
       <div className="vi-header-main">
         <div className="vi-header-brand">
           <img src={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`} alt="Visteon" className="vi-brand-logo" />
