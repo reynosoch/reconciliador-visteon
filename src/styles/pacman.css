@@ -2171,3 +2171,243 @@ body,
 body.vi-overlay-open .vi-shell {
   overflow-y: hidden !important;
 }
+
+
+/* 2026-10-01 · Native-scroll navbar motion + notification dark surface */
+/* The touchpad keeps native browser scrolling. Only presentation reacts to direction. */
+.vi-command-header {
+  transform-origin: top center;
+  transition:
+    box-shadow .34s cubic-bezier(.2,.8,.2,1),
+    background-color .34s cubic-bezier(.2,.8,.2,1),
+    border-color .34s cubic-bezier(.2,.8,.2,1);
+  will-change: box-shadow;
+}
+.vi-header-main {
+  transition:
+    min-height .34s cubic-bezier(.2,.8,.2,1),
+    padding .34s cubic-bezier(.2,.8,.2,1),
+    background-color .34s cubic-bezier(.2,.8,.2,1);
+}
+.vi-brand-logo,
+.vi-brand-divider,
+.vi-product-name,
+.vi-header-actions .vi-button,
+.vi-fetch-time {
+  transition:
+    width .34s cubic-bezier(.2,.8,.2,1),
+    height .34s cubic-bezier(.2,.8,.2,1),
+    min-height .34s cubic-bezier(.2,.8,.2,1),
+    padding .34s cubic-bezier(.2,.8,.2,1),
+    opacity .24s ease,
+    transform .34s cubic-bezier(.2,.8,.2,1);
+}
+.vi-source-ribbon {
+  max-height: 64px;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+  transform-origin: top center;
+  transition:
+    max-height .36s cubic-bezier(.2,.8,.2,1),
+    opacity .22s ease,
+    transform .38s cubic-bezier(.16,1,.3,1),
+    border-color .28s ease;
+}
+
+/* Scrolling down: preserve access to controls but free vertical space. */
+.vi-command-header.vi-header-compact {
+  box-shadow: 0 16px 42px rgba(0,8,15,.34) !important;
+}
+.vi-command-header.vi-header-compact .vi-header-main {
+  min-height: 56px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  background: linear-gradient(180deg,rgba(6,38,54,.94),rgba(5,31,45,.91)) !important;
+}
+.vi-command-header.vi-header-compact .vi-brand-logo {
+  width: 142px;
+}
+.vi-command-header.vi-header-compact .vi-brand-divider {
+  height: 24px;
+}
+.vi-command-header.vi-header-compact .vi-product-name {
+  transform: translateY(-1px);
+}
+.vi-command-header.vi-header-compact .vi-header-actions .vi-button {
+  min-height: 34px;
+}
+.vi-command-header.vi-header-compact .vi-fetch-time {
+  opacity: .72;
+  transform: scale(.96);
+}
+.vi-command-header.vi-header-compact .vi-source-ribbon {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-9px) scaleY(.72);
+  border-color: transparent !important;
+  pointer-events: none;
+}
+
+/* Scrolling upward: the navbar grows back with a soft elastic feel. */
+.vi-command-header.vi-header-expanded {
+  box-shadow:
+    0 18px 46px rgba(0,9,17,.26),
+    0 1px 0 rgba(245,130,31,.10) inset !important;
+}
+.vi-command-header.vi-header-expanded .vi-header-main {
+  min-height: 76px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.vi-command-header.vi-header-expanded .vi-source-ribbon {
+  max-height: 64px;
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+  animation: vi-navbar-stretch .36s cubic-bezier(.16,1,.3,1);
+}
+.vi-command-header.vi-header-top .vi-source-ribbon {
+  max-height: 64px;
+  opacity: 1;
+  transform: none;
+}
+@keyframes vi-navbar-stretch {
+  0% { transform: translateY(-7px) scaleY(.78); opacity: .25; }
+  68% { transform: translateY(1px) scaleY(1.035); opacity: 1; }
+  100% { transform: translateY(0) scaleY(1); opacity: 1; }
+}
+
+/* Notification Center must never inherit the old white drawer styles. */
+.vi-notification-drawer.vi-global-drawer.vi-drawer-panel {
+  width: min(560px,100vw) !important;
+  max-width: min(560px,100vw) !important;
+  height: 100dvh !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  background:
+    linear-gradient(180deg,#0b2b3e 0%,#082536 42%,#061f2d 100%) !important;
+  color: #eef7fa !important;
+  border-left: 1px solid rgba(245,130,31,.42) !important;
+  box-shadow: -34px 0 90px rgba(0,7,13,.48) !important;
+  scrollbar-color: #496f80 #082536;
+}
+.vi-notification-drawer > .vi-notification-head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background:
+    linear-gradient(180deg,rgba(11,46,65,.98),rgba(8,37,54,.94)) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+}
+.vi-notification-drawer .vi-eyebrow {
+  color: #ffb879 !important;
+}
+.vi-notification-drawer h2 {
+  color: #ffffff !important;
+}
+.vi-notification-drawer p,
+.vi-notification-drawer .vi-notification-heading-copy p {
+  color: #a9c0ca !important;
+}
+.vi-notification-drawer .vi-notification-list {
+  background: transparent !important;
+}
+.vi-notification-drawer .vi-notification-summary {
+  border-color: rgba(255,255,255,.09) !important;
+  background: rgba(255,255,255,.04) !important;
+}
+.vi-notification-drawer .vi-alert-summary {
+  background: transparent !important;
+}
+.vi-notification-drawer .vi-alert-summary button {
+  border: 1px solid rgba(255,255,255,.10) !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.025)) !important;
+  color: #eaf4f7 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.vi-notification-drawer .vi-alert-summary button:hover {
+  border-color: rgba(245,130,31,.52) !important;
+  background: rgba(245,130,31,.075) !important;
+  color: #fff !important;
+}
+.vi-notification-drawer .vi-alert-summary button.is-active {
+  border-color: rgba(245,130,31,.72) !important;
+  background:
+    linear-gradient(145deg,rgba(245,130,31,.18),rgba(245,130,31,.08)) !important;
+  color: #fff7ef !important;
+}
+.vi-notification-drawer .vi-alert-summary button > span {
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #dbe9ed !important;
+}
+.vi-notification-drawer .vi-alert-summary button > b {
+  color: #ffb879 !important;
+}
+.vi-notification-drawer .vi-operational-alert {
+  border: 1px solid rgba(255,255,255,.09) !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.050),rgba(255,255,255,.022)) !important;
+  color: #eff7f9 !important;
+}
+.vi-notification-drawer .vi-operational-alert:hover {
+  border-color: rgba(245,130,31,.60) !important;
+  background: rgba(245,130,31,.075) !important;
+}
+.vi-notification-drawer .vi-operational-alert .vi-alert-main,
+.vi-notification-drawer .vi-operational-alert .vi-alert-main strong,
+.vi-notification-drawer .vi-operational-alert .vi-alert-main em {
+  background: transparent !important;
+  border: 0 !important;
+}
+.vi-notification-drawer .vi-operational-alert .vi-alert-main strong {
+  color: #fff !important;
+}
+.vi-notification-drawer .vi-operational-alert .vi-alert-main em {
+  color: #9fb8c3 !important;
+}
+.vi-notification-drawer .vi-operational-alert > small {
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.055) !important;
+  color: #a9c0ca !important;
+}
+.vi-notification-drawer .vi-notification-empty,
+.vi-notification-drawer .vi-bot-status {
+  border: 1px solid rgba(255,255,255,.09) !important;
+  background: rgba(255,255,255,.035) !important;
+  color: #aec4cd !important;
+}
+.vi-notification-drawer .vi-pager {
+  color: #a9c0ca;
+}
+.vi-notification-drawer .vi-pager button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 10px;
+  background: rgba(255,255,255,.045);
+  color: #eaf4f7;
+}
+.vi-notification-drawer .vi-pager button:hover:not(:disabled) {
+  border-color: rgba(245,130,31,.55);
+  background: rgba(245,130,31,.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vi-command-header,
+  .vi-header-main,
+  .vi-brand-logo,
+  .vi-brand-divider,
+  .vi-product-name,
+  .vi-header-actions .vi-button,
+  .vi-fetch-time,
+  .vi-source-ribbon {
+    transition: none !important;
+    animation: none !important;
+  }
+}
