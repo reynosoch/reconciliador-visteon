@@ -133,6 +133,7 @@ export default function App() {
         displayReady,
         inventory.reconciliation,
         inventory.engine.sources,
+        references.sources,
         identity.id,
         previousCut,
         valid,
