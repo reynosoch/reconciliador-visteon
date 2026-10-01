@@ -15,5 +15,7 @@ with tempfile.TemporaryDirectory() as tmp:
     assert states==["accepted","already_running"],states
     status,data=post("/bot/status");assert status==200 and data["processState"]=="running"
     assert data.get("lastSnapshot") is None
-    mod.controller.process.terminate();mod.controller.process.wait(timeout=3);server.shutdown()
+    status,data=post("/bot/stop");assert status==200 and data["processState"]=="stopped"
+    status,data=post("/bot/status");assert status==200 and data["processState"] in {"stopped","idle"}
+    server.shutdown()
 print("Bot controller verification OK")
