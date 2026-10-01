@@ -517,8 +517,11 @@ Este README es la conciencia técnica; no crear `PROJECT_CONTEXT.md`, `SECURITY_
 
 El build ejecuta:
 
+- `npm run lint` para detectar imports, variables, claves duplicadas y errores estáticos reales. Las reglas específicas de React Compiler están desactivadas porque este PoC no usa ese compilador.
 - `scripts/verify-repo-clean.mjs` para bloquear backups/artefactos legacy conocidos.
 - `scripts/verify-unused.mjs` para exigir que todo módulo JavaScript/JSX dentro de `src/` sea alcanzable desde `src/main.jsx`.
+- `scripts/verify-runtime-deps.mjs` para evitar dependencias declaradas que nunca se importan desde el runtime.
+- `scripts/audit-css-usage.mjs` para hacer fallar el build si aparece CSS `vi-*` huérfano; las únicas excepciones son clases dinámicas documentadas explícitamente.
 
 No versionar `node_modules/`, `dist/`, `.env.local`, `inventario.db`, descargas temporales de 4Wall ni `bot_snapshot_status.json`. `dist/` es generado por Vite y se puede borrar localmente en cualquier momento.
 
