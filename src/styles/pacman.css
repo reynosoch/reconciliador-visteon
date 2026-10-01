@@ -1818,3 +1818,206 @@ body{background:#061f2d!important;overscroll-behavior-y:none}
   .vi-source-actions{justify-content:stretch!important}
   .vi-source-actions .source-mini-button{flex:1}
 }
+
+
+/* 2026-10-01 · Touchpad, sources drawer and modal data review */
+body.vi-overlay-open {
+  overflow: hidden !important;
+}
+
+/* Keep gestures inside the active drawer/modal instead of chaining into the dashboard. */
+.vi-drawer-backdrop,
+.vi-data-modal-backdrop {
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+.vi-sources-drawer {
+  width: min(620px, 100vw) !important;
+  max-width: 100vw !important;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  background:
+    linear-gradient(180deg, rgba(8, 45, 63, .98), rgba(5, 30, 43, .99)) !important;
+  border-left: 1px solid rgba(245, 130, 31, .58) !important;
+  box-shadow: -30px 0 90px rgba(0, 10, 18, .48) !important;
+  color: #eef7fa !important;
+}
+.vi-sources-drawer .vi-sources-head {
+  background:
+    linear-gradient(180deg, rgba(9, 47, 65, .97), rgba(7, 38, 54, .93)) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+.vi-sources-drawer .vi-eyebrow {
+  color: #ffb879 !important;
+}
+.vi-sources-drawer h2 {
+  color: #f7fbfc !important;
+}
+.vi-sources-drawer p,
+.vi-sources-drawer .text-slate-600,
+.vi-sources-drawer .text-slate-500,
+.vi-sources-drawer .text-slate-300,
+.vi-sources-drawer .text-slate-400,
+.vi-sources-drawer .text-slate-700 {
+  color: #a9c1cb !important;
+}
+.vi-sources-drawer .source-package-button {
+  min-height: 48px;
+  border: 1px solid rgba(245,130,31,.55) !important;
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(245,130,31,.20), rgba(245,130,31,.08)) !important;
+  color: #fff7ef !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.vi-sources-drawer .source-package-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(245,130,31,.28), rgba(245,130,31,.12)) !important;
+}
+.vi-sources-drawer .source-package-button .text-orange-300 {
+  color: #ffc58f !important;
+}
+.vi-sources-drawer .source-progress-node {
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 9px;
+  background: rgba(255,255,255,.045) !important;
+  color: #91acb7 !important;
+}
+.vi-sources-drawer .source-progress-ready {
+  border-color: rgba(118,222,180,.30) !important;
+  background: rgba(118,222,180,.10) !important;
+  color: #a7eccf !important;
+}
+.vi-sources-drawer .vi-source-line {
+  margin: 12px 0 !important;
+  padding: 16px !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.060), rgba(255,255,255,.024)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+}
+.vi-sources-drawer .vi-source-title > span:nth-child(2) {
+  color: #f4fafc !important;
+}
+.vi-sources-drawer .vi-source-title small,
+.vi-sources-drawer .vi-source-example {
+  color: #86a3af !important;
+}
+.vi-sources-drawer .vi-source-description {
+  color: #adc3cc !important;
+}
+.vi-sources-drawer .source-mini-button,
+.vi-sources-drawer .source-clear-button {
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.055) !important;
+  color: #eff8fa !important;
+}
+.vi-sources-drawer .source-mini-button:hover:not(:disabled),
+.vi-sources-drawer .source-clear-button:hover {
+  border-color: rgba(245,130,31,.55) !important;
+  background: rgba(245,130,31,.10) !important;
+}
+.vi-sources-drawer .vi-source-warning {
+  border-color: rgba(245,130,31,.30) !important;
+  background: rgba(245,130,31,.08) !important;
+  color: #ffd0a7 !important;
+}
+.vi-sources-drawer .vi-source-file-chip,
+.vi-sources-drawer .vi-source-file-list {
+  border-color: rgba(255,255,255,.10) !important;
+  background: rgba(0,0,0,.12) !important;
+}
+.vi-sources-drawer .vi-source-file-list summary span,
+.vi-sources-drawer .vi-source-file-list button {
+  color: #eef7fa !important;
+}
+
+/* Data review no longer occupies a dashboard quadrant. It is always an overlay. */
+.vi-data-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2vw, 26px);
+  background: rgba(1, 17, 27, .76);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: blur(12px) saturate(120%);
+  animation: vi-fade .18s ease both;
+}
+.vi-data-modal-window {
+  width: min(1440px, 96vw);
+  height: min(900px, 94dvh);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 24px;
+  background: #f8fafc;
+  box-shadow: 0 38px 110px rgba(0,0,0,.48);
+  animation: vi-data-modal-in .22s cubic-bezier(.2,.8,.2,1) both;
+  touch-action: pan-x pan-y;
+}
+.vi-data-modal-window > .vi-inspection {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  animation: none !important;
+}
+.vi-data-modal-window .vi-inspection-description {
+  flex: none;
+  margin: 0 !important;
+  padding: 10px 14px 11px;
+  max-width: none;
+  border-bottom: 1px solid #d9e1dd;
+  background: #f8fafc;
+}
+.vi-data-modal-window .vi-inspection-scroll,
+.vi-data-modal-window .vi-excel-grid-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+}
+.vi-data-modal-window .vi-excel-statusbar {
+  flex: none;
+}
+.vi-data-modal-window .vi-dual-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+@keyframes vi-data-modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 700px) {
+  .vi-sources-drawer {
+    width: 100vw !important;
+    border-left: 0 !important;
+  }
+  .vi-data-modal-backdrop {
+    padding: 0;
+  }
+  .vi-data-modal-window {
+    width: 100vw;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+}
