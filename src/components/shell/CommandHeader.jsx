@@ -34,7 +34,6 @@ function SourceState({ label, state, detail, live = false, ready = false, error 
 
 export default function CommandHeader({
   connectionStatus,
-  scanCount = 0,
   lastUpdated,
   referenceStatus,
   loading = false,
