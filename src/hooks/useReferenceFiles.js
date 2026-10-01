@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseDelimitedFile } from "../parsers/parseDelimitedFile.js";
 import { mergeBomLibrary } from "../domain/bomLibrary.js";
-import { idbGet, idbSet, downloadJson } from "../services/browserStorage.js";
-import { bomClient, syncBomLibrary } from "../services/bomCloud.js";
+import { idbGet, idbSet } from "../services/browserStorage.js";
+import { syncBomLibrary } from "../services/bomCloud.js";
+import { exportBomLibraryWorkbook } from "../services/exportInventoryWorkbook.js";
 const BOM_KEY = "reference:bom-library.v1";
 const empty = () => ({
   rows: [],
@@ -83,7 +84,7 @@ function bomSource(library) {
 }
 export function useReferenceFiles() {
   const [sources, setSources] = useState(initial);
-  const [cloudStatus, setCloudStatus] = useState({ state: "pending", message: "BOM guardados en esta computadora; respaldo compartido pendiente.", email: "" });
+  const [cloudStatus, setCloudStatus] = useState({ state: "pending", message: "BOM local listo; sincronización pendiente." });
   const library = useRef({ rows: [], files: [] }),
     queue = useRef(Promise.resolve()),
     mounted = useRef(false);
@@ -100,7 +101,7 @@ export function useReferenceFiles() {
         library.current = merged;
         if (mounted.current) {
           if (changed) setSources(s => ({ ...s, bom: bomSource(merged) }));
-          setCloudStatus(s => ({ ...s, state: "saved", message: "BOM comparados y respaldados en Supabase." }));
+          setCloudStatus({ state: "saved", message: merged.changed ? "BOM nuevos agregados al respaldo compartido." : "BOM sincronizados. No había datos nuevos que agregar." });
         }
       } catch (error) {
         if (mounted.current) setCloudStatus(s => ({ ...s, state: "pending", message: error.message }));
@@ -135,15 +136,13 @@ export function useReferenceFiles() {
   }, []);
   useEffect(() => {
     const retry = () => { void syncCloud(); };
-    const subscription = bomClient?.auth.onAuthStateChange((_event, session) => {
-      setCloudStatus(s => ({ ...s, email: session?.user?.email || "" }));
-      // Do not call Supabase async operations inside its auth callback lock.
-      queueMicrotask(retry);
-    });
-    if (!bomClient) queueMicrotask(retry);
+    queueMicrotask(retry);
     window.addEventListener("online", retry);
     const timer = window.setInterval(retry, 120000);
-    return () => { subscription?.data.subscription.unsubscribe(); window.removeEventListener("online", retry); window.clearInterval(timer); };
+    return () => {
+      window.removeEventListener("online", retry);
+      window.clearInterval(timer);
+    };
   }, [syncCloud]);
   const loadFile = useCallback((type, file) => {
     const operation = queue.current.then(async () => {
@@ -204,6 +203,7 @@ export function useReferenceFiles() {
           error: null,
           fingerprint: hash,
           loadedAt: new Date(),
+          optimizedFromExcel: parsed.delimiter === "xlsx",
         };
         if (type === "bom") {
           const current = await idbGet(BOM_KEY, { rows: [], files: [] });
@@ -228,8 +228,8 @@ export function useReferenceFiles() {
           source.warnings = [
             {
               message: next.addedParents
-                ? `Se agregaron ${next.addedParents} BOM nuevos.`
-                : "Estos BOM ya estaban guardados. No se duplicaron.",
+                ? `Se agregaron ${next.addedParents} BOM nuevos; los ya registrados no se duplicaron.`
+                : "Estos BOM ya estaban registrados. No se duplicaron.",
             },
           ];
         }
@@ -256,7 +256,7 @@ export function useReferenceFiles() {
     [],
   );
   const backupBom = useCallback(
-    () => downloadJson("respaldo-bom.json", library.current),
+    () => exportBomLibraryWorkbook(library.current),
     [],
   );
   const status = useMemo(() => {
