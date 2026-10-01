@@ -34,7 +34,7 @@ await db.exec(await readFile(new URL("../supabase/bom-delete-no-login.sql",impor
 await db.exec("set role anon; set request.uid=''; set request.jwt='{}'");
 assert.equal((await db.query("select * from public.inventory_bom_current")).rows.length,1);
 await assert.rejects(db.query("select public.save_inventory_bom(1,$1)",[value]),/permission denied/);
-const incoming = { rows:[{"Parent Item":"B",Component:"000123",Level:".2","Comp Phantom":"no",Usage:0.5}], files:[{fileName:"b.xlsx",fingerprint:"hash-b"}] };
+const incoming = { rows:[{"Parent Item":"B",Component:"000123",Level:".2","Comp Phantom":"no",Usage:0.5,__sourceFile:"b.xlsx"}], files:[{fileName:"b.xlsx",fingerprint:"hash-b"}] };
 const save = async (revision, library) => (await db.query("select public.merge_inventory_bom($1,$2) saved",[revision,JSON.stringify(library)])).rows[0].saved;
 assert.equal(await save(1,incoming),true);
 assert.equal(await save(1,incoming),false);
@@ -43,6 +43,7 @@ assert.equal((await db.query("select revision from public.inventory_bom_current"
 assert.equal(await save(2,{...incoming,rows:incoming.rows.map(row=>({...row,Level:"0.2","Comp Phantom":"NO",Usage:"0.5",Seq:99}))}),true);
 await assert.rejects(save(2,{...incoming,rows:[{...incoming.rows[0],Usage:9},{...incoming.rows[0],"Parent Item":"C"}]}),/BOM conflict/);
 assert.equal((await db.query("select jsonb_array_length(library->'rows') n from public.inventory_bom_current")).rows[0].n,2);
+assert.equal((await db.query('select "Usage" from public.inventory_bom_rows where source_file=\'b.xlsx\'')).rows[0]["Usage"],"0.5");
 const removeBom = async (revision, fingerprint) => (await db.query("select public.remove_inventory_bom($1,$2) result",[revision,fingerprint])).rows[0].result;
 assert.equal((await removeBom(1,"hash-b")).status,"stale");
 assert.equal((await removeBom(2,"missing")).status,"not_found");
@@ -58,6 +59,6 @@ await assert.rejects(db.query("update public.inventory_bom_current set revision=
 await assert.rejects(db.query("select * from public.inventory_bom_backups"),/permission denied/);
 await db.exec("reset role");
 assert.equal((await db.query("select count(*)::int n from public.inventory_bom_backups")).rows[0].n,3);
-assert.equal((await db.query('select "Parent Item", "Component", "Usage" from public.inventory_bom_rows')).rows[0]["Usage"],"0.5");
+assert.equal((await db.query("select count(*)::int n from public.inventory_bom_rows")).rows[0].n,0);
 await db.close();
 console.log("Supabase SQL OK (local Postgres): incremental BOM, controlled delete, immutable history, conflict atomicity, stale revision rejected, insert-only reports");
