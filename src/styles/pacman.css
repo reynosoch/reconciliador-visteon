@@ -3789,3 +3789,169 @@ body.vi-overlay-open .vi-shell {
   .vi-logic-table>div { grid-template-columns:minmax(0,1fr) 100px 52px; }
   .vi-logic-formula strong { width:100%;margin-left:0; }
 }
+
+
+/* 2026-10-01 · Performance mode: opaque liquid drawers, iPad edge only */
+/* The only motion left in normal dashboard use is the elastic edge response. */
+.vi-shell,
+.vi-shell *,
+.vi-global-overlay,
+.vi-global-overlay *,
+.vi-detail-overlay,
+.vi-detail-overlay *,
+.vi-data-modal-backdrop,
+.vi-data-modal-backdrop * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Opaque liquid surfaces: layered gradients, no expensive backdrop blur. */
+.vi-sources-drawer,
+.vi-notification-drawer,
+.vi-menu-panel,
+.vi-logic-tracer.vi-drawer-panel,
+.vi-detail-drawer,
+.vi-global-drawer,
+.vi-drawer-panel {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(245,130,31,.095), transparent 28%),
+    radial-gradient(circle at 6% 92%, rgba(48,121,154,.11), transparent 30%),
+    linear-gradient(165deg, #0c3145 0%, #092b3e 46%, #072536 100%) !important;
+  color: #eef7fa !important;
+  border-left: 1px solid rgba(245,130,31,.40) !important;
+  box-shadow:
+    -18px 0 48px rgba(0,7,13,.34),
+    inset 1px 0 rgba(255,255,255,.035) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.vi-menu-panel {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(245,130,31,.105), transparent 31%),
+    radial-gradient(circle at 92% 90%, rgba(51,131,164,.09), transparent 34%),
+    linear-gradient(155deg,#0d3449 0%,#092b3e 52%,#072536 100%) !important;
+}
+
+.vi-sources-drawer > .vi-sources-head,
+.vi-notification-drawer > .vi-notification-head,
+.vi-logic-head,
+.vi-menu-head,
+.vi-detail-drawer .sticky,
+.vi-drawer-glass-head {
+  background:
+    linear-gradient(180deg,#103b51 0%,#0c3145 100%) !important;
+  border-bottom:1px solid rgba(255,255,255,.075) !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+
+.vi-global-overlay,
+.vi-drawer-backdrop,
+.vi-detail-overlay,
+.vi-data-modal-backdrop {
+  background: rgba(0,12,21,.68) !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+
+/* Reduce compositing and repaint cost on the long dashboard. */
+.vi-main {
+  contain: layout style;
+}
+.vi-financial-shell,
+.vi-meeting-priorities,
+.vi-findings,
+.vi-cut-history,
+.vi-reconciliation-shell {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 520px;
+}
+.vi-financial-shell,
+.vi-meeting-priorities,
+.vi-findings,
+.vi-cut-history,
+.vi-reconciliation-shell,
+.vi-health-bar,
+.vi-intro {
+  box-shadow: none !important;
+}
+.vi-panel,
+.vi-panel-flat,
+.vi-liquid-surface,
+.vi-liquid-mini {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+
+/* Scrolling should remain completely native and immediate. */
+.vi-shell,
+.vi-drawer-panel,
+.vi-detail-drawer,
+.vi-global-drawer,
+.vi-menu-panel,
+.vi-logic-tracer,
+.vi-source-preview-table-wrap,
+.vi-inspection-scroll,
+.vi-excel-grid-wrap,
+.vi-dual-sheet-scroll,
+.vi-findings-table-wrap,
+.vi-table-shell {
+  scroll-behavior:auto !important;
+  overscroll-behavior-y:contain;
+}
+
+/* No hover or entry animation work while scrolling. */
+.vi-financial-cell,
+.vi-result-row,
+.vi-operational-alert,
+.vi-menu-item,
+.vi-source-line,
+.vi-button,
+.vi-help-trigger,
+.vi-bom-delete,
+.vi-export-option,
+.vi-product-update-card,
+.vi-logic-suggestions button {
+  transition:none !important;
+  animation:none !important;
+}
+
+/* Keep the iPad-like edge response as the sole visual animation. */
+.vi-elastic-top::before,
+.vi-elastic-bottom::after {
+  transition:
+    height .075s cubic-bezier(.22,.9,.25,1),
+    opacity .085s linear !important;
+}
+
+/* Make the edge effect feel stronger without transforming content. */
+.vi-elastic-top::before {
+  box-shadow:
+    0 10px 28px rgba(245,130,31,.12),
+    inset 0 1px rgba(255,255,255,.07) !important;
+}
+.vi-elastic-bottom::after {
+  box-shadow:
+    0 -10px 28px rgba(245,130,31,.10),
+    inset 0 -1px rgba(255,255,255,.06) !important;
+}
+
+/* Static Pac-Man references remain, but nothing animates. */
+.ghost-sprite,
+.pac-dot,
+.pac-pellet-rail,
+.vi-notification-phantom .ghost-sprite {
+  animation:none !important;
+  transition:none !important;
+}
+
+@media (max-width: 800px) {
+  .vi-financial-shell,
+  .vi-meeting-priorities,
+  .vi-findings,
+  .vi-cut-history,
+  .vi-reconciliation-shell {
+    contain-intrinsic-size: 1px 640px;
+  }
+}
