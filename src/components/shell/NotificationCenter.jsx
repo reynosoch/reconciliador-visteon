@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
+import { Ghost, PelletRail } from "../visual/PacmanGlyphs.jsx";
 import { syncOperationalAlerts } from "../../domain/notificationState.js";
 import { currentAlerts } from "../../domain/visibleAlerts.js";
 import { loadAlerts, saveAlerts, STORAGE_WARNING } from "../../services/browserStorage.js";
@@ -40,6 +41,7 @@ export default function NotificationCenter({
   onOperationalStateChange,
   onPersistenceError,
   returnPulse = 0,
+  missingSources = [],
 }) {
   const [record, setRecord] = useState({ inventoryId: null, value: {} });
   const stateRef = useRef({});
@@ -129,8 +131,7 @@ export default function NotificationCenter({
       onPersistenceError?.(STORAGE_WARNING),
     );
     onOperationalStateChange?.(next);
-    onOpenFinding?.(alert.id);
-    onClose?.();
+    onOpenFinding?.(alert);
   };
 
   const groups = Object.entries(
@@ -206,9 +207,26 @@ export default function NotificationCenter({
 
           <div className="vi-notification-list">
             {!evaluationValid ? (
-              <div className="vi-bot-status">
-                Carga las fuentes requeridas y espera a que termine la
-                actualización antes de interpretar alertas del corte actual.
+              <div className="vi-notification-empty-state">
+                <div className="vi-notification-phantom" aria-hidden="true">
+                  <Ghost size={46} tone="violet" />
+                  <span className="vi-notification-orbit"><i /><i /><i /></span>
+                </div>
+                <div>
+                  <p className="vi-eyebrow">AÚN NO HAY ACCIONES</p>
+                  <h3>Carga las fuentes del inventario</h3>
+                  <p>
+                    Cuando estén listas, aquí aparecerán las piezas que requieren atención:
+                    diferencias, ubicación, BOM, costo y demás hallazgos accionables.
+                  </p>
+                  {missingSources.length > 0 && (
+                    <div className="vi-notification-missing">
+                      <span>PENDIENTES</span>
+                      <strong>{missingSources.join(" · ")}</strong>
+                    </div>
+                  )}
+                </div>
+                <PelletRail muted />
               </div>
             ) : (
               <>
@@ -251,9 +269,16 @@ export default function NotificationCenter({
                 </div>
 
                 {!active.length && (
-                  <p className="vi-notification-empty">
-                    No encontramos alertas con estos archivos.
-                  </p>
+                  <div className="vi-notification-empty-state is-clear">
+                    <div className="vi-notification-phantom" aria-hidden="true">
+                      <Ghost size={38} tone="cyan" />
+                    </div>
+                    <div>
+                      <p className="vi-eyebrow">SIN ACCIONES PENDIENTES</p>
+                      <h3>El corte actual no generó alertas</h3>
+                      <p>Si cambian los archivos o aparece una nueva diferencia, se mostrará aquí.</p>
+                    </div>
+                  </div>
                 )}
 
                 <div className="vi-notification-cards">
