@@ -23,7 +23,7 @@ const fileBase = (value) =>
     .replace(/[^a-z0-9._-]+/gi, "-")
     .slice(0, 90) || "comparacion";
 const safeSheetName = (value) =>
-  String(value || "Datos").replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Datos";
+  String(value || "Datos").replace(/[\\/?*[\]:]/g, " ").slice(0, 31) || "Datos";
 const sourceFile = (sources, key, fallback) => {
   if (key === "bom" && Array.isArray(sources?.bom?.files) && sources.bom.files.length) {
     return sources.bom.files.map((item) => item.fileName).join(" + ");
