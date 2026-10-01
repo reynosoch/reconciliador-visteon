@@ -1,5 +1,18 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-01-motion-lab",
+    date: "01 OCT 2026",
+    title: "Scroll, Pac-Man y LAB visual",
+    summary: "La experiencia del dashboard ahora conserva movimiento continuo y transiciones físicas más suaves.",
+    items: [
+      "Rubber band con spring de Motion: más sensible, sin vibración y con regreso limpio en los bordes.",
+      "Flujo de datos se repliega al bajar y reaparece al subir con la misma sensación de resorte.",
+      "Pac-Man continúa animándose durante scroll, touchpad y rubber band.",
+      "Paneles principales usan vidrio suave: un poco más opacos y con blur ligero para ver el ambiente sin perder lectura.",
+      "Nueva sección LAB en el menú con Ver animación, que oculta temporalmente todo el dashboard y deja solo Pac-Man.",
+    ],
+  },
+  {
     id: "2026-10-01-logic-scroll",
     date: "01 OCT 2026",
     title: "Trazabilidad y experiencia de uso",
