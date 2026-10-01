@@ -1,6 +1,35 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
+let overlayLockCount = 0;
+let previousBodyOverflow = "";
+let previousBodyOverscroll = "";
+let previousHtmlOverscroll = "";
+
+function lockPageScroll() {
+  if (overlayLockCount === 0) {
+    previousBodyOverflow = document.body.style.overflow;
+    previousBodyOverscroll = document.body.style.overscrollBehavior;
+    previousHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+  }
+
+  overlayLockCount += 1;
+  document.body.style.overflow = "hidden";
+  document.body.style.overscrollBehavior = "none";
+  document.documentElement.style.overscrollBehavior = "none";
+  document.body.classList.add("vi-overlay-open");
+}
+
+function unlockPageScroll() {
+  overlayLockCount = Math.max(0, overlayLockCount - 1);
+  if (overlayLockCount !== 0) return;
+
+  document.body.style.overflow = previousBodyOverflow;
+  document.body.style.overscrollBehavior = previousBodyOverscroll;
+  document.documentElement.style.overscrollBehavior = previousHtmlOverscroll;
+  document.body.classList.remove("vi-overlay-open");
+}
+
 export default function OverlayPortal({ children, onClose }) {
   const root = useRef(null);
   const token = useRef(`vi-overlay-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -8,8 +37,7 @@ export default function OverlayPortal({ children, onClose }) {
   closeRef.current = onClose;
 
   useEffect(() => {
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockPageScroll();
 
     const marker = token.current;
     let pushed = false;
@@ -33,6 +61,7 @@ export default function OverlayPortal({ children, onClose }) {
         else closeRef.current?.();
         return;
       }
+
       if (event.key === "Tab" && root.current) {
         const nodes = [
           ...root.current.querySelectorAll(
@@ -40,6 +69,7 @@ export default function OverlayPortal({ children, onClose }) {
           ),
         ].filter((node) => !node.disabled);
         if (!nodes.length) return;
+
         const first = nodes[0];
         const last = nodes[nodes.length - 1];
         if (event.shiftKey && document.activeElement === first) {
@@ -55,14 +85,17 @@ export default function OverlayPortal({ children, onClose }) {
     addEventListener("popstate", pop);
     document.addEventListener("keydown", key);
     const focusTimer = setTimeout(
-      () => root.current?.querySelector("button,input,select,textarea,[tabindex]")?.focus(),
+      () =>
+        root.current
+          ?.querySelector("button,input,select,textarea,[tabindex]")
+          ?.focus(),
       0,
     );
 
     return () => {
       clearTimeout(historyTimer);
       clearTimeout(focusTimer);
-      document.body.style.overflow = oldOverflow;
+      unlockPageScroll();
       removeEventListener("popstate", pop);
       document.removeEventListener("keydown", key);
       if (pushed && history.state?.viOverlay === marker) history.back();
