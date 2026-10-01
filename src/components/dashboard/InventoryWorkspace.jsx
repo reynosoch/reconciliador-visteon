@@ -1,6 +1,6 @@
 const unitMoney = value => new Intl.NumberFormat("en-US", {style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(value);
 // src/components/dashboard/InventoryWorkspace.jsx
-import React, {
+import {
  useEffect,
  useMemo,
  useRef,
@@ -309,7 +309,7 @@ export default function InventoryWorkspace({
  useEffect(() => {
    if (!filtered.length) return;
    rowVirtualizer.scrollToIndex(0, { align: "start" });
- }, [search, filter]);
+ }, [search, filter, filtered.length, rowVirtualizer]);
 
  return (
 <section
