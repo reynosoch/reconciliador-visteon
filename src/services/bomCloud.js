@@ -27,6 +27,48 @@ function cloudError(error) {
     return new Error("Otra computadora guardó una versión distinta de este BOM. Conservamos tu copia local; revisa qué versión usar.");
   return new Error("No se pudo guardar el respaldo compartido. Revisa la conexión y los permisos de Supabase. Tu copia local sigue guardada.");
 }
+export async function removeBomFileFromCloud(fingerprint, client = bomClient) {
+  if (!client) throw new Error("Falta configurar la conexión a Supabase. No se borró el BOM.");
+  if (!fingerprint) throw new Error("No se encontró la huella del archivo BOM. No se borró nada.");
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await client
+      .from("inventory_bom_current")
+      .select("revision,library")
+      .eq("id", true)
+      .single();
+    if (error) throw cloudError(error);
+
+    const file = (data.library?.files || []).find((item) => item?.fingerprint === fingerprint);
+    if (!file) return data.library;
+
+    const removed = await client.rpc("remove_inventory_bom", {
+      expected_revision: data.revision,
+      target_fingerprint: fingerprint,
+    });
+    if (removed.error) {
+      if (removed.error?.code === "PGRST202" || removed.error?.message?.includes("remove_inventory_bom")) {
+        throw new Error("Falta activar el borrado BOM en Supabase. No se borró la copia local ni la compartida.");
+      }
+      throw cloudError(removed.error);
+    }
+
+    if (removed.data?.status === "stale") continue;
+
+    if (["deleted", "not_found"].includes(removed.data?.status)) {
+      const refreshed = await client
+        .from("inventory_bom_current")
+        .select("library")
+        .eq("id", true)
+        .single();
+      if (refreshed.error) throw cloudError(refreshed.error);
+      return refreshed.data.library;
+    }
+  }
+
+  throw new Error("Otra computadora cambió los BOM mientras intentabas borrar. No se borró nada; vuelve a intentarlo.");
+}
+
 export async function syncBomLibrary(local, client = bomClient) {
   if (!client) throw new Error("Falta configurar la conexión a Supabase. Tu copia local sigue guardada.");
   for (let attempt = 0; attempt < 3; attempt++) {
