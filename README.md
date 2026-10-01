@@ -123,7 +123,7 @@ La aplicación incluye:
 - Drawers laterales con apariencia líquida pero mayor opacidad; el dashboard prioriza legibilidad y rendimiento sobre blur/transparencias costosas.
 - `Estado de datos` abre un visor tipo hoja de cálculo con letras de columna, números de fila, búsqueda, pestaña de hoja y navegación de regreso al hallazgo.
 - `Posible ubicación` explica su cálculo en UI y permite abrir el PN directamente en el visor por localidad; los vínculos de cantidades son evidencia navegable, no ajustes automáticos.
-- La animación ambiental de Pac-Man puede activarse o desactivarse desde el menú; la preferencia se guarda en este dispositivo.
+- La animación ambiental de Pac-Man puede activarse o desactivarse desde el menú; la preferencia se guarda en este dispositivo. El LAB permite verla a pantalla completa sin alterar esa preferencia.
 
 ## Arquitectura
 
@@ -449,7 +449,7 @@ Proyecto PoC de conciliación de inventario para Visteon. El dashboard apoya la 
 
 La interfaz conserva una estética líquida Visteon, pero las superficies de lectura son deliberadamente más opacas y evitan blur costoso en el hot path. Los reflejos/gradientes son estáticos; el rendimiento y la legibilidad financiera tienen prioridad.
 
-El menú hamburguesa contiene opciones futuras marcadas como **DEVELOPMENT**, el Trazador de pieza y el switch persistente para activar/desactivar Pac-Man. Ya no existe un modo separado que oculte el dashboard.
+El menú hamburguesa contiene una sección **LAB** con el Trazador de pieza y **Ver animación**. Ver animación oculta temporalmente todo el dashboard y deja únicamente el ambiente Pac-Man, con salida por `×` o `Esc`; no altera la preferencia persistente de Pac-Man.
 
 ### Discrepancias por investigar
 
