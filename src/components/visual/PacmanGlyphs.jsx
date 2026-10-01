@@ -51,6 +51,8 @@ export function AmbientChase() {
 
     let frame = 0;
     let last = 0;
+    let lastPaint = 0;
+    let pauseUntil = 0;
     let point = { x: 48, y: 180 };
     let target = { ...point };
     let trail = [];
@@ -164,11 +166,16 @@ export function AmbientChase() {
     chooseRoamTarget();
 
     const tick = (now) => {
-      if (reducedMotion.matches || document.hidden) {
+      if (reducedMotion.matches || document.hidden || now < pauseUntil) {
         last = now;
         frame = requestAnimationFrame(tick);
         return;
       }
+      if (lastPaint && now - lastPaint < 34) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      lastPaint = now;
 
       const powered = now < powerUntil;
       if (!powered && host.classList.contains("is-power-mode")) {
@@ -234,12 +241,20 @@ export function AmbientChase() {
       nextPowerAt = performance.now() + 4000 + Math.random() * 7000;
     };
 
+    const pauseForScroll = () => {
+      pauseUntil = performance.now() + 190;
+    };
+
     window.addEventListener("resize", resize);
+    window.addEventListener("wheel", pauseForScroll, { passive: true });
+    window.addEventListener("touchmove", pauseForScroll, { passive: true });
     frame = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("wheel", pauseForScroll);
+      window.removeEventListener("touchmove", pauseForScroll);
     };
   }, []);
 
