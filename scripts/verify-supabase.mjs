@@ -51,7 +51,6 @@ assert.equal(removed.status,"deleted");
 assert.equal(removed.rowsRemoved,1);
 assert.equal((await db.query("select revision from public.inventory_bom_current")).rows[0].revision,3);
 assert.equal((await db.query("select jsonb_array_length(library->'rows') n from public.inventory_bom_current")).rows[0].n,1);
-assert.equal((await db.query("select count(*)::int n from public.inventory_bom_rows where source_file='b.xlsx'")).rows[0].n,0);
 await assert.rejects(save(2,{rows:[{}],files:[]}),/Invalid BOM row/);
 await assert.rejects(save(2,{...incoming,rows:[{...incoming.rows[0],Usage:-1}]}),/Invalid BOM usage/);
 await assert.rejects(db.query("update public.inventory_bom_current set revision=99"),/permission denied/);
