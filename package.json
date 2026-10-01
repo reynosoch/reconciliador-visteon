@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/verify-repo-clean.mjs && node scripts/verify-finance.mjs && node scripts/verify-discrepancies.mjs && node scripts/verify-ui-safety.mjs && node scripts/verify-dexie.mjs && node scripts/verify-export.mjs && node scripts/verify-meeting-rules.mjs && node scripts/verify-imports.mjs && node scripts/verify-supabase.mjs && vite build",
+    "build": "node scripts/verify-repo-clean.mjs && node scripts/verify-unused.mjs && node scripts/verify-finance.mjs && node scripts/verify-discrepancies.mjs && node scripts/verify-ui-safety.mjs && node scripts/verify-dexie.mjs && node scripts/verify-export.mjs && node scripts/verify-meeting-rules.mjs && node scripts/verify-imports.mjs && node scripts/verify-supabase.mjs && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
