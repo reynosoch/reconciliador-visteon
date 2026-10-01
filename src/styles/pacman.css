@@ -2411,3 +2411,118 @@ body.vi-overlay-open .vi-shell {
     animation: none !important;
   }
 }
+
+
+/* 2026-10-01 · Fast native scrolling + iPad-like elastic edges */
+:is(
+  .vi-shell,
+  .vi-drawer-panel,
+  .vi-detail-drawer,
+  .vi-global-drawer,
+  .vi-menu-panel,
+  .vi-source-preview-table-wrap,
+  .vi-inspection-scroll,
+  .vi-excel-grid-wrap,
+  .vi-dual-grid,
+  .vi-findings-table-wrap,
+  .vi-table-shell
+) {
+  scroll-behavior: auto !important;
+  transition: transform .22s cubic-bezier(.16,1,.3,1);
+}
+
+:is(
+  .vi-shell,
+  .vi-drawer-panel,
+  .vi-detail-drawer,
+  .vi-global-drawer,
+  .vi-menu-panel,
+  .vi-source-preview-table-wrap,
+  .vi-inspection-scroll,
+  .vi-excel-grid-wrap,
+  .vi-dual-grid,
+  .vi-findings-table-wrap,
+  .vi-table-shell
+).vi-elastic-top {
+  transform-origin: center top;
+  transform:
+    translate3d(0,var(--vi-elastic-shift,0px),0)
+    scaleY(var(--vi-elastic-scale,1)) !important;
+  will-change: transform;
+}
+
+:is(
+  .vi-shell,
+  .vi-drawer-panel,
+  .vi-detail-drawer,
+  .vi-global-drawer,
+  .vi-menu-panel,
+  .vi-source-preview-table-wrap,
+  .vi-inspection-scroll,
+  .vi-excel-grid-wrap,
+  .vi-dual-grid,
+  .vi-findings-table-wrap,
+  .vi-table-shell
+).vi-elastic-bottom {
+  transform-origin: center bottom;
+  transform:
+    translate3d(0,var(--vi-elastic-shift,0px),0)
+    scaleY(var(--vi-elastic-scale,1)) !important;
+  will-change: transform;
+}
+
+/* Free the compositor while the user is actively moving through the dashboard. */
+.vi-shell.vi-scroll-moving .vi-ambient-hunter,
+.vi-shell.vi-scroll-moving .vi-ambient-ghost,
+.vi-shell.vi-scroll-moving .vi-arcade-fruit,
+.vi-shell.vi-scroll-moving .vi-arcade-score {
+  animation-play-state: paused !important;
+}
+
+/* Blur is pretty but expensive while a long drawer is moving. Restore it as soon as movement ends. */
+.vi-sources-drawer.vi-scroll-moving .vi-sources-head,
+.vi-notification-drawer.vi-scroll-moving .vi-notification-head,
+.vi-menu-panel.vi-scroll-moving {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Keep expensive paint effects out of the hot scroll path. */
+.vi-scroll-moving {
+  scroll-behavior: auto !important;
+}
+.vi-shell.vi-scroll-moving .vi-command-header {
+  transition-duration: .18s !important;
+}
+.vi-shell.vi-scroll-moving .vi-source-ribbon {
+  transition-duration: .18s !important;
+}
+
+/* Tables and large data panes stay on their own paint layer while scrolling. */
+.vi-findings-table-wrap,
+.vi-table-shell,
+.vi-inspection-scroll,
+.vi-excel-grid-wrap,
+.vi-source-preview-table-wrap {
+  contain: paint;
+}
+
+/* Elastic feedback is decorative; accessibility preference removes it completely. */
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    .vi-shell,
+    .vi-drawer-panel,
+    .vi-detail-drawer,
+    .vi-global-drawer,
+    .vi-menu-panel,
+    .vi-source-preview-table-wrap,
+    .vi-inspection-scroll,
+    .vi-excel-grid-wrap,
+    .vi-dual-grid,
+    .vi-findings-table-wrap,
+    .vi-table-shell
+  ) {
+    transform: none !important;
+    transition: none !important;
+  }
+}
