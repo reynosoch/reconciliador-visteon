@@ -1,5 +1,6 @@
 import { rawScanObject } from "../../domain/scanView.js";
 import { useEffect, useMemo, useState } from "react";
+import ExportFormatDialog from "../shell/ExportFormatDialog.jsx";
 
 const PAGE_SIZE = 50;
 const count = (value) => new Intl.NumberFormat("es-MX").format(Number(value) || 0);
@@ -14,6 +15,90 @@ const letter = (index) => {
   }
   return result;
 };
+
+const fileName = (value, fallback = "fuente") => String(value || fallback);
+const fileBase = (value) =>
+  fileName(value)
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-z0-9._-]+/gi, "-")
+    .slice(0, 90) || "comparacion";
+const safeSheetName = (value) =>
+  String(value || "Datos").replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Datos";
+const sourceFile = (sources, key, fallback) => {
+  if (key === "bom" && Array.isArray(sources?.bom?.files) && sources.bom.files.length) {
+    return sources.bom.files.map((item) => item.fileName).join(" + ");
+  }
+  return sources?.[key]?.fileName || fallback;
+};
+const exportRows = (sheet) =>
+  (sheet.rows || []).map((row) =>
+    Object.fromEntries(
+      (sheet.columns || []).map((column) => [column.label, row?.[column.key] ?? ""]),
+    ),
+  );
+
+function downloadBlob(content, name, type) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function downloadComparison(payload, format) {
+  const sheets = payload?.sheets || [];
+  const base = fileBase(payload?.fileName || payload?.title || "comparacion");
+
+  if (format === "xlsx") {
+    const XLSX = await import("xlsx");
+    const book = XLSX.utils.book_new();
+    if (payload?.summary) {
+      XLSX.utils.book_append_sheet(
+        book,
+        XLSX.utils.json_to_sheet([{ Resumen: payload.summary }]),
+        "Resumen",
+      );
+    }
+    sheets.forEach((sheet, index) => {
+      XLSX.utils.book_append_sheet(
+        book,
+        XLSX.utils.json_to_sheet(exportRows(sheet)),
+        safeSheetName(sheet.title || `Hoja ${index + 1}`),
+      );
+    });
+    XLSX.writeFile(book, `${base}.xlsx`, { compression: true });
+    return;
+  }
+
+  const separator = format === "txt" ? "\t" : ",";
+  const quote = (value) => {
+    const text = String(value ?? "");
+    if (format === "txt") return text.replace(/\t/g, " ");
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+  const sections = [];
+  if (payload?.summary) sections.push(`RESUMEN: ${payload.summary}`);
+  sheets.forEach((sheet) => {
+    const columns = sheet.columns || [];
+    sections.push(
+      [
+        `[${sheet.title || "Datos"}]`,
+        columns.map((column) => quote(column.label)).join(separator),
+        ...(sheet.rows || []).map((row) =>
+          columns.map((column) => quote(row?.[column.key] ?? "")).join(separator),
+        ),
+      ].join("\n"),
+    );
+  });
+  downloadBlob(
+    sections.join("\n\n"),
+    `${base}.${format}`,
+    format === "csv" ? "text/csv;charset=utf-8" : "text/plain;charset=utf-8",
+  );
+}
 
 const VIEW_TITLES = {
   overview: "Fuentes cargadas",
@@ -221,12 +306,15 @@ function getView(view, { scanRows, diagnostics, reconciliation, referenceRows, s
   }
 }
 
-function SheetTable({ title, rows, columns, emptyMessage }) {
+function SheetTable({ title, fileName: sheetFileName, rows, columns, emptyMessage }) {
   const visible = rows.slice(0, 120);
   return (
     <section className="vi-dual-sheet">
       <div className="vi-dual-sheet-title">
-        <strong>{title}</strong>
+        <div>
+          <strong>{title}</strong>
+          <small title={sheetFileName}>{sheetFileName || "Fuente sin nombre"}</small>
+        </div>
         <span>{count(rows.length)} filas</span>
       </div>
       <div className="vi-dual-sheet-scroll">
@@ -256,7 +344,15 @@ function SheetTable({ title, rows, columns, emptyMessage }) {
   );
 }
 
-function FindingEvidenceView({ finding, scanRows, referenceRows, reconciliation, onClose }) {
+function FindingEvidenceView({
+  finding,
+  scanRows,
+  referenceRows,
+  reconciliation,
+  sources,
+  onClose,
+  onExport,
+}) {
   const pn = clean(finding?.partNumber);
   const qadRows = (referenceRows.qad || []).filter((row) => clean(row["Item Number"]) === pn);
   const physicalRows = scanRows.filter((row) => clean(row.numero_parte) === pn || clean(rawScanObject(row)["Número Parte QAD"]) === pn);
@@ -265,9 +361,16 @@ function FindingEvidenceView({ finding, scanRows, referenceRows, reconciliation,
   const areaNames = new Set(physicalRows.map((row) => clean(row.area_escaneo)).filter(Boolean));
   const areaRows = (referenceRows.areas || []).filter((row) => areaNames.has(clean(row.Nombre)));
   const item = reconciliation.find((row) => clean(row.partNumber) === pn);
+  const names = {
+    scans: sourceFile(sources, "scans", "4Wall · snapshot Supabase DEV"),
+    qad: sourceFile(sources, "qad", "QAD"),
+    cost: sourceFile(sources, "cost", "Cost Part"),
+    bom: sourceFile(sources, "bom", "BOM"),
+    areas: sourceFile(sources, "areas", "4Wall-Area"),
+  };
 
-  let left = { title: "QAD", rows: qadRows, columns: [{label:"Part Number",key:"Item Number"},{label:"Localidad",key:"Location"},{label:"Cantidad",key:"Quantity On Hand"},{label:"Sitio",key:"Site"}] };
-  let right = { title: "4Wall", rows: scanViewRows(physicalRows), columns: scanColumns(physicalRows) };
+  let left = { title: "QAD", fileName: names.qad, rows: qadRows, columns: [{label:"Part Number",key:"Item Number"},{label:"Localidad",key:"Location"},{label:"Cantidad",key:"Quantity On Hand"},{label:"Sitio",key:"Site"}] };
+  let right = { title: "4Wall", fileName: names.scans, rows: scanViewRows(physicalRows), columns: scanColumns(physicalRows) };
   let message = "";
 
   if (finding?.ruleCode === "NO_PHYSICAL") {
@@ -279,16 +382,16 @@ function FindingEvidenceView({ finding, scanRows, referenceRows, reconciliation,
       ? "Hay filas QAD, pero su saldo total evaluado es cero. Compare localidad y Site antes de clasificar el material."
       : "Hay físico 4Wall, pero el archivo QAD filtrado no contiene este PN.";
   } else if (finding?.ruleCode === "UNVALUED") {
-    left = { title: "Cost Part", rows: costRows, columns: [{label:"Part Number",key:"Item Number"},{label:"Cost Total",key:"Cost Total"},{label:"Status",key:"Status"},{label:"Site",key:"Site"}] };
-    right = { title: "Conciliación", rows: item ? [{partNumber:item.partNumber,netPieces:item.financial?.netPieces,costState:item.master?.costState,netUsd:item.master?.hasCost?item.financial?.netUsd:"SIN VALORAR"}] : [], columns:[{label:"Part Number",key:"partNumber"},{label:"Diferencia piezas",key:"netPieces"},{label:"Estado costo",key:"costState"},{label:"NET USD",key:"netUsd"}] };
+    left = { title: "Cost Part", fileName: names.cost, rows: costRows, columns: [{label:"Part Number",key:"Item Number"},{label:"Cost Total",key:"Cost Total"},{label:"Status",key:"Status"},{label:"Site",key:"Site"}] };
+    right = { title: "Conciliación", fileName: "Resultado calculado por el reconciliador", rows: item ? [{partNumber:item.partNumber,netPieces:item.financial?.netPieces,costState:item.master?.costState,netUsd:item.master?.hasCost?item.financial?.netUsd:"SIN VALORAR"}] : [], columns:[{label:"Part Number",key:"partNumber"},{label:"Diferencia piezas",key:"netPieces"},{label:"Estado costo",key:"costState"},{label:"NET USD",key:"netUsd"}] };
     message = "La diferencia en piezas existe, pero falta un costo válido y no contradictorio para convertirla a dólares.";
   } else if (finding?.ruleCode === "UNMAPPED_AREA") {
-    left = { title: "4Wall", rows: scanViewRows(physicalRows), columns: scanColumns(physicalRows) };
-    right = { title: "Diccionario 4Wall-Area", rows: areaRows, columns:[{label:"Área 4Wall",key:"Nombre"},{label:"Localidad QAD",key:"Localidad QAD"},{label:"Área General",key:"Área General"}] };
+    left = { title: "4Wall", fileName: names.scans, rows: scanViewRows(physicalRows), columns: scanColumns(physicalRows) };
+    right = { title: "Diccionario 4Wall-Area", fileName: names.areas, rows: areaRows, columns:[{label:"Área 4Wall",key:"Nombre"},{label:"Localidad QAD",key:"Localidad QAD"},{label:"Área General",key:"Área General"}] };
     message = "Compare el nombre del área de 4Wall contra el diccionario. Si no existe una Localidad QAD válida, el motor conserva UNMAPPED.";
   } else if (finding?.ruleCode === "BOM_REVIEW") {
-    left = { title: "BOM", rows: bomRows, columns:[{label:"Padre",key:"Parent Item"},{label:"Componente",key:"Component"},{label:"Usage",key:"Usage"},{label:"Site",key:"Site"}] };
-    right = { title: "4Wall", rows: scanViewRows(physicalRows), columns: scanColumns(physicalRows) };
+    left = { title: "BOM", fileName: names.bom, rows: bomRows, columns:[{label:"Padre",key:"Parent Item"},{label:"Componente",key:"Component"},{label:"Usage",key:"Usage"},{label:"Site",key:"Site"}] };
+    right = { title: "4Wall", fileName: names.scans, rows: scanViewRows(physicalRows), columns: scanColumns(physicalRows) };
     message = "La relación BOM sirve para investigar; por sí sola no crea físico ni modifica el NET.";
   } else if (finding?.ruleCode === "LOCATION_CANDIDATE") {
     message = "Las dos fuentes se muestran lado a lado. Use el diccionario 4Wall-Area para comprobar que el área física corresponda a la misma Localidad QAD antes de inferir un movimiento.";
@@ -305,12 +408,37 @@ function FindingEvidenceView({ finding, scanRows, referenceRows, reconciliation,
           <span>{finding?.ruleCode || "Hallazgo"}</span>
         </div>
         <div className="vi-excel-title-actions">
-          <button type="button" className="vi-excel-back" onClick={onClose}><span aria-hidden="true">‹</span> REGRESAR</button>
+          <button
+            type="button"
+            className="vi-excel-export"
+            onClick={() => onExport?.({
+              title: `Evidencia ${finding?.partNumber || "comparación"}`,
+              fileName: `evidencia-${finding?.partNumber || "comparacion"}`,
+              summary: message,
+              sheets: [left, right],
+            })}
+          >
+            ↓ DESCARGAR
+          </button>
+          <button type="button" className="vi-excel-back" onClick={onClose}>
+            <span aria-hidden="true">←</span>
+            <strong>VOLVER AL HALLAZGO</strong>
+          </button>
         </div>
+      </div>
+      <div className="vi-excel-readonly-note">
+        <strong>SOLO LECTURA</strong>
+        <span>Este visor no modifica archivos. Si necesitas cambiar datos, corrige el archivo original y vuelve a cargarlo en Fuentes.</span>
       </div>
       <div className="vi-evidence-alert">
         <strong>Qué está pasando</strong>
         <span>{message}</span>
+      </div>
+      <div className="vi-evidence-sources">
+        <span>COMPARACIÓN</span>
+        <strong>{left.fileName || left.title}</strong>
+        <i>↔</i>
+        <strong>{right.fileName || right.title}</strong>
       </div>
       <div className="vi-dual-grid">
         <SheetTable {...left} emptyMessage={`No hay filas de ${left.title} para este Part Number.`} />
@@ -327,6 +455,8 @@ export default function DataInspectionPanel({
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [page, setPage] = useState(0);
+  const [exportPayload, setExportPayload] = useState(null);
+  const [exportBusy, setExportBusy] = useState("");
 
   useEffect(() => {
     setQuery(initialQuery || "");
@@ -351,15 +481,38 @@ export default function DataInspectionPanel({
   const visible = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
   const parts = useMemo(() => new Map(reconciliation.map((item) => [item.partNumber, item])), [reconciliation]);
 
+  const runExport = async (format) => {
+    if (!exportPayload || exportBusy) return;
+    setExportBusy(format);
+    try {
+      await downloadComparison(exportPayload, format);
+      setExportPayload(null);
+    } finally {
+      setExportBusy("");
+    }
+  };
+
   if (view === "findingEvidence" && findingContext) {
     return (
-      <FindingEvidenceView
-        finding={findingContext}
-        scanRows={scanRows}
-        referenceRows={referenceRows}
-        reconciliation={reconciliation}
-        onClose={onClose}
-      />
+      <>
+        <FindingEvidenceView
+          finding={findingContext}
+          scanRows={scanRows}
+          referenceRows={referenceRows}
+          reconciliation={reconciliation}
+          sources={sources}
+          onClose={onClose}
+          onExport={setExportPayload}
+        />
+        <ExportFormatDialog
+          open={Boolean(exportPayload)}
+          busy={exportBusy}
+          onSelect={runExport}
+          onClose={() => {
+            if (!exportBusy) setExportPayload(null);
+          }}
+        />
+      </>
     );
   }
 
@@ -372,6 +525,7 @@ export default function DataInspectionPanel({
   };
 
   return (
+    <>
     <section className="vi-inspection vi-excel-viewer" id="vi-data-inspection" aria-label={VIEW_TITLES[view]}>
       <div className="vi-excel-titlebar">
         <div className="vi-excel-appmark">X</div>
@@ -380,6 +534,18 @@ export default function DataInspectionPanel({
           <span>{VIEW_TITLES[view]}</span>
         </div>
         <div className="vi-excel-title-actions">
+          <button
+            type="button"
+            className="vi-excel-export"
+            onClick={() => setExportPayload({
+              title: VIEW_TITLES[view],
+              fileName: VIEW_TITLES[view],
+              summary: viewData.description,
+              sheets: [{ title: VIEW_TITLES[view], rows: filtered, columns: viewData.columns }],
+            })}
+          >
+            ↓ DESCARGAR
+          </button>
           <button type="button" className="vi-icon-close vi-excel-close" onClick={onClose} aria-label="Cerrar visor">×</button>
         </div>
       </div>
@@ -398,6 +564,10 @@ export default function DataInspectionPanel({
           placeholder="Buscar Part Number, localidad, área, motivo..."
           aria-label="Buscar en esta hoja"
         />
+      </div>
+      <div className="vi-excel-readonly-note">
+        <strong>SOLO LECTURA</strong>
+        <span>Para modificar esta información, cambia el archivo original y vuelve a subirlo en Fuentes.</span>
       </div>
       <p className="vi-inspection-description">{viewData.description}</p>
       <div className="vi-inspection-scroll vi-excel-grid-wrap">
@@ -446,5 +616,14 @@ export default function DataInspectionPanel({
         )}
       </div>
     </section>
+    <ExportFormatDialog
+      open={Boolean(exportPayload)}
+      busy={exportBusy}
+      onSelect={runExport}
+      onClose={() => {
+        if (!exportBusy) setExportPayload(null);
+      }}
+    />
+    </>
   );
 }
