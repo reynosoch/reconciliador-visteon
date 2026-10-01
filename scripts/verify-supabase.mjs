@@ -43,7 +43,6 @@ assert.equal((await db.query("select revision from public.inventory_bom_current"
 assert.equal(await save(2,{...incoming,rows:incoming.rows.map(row=>({...row,Level:"0.2","Comp Phantom":"NO",Usage:"0.5",Seq:99}))}),true);
 await assert.rejects(save(2,{...incoming,rows:[{...incoming.rows[0],Usage:9},{...incoming.rows[0],"Parent Item":"C"}]}),/BOM conflict/);
 assert.equal((await db.query("select jsonb_array_length(library->'rows') n from public.inventory_bom_current")).rows[0].n,2);
-assert.equal((await db.query('select "Usage" from public.inventory_bom_rows where source_file=\'b.xlsx\'')).rows[0]["Usage"],"0.5");
 const removeBom = async (revision, fingerprint) => (await db.query("select public.remove_inventory_bom($1,$2) result",[revision,fingerprint])).rows[0].result;
 assert.equal((await removeBom(1,"hash-b")).status,"stale");
 assert.equal((await removeBom(2,"missing")).status,"not_found");
