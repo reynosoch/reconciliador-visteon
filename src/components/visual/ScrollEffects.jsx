@@ -1,183 +1,358 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
+import {
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useSpring,
+} from "motion/react";
 
-const RUBBER_MAX_PX = 54;
-const RUBBER_CURVE = 155;
-const FOLLOW_TAU_MS = 14;
-const RETURN_TAU_MS = 22;
-const WHEEL_RELEASE_MS = 28;
-const RAW_LIMIT = 340;
+const RUBBER_MAX_PX = 52;
+const RUBBER_CURVE = 150;
+const RAW_LIMIT = 320;
+const WHEEL_RELEASE_MS = 46;
+const MOMENTUM_GUARD_MS = 90;
+const MOMENTUM_GUARD_DELTA = 2.4;
+
+const SPRING = {
+  stiffness: 520,
+  damping: 34,
+  mass: 0.55,
+  restDelta: 0.05,
+  restSpeed: 0.55,
+};
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 const rubberDistance = (distance) =>
-  Math.sign(distance) * RUBBER_MAX_PX * (1 - Math.exp(-Math.abs(distance) / RUBBER_CURVE));
+  Math.sign(distance) *
+  RUBBER_MAX_PX *
+  (1 - Math.exp(-Math.abs(distance) / RUBBER_CURVE));
 
-/** Native scrolling in the middle; only the clipped content moves at an edge. */
+/**
+ * Native scrolling owns the middle of the gesture.
+ * Motion only springs the clipped content when the viewport reaches an edge.
+ */
 export default function ScrollEffects({ viewportRef, contentRef }) {
   const viewportId = useId();
   const railRef = useRef(null);
   const thumbRef = useRef(null);
+  const metricsRef = useRef({
+    extent: 0,
+    track: 0,
+    thumbSize: 0,
+    pull: 0,
+  });
+
+  const reduceMotion = useReducedMotion();
+  const pullTarget = useMotionValue(0);
+  const pullSpring = useSpring(pullTarget, SPRING);
+
+  const paintThumb = () => {
+    const viewport = viewportRef.current;
+    const rail = railRef.current;
+    const thumb = thumbRef.current;
+    if (!viewport || !rail || !thumb) return;
+
+    const { extent, track, thumbSize, pull } = metricsRef.current;
+    const compressed = Math.max(18, thumbSize - Math.abs(pull) * 0.3);
+    const fraction = extent
+      ? clamp(viewport.scrollTop / extent, 0, 1)
+      : 0;
+    const y = fraction * Math.max(0, track - compressed);
+
+    thumb.style.height = `${compressed.toFixed(2)}px`;
+    thumb.style.transform = `translate3d(0,${y.toFixed(2)}px,0)`;
+    rail.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
+  };
+
+  useMotionValueEvent(pullSpring, "change", (latest) => {
+    const content = contentRef.current;
+    const rail = railRef.current;
+    if (!content || !rail) return;
+
+    const pull = Math.abs(latest) < 0.025 ? 0 : latest;
+    metricsRef.current.pull = pull;
+
+    if (pull === 0) {
+      content.style.removeProperty("transform");
+      content.style.removeProperty("transform-origin");
+      content.style.removeProperty("will-change");
+      rail.classList.remove("is-pulling");
+    } else {
+      const stretch = 1 + Math.min(RUBBER_MAX_PX, Math.abs(pull)) / 6500;
+      content.style.willChange = "transform";
+      content.style.transformOrigin = pull > 0 ? "center top" : "center bottom";
+      content.style.transform =
+        `translate3d(0,${pull.toFixed(3)}px,0) scaleY(${stretch.toFixed(5)})`;
+      rail.classList.add("is-pulling");
+    }
+
+    paintThumb();
+  });
 
   useEffect(() => {
     const viewport = viewportRef.current;
     const content = contentRef.current;
     const rail = railRef.current;
     const thumb = thumbRef.current;
-    if (!viewport || !content || !rail || !thumb) return;
+    if (!viewport || !content || !rail || !thumb) return undefined;
+
     if (!viewport.id) viewport.id = viewportId;
     rail.setAttribute("aria-controls", viewport.id);
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-    let raw = 0, pull = 0, targetPull = 0, frame = 0, timer = 0;
-    let previousTime = 0, touch = null, drag = null;
-    let extent = 0, height = 0, track = 0, thumbSize = 0;
+
+    let raw = 0;
+    let timer = 0;
+    let thumbFrame = 0;
+    let touch = null;
+    let drag = null;
+    let height = 0;
+    let lastReleaseAt = 0;
     const shell = viewport.classList.contains("vi-shell");
     rail.classList.toggle("vi-page-scroll-rail", shell);
+
+    const scheduleThumb = () => {
+      if (thumbFrame) return;
+      thumbFrame = requestAnimationFrame(() => {
+        thumbFrame = 0;
+        paintThumb();
+      });
+    };
 
     const measure = () => {
       const rect = viewport.getBoundingClientRect();
       height = viewport.clientHeight;
-      extent = Math.max(0, viewport.scrollHeight - height);
-      track = Math.max(0, rect.height - 24);
-      thumbSize = Math.min(track, Math.max(36, track * height / Math.max(1, viewport.scrollHeight)));
+      const extent = Math.max(0, viewport.scrollHeight - height);
+      const track = Math.max(0, rect.height - 24);
+      const thumbSize = Math.min(
+        track,
+        Math.max(36, (track * height) / Math.max(1, viewport.scrollHeight)),
+      );
+
+      metricsRef.current.extent = extent;
+      metricsRef.current.track = track;
+      metricsRef.current.thumbSize = thumbSize;
+
       rail.style.top = `${rect.top + 12}px`;
       rail.style.left = `${rect.right - 13}px`;
       rail.style.height = `${track}px`;
       rail.hidden = extent <= 1;
-      schedule();
+      scheduleThumb();
     };
-    const paint = (time) => {
-      frame = 0;
-      const dt = previousTime ? Math.min(34, Math.max(0, time - previousTime)) : 16;
-      previousTime = time;
 
-      const tau = Math.abs(targetPull) > 0.01 ? FOLLOW_TAU_MS : RETURN_TAU_MS;
-      const follow = 1 - Math.exp(-dt / tau);
-      pull += (targetPull - pull) * follow;
-
-      if (Math.abs(targetPull - pull) < 0.12) {
-        pull = targetPull;
-        if (targetPull === 0) raw = 0;
-      }
-
-      if (Math.abs(pull) > 0.01) {
-        content.style.transformOrigin = pull > 0 ? "center top" : "center bottom";
-        content.style.transform = `translate3d(0,${pull.toFixed(3)}px,0) scaleY(${(1 + Math.abs(pull) / 4300).toFixed(5)})`;
-      } else {
-        pull = 0;
-        content.style.removeProperty("transform");
-        content.style.removeProperty("transform-origin");
-      }
-
-      const compressed = Math.max(18, thumbSize - Math.abs(pull) * 0.42);
-      const fraction = extent ? Math.max(0, Math.min(1, viewport.scrollTop / extent)) : 0;
-      const y = fraction * (track - compressed);
-      thumb.style.height = `${compressed.toFixed(2)}px`;
-      thumb.style.transform = `translate3d(0,${y.toFixed(2)}px,0)`;
-      rail.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
-      rail.classList.toggle("is-pulling", Math.abs(pull) > 0.5);
-
-      if (Math.abs(targetPull - pull) >= 0.12) schedule();
+    const jumpToRest = () => {
+      clearTimeout(timer);
+      timer = 0;
+      raw = 0;
+      pullTarget.jump(0);
+      pullSpring.jump(0);
+      metricsRef.current.pull = 0;
+      content.style.removeProperty("transform");
+      content.style.removeProperty("transform-origin");
+      content.style.removeProperty("will-change");
+      rail.classList.remove("is-pulling");
+      scheduleThumb();
     };
-    function schedule() { if (!frame) frame = requestAnimationFrame(paint); }
+
     const release = () => {
       clearTimeout(timer);
       timer = 0;
       touch = null;
       raw = 0;
-      targetPull = 0;
-      previousTime = performance.now();
-      schedule();
+      lastReleaseAt = performance.now();
+
+      if (reduceMotion) {
+        jumpToRest();
+      } else {
+        pullTarget.set(0);
+      }
     };
+
     const reset = () => {
-      clearTimeout(timer);
-      timer = 0;
       raw = 0;
-      pull = 0;
-      targetPull = 0;
-      previousTime = 0;
-      schedule();
+      if (reduceMotion) jumpToRest();
+      else pullTarget.set(0);
     };
-    const atEdge = (delta) => extent > 1 &&
-      ((delta > 0 && viewport.scrollTop <= 1) ||
-       (delta < 0 && viewport.scrollTop >= extent - 1));
+
+    const atEdge = (delta) => {
+      const extent = metricsRef.current.extent;
+      return (
+        extent > 1 &&
+        ((delta > 0 && viewport.scrollTop <= 1) ||
+          (delta < 0 && viewport.scrollTop >= extent - 1))
+      );
+    };
+
     const nestedScroller = (target) => {
       let node = target instanceof Element ? target : null;
       while (node && node !== viewport) {
-        if (node.scrollHeight > node.clientHeight + 1 &&
-            /auto|scroll/.test(getComputedStyle(node).overflowY)) return true;
+        if (
+          node.scrollHeight > node.clientHeight + 1 &&
+          /auto|scroll/.test(getComputedStyle(node).overflowY)
+        ) {
+          return true;
+        }
         node = node.parentElement;
       }
       return false;
     };
+
     const pullBy = (delta, mode = "touch") => {
-      if (reduced.matches) return;
+      if (reduceMotion) return false;
+
       clearTimeout(timer);
       timer = 0;
 
       if (raw && Math.sign(raw) !== Math.sign(delta)) raw = 0;
 
-      // Wheel momentum arrives in uneven packets. Accumulate a damped target,
-      // then let requestAnimationFrame interpolate the visible motion.
-      const contribution = mode === "wheel" ? delta * 0.48 : delta;
-      raw = Math.max(-RAW_LIMIT, Math.min(RAW_LIMIT, raw + contribution));
-      targetPull = rubberDistance(raw);
-      schedule();
+      const bounded = clamp(delta, -120, 120);
+      if (mode === "wheel") {
+        // Trackpads emit uneven momentum packets. Decay prior energy and feed
+        // the spring a stable target instead of exposing every packet visually.
+        raw = raw * 0.72 + bounded * 1.05;
+      } else {
+        raw += bounded;
+      }
+
+      raw = clamp(raw, -RAW_LIMIT, RAW_LIMIT);
+      pullTarget.set(rubberDistance(raw));
+      return true;
     };
+
     const wheel = (event) => {
-      if (event.ctrlKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY) ||
-          nestedScroller(event.target)) return;
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height : 1;
+      if (
+        event.ctrlKey ||
+        Math.abs(event.deltaX) >= Math.abs(event.deltaY) ||
+        nestedScroller(event.target)
+      ) {
+        return;
+      }
+
+      const unit =
+        event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height : 1;
       const delta = -event.deltaY * unit;
-      if (atEdge(delta)) {
-        pullBy(delta, "wheel");
-        timer = setTimeout(release, WHEEL_RELEASE_MS);
-      } else if (pull) reset();
+
+      if (!atEdge(delta)) {
+        if (Math.abs(metricsRef.current.pull) > 0.05) reset();
+        return;
+      }
+
+      // Ignore tiny trailing momentum packets just after release. Without this
+      // guard they can wake the spring again and create the visible "tremble".
+      if (
+        performance.now() - lastReleaseAt < MOMENTUM_GUARD_MS &&
+        Math.abs(delta) < MOMENTUM_GUARD_DELTA
+      ) {
+        return;
+      }
+
+      if (pullBy(delta, "wheel")) {
+        timer = window.setTimeout(release, WHEEL_RELEASE_MS);
+      }
     };
+
     const startTouch = (event) => {
-      reset();
-      if (event.touches.length !== 1 || nestedScroller(event.target)) return;
+      clearTimeout(timer);
+      timer = 0;
+      raw = 0;
+
+      if (event.touches.length !== 1 || nestedScroller(event.target)) {
+        touch = null;
+        return;
+      }
+
       const t = event.touches[0];
       touch = { x: t.clientX, y: t.clientY };
     };
+
     const moveTouch = (event) => {
-      if (!touch || event.touches.length !== 1) { release(); return; }
-      const t = event.touches[0], dy = t.clientY - touch.y, dx = t.clientX - touch.x;
+      if (!touch || event.touches.length !== 1) {
+        release();
+        return;
+      }
+
+      const t = event.touches[0];
+      const dy = t.clientY - touch.y;
+      const dx = t.clientX - touch.x;
       touch = { x: t.clientX, y: t.clientY };
+
       if (Math.abs(dx) > Math.abs(dy)) return;
-      if (atEdge(dy) && !reduced.matches) {
+
+      if (atEdge(dy) && !reduceMotion) {
         if (event.cancelable) event.preventDefault();
-        pullBy(dy);
-      } else if (pull) reset();
+        pullBy(dy, "touch");
+      } else if (Math.abs(metricsRef.current.pull) > 0.05) {
+        reset();
+      }
     };
+
     const scroll = (event) => {
       if (event.target !== viewport) return;
-      if (viewport.scrollTop > 1 && viewport.scrollTop < extent - 1 && pull) reset();
-      schedule();
+      const { extent, pull } = metricsRef.current;
+      if (
+        viewport.scrollTop > 1 &&
+        viewport.scrollTop < extent - 1 &&
+        Math.abs(pull) > 0.05
+      ) {
+        reset();
+      }
+      scheduleThumb();
     };
+
     const pointerDown = (event) => {
       if (event.button !== 0) return;
       event.preventDefault();
       reset();
       rail.focus({ preventScroll: true });
+
+      const { extent, track, thumbSize } = metricsRef.current;
       const rect = rail.getBoundingClientRect();
-      if (event.target !== thumb) viewport.scrollTop =
-        ((event.clientY - rect.top - thumbSize / 2) / Math.max(1, track - thumbSize)) * extent;
+      if (event.target !== thumb) {
+        viewport.scrollTop =
+          ((event.clientY - rect.top - thumbSize / 2) /
+            Math.max(1, track - thumbSize)) *
+          extent;
+      }
+
       drag = { y: event.clientY, top: viewport.scrollTop };
       rail.setPointerCapture(event.pointerId);
     };
+
     const pointerMove = (event) => {
-      if (drag) viewport.scrollTop = drag.top +
-        (event.clientY - drag.y) * extent / Math.max(1, track - thumbSize);
+      if (!drag) return;
+      const { extent, track, thumbSize } = metricsRef.current;
+      viewport.scrollTop =
+        drag.top +
+        ((event.clientY - drag.y) * extent) /
+          Math.max(1, track - thumbSize);
     };
-    const pointerEnd = () => { drag = null; };
+
+    const pointerEnd = () => {
+      drag = null;
+    };
+
     const key = (event) => {
-      const moves = { ArrowDown: 48, ArrowUp: -48, PageDown: height * .85, PageUp: -height * .85 };
-      if (event.key in moves) { event.preventDefault(); viewport.scrollTop += moves[event.key]; }
-      else if (event.key === "Home" || event.key === "End") {
-        event.preventDefault(); viewport.scrollTop = event.key === "Home" ? 0 : extent;
+      const moves = {
+        ArrowDown: 48,
+        ArrowUp: -48,
+        PageDown: height * 0.85,
+        PageUp: -height * 0.85,
+      };
+
+      if (event.key in moves) {
+        event.preventDefault();
+        viewport.scrollTop += moves[event.key];
+      } else if (event.key === "Home" || event.key === "End") {
+        event.preventDefault();
+        viewport.scrollTop =
+          event.key === "Home" ? 0 : metricsRef.current.extent;
       }
     };
+
     const observer = new ResizeObserver(measure);
-    observer.observe(viewport); observer.observe(content);
+    observer.observe(viewport);
+    observer.observe(content);
+
     viewport.addEventListener("scroll", scroll, { passive: true });
     viewport.addEventListener("wheel", wheel, { passive: true });
     viewport.addEventListener("touchstart", startTouch, { passive: true });
@@ -189,13 +364,17 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     rail.addEventListener("pointerup", pointerEnd);
     rail.addEventListener("lostpointercapture", pointerEnd);
     rail.addEventListener("keydown", key);
-    reduced.addEventListener("change", reset);
     viewport.addEventListener("animationend", measure);
     window.addEventListener("resize", measure);
     window.addEventListener("blur", release);
+
     measure();
+
     return () => {
-      clearTimeout(timer); cancelAnimationFrame(frame); observer.disconnect();
+      clearTimeout(timer);
+      cancelAnimationFrame(thumbFrame);
+      observer.disconnect();
+
       viewport.removeEventListener("scroll", scroll);
       viewport.removeEventListener("wheel", wheel);
       viewport.removeEventListener("touchstart", startTouch);
@@ -207,32 +386,61 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       rail.removeEventListener("pointerup", pointerEnd);
       rail.removeEventListener("lostpointercapture", pointerEnd);
       rail.removeEventListener("keydown", key);
-      reduced.removeEventListener("change", reset);
       viewport.removeEventListener("animationend", measure);
       window.removeEventListener("resize", measure);
       window.removeEventListener("blur", release);
+
+      pullTarget.jump(0);
+      pullSpring.jump(0);
       content.style.removeProperty("transform");
       content.style.removeProperty("transform-origin");
+      content.style.removeProperty("will-change");
     };
-  }, [viewportRef, contentRef, viewportId]);
+  }, [
+    viewportRef,
+    contentRef,
+    viewportId,
+    reduceMotion,
+    pullTarget,
+    pullSpring,
+  ]);
 
   return createPortal(
-    <div ref={railRef} className="vi-scroll-rail" role="scrollbar"
-      tabIndex={0} aria-label="Desplazar contenido" aria-orientation="vertical"
-      aria-valuemin={0} aria-valuemax={100} aria-valuenow={0}>
+    <div
+      ref={railRef}
+      className="vi-scroll-rail"
+      role="scrollbar"
+      tabIndex={0}
+      aria-label="Desplazar contenido"
+      aria-orientation="vertical"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={0}
+    >
       <div ref={thumbRef} className="vi-scroll-thumb" />
-    </div>, document.body,
+    </div>,
+    document.body,
   );
 }
 
 export function RubberDrawer({ children, className = "", ...props }) {
-  const viewportRef = useRef(null), contentRef = useRef(null);
-  return <>
-    <aside {...props} ref={viewportRef} className={`${className} vi-rubber-viewport`}>
-      <div className="vi-rubber-clip">
-        <div className="vi-rubber-content" ref={contentRef}>{children}</div>
-      </div>
-    </aside>
-    <ScrollEffects viewportRef={viewportRef} contentRef={contentRef} />
-  </>;
+  const viewportRef = useRef(null);
+  const contentRef = useRef(null);
+
+  return (
+    <>
+      <aside
+        {...props}
+        ref={viewportRef}
+        className={`${className} vi-rubber-viewport`}
+      >
+        <div className="vi-rubber-clip">
+          <div className="vi-rubber-content" ref={contentRef}>
+            {children}
+          </div>
+        </div>
+      </aside>
+      <ScrollEffects viewportRef={viewportRef} contentRef={contentRef} />
+    </>
+  );
 }
