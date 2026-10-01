@@ -1,5 +1,86 @@
 # Visteon Inventory Reconciler — 4Wall vs QAD
 
+<!-- AGENT_CONTEXT_START -->
+## Agent entrypoint — lee esto primero
+
+Si eres un agente trabajando en este repo, **no leas todo el README ni recorras todo `src/` de entrada**. Empieza con este bloque y abre únicamente los archivos indicados para tu tarea. El resto del README es referencia detallada.
+
+### Qué es este proyecto
+
+PoC de Visteon para reconciliar **4Wall físico vs QAD congelado** durante inventario. Prioriza impacto en USD, conserva detalle por localidad y usa ISPBB/BOM/Cost Part para explicar diferencias. Los datos de desarrollo son de prueba; no presentar resultados como pérdidas reales sin validación operativa.
+
+### Reglas que no debes romper
+
+- `NET piezas = Físico total - QAD total`; `NET USD = NET piezas × costo`; conservar signo.
+- `SWING = Σ ABS(Físico(localidad) - QAD(localidad)) × costo`; **no dividir entre 2**.
+- Phantom: fuente autoritativa **ISPBB**; no usar prefijos.
+- BOM: usar `Usage`, no `Grossed up Usage`; regla vigente `Level .2 / 0.2` + `Comp Phantom = NO`; no recursivo.
+- `OBSOLETE` sale de Cost Part. `Físico > QAD` puede producir ganancia obsoleta, pero sigue dentro del NET.
+- `QAD=0 && Físico>0` = material inesperado.
+- `QAD>0 && Físico=0` durante conteo = **Sin físico registrado**, no pérdida final confirmada.
+- Área 4Wall → catálogo 4Wall-Area → Localidad QAD. Solo normalización confirmada: `WHSE → ZWHSE`. Si no existe mapeo: `UNMAPPED`.
+- React no debe duplicar fórmulas del motor. Lógica de negocio en `src/domain/`.
+- No mezclar 4Wall manual con automático.
+- No poner secretos en frontend, Git o variables `VITE_*`.
+- GitHub Pages es manual; push a `main` no despliega Pages automáticamente.
+- Mantener scroll nativo. `ScrollEffects.jsx` es la única implementación del rubber band.
+
+### Arquitectura mínima
+
+```text
+Fuentes → parsers → normalización → src/domain → hooks → React/UI
+```
+
+### Abre solo lo que corresponda
+
+| Si vas a tocar… | Empieza por… |
+| --- | --- |
+| Fórmulas NET/SWING/flags | `src/domain/reconcileInventory.js`, `src/domain/inventoryEngine.js` |
+| Phantom/BOM | `src/domain/explodeBom.js`, `src/domain/bomLibrary.js`, `src/parsers/parseBom.js` |
+| Áreas/localidades | `src/domain/normalize.js`, `src/parsers/parse4WallAreas.js` |
+| Hallazgos/notificaciones | `src/domain/buildDiscrepancyFindings.js`, `src/domain/notificationState.js`, `src/components/shell/NotificationCenter.jsx` |
+| Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx` |
+| Fuentes/importación | `src/hooks/useReferenceFiles.js`, `src/parsers/`, `src/components/shell/SourcesDrawer.jsx` |
+| 4Wall automático | `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py` |
+| Supabase/BOM cloud | `src/services/bomCloud.js`, `supabase/migrations/` |
+| Scroll/rubber band | `src/components/visual/ScrollEffects.jsx`, luego CSS específico en `src/styles/pacman.css` |
+| Excel/exportación | `src/services/exportInventoryWorkbook.js`, `src/services/exportBomWorkbook.js` |
+| Persistencia local | `src/services/browserStorage.js` |
+| Shell/drawers | `src/components/shell/` |
+| Reglas/decisiones del proyecto | sección relevante de este `README.md` |
+
+### Comandos
+
+Windows corporativo:
+
+```powershell
+git pull origin main --no-edit
+npm.cmd ci
+npm.cmd run build
+npm.cmd run dev
+```
+
+Para cargar solo este contexto en otra sesión/agente:
+
+```powershell
+npm.cmd run context
+```
+
+Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESLint sin warnings, cero módulos runtime huérfanos, cero dependencias runtime sin uso, cero CSS `vi-*` huérfano salvo clases dinámicas documentadas, verificaciones financieras/BOM/imports/Dexie/Supabase y build Vite.
+
+### Estado técnico actual
+
+- React 19 + Vite 8 + Tailwind 3.
+- Supabase/PostgreSQL + Dexie/IndexedDB.
+- TanStack Virtual en la tabla grande.
+- Motion solo para microinteracciones; no controla el scroll.
+- SheetJS fijado localmente en `vendor/xlsx-0.20.3.tgz`.
+- `README.md` es la única fuente de verdad documental del proyecto.
+
+**Solo si tu tarea requiere contexto adicional, continúa con la sección correspondiente abajo.**
+<!-- AGENT_CONTEXT_END -->
+
+
 > **Fuente de verdad del proyecto:** reglas, decisiones, pendientes, seguridad, arquitectura y operación deben mantenerse en este README. Evitar documentos paralelos que repitan o contradigan esta información.
 
 Dashboard web para apoyar la conciliación del inventario físico de planta durante el día de inventario. El sistema compara el físico proveniente de **4Wall** contra el congelado de **QAD**, incorpora referencias de planeación, BOM y costos, y presenta diferencias en piezas y dólares para las juntas periódicas de Finanzas.
