@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseDelimitedFile } from "../parsers/parseDelimitedFile.js";
 import { mergeBomLibrary } from "../domain/bomLibrary.js";
 import { idbGet, idbSet } from "../services/browserStorage.js";
-import { syncBomLibrary } from "../services/bomCloud.js";
+import { removeBomFileFromCloud, syncBomLibrary } from "../services/bomCloud.js";
 import { downloadBomWorkbook } from "../services/exportBomWorkbook.js";
 const BOM_KEY = "reference:bom-library.v1";
 const empty = () => ({
@@ -243,6 +243,31 @@ export function useReferenceFiles() {
     if (type === "bom") void operation.then(() => syncCloud(), () => {});
     return operation;
   }, [syncCloud]);
+  const deleteBomFile = useCallback((file) => {
+    const operation = queue.current.then(async () => {
+      if (!file?.fingerprint) throw new Error("No se encontró la huella del BOM. No se borró nada.");
+      setCloudStatus({ state: "syncing", message: `Borrando ${file.fileName || "BOM"} del respaldo compartido…` });
+
+      const next = await removeBomFileFromCloud(file.fingerprint);
+      const saved = await idbSet(BOM_KEY, next);
+      if (!saved.ok) {
+        throw new Error("Supabase borró el BOM, pero no pudimos actualizar la copia local. Recarga la página para sincronizar.");
+      }
+
+      library.current = next;
+      if (mounted.current) {
+        setSources((s) => ({ ...s, bom: bomSource(next) }));
+        setCloudStatus({ state: "saved", message: `${file.fileName || "BOM"} eliminado de Supabase y de esta computadora.` });
+      }
+      return next;
+    });
+
+    queue.current = operation.catch((error) => {
+      if (mounted.current) setCloudStatus({ state: "pending", message: error.message });
+    });
+    return operation;
+  }, []);
+
   const clearFile = useCallback((type) => {
     if (type === "bom") return;
     setSources((s) => ({ ...s, [type]: empty() }));
@@ -274,6 +299,7 @@ export function useReferenceFiles() {
     costRows: sources.cost.rows,
     manualScans: sources.scans.loaded ? sources.scans : null,
     loadFile,
+    deleteBomFile,
     clearFile,
     backupBom,
     cloudStatus,
