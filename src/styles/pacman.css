@@ -2158,98 +2158,10 @@ body.vi-overlay-open .vi-shell {
     border-color .34s cubic-bezier(.2,.8,.2,1);
   will-change: box-shadow;
 }
-.vi-header-main {
-  transition:
-    min-height .34s cubic-bezier(.2,.8,.2,1),
-    padding .34s cubic-bezier(.2,.8,.2,1),
-    background-color .34s cubic-bezier(.2,.8,.2,1);
-}
-.vi-brand-logo,
-.vi-brand-divider,
-.vi-product-name,
-.vi-header-actions .vi-button,
-.vi-fetch-time {
-  transition:
-    width .34s cubic-bezier(.2,.8,.2,1),
-    height .34s cubic-bezier(.2,.8,.2,1),
-    min-height .34s cubic-bezier(.2,.8,.2,1),
-    padding .34s cubic-bezier(.2,.8,.2,1),
-    opacity .24s ease,
-    transform .34s cubic-bezier(.2,.8,.2,1);
-}
 .vi-source-ribbon {
   max-height: 64px;
   overflow: hidden;
   opacity: 1;
-  transform: translateY(0) scaleY(1);
-  transform-origin: top center;
-  transition:
-    max-height .36s cubic-bezier(.2,.8,.2,1),
-    opacity .22s ease,
-    transform .38s cubic-bezier(.16,1,.3,1),
-    border-color .28s ease;
-}
-
-/* Scrolling down: preserve access to controls but free vertical space. */
-.vi-command-header.vi-header-compact {
-  box-shadow: 0 16px 42px rgba(0,8,15,.34) !important;
-}
-.vi-command-header.vi-header-compact .vi-header-main {
-  min-height: 56px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  background: linear-gradient(180deg,rgba(6,38,54,.94),rgba(5,31,45,.91)) !important;
-}
-.vi-command-header.vi-header-compact .vi-brand-logo {
-  width: 142px;
-}
-.vi-command-header.vi-header-compact .vi-brand-divider {
-  height: 24px;
-}
-.vi-command-header.vi-header-compact .vi-product-name {
-  transform: translateY(-1px);
-}
-.vi-command-header.vi-header-compact .vi-header-actions .vi-button {
-  min-height: 34px;
-}
-.vi-command-header.vi-header-compact .vi-fetch-time {
-  opacity: .72;
-  transform: scale(.96);
-}
-.vi-command-header.vi-header-compact .vi-source-ribbon {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-9px) scaleY(.72);
-  border-color: transparent !important;
-  pointer-events: none;
-}
-
-/* Scrolling upward: the navbar grows back with a soft elastic feel. */
-.vi-command-header.vi-header-expanded {
-  box-shadow:
-    0 18px 46px rgba(0,9,17,.26),
-    0 1px 0 rgba(245,130,31,.10) inset !important;
-}
-.vi-command-header.vi-header-expanded .vi-header-main {
-  min-height: 76px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-.vi-command-header.vi-header-expanded .vi-source-ribbon {
-  max-height: 64px;
-  opacity: 1;
-  transform: translateY(0) scaleY(1);
-  animation: vi-navbar-stretch .36s cubic-bezier(.16,1,.3,1);
-}
-.vi-command-header.vi-header-top .vi-source-ribbon {
-  max-height: 64px;
-  opacity: 1;
-  transform: none;
-}
-@keyframes vi-navbar-stretch {
-  0% { transform: translateY(-7px) scaleY(.78); opacity: .25; }
-  68% { transform: translateY(1px) scaleY(1.035); opacity: 1; }
-  100% { transform: translateY(0) scaleY(1); opacity: 1; }
 }
 
 /* Notification Center must never inherit the old white drawer styles. */
@@ -2387,25 +2299,6 @@ body.vi-overlay-open .vi-shell {
   }
 }
 
-
-/* Blur is pretty but expensive while a long drawer is moving. Restore it as soon as movement ends. */
-.vi-sources-drawer.vi-scroll-moving .vi-sources-head,
-.vi-notification-drawer.vi-scroll-moving .vi-notification-head,
-.vi-menu-panel.vi-scroll-moving {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-/* Keep expensive paint effects out of the hot scroll path. */
-.vi-scroll-moving {
-  scroll-behavior: auto !important;
-}
-.vi-shell.vi-scroll-moving .vi-command-header {
-  transition-duration: .18s !important;
-}
-.vi-shell.vi-scroll-moving .vi-source-ribbon {
-  transition-duration: .18s !important;
-}
 
 /* Tables and large data panes stay on their own paint layer while scrolling. */
 .vi-findings-table-wrap,
