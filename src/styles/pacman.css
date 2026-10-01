@@ -1821,6 +1821,13 @@ body{background:#061f2d!important;overscroll-behavior-y:none}
 
 
 /* 2026-10-01 · Touchpad, sources drawer and modal data review */
+html {
+  overflow-y: auto !important;
+}
+body:not(.vi-overlay-open) {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+}
 body.vi-overlay-open {
   overflow: hidden !important;
 }
@@ -1838,7 +1845,6 @@ body.vi-overlay-open {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior-y: contain;
-  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
   background:
@@ -1962,7 +1968,6 @@ body.vi-overlay-open {
   background: #f8fafc;
   box-shadow: 0 38px 110px rgba(0,0,0,.48);
   animation: vi-data-modal-in .22s cubic-bezier(.2,.8,.2,1) both;
-  touch-action: pan-x pan-y;
 }
 .vi-data-modal-window > .vi-inspection {
   width: 100%;
@@ -1989,7 +1994,6 @@ body.vi-overlay-open {
   min-height: 0;
   max-height: none !important;
   overscroll-behavior: contain;
-  touch-action: pan-x pan-y;
 }
 .vi-data-modal-window .vi-excel-statusbar {
   flex: none;
@@ -2019,4 +2023,123 @@ body.vi-overlay-open {
     border: 0;
     border-radius: 0;
   }
+}
+
+
+/* 2026-10-01 · Hamburger language + BOM source summary */
+.vi-menu-language {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+}
+.vi-menu-language button {
+  min-width: 42px;
+  min-height: 30px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 9px;
+  background: rgba(255,255,255,.04);
+  color: #9fb7c1;
+  font-size: 10px;
+  font-weight: 900;
+}
+.vi-menu-language button.is-active {
+  border-color: rgba(245,130,31,.55);
+  background: rgba(245,130,31,.12);
+  color: #ffc38c;
+}
+.vi-menu-language > span {
+  color: #6f8e9b;
+  font-size: 11px;
+}
+.vi-menu-language > em {
+  margin-left: auto;
+  padding: 3px 6px;
+  border-radius: 7px;
+  background: rgba(245,130,31,.14);
+  color: #ffb16a;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.vi-bom-source-summary {
+  display: grid;
+  gap: 8px;
+}
+.vi-bom-latest {
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(245,130,31,.38);
+  border-radius: 13px;
+  background: rgba(245,130,31,.075);
+  color: #f4fafc;
+  text-align: left;
+}
+.vi-bom-latest:hover:not(:disabled) {
+  border-color: rgba(245,130,31,.68);
+  background: rgba(245,130,31,.11);
+}
+.vi-bom-latest > span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.vi-bom-latest small {
+  color: #ffb474;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .09em;
+}
+.vi-bom-latest strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #f6fafb;
+  font-size: 11px;
+}
+.vi-bom-latest > b {
+  white-space: nowrap;
+  color: #ffd0a6;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.vi-bom-total {
+  min-height: 38px;
+  padding: 8px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 11px;
+  background: rgba(0,0,0,.10);
+}
+.vi-bom-total > span {
+  color: #8faab5;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.vi-bom-total > strong {
+  margin-left: auto;
+  color: #f4fafb;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.vi-bom-total > small {
+  color: #91aab5;
+  font-size: 9px;
+  white-space: nowrap;
 }
