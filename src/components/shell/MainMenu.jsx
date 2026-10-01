@@ -12,6 +12,7 @@ export default function MainMenu({
   open,
   onClose,
   onAnimationOnly,
+  onOpenLogicTracer,
   snapshotMeta,
   scanCount = 0,
   lastUpdated,
@@ -65,6 +66,24 @@ export default function MainMenu({
               <button type="button" disabled>EN</button>
               <em>DEV</em>
             </div>
+          </section>
+
+          <section className="vi-menu-section">
+            <span className="vi-menu-section-title">ENTENDER LA LÓGICA</span>
+            <button
+              type="button"
+              className="vi-menu-item vi-logic-entry"
+              onClick={() => {
+                onClose?.();
+                onOpenLogicTracer?.();
+              }}
+            >
+              <span>
+                <strong>Trazador de pieza</strong>
+                <small>Elige un PN y mira paso a paso cómo 4Wall, QAD, ISPBB, BOM y Cost Part producen su resultado.</small>
+              </span>
+              <b>›</b>
+            </button>
           </section>
 
           <section className="vi-menu-section">
