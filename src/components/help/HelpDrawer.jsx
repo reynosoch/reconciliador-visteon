@@ -1,6 +1,5 @@
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 // src/components/help/HelpDrawer.jsx
-import React from "react";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
 const HELP = {
  overview: {
