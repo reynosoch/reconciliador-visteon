@@ -77,6 +77,10 @@ begin
     where f->>'fingerprint' <> target_fingerprint;
 
   new_row_count := jsonb_array_length(next_rows);
+  if new_row_count = old_row_count then
+    raise exception 'BOM provenance missing';
+  end if;
+
   next_library := jsonb_build_object('rows',next_rows,'files',next_files);
 
   delete from public.inventory_bom_rows
