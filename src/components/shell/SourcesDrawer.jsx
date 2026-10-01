@@ -86,6 +86,8 @@ function SourceLine({
   clearFile,
   onHelp,
   onPreview,
+  onRequestDeleteBom,
+  deletingBom,
   botRunning,
 }) {
   const input = useRef(null);
@@ -153,18 +155,32 @@ function SourceLine({
       {source?.loaded ? (
         config.type === "bom" ? (
           <div className="vi-bom-source-summary">
-            <button
-              type="button"
-              className="vi-bom-latest"
-              onClick={() => latestBom && onPreview?.({ config, source, fileName: latestBom.fileName })}
-              disabled={!latestBom}
-            >
-              <span>
-                <small>ÚLTIMO BOM CARGADO</small>
-                <strong>{latestBom?.fileName || "Sin archivo BOM"}</strong>
-              </span>
-              <b>{latestBomRows.toLocaleString("es-MX")} filas</b>
-            </button>
+            <div className="vi-bom-latest-row">
+              <button
+                type="button"
+                className="vi-bom-latest"
+                onClick={() => latestBom && onPreview?.({ config, source, fileName: latestBom.fileName })}
+                disabled={!latestBom}
+              >
+                <span>
+                  <small>ÚLTIMO BOM CARGADO</small>
+                  <strong>{latestBom?.fileName || "Sin archivo BOM"}</strong>
+                </span>
+                <b>{latestBomRows.toLocaleString("es-MX")} filas</b>
+              </button>
+              {latestBom && (
+                <button
+                  type="button"
+                  className="vi-bom-delete"
+                  onClick={() => onRequestDeleteBom?.(latestBom)}
+                  disabled={deletingBom === latestBom.fingerprint}
+                  aria-label={`Borrar ${latestBom.fileName} de BOM local y Supabase`}
+                  title="Borrar este BOM del respaldo compartido"
+                >
+                  ×
+                </button>
+              )}
+            </div>
 
             <div className="vi-bom-total">
               <span>TOTAL ACUMULADO</span>
@@ -188,14 +204,26 @@ function SourceLine({
                 {bomFiles.map((file) => {
                   const actualRows = bomRowsForFile(file.fileName);
                   return (
-                    <button
-                      type="button"
-                      key={file.fingerprint || file.fileName}
-                      onClick={() => onPreview?.({ config, source, fileName: file.fileName })}
-                    >
-                      <span>{file.fileName}</span>
-                      <small>{actualRows.toLocaleString("es-MX")} filas</small>
-                    </button>
+                    <div className="vi-bom-file-entry" key={file.fingerprint || file.fileName}>
+                      <button
+                        type="button"
+                        className="vi-bom-file-preview"
+                        onClick={() => onPreview?.({ config, source, fileName: file.fileName })}
+                      >
+                        <span>{file.fileName}</span>
+                        <small>{actualRows.toLocaleString("es-MX")} filas</small>
+                      </button>
+                      <button
+                        type="button"
+                        className="vi-bom-delete"
+                        onClick={() => onRequestDeleteBom?.(file)}
+                        disabled={deletingBom === file.fingerprint}
+                        aria-label={`Borrar ${file.fileName} de BOM local y Supabase`}
+                        title="Borrar este BOM del respaldo compartido"
+                      >
+                        ×
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -261,6 +289,7 @@ export default function SourcesDrawer({
   sources,
   status,
   loadFile,
+  deleteBomFile,
   clearFile,
   botRunning = false,
   onHelp,
@@ -270,6 +299,9 @@ export default function SourcesDrawer({
   const [unknownFiles, setUnknownFiles] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [pendingClear, setPendingClear] = useState(null);
+  const [pendingBomDelete, setPendingBomDelete] = useState(null);
+  const [deletingBom, setDeletingBom] = useState("");
+  const [bomDeleteError, setBomDeleteError] = useState("");
   const [preview, setPreview] = useState(null);
 
   if (!open) return null;
@@ -387,9 +419,20 @@ export default function SourcesDrawer({
                 clearFile={(type) => setPendingClear({ type })}
                 onHelp={onHelp}
                 onPreview={setPreview}
+                onRequestDeleteBom={(file) => {
+                  setBomDeleteError("");
+                  setPendingBomDelete(file);
+                }}
+                deletingBom={deletingBom}
                 botRunning={botRunning}
               />
             ))}
+
+            {bomDeleteError && (
+              <div className="vi-source-warning vi-bom-delete-error" role="alert">
+                {bomDeleteError}
+              </div>
+            )}
 
             {unknownFiles.length > 0 && (
               <div className="mt-5 border border-amber-500/25 bg-amber-500/[0.04] p-4">
@@ -407,6 +450,33 @@ export default function SourcesDrawer({
         </aside>
 
         <SourcePreviewModal selection={preview} onClose={() => setPreview(null)} />
+
+        <ConfirmDialog
+          open={Boolean(pendingBomDelete)}
+          title="¿Borrar este BOM?"
+          message={pendingBomDelete ? `${pendingBomDelete.fileName} se eliminará del respaldo compartido de Supabase y de la copia local de esta computadora. Esta acción crea una nueva revisión del respaldo.` : ""}
+          confirmLabel="Borrar BOM"
+          cancelLabel="Cancelar"
+          busy={Boolean(deletingBom)}
+          onCancel={() => {
+            if (!deletingBom) setPendingBomDelete(null);
+          }}
+          onConfirm={async () => {
+            const file = pendingBomDelete;
+            if (!file || deletingBom) return;
+            setDeletingBom(file.fingerprint || file.fileName);
+            setBomDeleteError("");
+            try {
+              await deleteBomFile?.(file);
+              setPendingBomDelete(null);
+            } catch (error) {
+              setPendingBomDelete(null);
+              setBomDeleteError(error?.message || "No se pudo borrar el BOM. No se modificó la copia local.");
+            } finally {
+              setDeletingBom("");
+            }
+          }}
+        />
 
         <ConfirmDialog
           open={Boolean(pendingClear)}
