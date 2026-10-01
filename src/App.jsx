@@ -18,7 +18,8 @@ import ConfirmDialog from "./components/shell/ConfirmDialog";
 import OverlayPortal, { forceUnlockPageScroll } from "./components/shell/OverlayPortal.jsx";
 import MainMenu, { AnimationOnlyView } from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
-import { useReferenceFiles } from "./hooks/useReferenceFiles";
+import SnapshotStamp from "./components/shell/SnapshotStamp.jsx";
+import { REFERENCE_SOURCE_LABELS, useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
 import { AmbientChase } from "./components/visual/PacmanGlyphs";
 import {
@@ -73,7 +74,8 @@ export default function App() {
     [warning, setWarning] = useState(""),
     [confirmNew, setConfirmNew] = useState(false),
     [menuOpen, setMenuOpen] = useState(false),
-    [animationOnly, setAnimationOnly] = useState(false);
+    [animationOnly, setAnimationOnly] = useState(false),
+    [detailFromNotifications, setDetailFromNotifications] = useState(false);
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
       manualScans: references.manualScans,
@@ -430,6 +432,31 @@ export default function App() {
       removeEventListener("touchend", end);
     };
   }, [sourcesOpen, notificationsOpen, botOpen, helpTopic, selectedPart, menuOpen, animationOnly]);
+  const openPartFromNotification = (alert) => {
+    const item = inventory.reconciliation.find(
+      (row) => row.partNumber === alert?.partNumber,
+    );
+
+    if (!item) {
+      setFocusFindingOrigin("notifications");
+      setFocusFindingId(alert?.id || null);
+      setNotificationsOpen(false);
+      return;
+    }
+
+    setDetailFromNotifications(true);
+    setSelectedPart(item);
+    window.setTimeout(() => setNotificationsOpen(false), 110);
+  };
+
+  const backToNotificationsFromPart = () => {
+    setSelectedPart(null);
+    setDetailFromNotifications(false);
+    setNotificationTab("OPERATIVAS");
+    setNotificationReturnToken((value) => value + 1);
+    setNotificationsOpen(true);
+  };
+
   const saveIdentity = (n) => {
       setIdentity(n);
       if (!safeWriteJson(KEY, n).ok) setWarning(STORAGE_WARNING);
@@ -607,11 +634,21 @@ export default function App() {
           onHelp={setHelpTopic}
         />
       </main>}
+      {!animationOnly && (
+        <footer className="vi-page-snapshot-footer">
+          <SnapshotStamp
+            snapshotMeta={inventory.snapshotMeta}
+            scanCount={inventory.scanCount}
+            lastUpdated={inventory.lastUpdated}
+          />
+        </footer>
+      )}
       {!animationOnly && <SourcesDrawer
         open={sourcesOpen}
         sources={references.sources}
         status={references.status}
         loadFile={references.loadFile}
+        deleteBomFile={references.deleteBomFile}
         clearFile={references.clearFile}
         botRunning={botRunning}
         onHelp={setHelpTopic}
@@ -620,7 +657,12 @@ export default function App() {
       {!animationOnly && <PartDetailDrawer
         item={selectedPart}
         onHelp={setHelpTopic}
-        onClose={() => setSelectedPart(null)}
+        fromNotifications={detailFromNotifications}
+        onBackToNotifications={backToNotificationsFromPart}
+        onClose={() => {
+          setSelectedPart(null);
+          setDetailFromNotifications(false);
+        }}
       />}
       {!animationOnly && <HelpDrawer
         topic={helpTopic}
@@ -635,10 +677,10 @@ export default function App() {
         inventoryId={identity.id}
         initialTab={notificationTab}
         returnPulse={notificationReturnToken}
-        onOpenFinding={(id) => {
-          setFocusFindingOrigin("notifications");
-          setFocusFindingId(id);
-        }}
+        missingSources={references.status.missingSources.map(
+          (key) => REFERENCE_SOURCE_LABELS[key] || key,
+        )}
+        onOpenFinding={openPartFromNotification}
         onCountChange={setNotificationCount}
         onOperationalStateChange={setOperationalState}
         onPersistenceError={setWarning}
@@ -663,7 +705,14 @@ export default function App() {
           setOperationalState({});
         }}
       />}
-      <MainMenu open={menuOpen} onClose={() => setMenuOpen(false)} onAnimationOnly={() => setAnimationOnly(true)} />
+      <MainMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onAnimationOnly={() => setAnimationOnly(true)}
+        snapshotMeta={inventory.snapshotMeta}
+        scanCount={inventory.scanCount}
+        lastUpdated={inventory.lastUpdated}
+      />
       <DevFeedback inventoryId={identity.id} />
     </div>
   );
