@@ -1,6 +1,4 @@
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
-﻿// src/components/detail/PartDetailDrawer.jsx
-import React from "react";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
 import {
  Ghost,
@@ -16,7 +14,6 @@ function money(value) {
      currency: "USD",
      minimumFractionDigits: 2,
      maximumFractionDigits: 2,
-     minimumFractionDigits: 0,
    }
  ).format(
    Number(value) || 0
