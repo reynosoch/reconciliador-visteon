@@ -1829,7 +1829,6 @@ body.vi-overlay-open {
 .vi-drawer-backdrop,
 .vi-data-modal-backdrop {
   overscroll-behavior: contain;
-  touch-action: none;
 }
 .vi-sources-drawer {
   width: min(620px, 100vw) !important;
