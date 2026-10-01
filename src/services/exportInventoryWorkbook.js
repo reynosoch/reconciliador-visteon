@@ -1,11 +1,11 @@
 import { rawScanObject } from "../domain/scanView.js";
 const enc = new TextEncoder();
-const xml = (value) => String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&apos;");
+const xml = (value) => String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
 const safe = (value) => value == null ? "" : typeof value === "boolean" ? (value ? "Sí" : "No") : String(value);
 const n = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 const col = (index) => { let x=index+1,out=""; while(x){ const r=(x-1)%26; out=String.fromCharCode(65+r)+out; x=Math.floor((x-1)/26); } return out; };
 const ref = (r,c) => `${col(c)}${r+1}`;
-const cleanSheet = (name) => String(name).replace(/[\\/?*\[\]:]/g," ").slice(0,31) || "Hoja";
+const cleanSheet = (name) => String(name).replace(/[\\/?*[\]:]/g," ").slice(0,31) || "Hoja";
 
 function crc32(bytes){let crc=0xffffffff;for(const b of bytes){crc^=b;for(let k=0;k<8;k++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}return (crc^0xffffffff)>>>0;}
 function u16(v){return new Uint8Array([v&255,(v>>>8)&255]);}
