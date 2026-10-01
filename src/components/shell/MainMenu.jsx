@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
+import SnapshotStamp from "./SnapshotStamp.jsx";
 
 const DEV_ITEMS = [
   ["Análisis histórico", "Comparar inventarios y tendencias entre cortes."],
@@ -7,7 +8,14 @@ const DEV_ITEMS = [
   ["Centro de exportación", "Administrar reportes y plantillas compartibles."],
 ];
 
-export default function MainMenu({ open, onClose, onAnimationOnly }) {
+export default function MainMenu({
+  open,
+  onClose,
+  onAnimationOnly,
+  snapshotMeta,
+  scanCount = 0,
+  lastUpdated,
+}) {
   const touchStart = useRef(null);
   if (!open) return null;
   return (
@@ -38,6 +46,16 @@ export default function MainMenu({ open, onClose, onAnimationOnly }) {
             </div>
             <button type="button" className="vi-icon-close" onClick={onClose} aria-label="Cerrar menú">×</button>
           </div>
+
+          <section className="vi-menu-section vi-menu-snapshot-section">
+            <span className="vi-menu-section-title">CORTE ACTUAL</span>
+            <SnapshotStamp
+              snapshotMeta={snapshotMeta}
+              scanCount={scanCount}
+              lastUpdated={lastUpdated}
+              compact
+            />
+          </section>
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">IDIOMA</span>
