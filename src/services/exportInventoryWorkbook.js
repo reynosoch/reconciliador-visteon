@@ -177,3 +177,56 @@ export async function exportDiscrepanciesWorkbook({findings=[],inventoryName="In
   ];
   return buildPackage(sheets,"Visteon Discrepancias","Visteon-Discrepancias");
 }
+
+
+export function exportBomLibraryWorkbook(library = { rows: [], files: [] }) {
+  const sourceRows = Array.isArray(library?.rows) ? library.rows : [];
+  const files = Array.isArray(library?.files) ? library.files : [];
+  const bomRows = sourceRows.map((item) => {
+    const { __sourceFile, ...rest } = item || {};
+    return {
+      ...rest,
+      "Archivo origen": __sourceFile || "",
+    };
+  });
+  const preferred = [
+    "Parent Item",
+    "Component",
+    "Level",
+    "Comp Phantom",
+    "Usage",
+    "Parent Phantom",
+    "Description",
+    "Archivo origen",
+  ].filter((key) => bomRows.some((row) => Object.prototype.hasOwnProperty.call(row, key)));
+  const extra = Array.from(
+    new Set(bomRows.flatMap((row) => Object.keys(row))),
+  ).filter((key) => !preferred.includes(key));
+  const fileRows = files.map((file) => ({
+    Archivo: file.fileName || "",
+    "BOM incluidos": Array.isArray(file.rows)
+      ? new Set(file.rows.map((row) => String(row?.["Parent Item"] || "").trim()).filter(Boolean)).size
+      : "",
+    Huella: file.fingerprint || "",
+    "Fecha de carga": file.loadedAt || "",
+  }));
+  const sheets = [
+    objectSheet(
+      "BOM registrados",
+      "Colección consolidada. Parent Item repetidos idénticos no se duplican.",
+      bomRows,
+      [...preferred, ...extra],
+    ),
+    objectSheet(
+      "Archivos origen",
+      "Archivos que aportaron BOM nuevos a la colección.",
+      fileRows,
+      ["Archivo", "BOM incluidos", "Huella", "Fecha de carga"],
+    ),
+  ];
+  return buildPackage(
+    sheets,
+    "Visteon BOM registrados",
+    "Visteon-BOM-Registrados",
+  );
+}
