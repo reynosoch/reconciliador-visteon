@@ -459,9 +459,9 @@ export default function App() {
         requestAnimationFrame(() => {
           const scroller = document.querySelector(".vi-shell");
           if (scroller) {
-            scroller.scrollTo({ top: returnY, behavior: "smooth" });
+            scroller.scrollTo({ top: returnY, behavior: "auto" });
           } else {
-            window.scrollTo({ top: returnY, behavior: "smooth" });
+            window.scrollTo({ top: returnY, behavior: "auto" });
           }
         });
       }
