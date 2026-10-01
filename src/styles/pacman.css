@@ -3545,8 +3545,7 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 }
 
 
-/* 2026-10-01 · Continuous Pac-Man + translucent dashboard surfaces */
-/* Let the ambient chase read through the dashboard without adding blur cost. */
+/* 2026-10-01 · Continuous Pac-Man + soft glass dashboard surfaces */
 .vi-ambient-chase {
   opacity: .78;
 }
@@ -3565,32 +3564,31 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
   background:
     linear-gradient(
       145deg,
-      rgba(16,56,77,.84),
-      rgba(10,43,62,.78) 62%,
-      rgba(9,38,56,.82)
+      rgba(16,56,77,.89),
+      rgba(10,43,62,.85) 62%,
+      rgba(9,38,56,.88)
     ) !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
+  -webkit-backdrop-filter: blur(6px) saturate(112%) !important;
+  backdrop-filter: blur(6px) saturate(112%) !important;
 }
 
-/* Large table surfaces stay slightly more opaque so values remain easy to scan. */
+/* Dense tables stay a little more opaque so values remain easy to scan. */
 .vi-main :is(
   .vi-findings-table-wrap,
   .vi-table-virtual-scroll,
   .vi-inspection-scroll
 ) {
-  background: rgba(7,34,49,.84);
+  background: rgba(7,34,49,.89);
 }
 
-/* Financial cells inherit the glassy parent instead of repainting an opaque slab. */
+/* Financial cells still reveal the chase without reading as transparent cards. */
 .vi-main .vi-financial-cell {
-  background: rgba(12,49,68,.52) !important;
+  background: rgba(12,49,68,.60) !important;
 }
 .vi-main .vi-financial-cell:hover {
-  background: rgba(22,66,88,.72) !important;
+  background: rgba(22,66,88,.76) !important;
 }
 
-/* Keep Pac-Man visible in the gaps while protecting text contrast. */
 .vi-main :is(
   .vi-financial-shell,
   .vi-findings,
@@ -3600,6 +3598,58 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
   .vi-reconciliation-shell
 ) {
   box-shadow:
-    0 12px 34px rgba(0,10,18,.16),
-    inset 0 1px rgba(255,255,255,.025) !important;
+    0 12px 34px rgba(0,10,18,.18),
+    inset 0 1px rgba(255,255,255,.03) !important;
+}
+
+/* Full-screen LAB: only the ambient animation remains visible. */
+.vi-animation-lab {
+  position: fixed;
+  z-index: 5000;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(22,76,99,.30), transparent 34%),
+    radial-gradient(circle at 86% 82%, rgba(245,130,31,.10), transparent 28%),
+    linear-gradient(180deg,#061f2d 0%,#082838 48%,#061f2d 100%);
+}
+.vi-animation-lab .vi-ambient-chase {
+  z-index: 0;
+  opacity: 1;
+}
+.vi-animation-lab-close {
+  position: fixed;
+  z-index: 5002;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  background: rgba(7,34,49,.74);
+  color: #fff;
+  font-size: 27px;
+  line-height: 1;
+  font-weight: 300;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+  box-shadow: 0 10px 28px rgba(0,8,14,.26);
+}
+.vi-animation-lab-close:hover {
+  border-color: rgba(245,130,31,.58);
+  background: rgba(18,58,76,.82);
+}
+.vi-animation-lab-close:focus-visible {
+  outline: 2px solid #f5821f;
+  outline-offset: 3px;
+}
+
+.vi-animation-lab-entry {
+  border-color: rgba(111,190,219,.28) !important;
+  background:
+    linear-gradient(145deg,rgba(66,149,180,.09),rgba(255,255,255,.025)) !important;
 }
