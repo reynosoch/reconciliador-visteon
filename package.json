@@ -13,8 +13,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",
+    "@tanstack/react-virtual": "3.14.13",
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
+    "motion": "13.4.6",
     "papaparse": "^5.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
