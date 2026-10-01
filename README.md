@@ -366,7 +366,7 @@ Proyecto PoC de conciliación de inventario para Visteon. El dashboard apoya la 
 
 ## UX de investigación y trazabilidad
 
-La interfaz usa una temática **Liquid Glass** como sistema visual global: paneles principales, botones, menús laterales, diálogos y controles comparten transparencia, blur, reflejos suaves y bordes translúcidos. El objetivo es mantener visible el ambiente Pac-Man sin sacrificar lectura financiera.
+La interfaz conserva una estética líquida Visteon, pero las superficies de lectura son deliberadamente más opacas y evitan blur costoso en el hot path. Los reflejos/gradientes son estáticos; el rendimiento y la legibilidad financiera tienen prioridad.
 
 El menú hamburguesa contiene opciones futuras marcadas como **DEVELOPMENT**, el Trazador de pieza y el switch persistente para activar/desactivar Pac-Man. Ya no existe un modo separado que oculte el dashboard.
 
@@ -453,7 +453,7 @@ En Fuentes, cargar `Escaneos 4Wall (archivo manual)`. El encabezado identifica e
 - Importes en USD. Costo unitario mostrado con dos decimales; cálculo con precisión original (un costo menor a un centavo no se convierte en cero antes de multiplicar).
 - Costo cero se señala, conservando cantidades; no se interpreta como ausencia de inventario ni se inventa una causa de negociación.
 - Los resultados guardados con la regla anterior no se comparan como si usaran la nueva regla; se incrementó la versión de cálculo.
-- Preguntas pendientes únicamente en la campana: cierre de áreas, códigos de alcance Francia/Paso/CUU, reporte QAD 3.2 vs 3.12, versiones BOM, diferencias ISPBB/BOM, costos cero y almacenamiento compartido.
+- Las preguntas pendientes se mantienen en este README, no mezcladas con alertas operativas. Cualquier cambio de alcance, reporte QAD, versión BOM, costo o almacenamiento compartido debe documentarse aquí antes de cambiar lógica.
 - No se inventa el cierre de un área. Una localidad QAD puede agrupar varias áreas 4Wall. El filtro actual sigue en Site 179A y tipos PP/MP/FP hasta recibir los códigos que correspondan al alcance acordado.
 - La contraseña se indicó con cambio cada 90 días; debe actualizarse en la configuración local del bot cuando corresponda, nunca en el repositorio. Falta confirmar qué cuenta aplica; no se programó cambio automático.
 
