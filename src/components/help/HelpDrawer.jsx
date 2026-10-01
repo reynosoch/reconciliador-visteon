@@ -1,3 +1,4 @@
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 // src/components/help/HelpDrawer.jsx
 import React from "react";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
@@ -261,7 +262,7 @@ export default function HelpDrawer({
        }
      }}
 >
-<aside
+<RubberDrawer
        className="
          vi-drawer-panel
          absolute
@@ -344,7 +345,7 @@ export default function HelpDrawer({
 </div>
 </section>
 </div>
-</aside>
+</RubberDrawer>
 </div>
 </OverlayPortal>
  );

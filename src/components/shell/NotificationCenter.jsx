@@ -1,3 +1,4 @@
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import { Ghost, PelletRail } from "../visual/PacmanGlyphs.jsx";
@@ -161,7 +162,7 @@ export default function NotificationCenter({
   return (
     <OverlayPortal onClose={onClose}>
       <div className="vi-global-overlay">
-        <aside
+        <RubberDrawer
           className={[
             "vi-drawer-panel",
             "vi-global-drawer",
@@ -368,7 +369,7 @@ export default function NotificationCenter({
             )
             )}
           </div>
-        </aside>
+        </RubberDrawer>
       </div>
     </OverlayPortal>
   );

@@ -1,3 +1,4 @@
+import ScrollEffects from "./components/visual/ScrollEffects.jsx";
 import { AmbientChase } from "./components/visual/PacmanGlyphs.jsx";
 import MeetingPriorities from "./components/dashboard/MeetingPriorities.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -60,6 +61,7 @@ export default function App() {
   }, [pacmanEnabled]);
   const mobileSwipeStart = useRef(null);
   const shellRef = useRef(null);
+  const mainMotionRef = useRef(null);
   const [sourcesOpen, setSourcesOpen] = useState(false),
     [selectedPart, setSelectedPart] = useState(null),
     [helpTopic, setHelpTopic] = useState(null),
@@ -333,7 +335,7 @@ export default function App() {
             ? "No se confirmó un corte de datos completo."
             : "";
   return (
-    <div className="vi-shell" ref={shellRef}>
+    <div className="vi-shell vi-rubber-viewport" ref={shellRef}>
       {pacmanEnabled && <AmbientChase />}
       <CommandHeader
         connectionStatus={inventory.connectionStatus}
@@ -354,7 +356,7 @@ export default function App() {
         notificationCount={notificationCount}
       />
       {warning && <div className="vi-persistence-warning">{warning}</div>}
-      {<main className="vi-main">
+      {<div className="vi-rubber-clip"><div className="vi-rubber-content" ref={mainMotionRef}><main className="vi-main">
         <section className="vi-intro">
           <div>
             <p className="vi-eyebrow">PLANTA 179A / INVENTARIO FÍSICO</p>
@@ -462,7 +464,8 @@ export default function App() {
           onSelectPart={setSelectedPart}
           onHelp={setHelpTopic}
         />
-      </main>}
+      </main></div></div>}
+      <ScrollEffects viewportRef={shellRef} contentRef={mainMotionRef} />
       {(
         <footer className="vi-page-snapshot-footer">
           <SnapshotStamp

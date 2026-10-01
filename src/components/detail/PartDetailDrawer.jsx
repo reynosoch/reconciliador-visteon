@@ -1,3 +1,4 @@
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 ﻿// src/components/detail/PartDetailDrawer.jsx
 import React from "react";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
@@ -383,7 +384,7 @@ export default function PartDetailDrawer({
        }
      }
 >
-<aside className="vi-detail-drawer">
+<RubberDrawer className="vi-detail-drawer">
 <div
          className="
            sticky
@@ -634,7 +635,7 @@ export default function PartDetailDrawer({
 </section>
 
 </div>
-</aside>
+</RubberDrawer>
 </div>
 </OverlayPortal>
  );

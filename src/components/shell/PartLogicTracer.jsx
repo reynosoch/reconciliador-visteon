@@ -1,3 +1,4 @@
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import { useMemo, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import { Ghost, PelletRail } from "../visual/PacmanGlyphs.jsx";
@@ -109,7 +110,7 @@ export default function PartLogicTracer({
       <div className="vi-global-overlay vi-logic-overlay" onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose?.();
       }}>
-        <aside className="vi-logic-tracer vi-drawer-panel">
+        <RubberDrawer className="vi-logic-tracer vi-drawer-panel">
           <div className="vi-logic-head">
             <div>
               <p className="vi-eyebrow">TRAZADOR DE PIEZA</p>
@@ -300,7 +301,7 @@ export default function PartLogicTracer({
               )}
             </>
           )}
-        </aside>
+        </RubberDrawer>
       </div>
     </OverlayPortal>
   );

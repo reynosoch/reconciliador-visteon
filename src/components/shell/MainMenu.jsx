@@ -1,3 +1,4 @@
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import { useRef } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import SnapshotStamp from "./SnapshotStamp.jsx";
@@ -25,7 +26,7 @@ export default function MainMenu({
       <div className="vi-global-overlay vi-menu-overlay" onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}>
-        <aside
+        <RubberDrawer
           className="vi-menu-panel vi-liquid-drawer"
           onTouchStart={(event) => {
             const touch = event.touches?.[0];
@@ -119,7 +120,7 @@ export default function MainMenu({
           </section>
 
 
-        </aside>
+        </RubberDrawer>
       </div>
     </OverlayPortal>
   );

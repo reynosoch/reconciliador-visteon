@@ -1,3 +1,4 @@
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 // src/components/shell/SourcesDrawer.jsx
 import React, { useRef, useState } from "react";
 import { HelpButton } from "../help/HelpDrawer";
@@ -350,7 +351,7 @@ export default function SourcesDrawer({
           if (event.target === event.currentTarget) onClose?.();
         }}
       >
-        <aside className="vi-drawer-panel vi-sources-drawer absolute right-0 top-0 bottom-0 w-full max-w-[620px] overflow-y-auto">
+        <RubberDrawer className="vi-drawer-panel vi-sources-drawer absolute right-0 top-0 bottom-0 w-full max-w-[620px] overflow-y-auto">
           <input
             ref={bulkInput}
             type="file"
@@ -447,7 +448,7 @@ export default function SourcesDrawer({
               </div>
             )}
           </div>
-        </aside>
+        </RubberDrawer>
 
         <SourcePreviewModal selection={preview} onClose={() => setPreview(null)} />
 

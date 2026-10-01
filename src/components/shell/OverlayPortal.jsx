@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 let overlayLockCount = 0;
@@ -43,6 +43,34 @@ export default function OverlayPortal({ children, onClose }) {
   const token = useRef(`vi-overlay-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+
+  useLayoutEffect(() => {
+    const host = root.current;
+    const mountedAt = performance.now();
+    return () => {
+      // A short inert visual snapshot lets the drawer finish its exit after React
+      // closes it. It cannot receive input, retain scroll locks or run effects.
+      if (!host?.querySelector(".vi-rubber-viewport") ||
+          performance.now() - mountedAt < 200 ||
+          matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const snapshot = host.cloneNode(true);
+      snapshot.classList.add("vi-overlay-exit");
+      snapshot.inert = true;
+      snapshot.setAttribute("aria-hidden", "true");
+      snapshot.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
+      const originals = host.querySelectorAll(".vi-rubber-viewport");
+      document.body.appendChild(snapshot);
+      snapshot.querySelectorAll(".vi-rubber-viewport").forEach((node, index) => {
+        node.scrollTop = originals[index]?.scrollTop || 0;
+      });
+      const timer = setTimeout(() => snapshot.remove(), 160);
+      snapshot.addEventListener("animationend", (event) => {
+        if (event.target !== snapshot) return;
+        clearTimeout(timer);
+        snapshot.remove();
+      });
+    };
+  }, []);
 
   useEffect(() => {
     lockPageScroll();
@@ -110,5 +138,5 @@ export default function OverlayPortal({ children, onClose }) {
     };
   }, []);
 
-  return createPortal(<div ref={root}>{children}</div>, document.body);
+  return createPortal(<div ref={root} className="vi-overlay-root">{children}</div>, document.body);
 }

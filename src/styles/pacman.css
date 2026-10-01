@@ -984,7 +984,7 @@ html,body,#root,.vi-shell{max-width:100%;overflow-x:hidden}
 .vi-drawer-glass-head,
 .vi-global-drawer>div:first-child,
 .vi-drawer-panel>div:first-child,
-.vi-detail-drawer>div:first-child{
+.vi-detail-drawer .vi-rubber-content>div:first-child{
   position:sticky;top:0;z-index:12;
   display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
   padding:20px;
@@ -2291,7 +2291,7 @@ body.vi-overlay-open .vi-shell {
   box-shadow: -34px 0 90px rgba(0,7,13,.48) !important;
   scrollbar-color: #496f80 #082536;
 }
-.vi-notification-drawer > .vi-notification-head {
+.vi-notification-drawer .vi-notification-head {
   position: sticky;
   top: 0;
   z-index: 4;
@@ -3771,3 +3771,100 @@ body.vi-overlay-open .vi-shell {
 .vi-pacman-toggle[aria-checked="true"] .vi-switch-track { background: #f5821f; }
 .vi-pacman-toggle[aria-checked="true"] .vi-switch-track > span { transform: translateX(18px); }
 .vi-pacman-toggle:focus-visible { outline: 2px solid #f5821f; outline-offset: 3px; }
+
+/* Solid dashboard cards: Pac-Man stays in the gutters, not behind the figures. */
+.vi-main :is(.vi-financial-shell,.vi-findings,.vi-health-bar,.vi-reconciliation-shell,
+.vi-cut-history,.vi-meeting-priorities,.vi-panel,.vi-panel-flat,.vi-liquid-surface) {
+  background: linear-gradient(145deg,#10384d,#0a2b3e 65%,#092638) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.vi-main .vi-financial-cell {
+  background: linear-gradient(160deg,#123b50,#0d3043) !important;
+}
+.vi-main .vi-financial-cell:hover { background: #164258 !important; }
+
+/* The scroll owner never stretches. Clipping the moving content preserves its
+   measured height at both edges, even on fast changes of direction. */
+.vi-rubber-viewport {
+  overscroll-behavior-y: none !important;
+  scrollbar-width: none !important;
+  scrollbar-gutter: auto !important;
+}
+.vi-rubber-viewport::-webkit-scrollbar { display: none !important; }
+.vi-rubber-viewport > .vi-rubber-clip {
+  overflow: clip;
+  display: flow-root;
+  min-width: 0;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+.vi-rubber-content { display: flow-root; min-width: 0; }
+.vi-rubber-content > :is(.vi-sources-head,.vi-notification-head,.vi-menu-head) {
+  background: linear-gradient(180deg,#103b51,#0c3145) !important;
+}
+
+/* Small floating rail; the thumb compresses with the content's edge tension. */
+.vi-scroll-rail {
+  position: fixed;
+  z-index: 1600;
+  width: 10px;
+  border-radius: 20px;
+  background: rgba(3,20,31,.28);
+  touch-action: none;
+  cursor: pointer;
+}
+.vi-scroll-rail[hidden] { display: none; }
+.vi-scroll-thumb {
+  width: 5px;
+  margin-left: 3px;
+  min-height: 18px;
+  border-radius: 20px;
+  background: linear-gradient(#86afbf,#48788f);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.vi-scroll-rail:hover .vi-scroll-thumb,
+.vi-scroll-rail:focus-visible .vi-scroll-thumb,
+.vi-scroll-rail.is-pulling .vi-scroll-thumb {
+  background: linear-gradient(#ffb46c,#f5821f);
+}
+.vi-scroll-rail:focus-visible { outline: 2px solid #f5821f; outline-offset: 2px; }
+body.vi-overlay-open .vi-page-scroll-rail { display: none; }
+
+/* Only the panels animate, never the scrolling dashboard or its rows. */
+.vi-overlay-root .vi-rubber-viewport {
+  --vi-drawer-enter: 42px;
+  animation: vi-drawer-enter .18s cubic-bezier(.2,.8,.2,1) both !important;
+}
+.vi-overlay-root .vi-menu-panel { --vi-drawer-enter: 36px; }
+.vi-overlay-root { animation: vi-overlay-enter .14s ease-out both !important; }
+.vi-overlay-root.vi-overlay-exit {
+  pointer-events: none !important;
+  animation: vi-overlay-exit .14s ease-in both !important;
+}
+.vi-overlay-exit .vi-rubber-viewport {
+  animation: vi-drawer-exit .14s ease-in both !important;
+}
+.vi-sources-drawer {
+  position: absolute !important;
+  right: 0 !important;
+  left: auto !important;
+  top: 0 !important;
+  bottom: 0 !important;
+}
+@keyframes vi-drawer-enter {
+  from { translate: var(--vi-drawer-enter) 0; opacity: .45; }
+  to { translate: 0 0; opacity: 1; }
+}
+@keyframes vi-drawer-exit {
+  from { translate: 0 0; opacity: 1; }
+  to { translate: var(--vi-drawer-enter) 0; opacity: .3; }
+}
+@keyframes vi-overlay-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vi-overlay-exit { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .vi-overlay-root, .vi-overlay-root .vi-rubber-viewport {
+    animation: none !important;
+  }
+}
