@@ -3543,3 +3543,63 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
     min-width: 0;
   }
 }
+
+
+/* 2026-10-01 · Continuous Pac-Man + translucent dashboard surfaces */
+/* Let the ambient chase read through the dashboard without adding blur cost. */
+.vi-ambient-chase {
+  opacity: .78;
+}
+
+.vi-main :is(
+  .vi-financial-shell,
+  .vi-findings,
+  .vi-health-bar,
+  .vi-reconciliation-shell,
+  .vi-cut-history,
+  .vi-meeting-priorities,
+  .vi-panel,
+  .vi-panel-flat,
+  .vi-liquid-surface
+) {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(16,56,77,.84),
+      rgba(10,43,62,.78) 62%,
+      rgba(9,38,56,.82)
+    ) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Large table surfaces stay slightly more opaque so values remain easy to scan. */
+.vi-main :is(
+  .vi-findings-table-wrap,
+  .vi-table-virtual-scroll,
+  .vi-inspection-scroll
+) {
+  background: rgba(7,34,49,.84);
+}
+
+/* Financial cells inherit the glassy parent instead of repainting an opaque slab. */
+.vi-main .vi-financial-cell {
+  background: rgba(12,49,68,.52) !important;
+}
+.vi-main .vi-financial-cell:hover {
+  background: rgba(22,66,88,.72) !important;
+}
+
+/* Keep Pac-Man visible in the gaps while protecting text contrast. */
+.vi-main :is(
+  .vi-financial-shell,
+  .vi-findings,
+  .vi-health-bar,
+  .vi-cut-history,
+  .vi-meeting-priorities,
+  .vi-reconciliation-shell
+) {
+  box-shadow:
+    0 12px 34px rgba(0,10,18,.16),
+    inset 0 1px rgba(255,255,255,.025) !important;
+}
