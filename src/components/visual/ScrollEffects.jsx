@@ -1,8 +1,14 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 
+const RUBBER_MAX_PX = 58;
+const RUBBER_CURVE = 160;
+const RETURN_TAU_MS = 24;
+const WHEEL_RELEASE_MS = 22;
+const RAW_LIMIT = 420;
+
 const rubberDistance = (distance) =>
-  Math.sign(distance) * 64 * (1 - Math.exp(-Math.abs(distance) / 180));
+  Math.sign(distance) * RUBBER_MAX_PX * (1 - Math.exp(-Math.abs(distance) / RUBBER_CURVE));
 
 /** Native scrolling in the middle; only the clipped content moves at an edge. */
 export default function ScrollEffects({ viewportRef, contentRef }) {
@@ -41,8 +47,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       frame = 0;
       if (returning) {
         const dt = previousTime ? Math.max(0, time - previousTime) : 16;
-        pull *= Math.exp(-dt / 65);
-        if (Math.abs(pull) < 0.15) { pull = 0; raw = 0; returning = false; }
+        pull *= Math.exp(-dt / RETURN_TAU_MS);
+        if (Math.abs(pull) < 0.35) { pull = 0; returning = false; }
       }
       previousTime = time;
       if (pull) {
@@ -64,9 +70,16 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     function schedule() { if (!frame) frame = requestAnimationFrame(paint); }
     const release = () => {
       clearTimeout(timer);
+      timer = 0;
       touch = null;
-      returning = true;
-      previousTime = performance.now();
+      raw = 0;
+      if (Math.abs(pull) < 0.35) {
+        pull = 0;
+        returning = false;
+      } else {
+        returning = true;
+        previousTime = performance.now();
+      }
       schedule();
     };
     const reset = () => {
@@ -84,13 +97,20 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       }
       return false;
     };
-    const pullBy = (delta) => {
+    const pullBy = (delta, mode = "touch") => {
       if (reduced.matches) return;
       clearTimeout(timer);
-      if (raw && Math.sign(raw) !== Math.sign(delta)) raw = 0;
-      raw = Math.max(-600, Math.min(600, raw + delta));
-      pull = rubberDistance(raw);
+      timer = 0;
+      if (returning || (raw && Math.sign(raw) !== Math.sign(delta))) raw = 0;
       returning = false;
+
+      // Touch follows the finger. Wheel/touchpad momentum is damped so repeated
+      // edge events cannot saturate the rubber band and leave it hanging.
+      const nextRaw = mode === "wheel"
+        ? raw * 0.42 + delta
+        : raw + delta;
+      raw = Math.max(-RAW_LIMIT, Math.min(RAW_LIMIT, nextRaw));
+      pull = rubberDistance(raw);
       schedule();
     };
     const wheel = (event) => {
@@ -99,8 +119,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height : 1;
       const delta = -event.deltaY * unit;
       if (atEdge(delta)) {
-        pullBy(delta);
-        timer = setTimeout(release, 85);
+        pullBy(delta, "wheel");
+        timer = setTimeout(release, WHEEL_RELEASE_MS);
       } else if (pull) reset();
     };
     const startTouch = (event) => {
