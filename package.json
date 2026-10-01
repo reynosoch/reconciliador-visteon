@@ -9,7 +9,8 @@
     "lint": "eslint . --max-warnings=0",
     "preview": "vite preview",
     "audit:css": "node scripts/audit-css-usage.mjs",
-    "context": "node scripts/show-agent-context.mjs"
+    "context": "node scripts/show-agent-context.mjs",
+    "deploy": "node scripts/deploy-pages.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",
