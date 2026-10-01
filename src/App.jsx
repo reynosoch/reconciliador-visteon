@@ -1,3 +1,4 @@
+import { AmbientChase } from "./components/visual/PacmanGlyphs.jsx";
 import MeetingPriorities from "./components/dashboard/MeetingPriorities.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import CommandHeader from "./components/shell/CommandHeader";
@@ -51,6 +52,12 @@ function initial() {
   return { id: old || newId(), name: old || "Inventario actual" };
 }
 export default function App() {
+  const [pacmanEnabled, setPacmanEnabled] = useState(
+    () => safeReadJson("visteon.ui.pacman.v1", true).value !== false,
+  );
+  useEffect(() => {
+    safeWriteJson("visteon.ui.pacman.v1", pacmanEnabled);
+  }, [pacmanEnabled]);
   const mobileSwipeStart = useRef(null);
   const shellRef = useRef(null);
   const [sourcesOpen, setSourcesOpen] = useState(false),
@@ -153,118 +160,6 @@ export default function App() {
   }, [identity]);
   useEffect(() => {
     archiveLegacyStorage().catch(() => setWarning(STORAGE_WARNING));
-  }, []);
-  useEffect(() => {
-    const selector = [
-      ".vi-shell",
-      ".vi-drawer-panel",
-      ".vi-detail-drawer",
-      ".vi-global-drawer",
-      ".vi-menu-panel",
-      ".vi-logic-tracer",
-      ".vi-source-preview-table-wrap",
-      ".vi-inspection-scroll",
-      ".vi-excel-grid-wrap",
-      ".vi-dual-sheet-scroll",
-      ".vi-findings-table-wrap",
-      ".vi-table-shell",
-    ].join(",");
-
-    const releaseTimers = new WeakMap();
-    let touchState = null;
-
-    const findSurface = (target) => {
-      let node = target instanceof Element ? target : null;
-      while (node && node !== document.body) {
-        if (node.matches?.(selector) && node.scrollHeight > node.clientHeight + 1) {
-          return node;
-        }
-        node = node.parentElement;
-      }
-      return target instanceof Node && shellRef.current?.contains(target)
-        ? shellRef.current
-        : null;
-    };
-
-    const release = (surface, delay = 105) => {
-      if (!surface) return;
-      const previous = releaseTimers.get(surface);
-      if (previous) window.clearTimeout(previous);
-      const timer = window.setTimeout(() => {
-        surface.classList.remove("vi-elastic-top", "vi-elastic-bottom");
-        surface.style.removeProperty("--vi-elastic-pull");
-        releaseTimers.delete(surface);
-      }, delay);
-      releaseTimers.set(surface, timer);
-    };
-
-    const stretch = (surface, edge, rawAmount) => {
-      if (!surface) return;
-      const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
-      if (maxScroll <= 1) return;
-
-      const pull = Math.min(28, Math.max(4, rawAmount));
-      surface.classList.toggle("vi-elastic-top", edge === "top");
-      surface.classList.toggle("vi-elastic-bottom", edge === "bottom");
-      surface.style.setProperty("--vi-elastic-pull", String(pull));
-      release(surface);
-    };
-
-    const onWheel = (event) => {
-      if (Math.abs(event.deltaY) < 3) return;
-      const surface = findSurface(event.target);
-      if (!surface) return;
-
-      const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
-      if (event.deltaY < 0 && surface.scrollTop <= 1) {
-        stretch(surface, "top", Math.abs(event.deltaY) * 0.12);
-      } else if (event.deltaY > 0 && surface.scrollTop >= maxScroll - 1) {
-        stretch(surface, "bottom", Math.abs(event.deltaY) * 0.12);
-      }
-    };
-
-    const onTouchStart = (event) => {
-      const touch = event.touches?.[0];
-      const surface = findSurface(event.target);
-      touchState = touch && surface
-        ? { surface, startY: touch.clientY }
-        : null;
-    };
-
-    const onTouchMove = (event) => {
-      if (!touchState) return;
-      const touch = event.touches?.[0];
-      if (!touch) return;
-
-      const { surface, startY } = touchState;
-      const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
-      const delta = touch.clientY - startY;
-
-      if (delta > 0 && surface.scrollTop <= 1) {
-        stretch(surface, "top", Math.abs(delta) * 0.16);
-      } else if (delta < 0 && surface.scrollTop >= maxScroll - 1) {
-        stretch(surface, "bottom", Math.abs(delta) * 0.16);
-      }
-    };
-
-    const onTouchEnd = () => {
-      if (touchState?.surface) release(touchState.surface, 45);
-      touchState = null;
-    };
-
-    document.addEventListener("wheel", onWheel, { passive: true, capture: true });
-    document.addEventListener("touchstart", onTouchStart, { passive: true, capture: true });
-    document.addEventListener("touchmove", onTouchMove, { passive: true, capture: true });
-    document.addEventListener("touchend", onTouchEnd, { passive: true, capture: true });
-    document.addEventListener("touchcancel", onTouchEnd, { passive: true, capture: true });
-
-    return () => {
-      document.removeEventListener("wheel", onWheel, true);
-      document.removeEventListener("touchstart", onTouchStart, true);
-      document.removeEventListener("touchmove", onTouchMove, true);
-      document.removeEventListener("touchend", onTouchEnd, true);
-      document.removeEventListener("touchcancel", onTouchEnd, true);
-    };
   }, []);
 
   useEffect(() => {
@@ -439,6 +334,7 @@ export default function App() {
             : "";
   return (
     <div className="vi-shell" ref={shellRef}>
+      {pacmanEnabled && <AmbientChase />}
       <CommandHeader
         connectionStatus={inventory.connectionStatus}
         scanCount={inventory.scanCount}
@@ -639,6 +535,8 @@ export default function App() {
         }}
       />}
       <MainMenu
+        pacmanEnabled={pacmanEnabled}
+        onTogglePacman={() => setPacmanEnabled((enabled) => !enabled)}
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         onOpenLogicTracer={() => setLogicTracerOpen(true)}

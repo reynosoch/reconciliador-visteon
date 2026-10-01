@@ -50,6 +50,7 @@ export function AmbientChase() {
     const score = host.querySelector('[data-chase="score"]');
 
     let frame = 0;
+    const fruitTimers = new Set();
     let last = 0;
     let lastPaint = 0;
     let pauseUntil = 0;
@@ -108,7 +109,6 @@ export function AmbientChase() {
       score.textContent = value;
       score.style.transform = `translate3d(${p.x}px, ${p.y - 12}px, 0)`;
       score.classList.remove("is-visible");
-      void score.offsetWidth;
       score.classList.add("is-visible");
       scoreUntil = performance.now() + 1000;
     };
@@ -142,11 +142,13 @@ export function AmbientChase() {
         if (Math.hypot(point.x - p.x, point.y - p.y) < 20) {
           fruit.hidden = true;
           showScore(p, "+100");
-          window.setTimeout(() => {
+          const timer = window.setTimeout(() => {
+            fruitTimers.delete(timer);
             if (!host.isConnected) return;
             setPosition(fruit, randomPoint());
             fruit.hidden = false;
           }, 3500 + Math.random() * 3500);
+          fruitTimers.add(timer);
           break;
         }
       }
@@ -245,6 +247,7 @@ export function AmbientChase() {
       pauseUntil = performance.now() + 190;
     };
 
+    document.addEventListener("scroll", pauseForScroll, { passive: true, capture: true });
     window.addEventListener("resize", resize);
     window.addEventListener("wheel", pauseForScroll, { passive: true });
     window.addEventListener("touchmove", pauseForScroll, { passive: true });
@@ -252,6 +255,8 @@ export function AmbientChase() {
 
     return () => {
       cancelAnimationFrame(frame);
+      fruitTimers.forEach((timer) => window.clearTimeout(timer));
+      document.removeEventListener("scroll", pauseForScroll, true);
       window.removeEventListener("resize", resize);
       window.removeEventListener("wheel", pauseForScroll);
       window.removeEventListener("touchmove", pauseForScroll);

@@ -9,6 +9,8 @@ const DEV_ITEMS = [
 ];
 
 export default function MainMenu({
+  pacmanEnabled = true,
+  onTogglePacman,
   open,
   onClose,
   onOpenLogicTracer,
@@ -55,6 +57,24 @@ export default function MainMenu({
               lastUpdated={lastUpdated}
               compact
             />
+          </section>
+
+          <section className="vi-menu-section">
+            <span className="vi-menu-section-title">APARIENCIA</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={pacmanEnabled}
+              aria-label="Animación de Pac-Man"
+              className="vi-menu-item vi-pacman-toggle"
+              onClick={onTogglePacman}
+            >
+              <span>
+                <strong>Animación de Pac-Man</strong>
+                <small>{pacmanEnabled ? "Activada" : "Desactivada"} · Se guarda en este dispositivo.</small>
+              </span>
+              <span className="vi-switch-track" aria-hidden="true"><span /></span>
+            </button>
           </section>
 
           <section className="vi-menu-section">
