@@ -91,6 +91,13 @@ function SourceLine({
   const input = useRef(null);
   const manualLocked = config.type === "scans" && botRunning;
   const bomFiles = Array.isArray(source?.files) ? source.files : [];
+  const bomRows = Array.isArray(source?.rows) ? source.rows : [];
+  const bomRowsForFile = (fileName) =>
+    bomRows.filter((row) => String(row?.__sourceFile || "") === String(fileName || "")).length;
+  const latestBom = bomFiles.length
+    ? [...bomFiles].sort((a, b) => new Date(b.loadedAt || 0) - new Date(a.loadedAt || 0))[0]
+    : null;
+  const latestBomRows = latestBom ? bomRowsForFile(latestBom.fileName) : 0;
 
   return (
     <div className="vi-source-line">
@@ -145,34 +152,55 @@ function SourceLine({
 
       {source?.loaded ? (
         config.type === "bom" ? (
-          <details className="vi-source-file-list">
-            <summary>
+          <div className="vi-bom-source-summary">
+            <button
+              type="button"
+              className="vi-bom-latest"
+              onClick={() => latestBom && onPreview?.({ config, source, fileName: latestBom.fileName })}
+              disabled={!latestBom}
+            >
               <span>
-                {bomFiles.length.toLocaleString("es-MX")} archivo
-                {bomFiles.length === 1 ? "" : "s"} BOM
+                <small>ÚLTIMO BOM CARGADO</small>
+                <strong>{latestBom?.fileName || "Sin archivo BOM"}</strong>
               </span>
-              <strong>ABRIR ▾</strong>
-            </summary>
-            <div>
-              <button
-                type="button"
-                onClick={() => onPreview?.({ config, source, fileName: "__all" })}
-              >
-                <span>VER TODOS</span>
-                <small>{Number(source.rows?.length || 0).toLocaleString("es-MX")} filas</small>
-              </button>
-              {bomFiles.map((file) => (
+              <b>{latestBomRows.toLocaleString("es-MX")} filas</b>
+            </button>
+
+            <div className="vi-bom-total">
+              <span>TOTAL ACUMULADO</span>
+              <strong>{bomRows.length.toLocaleString("es-MX")} filas</strong>
+              <small>{bomFiles.length.toLocaleString("es-MX")} archivo{bomFiles.length === 1 ? "" : "s"}</small>
+            </div>
+
+            <details className="vi-source-file-list">
+              <summary>
+                <span>VER TODOS LOS BOM</span>
+                <strong>ABRIR ▾</strong>
+              </summary>
+              <div>
                 <button
                   type="button"
-                  key={file.fingerprint || file.fileName}
-                  onClick={() => onPreview?.({ config, source, fileName: file.fileName })}
+                  onClick={() => onPreview?.({ config, source, fileName: "__all" })}
                 >
-                  <span>{file.fileName}</span>
-                  <small>{Number(file.rowCount || 0).toLocaleString("es-MX")} filas</small>
+                  <span>VER TODOS</span>
+                  <small>{bomRows.length.toLocaleString("es-MX")} filas</small>
                 </button>
-              ))}
-            </div>
-          </details>
+                {bomFiles.map((file) => {
+                  const actualRows = bomRowsForFile(file.fileName);
+                  return (
+                    <button
+                      type="button"
+                      key={file.fingerprint || file.fileName}
+                      onClick={() => onPreview?.({ config, source, fileName: file.fileName })}
+                    >
+                      <span>{file.fileName}</span>
+                      <small>{actualRows.toLocaleString("es-MX")} filas</small>
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
+          </div>
         ) : (
           <button
             type="button"
