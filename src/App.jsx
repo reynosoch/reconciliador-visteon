@@ -19,6 +19,7 @@ import OverlayPortal, { forceUnlockPageScroll } from "./components/shell/Overlay
 import MainMenu, { AnimationOnlyView } from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
 import SnapshotStamp from "./components/shell/SnapshotStamp.jsx";
+import PartLogicTracer from "./components/shell/PartLogicTracer.jsx";
 import { REFERENCE_SOURCE_LABELS, useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
 import { AmbientChase } from "./components/visual/PacmanGlyphs";
@@ -53,8 +54,6 @@ function initial() {
 export default function App() {
   const mobileSwipeStart = useRef(null);
   const shellRef = useRef(null);
-  const scrollFrame = useRef(null);
-  const previousScrollTop = useRef(0);
   const [sourcesOpen, setSourcesOpen] = useState(false),
     [selectedPart, setSelectedPart] = useState(null),
     [helpTopic, setHelpTopic] = useState(null),
@@ -74,6 +73,7 @@ export default function App() {
     [warning, setWarning] = useState(""),
     [confirmNew, setConfirmNew] = useState(false),
     [menuOpen, setMenuOpen] = useState(false),
+    [logicTracerOpen, setLogicTracerOpen] = useState(false),
     [animationOnly, setAnimationOnly] = useState(false),
     [detailFromNotifications, setDetailFromNotifications] = useState(false);
   const references = useReferenceFiles(),
@@ -157,136 +157,80 @@ export default function App() {
     archiveLegacyStorage().catch(() => setWarning(STORAGE_WARNING));
   }, []);
   useEffect(() => {
-    const scroller = shellRef.current;
-    if (!scroller) return undefined;
-
-    const header = scroller.querySelector(".vi-command-header");
-    let settleTimer = 0;
-    previousScrollTop.current = scroller.scrollTop;
-    header?.classList.add("vi-header-top");
-
-    const setHeaderMode = (mode) => {
-      if (!header) return;
-      header.classList.remove("vi-header-top", "vi-header-compact", "vi-header-expanded");
-      header.classList.add(`vi-header-${mode}`);
-    };
-
-    const handleScroll = () => {
-      scroller.classList.add("vi-scroll-moving");
-      window.clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(() => {
-        scroller.classList.remove("vi-scroll-moving");
-      }, 120);
-
-      if (scrollFrame.current) return;
-      scrollFrame.current = requestAnimationFrame(() => {
-        scrollFrame.current = null;
-        const nextTop = Math.max(0, scroller.scrollTop);
-        const delta = nextTop - previousScrollTop.current;
-
-        if (nextTop <= 18) setHeaderMode("top");
-        else if (delta > 4) setHeaderMode("compact");
-        else if (delta < -4) setHeaderMode("expanded");
-
-        previousScrollTop.current = nextTop;
-      });
-    };
-
-    scroller.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      scroller.removeEventListener("scroll", handleScroll);
-      window.clearTimeout(settleTimer);
-      if (scrollFrame.current) cancelAnimationFrame(scrollFrame.current);
-      scrollFrame.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
     const selector = [
       ".vi-shell",
       ".vi-drawer-panel",
       ".vi-detail-drawer",
       ".vi-global-drawer",
       ".vi-menu-panel",
+      ".vi-logic-tracer",
       ".vi-source-preview-table-wrap",
       ".vi-inspection-scroll",
       ".vi-excel-grid-wrap",
-      ".vi-dual-grid",
+      ".vi-dual-sheet-scroll",
       ".vi-findings-table-wrap",
       ".vi-table-shell",
     ].join(",");
 
-    const elasticTimers = new WeakMap();
-    const motionTimers = new WeakMap();
+    const releaseTimers = new WeakMap();
     let touchState = null;
 
-    const findSurface = (target) =>
-      target instanceof Element ? target.closest(selector) : null;
-
-    const markMoving = (surface) => {
-      if (!surface) return;
-      surface.classList.add("vi-scroll-moving");
-      const old = motionTimers.get(surface);
-      if (old) window.clearTimeout(old);
-      const timer = window.setTimeout(() => {
-        surface.classList.remove("vi-scroll-moving");
-        motionTimers.delete(surface);
-      }, 120);
-      motionTimers.set(surface, timer);
+    const findSurface = (target) => {
+      let node = target instanceof Element ? target : null;
+      while (node && node !== document.body) {
+        if (node.matches?.(selector) && node.scrollHeight > node.clientHeight + 1) {
+          return node;
+        }
+        node = node.parentElement;
+      }
+      return target instanceof Node && shellRef.current?.contains(target)
+        ? shellRef.current
+        : null;
     };
 
-    const releaseElastic = (surface, delay = 90) => {
-      const old = elasticTimers.get(surface);
-      if (old) window.clearTimeout(old);
+    const release = (surface, delay = 105) => {
+      if (!surface) return;
+      const previous = releaseTimers.get(surface);
+      if (previous) window.clearTimeout(previous);
       const timer = window.setTimeout(() => {
         surface.classList.remove("vi-elastic-top", "vi-elastic-bottom");
-        surface.style.removeProperty("--vi-elastic-shift");
-        surface.style.removeProperty("--vi-elastic-scale");
-        elasticTimers.delete(surface);
+        surface.style.removeProperty("--vi-elastic-pull");
+        releaseTimers.delete(surface);
       }, delay);
-      elasticTimers.set(surface, timer);
+      releaseTimers.set(surface, timer);
     };
 
     const stretch = (surface, edge, rawAmount) => {
       if (!surface) return;
       const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
-      if (maxScroll <= 1 && surface !== shellRef.current) return;
+      if (maxScroll <= 1) return;
 
-      const amount = Math.min(26, Math.max(3, rawAmount));
-      const shift = edge === "top" ? amount : -amount;
-      const scale = 1 + Math.min(0.012, amount / 1700);
-
-      surface.classList.remove("vi-elastic-top", "vi-elastic-bottom");
-      surface.classList.add(edge === "top" ? "vi-elastic-top" : "vi-elastic-bottom");
-      surface.style.setProperty("--vi-elastic-shift", `${shift.toFixed(2)}px`);
-      surface.style.setProperty("--vi-elastic-scale", scale.toFixed(4));
-      releaseElastic(surface);
+      const pull = Math.min(28, Math.max(4, rawAmount));
+      surface.classList.toggle("vi-elastic-top", edge === "top");
+      surface.classList.toggle("vi-elastic-bottom", edge === "bottom");
+      surface.style.setProperty("--vi-elastic-pull", String(pull));
+      release(surface);
     };
 
     const onWheel = (event) => {
+      if (Math.abs(event.deltaY) < 3) return;
       const surface = findSurface(event.target);
-      if (!surface || Math.abs(event.deltaY) < 2) return;
-      markMoving(surface);
+      if (!surface) return;
 
       const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
-      const atTop = surface.scrollTop <= 1;
-      const atBottom = surface.scrollTop >= maxScroll - 1;
-
-      if (event.deltaY < 0 && atTop) {
-        stretch(surface, "top", Math.abs(event.deltaY) * 0.16);
-      } else if (event.deltaY > 0 && atBottom) {
-        stretch(surface, "bottom", Math.abs(event.deltaY) * 0.16);
+      if (event.deltaY < 0 && surface.scrollTop <= 1) {
+        stretch(surface, "top", Math.abs(event.deltaY) * 0.12);
+      } else if (event.deltaY > 0 && surface.scrollTop >= maxScroll - 1) {
+        stretch(surface, "bottom", Math.abs(event.deltaY) * 0.12);
       }
     };
 
     const onTouchStart = (event) => {
       const touch = event.touches?.[0];
       const surface = findSurface(event.target);
-      if (!touch || !surface) {
-        touchState = null;
-        return;
-      }
-      touchState = { surface, y: touch.clientY };
+      touchState = touch && surface
+        ? { surface, startY: touch.clientY }
+        : null;
     };
 
     const onTouchMove = (event) => {
@@ -294,28 +238,20 @@ export default function App() {
       const touch = event.touches?.[0];
       if (!touch) return;
 
-      const { surface, y } = touchState;
-      markMoving(surface);
+      const { surface, startY } = touchState;
       const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
-      const dy = touch.clientY - y;
+      const delta = touch.clientY - startY;
 
-      if (dy > 0 && surface.scrollTop <= 1) {
-        stretch(surface, "top", Math.abs(dy) * 0.20);
-      } else if (dy < 0 && surface.scrollTop >= maxScroll - 1) {
-        stretch(surface, "bottom", Math.abs(dy) * 0.20);
+      if (delta > 0 && surface.scrollTop <= 1) {
+        stretch(surface, "top", Math.abs(delta) * 0.16);
+      } else if (delta < 0 && surface.scrollTop >= maxScroll - 1) {
+        stretch(surface, "bottom", Math.abs(delta) * 0.16);
       }
     };
 
     const onTouchEnd = () => {
-      if (touchState?.surface) releaseElastic(touchState.surface, 30);
+      if (touchState?.surface) release(touchState.surface, 45);
       touchState = null;
-    };
-
-    const onAnyScroll = (event) => {
-      const surface = event.target instanceof Element
-        ? event.target.closest(selector)
-        : shellRef.current;
-      markMoving(surface);
     };
 
     document.addEventListener("wheel", onWheel, { passive: true, capture: true });
@@ -323,7 +259,6 @@ export default function App() {
     document.addEventListener("touchmove", onTouchMove, { passive: true, capture: true });
     document.addEventListener("touchend", onTouchEnd, { passive: true, capture: true });
     document.addEventListener("touchcancel", onTouchEnd, { passive: true, capture: true });
-    document.addEventListener("scroll", onAnyScroll, true);
 
     return () => {
       document.removeEventListener("wheel", onWheel, true);
@@ -331,9 +266,9 @@ export default function App() {
       document.removeEventListener("touchmove", onTouchMove, true);
       document.removeEventListener("touchend", onTouchEnd, true);
       document.removeEventListener("touchcancel", onTouchEnd, true);
-      document.removeEventListener("scroll", onAnyScroll, true);
     };
   }, []);
+
   useEffect(() => {
     const overlayOpen =
       sourcesOpen ||
@@ -343,6 +278,7 @@ export default function App() {
       botOpen ||
       confirmNew ||
       menuOpen ||
+      logicTracerOpen ||
       Boolean(activeDataView);
 
     if (!overlayOpen) {
@@ -356,6 +292,7 @@ export default function App() {
     botOpen,
     confirmNew,
     menuOpen,
+    logicTracerOpen,
     activeDataView,
   ]);
   useEffect(() => {
@@ -410,7 +347,7 @@ export default function App() {
   }, [references.status.loadedCount, warning]);
   useEffect(() => {
     const start = (event) => {
-      if (window.innerWidth > 760 || sourcesOpen || notificationsOpen || botOpen || helpTopic || selectedPart || menuOpen || animationOnly) return;
+      if (window.innerWidth > 760 || sourcesOpen || notificationsOpen || botOpen || helpTopic || selectedPart || menuOpen || logicTracerOpen || animationOnly) return;
       const touch = event.touches?.[0];
       if (!touch || touch.clientX < window.innerWidth - 28) return;
       mobileSwipeStart.current = { x: touch.clientX, y: touch.clientY };
@@ -431,7 +368,7 @@ export default function App() {
       removeEventListener("touchstart", start);
       removeEventListener("touchend", end);
     };
-  }, [sourcesOpen, notificationsOpen, botOpen, helpTopic, selectedPart, menuOpen, animationOnly]);
+  }, [sourcesOpen, notificationsOpen, botOpen, helpTopic, selectedPart, menuOpen, logicTracerOpen, animationOnly]);
   const openPartFromNotification = (alert) => {
     const item = inventory.reconciliation.find(
       (row) => row.partNumber === alert?.partNumber,
@@ -709,9 +646,17 @@ export default function App() {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         onAnimationOnly={() => setAnimationOnly(true)}
+        onOpenLogicTracer={() => setLogicTracerOpen(true)}
         snapshotMeta={inventory.snapshotMeta}
         scanCount={inventory.scanCount}
         lastUpdated={inventory.lastUpdated}
+      />
+      <PartLogicTracer
+        open={logicTracerOpen}
+        onClose={() => setLogicTracerOpen(false)}
+        reconciliation={inventory.reconciliation}
+        sources={references.sources}
+        scanReady={Boolean(inventory.lastUpdated && inventory.scanRows?.length)}
       />
       <DevFeedback inventoryId={identity.id} />
     </div>
