@@ -2526,3 +2526,589 @@ body.vi-overlay-open .vi-shell {
     transition: none !important;
   }
 }
+
+
+/* 2026-10-01 · BOM delete, snapshot stamp, notification bridge and Excel viewer */
+/* BOM removal */
+.vi-bom-latest-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 38px;
+  align-items:stretch;
+  gap:7px;
+}
+.vi-bom-latest-row .vi-bom-latest{min-width:0}
+.vi-bom-delete{
+  width:38px;
+  min-width:38px;
+  min-height:38px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,139,148,.30);
+  border-radius:11px;
+  background:rgba(255,139,148,.065);
+  color:#ffb0b6;
+  font-size:21px;
+  line-height:1;
+  font-weight:500;
+  transition:background .16s,border-color .16s,transform .16s,color .16s;
+}
+.vi-bom-delete:hover:not(:disabled){
+  border-color:rgba(255,139,148,.72);
+  background:rgba(255,139,148,.14);
+  color:#fff;
+  transform:translateY(-1px);
+}
+.vi-bom-file-entry{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 36px;
+  gap:6px;
+  align-items:stretch;
+  padding:6px;
+  border-top:1px solid rgba(255,255,255,.055);
+}
+.vi-bom-file-entry:first-child{border-top:0}
+.vi-bom-file-entry .vi-bom-file-preview{
+  min-width:0;
+  width:100%;
+  padding:8px 9px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border:0!important;
+  border-radius:8px;
+  background:transparent!important;
+  color:#eef7fa!important;
+  text-align:left;
+}
+.vi-bom-file-entry .vi-bom-file-preview:hover{
+  background:rgba(255,255,255,.045)!important;
+}
+.vi-bom-file-entry .vi-bom-file-preview span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.vi-bom-file-entry .vi-bom-file-preview small{
+  flex:none;
+  color:#8fa9b4;
+}
+.vi-bom-delete-error{margin:14px 0!important}
+
+/* Low-key snapshot identity */
+.vi-snapshot-stamp{
+  width:min(100%,760px);
+  min-width:0;
+  display:grid;
+  grid-template-columns:8px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:9px 11px;
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:12px;
+  background:rgba(255,255,255,.025);
+  color:#dce9ed;
+}
+.vi-snapshot-dot{
+  width:7px;
+  height:7px;
+  border-radius:999px;
+  background:#f5821f;
+  box-shadow:0 0 0 3px rgba(245,130,31,.09);
+}
+.vi-snapshot-copy{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.vi-snapshot-copy small{
+  color:#718f9b;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+.vi-snapshot-copy strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#dbe9ed;
+  font-size:9px;
+  font-weight:750;
+}
+.vi-snapshot-meta{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  color:#7896a2;
+  font-size:8px;
+  white-space:nowrap;
+}
+.vi-snapshot-meta em{
+  padding:3px 5px;
+  border-radius:6px;
+  background:rgba(245,130,31,.07);
+  color:#c99563;
+  font-style:normal;
+  font-weight:850;
+  letter-spacing:.04em;
+}
+.vi-snapshot-stamp.is-compact{
+  grid-template-columns:7px minmax(0,1fr);
+}
+.vi-snapshot-stamp.is-compact .vi-snapshot-meta{
+  grid-column:2;
+  justify-content:flex-start;
+  flex-wrap:wrap;
+  white-space:normal;
+}
+.vi-page-snapshot-footer{
+  position:relative;
+  z-index:1;
+  max-width:1540px;
+  margin:0 auto;
+  padding:0 clamp(18px,3vw,48px) 26px;
+  opacity:.70;
+}
+.vi-page-snapshot-footer:hover{opacity:1}
+
+/* Notification empty states */
+.vi-notification-empty-state{
+  min-height:330px;
+  padding:28px 20px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:18px;
+  text-align:center;
+  border:1px dashed rgba(255,255,255,.10);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 50% 24%,rgba(207,183,244,.08),transparent 32%),
+    rgba(255,255,255,.018);
+}
+.vi-notification-empty-state.is-clear{
+  min-height:230px;
+  background:
+    radial-gradient(circle at 50% 18%,rgba(81,204,224,.08),transparent 34%),
+    rgba(255,255,255,.018);
+}
+.vi-notification-phantom{
+  position:relative;
+  width:86px;
+  height:74px;
+  display:grid;
+  place-items:center;
+}
+.vi-notification-phantom .ghost-sprite{
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.22));
+  animation:vi-phantom-idle 2.4s ease-in-out infinite;
+}
+.vi-notification-orbit{
+  position:absolute;
+  inset:0;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:50%;
+}
+.vi-notification-orbit i{
+  position:absolute;
+  top:50%;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:#e9c985;
+}
+.vi-notification-orbit i:nth-child(1){left:3px}
+.vi-notification-orbit i:nth-child(2){right:3px}
+.vi-notification-orbit i:nth-child(3){left:50%;top:2px}
+@keyframes vi-phantom-idle{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-7px)}
+}
+.vi-notification-empty-state h3{
+  margin:5px 0 7px;
+  color:#f7fbfc;
+  font-size:17px;
+}
+.vi-notification-empty-state p:not(.vi-eyebrow){
+  max-width:38ch;
+  margin:0 auto;
+  color:#9db5bf!important;
+  font-size:11px;
+  line-height:1.55;
+}
+.vi-notification-missing{
+  margin-top:14px;
+  display:grid;
+  gap:5px;
+}
+.vi-notification-missing span{
+  color:#728f9b;
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+.vi-notification-missing strong{
+  color:#d6e5e9;
+  font-size:9px;
+  font-weight:700;
+}
+
+/* Drawer-to-drawer continuity from notifications */
+.vi-detail-overlay.vi-detail-from-notifications{
+  z-index:1200!important;
+  background:rgba(0,15,26,.42)!important;
+  animation:vi-detail-bridge-backdrop .18s ease both!important;
+}
+.vi-detail-from-notifications .vi-detail-drawer{
+  animation:vi-detail-bridge .22s cubic-bezier(.16,1,.3,1) both!important;
+}
+@keyframes vi-detail-bridge{
+  from{transform:translateX(30px);opacity:.82}
+  to{transform:translateX(0);opacity:1}
+}
+@keyframes vi-detail-bridge-backdrop{
+  from{background:rgba(0,15,26,.12)}
+  to{background:rgba(0,15,26,.42)}
+}
+.vi-detail-back-notifications{
+  min-height:34px;
+  padding:0 9px;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:10px;
+  background:rgba(255,255,255,.045);
+  color:#dbe9ed;
+}
+.vi-detail-back-notifications:hover{
+  border-color:rgba(245,130,31,.52);
+  background:rgba(245,130,31,.075);
+}
+.vi-detail-back-notifications>span{
+  color:#ffaf68;
+  font-size:19px;
+  line-height:1;
+}
+.vi-detail-back-notifications strong{
+  font-size:8px;
+  letter-spacing:.06em;
+}
+
+/* Excel-like inspection surface */
+.vi-data-modal-window{
+  background:#f3f3f3!important;
+}
+.vi-excel-viewer{
+  background:#f3f3f3!important;
+  color:#222!important;
+}
+.vi-excel-titlebar{
+  background:#217346!important;
+  border-bottom:1px solid #185b38!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.08) inset;
+}
+.vi-excel-appmark{
+  width:30px!important;
+  height:30px!important;
+  border-radius:3px!important;
+  background:#fff!important;
+  color:#217346!important;
+  border:0!important;
+  font-family:Arial,sans-serif!important;
+  font-size:18px!important;
+  font-weight:900!important;
+}
+.vi-excel-titlebar strong{color:#fff!important}
+.vi-excel-titlebar span{color:#d5eee1!important}
+.vi-excel-ribbon{
+  min-height:36px!important;
+  background:#f7f7f7!important;
+  color:#343434!important;
+  border-bottom:1px solid #d0d0d0!important;
+  box-shadow:0 1px 0 #fff inset;
+}
+.vi-excel-ribbon>span{
+  color:#313131!important;
+  font-weight:700!important;
+}
+.vi-excel-ribbon>b{
+  color:#217346!important;
+}
+.vi-excel-formula{
+  background:#fafafa!important;
+  border-bottom:1px solid #d1d1d1!important;
+}
+.vi-excel-namebox{
+  background:#fff!important;
+  border:1px solid #cfcfcf!important;
+  color:#3e3e3e!important;
+}
+.vi-excel-fx{color:#4f4f4f!important}
+.vi-excel-formula input{
+  background:#fff!important;
+  color:#262626!important;
+  border-color:#cfcfcf!important;
+}
+.vi-excel-readonly-note{
+  min-height:34px;
+  padding:7px 12px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border-bottom:1px solid #e2d29a;
+  background:#fff8dc;
+  color:#65521c;
+  font-size:9px;
+}
+.vi-excel-readonly-note strong{
+  flex:none;
+  padding:3px 6px;
+  border-radius:4px;
+  background:#f3df8e;
+  color:#5b4714;
+  font-size:8px;
+  letter-spacing:.08em;
+}
+.vi-inspection-description{
+  background:#fff!important;
+  color:#5a5a5a!important;
+}
+.vi-excel-grid-wrap,
+.vi-dual-sheet-scroll{
+  background:#fff!important;
+}
+.vi-excel-grid th,
+.vi-excel-grid td{
+  border-color:#d9d9d9!important;
+}
+.vi-excel-letters th{
+  background:#f0f0f0!important;
+  color:#5d5d5d!important;
+}
+.vi-excel-fields th{
+  background:#f7f7f7!important;
+  color:#313131!important;
+}
+.vi-excel-row-number{
+  background:#f2f2f2!important;
+  color:#626262!important;
+}
+.vi-excel-grid td{
+  background:#fff!important;
+  color:#222!important;
+}
+.vi-excel-grid tbody tr:hover td{
+  background:#eef7f1!important;
+}
+.vi-excel-export,
+.vi-excel-back{
+  min-height:31px;
+  padding:0 10px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid rgba(255,255,255,.30);
+  border-radius:4px;
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.03em;
+  text-decoration:none!important;
+}
+.vi-excel-export:hover,
+.vi-excel-back:hover{
+  background:rgba(255,255,255,.20);
+  border-color:rgba(255,255,255,.56);
+}
+.vi-excel-back span{
+  font-size:14px;
+}
+.vi-evidence-alert{
+  background:#eef7f1!important;
+  border-bottom-color:#c8dfd0!important;
+}
+.vi-evidence-sources{
+  min-height:39px;
+  padding:7px 11px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  overflow-x:auto;
+  border-bottom:1px solid #d0d0d0;
+  background:#fafafa;
+  color:#575757;
+  white-space:nowrap;
+}
+.vi-evidence-sources>span{
+  color:#217346;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.vi-evidence-sources strong{
+  max-width:38vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:9px;
+}
+.vi-evidence-sources i{
+  color:#217346;
+  font-style:normal;
+  font-weight:900;
+}
+.vi-dual-sheet-title{
+  height:auto!important;
+  min-height:45px;
+  padding:7px 10px!important;
+}
+.vi-dual-sheet-title>div{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.vi-dual-sheet-title strong{
+  font-size:10px!important;
+}
+.vi-dual-sheet-title small{
+  min-width:0;
+  max-width:44vw;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#bfe0cc;
+  font-size:8px;
+}
+.vi-dual-sheet-title>span{
+  flex:none;
+}
+
+/* Source preview gets the same spreadsheet language. */
+.vi-source-preview{
+  background:#f3f3f3!important;
+  color:#222!important;
+}
+.vi-source-preview>header{
+  background:#217346!important;
+  color:#fff!important;
+  border-bottom:1px solid #185b38!important;
+}
+.vi-source-preview>header h2,
+.vi-source-preview>header span{color:#fff!important}
+.vi-source-preview>header .vi-eyebrow{color:#d4eee0!important}
+.vi-source-preview-actions{
+  background:#f7f7f7!important;
+  border-bottom:1px solid #d0d0d0!important;
+}
+.vi-source-preview-actions strong{color:#555!important}
+.vi-source-preview-actions button{
+  border-color:#b8c7bd!important;
+  background:#fff!important;
+  color:#217346!important;
+}
+.vi-source-preview-note{
+  margin:0!important;
+  padding:8px 12px!important;
+  border-bottom:1px solid #e2d29a!important;
+  background:#fff8dc!important;
+  color:#65521c!important;
+}
+.vi-source-preview-note strong{font-weight:900}
+.vi-source-preview-table th,
+.vi-source-preview-table td{
+  border-color:#d9d9d9!important;
+}
+.vi-source-preview-table thead th{
+  background:#f0f0f0!important;
+  color:#444!important;
+}
+.vi-source-preview-table tbody th{
+  background:#f2f2f2!important;
+  color:#666!important;
+}
+
+/* Export picker */
+.vi-export-overlay{
+  z-index:1500!important;
+  justify-content:center!important;
+  align-items:center;
+  padding:18px;
+}
+.vi-export-dialog{
+  width:min(520px,calc(100vw - 28px));
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:20px;
+  background:linear-gradient(180deg,#0c3044,#082538);
+  color:#eef7fa;
+  box-shadow:0 34px 100px rgba(0,0,0,.50);
+  animation:vi-data-modal-in .18s cubic-bezier(.16,1,.3,1) both;
+}
+.vi-export-dialog-head{
+  padding:18px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.vi-export-dialog-head h2{
+  margin:4px 0 4px;
+  color:#fff;
+  font-size:18px;
+}
+.vi-export-dialog-head p:last-child{
+  color:#9eb6c0;
+  font-size:10px;
+  line-height:1.45;
+}
+.vi-export-options{
+  padding:12px;
+  display:grid;
+  gap:8px;
+}
+.vi-export-option{
+  width:100%;
+  min-height:62px;
+  padding:11px 13px;
+  display:grid;
+  gap:4px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:13px;
+  background:rgba(255,255,255,.035);
+  color:#eef7fa;
+  text-align:left;
+}
+.vi-export-option:hover:not(:disabled){
+  border-color:rgba(245,130,31,.55);
+  background:rgba(245,130,31,.08);
+}
+.vi-export-option strong{
+  color:#fff;
+  font-size:11px;
+}
+.vi-export-option span{
+  color:#91aab5;
+  font-size:9px;
+}
+
+@media(max-width:700px){
+  .vi-snapshot-meta{display:none}
+  .vi-snapshot-stamp{grid-template-columns:7px minmax(0,1fr)}
+  .vi-evidence-sources strong{max-width:70vw}
+  .vi-dual-sheet-title small{max-width:68vw}
+  .vi-excel-title-actions{gap:4px}
+  .vi-excel-export,.vi-excel-back{padding:0 7px;font-size:8px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .vi-notification-phantom .ghost-sprite,
+  .vi-detail-from-notifications .vi-detail-drawer,
+  .vi-detail-overlay.vi-detail-from-notifications{
+    animation:none!important;
+  }
+}
