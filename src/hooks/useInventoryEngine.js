@@ -132,17 +132,21 @@ export function useInventoryEngine({
           }
         : loading && !lastUpdated
           ? {
-              state: "LOADING",
-              label: "Conectando con 4Wall",
-              detail: "Consultando Supabase...",
+              state: "DEV_LOADING",
+              label: "Leyendo snapshot 4Wall",
+              detail: "Supabase · bot automático todavía no operativo",
             }
           : lastUpdated
             ? {
-                state: loading ? "REFRESHING" : "LIVE",
-                label: loading ? "Actualizando 4Wall" : "4Wall disponible",
-                detail: `${scanCount.toLocaleString()} registros`,
+                state: "DEV_SNAPSHOT",
+                label: "Snapshot 4Wall de desarrollo",
+                detail: `${scanCount.toLocaleString()} registros · bot automático no operativo`,
               }
-            : { state: "WAITING", label: "Esperando datos", detail: "" },
+            : {
+                state: "WAITING",
+                label: "4Wall automático no operativo",
+                detail: "Carga un archivo manual para trabajar con datos físicos",
+              },
     [error, loading, lastUpdated, scanCount],
   );
   return {
