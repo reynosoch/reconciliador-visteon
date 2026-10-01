@@ -4,6 +4,7 @@ import { Ghost, PelletRail } from "../visual/PacmanGlyphs.jsx";
 import { syncOperationalAlerts } from "../../domain/notificationState.js";
 import { currentAlerts } from "../../domain/visibleAlerts.js";
 import { loadAlerts, saveAlerts, STORAGE_WARNING } from "../../services/browserStorage.js";
+import { PRODUCT_UPDATES } from "../../data/productUpdates.js";
 
 export function Bell() {
   return (
@@ -47,6 +48,7 @@ export default function NotificationCenter({
   const stateRef = useRef({});
   const [page, setPage] = useState(0);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [viewMode, setViewMode] = useState("actions");
   const [pulse, setPulse] = useState(false);
   const loaded = record.inventoryId === inventoryId;
 
@@ -197,15 +199,55 @@ export default function NotificationCenter({
 
             <div className="vi-notification-heading-copy">
               <p className="vi-eyebrow">NOTIFICACIONES</p>
-              <h2>{selectedGroup || "Por revisar"}</h2>
+              <h2>{viewMode === "updates" ? "Novedades del sistema" : (selectedGroup || "Por revisar")}</h2>
               <p>
-                Alertas del corte actual. Abre un Part Number para ver qué
-                encontramos, qué archivos originan la evidencia y qué revisar.
+                {viewMode === "updates"
+                  ? "Resumen de los cambios recientes del reconciliador."
+                  : "Alertas del corte actual. Abre un Part Number para ver qué encontramos, qué archivos originan la evidencia y qué revisar."}
               </p>
+            </div>
+
+            <div className="vi-notification-mode-tabs" role="tablist" aria-label="Áreas de notificaciones">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === "actions"}
+                className={viewMode === "actions" ? "is-active" : ""}
+                onClick={() => setViewMode("actions")}
+              >
+                ACCIONES
+                {unread > 0 && <b>{unread.toLocaleString("es-MX")}</b>}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === "updates"}
+                className={viewMode === "updates" ? "is-active" : ""}
+                onClick={() => setViewMode("updates")}
+              >
+                NOVEDADES
+              </button>
             </div>
           </div>
 
           <div className="vi-notification-list">
+            {viewMode === "updates" ? (
+              <div className="vi-product-updates">
+                {PRODUCT_UPDATES.map((update) => (
+                  <article className="vi-product-update-card" key={update.id}>
+                    <div className="vi-product-update-meta">
+                      <span>{update.date}</span>
+                      <em>BUILD NOTES</em>
+                    </div>
+                    <h3>{update.title}</h3>
+                    <p>{update.summary}</p>
+                    <ul>
+                      {update.items.map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            ) : 
             {!evaluationValid ? (
               <div className="vi-notification-empty-state">
                 <div className="vi-notification-phantom" aria-hidden="true">
@@ -319,6 +361,7 @@ export default function NotificationCenter({
                   </div>
                 )}
               </>
+            )}
             )}
           </div>
         </aside>
