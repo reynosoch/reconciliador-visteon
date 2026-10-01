@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 
 export default function BotControlModal({ open, onClose, onStatusChange }) {
@@ -9,7 +9,7 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
   const requestRef = useRef(false);
   const endpoint = String(import.meta.env.VITE_BOT_CONTROL_URL || "").replace(/\/$/, "");
 
-  const call = async (path) => {
+  const call = useCallback(async (path) => {
     const response = await fetch(endpoint + path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -18,29 +18,29 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.message || ("HTTP " + response.status));
     return data;
-  };
+  }, [endpoint, password]);
 
-  const publishStatus = (next) => {
+  const publishStatus = useCallback((next) => {
     setStatus(next);
     onStatusChange?.(next);
     return next;
-  };
+  }, [onStatusChange]);
 
-  const refreshStatus = async () => {
+  const refreshStatus = useCallback(async () => {
     if (!endpoint) return;
     try {
       publishStatus(await call("/bot/status"));
     } catch {
       // Un fallo consultando estado no se convierte en éxito.
     }
-  };
+  }, [endpoint, call, publishStatus]);
 
   useEffect(() => {
     if (!open || !endpoint) return;
-    refreshStatus();
+    void refreshStatus();
     const id = setInterval(refreshStatus, 3000);
     return () => clearInterval(id);
-  }, [open, endpoint]);
+  }, [open, endpoint, refreshStatus]);
 
   const runAction = async (path) => {
     if (requestRef.current) return;
