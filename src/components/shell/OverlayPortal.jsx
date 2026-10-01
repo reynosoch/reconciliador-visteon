@@ -30,6 +30,14 @@ function unlockPageScroll() {
   document.body.classList.remove("vi-overlay-open");
 }
 
+export function forceUnlockPageScroll() {
+  overlayLockCount = 0;
+  document.body.style.overflow = "";
+  document.body.style.overscrollBehavior = "";
+  document.documentElement.style.overscrollBehavior = "";
+  document.body.classList.remove("vi-overlay-open");
+}
+
 export default function OverlayPortal({ children, onClose }) {
   const root = useRef(null);
   const token = useRef(`vi-overlay-${Date.now()}-${Math.random().toString(36).slice(2)}`);
