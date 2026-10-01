@@ -11,7 +11,6 @@ const money = (v) =>
           currency: "USD",
           maximumFractionDigits: 0,
         }).format(Number(v) || 0),
-  number = (v) => new Intl.NumberFormat("es-MX").format(Number(v) || 0),
   FILTERS = [
     ["ALL", "TODAS"],
     ["CANTIDAD", "CANTIDAD"],
@@ -62,18 +61,7 @@ const HELP_ROWS = [
 ];
 
 function FindingText({ finding }) {
-  if (finding.ruleCode !== "LOCATION_CANDIDATE" || !finding.locationAnalysis) {
-    return <p>{finding.whatFound}</p>;
-  }
-  const a = finding.locationAnalysis;
-  return (
-    <p>
-      Hay sobrantes locales por <strong>{number(a.surplus)} piezas</strong> y
-      faltantes locales por <strong>{number(a.shortage)} piezas</strong>. Hasta{" "}
-      <strong>{number(a.compensable)} piezas</strong> son potencialmente
-      compensables entre localidades.
-    </p>
-  );
+  return <p>{finding.whatFound}</p>;
 }
 
 function Detail({ finding, onClose, onOpenExcel }) {
