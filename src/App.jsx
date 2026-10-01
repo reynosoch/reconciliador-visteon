@@ -17,7 +17,8 @@ import HelpDrawer from "./components/help/HelpDrawer";
 import NotificationCenter from "./components/shell/NotificationCenter";
 import BotControlModal from "./components/shell/BotControlModal";
 import ConfirmDialog from "./components/shell/ConfirmDialog";
-import OverlayPortal, { forceUnlockPageScroll } from "./components/shell/OverlayPortal.jsx";
+import OverlayPortal from "./components/shell/OverlayPortal.jsx";
+import { forceUnlockPageScroll } from "./services/overlayScroll.js";
 import MainMenu from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
 import SnapshotStamp from "./components/shell/SnapshotStamp.jsx";
@@ -49,7 +50,9 @@ function initial() {
   let old = "";
   try {
     old = localStorage.getItem("visteon.inventory.campaignId.v1") || "";
-  } catch {}
+  } catch {
+    // Storage can be blocked; keep the generated inventory id fallback.
+  }
   return { id: old || newId(), name: old || "Inventario actual" };
 }
 export default function App() {
@@ -133,7 +136,6 @@ export default function App() {
         displayReady
           ? buildDiscrepancyFindings({
               reconciliation: inventory.reconciliation,
-              sources: inventory.engine.sources,
               sourceFiles: references.sources,
               campaignId: identity.id,
               quantityTolerance: { default: 0, PCS: 0 },
@@ -339,7 +341,6 @@ export default function App() {
       {pacmanEnabled && <AmbientChase />}
       <CommandHeader
         connectionStatus={inventory.connectionStatus}
-        scanCount={inventory.scanCount}
         lastUpdated={inventory.lastUpdated}
         referenceStatus={references.status}
         loading={inventory.loading}
