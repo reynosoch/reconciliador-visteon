@@ -73,8 +73,7 @@ export default function App() {
     [warning, setWarning] = useState(""),
     [confirmNew, setConfirmNew] = useState(false),
     [menuOpen, setMenuOpen] = useState(false),
-    [animationOnly, setAnimationOnly] = useState(false),
-    [headerScrollMode, setHeaderScrollMode] = useState("top");
+    [animationOnly, setAnimationOnly] = useState(false);
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
       manualScans: references.manualScans,
@@ -159,22 +158,33 @@ export default function App() {
     const scroller = shellRef.current;
     if (!scroller) return undefined;
 
+    const header = scroller.querySelector(".vi-command-header");
+    let settleTimer = 0;
     previousScrollTop.current = scroller.scrollTop;
+    header?.classList.add("vi-header-top");
+
+    const setHeaderMode = (mode) => {
+      if (!header) return;
+      header.classList.remove("vi-header-top", "vi-header-compact", "vi-header-expanded");
+      header.classList.add(`vi-header-${mode}`);
+    };
 
     const handleScroll = () => {
+      scroller.classList.add("vi-scroll-moving");
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        scroller.classList.remove("vi-scroll-moving");
+      }, 120);
+
       if (scrollFrame.current) return;
       scrollFrame.current = requestAnimationFrame(() => {
         scrollFrame.current = null;
         const nextTop = Math.max(0, scroller.scrollTop);
         const delta = nextTop - previousScrollTop.current;
 
-        if (nextTop <= 18) {
-          setHeaderScrollMode((current) => current === "top" ? current : "top");
-        } else if (delta > 4) {
-          setHeaderScrollMode((current) => current === "compact" ? current : "compact");
-        } else if (delta < -4) {
-          setHeaderScrollMode((current) => current === "expanded" ? current : "expanded");
-        }
+        if (nextTop <= 18) setHeaderMode("top");
+        else if (delta > 4) setHeaderMode("compact");
+        else if (delta < -4) setHeaderMode("expanded");
 
         previousScrollTop.current = nextTop;
       });
@@ -183,8 +193,143 @@ export default function App() {
     scroller.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       scroller.removeEventListener("scroll", handleScroll);
+      window.clearTimeout(settleTimer);
       if (scrollFrame.current) cancelAnimationFrame(scrollFrame.current);
       scrollFrame.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const selector = [
+      ".vi-shell",
+      ".vi-drawer-panel",
+      ".vi-detail-drawer",
+      ".vi-global-drawer",
+      ".vi-menu-panel",
+      ".vi-source-preview-table-wrap",
+      ".vi-inspection-scroll",
+      ".vi-excel-grid-wrap",
+      ".vi-dual-grid",
+      ".vi-findings-table-wrap",
+      ".vi-table-shell",
+    ].join(",");
+
+    const elasticTimers = new WeakMap();
+    const motionTimers = new WeakMap();
+    let touchState = null;
+
+    const findSurface = (target) =>
+      target instanceof Element ? target.closest(selector) : null;
+
+    const markMoving = (surface) => {
+      if (!surface) return;
+      surface.classList.add("vi-scroll-moving");
+      const old = motionTimers.get(surface);
+      if (old) window.clearTimeout(old);
+      const timer = window.setTimeout(() => {
+        surface.classList.remove("vi-scroll-moving");
+        motionTimers.delete(surface);
+      }, 120);
+      motionTimers.set(surface, timer);
+    };
+
+    const releaseElastic = (surface, delay = 90) => {
+      const old = elasticTimers.get(surface);
+      if (old) window.clearTimeout(old);
+      const timer = window.setTimeout(() => {
+        surface.classList.remove("vi-elastic-top", "vi-elastic-bottom");
+        surface.style.removeProperty("--vi-elastic-shift");
+        surface.style.removeProperty("--vi-elastic-scale");
+        elasticTimers.delete(surface);
+      }, delay);
+      elasticTimers.set(surface, timer);
+    };
+
+    const stretch = (surface, edge, rawAmount) => {
+      if (!surface) return;
+      const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
+      if (maxScroll <= 1 && surface !== shellRef.current) return;
+
+      const amount = Math.min(26, Math.max(3, rawAmount));
+      const shift = edge === "top" ? amount : -amount;
+      const scale = 1 + Math.min(0.012, amount / 1700);
+
+      surface.classList.remove("vi-elastic-top", "vi-elastic-bottom");
+      surface.classList.add(edge === "top" ? "vi-elastic-top" : "vi-elastic-bottom");
+      surface.style.setProperty("--vi-elastic-shift", `${shift.toFixed(2)}px`);
+      surface.style.setProperty("--vi-elastic-scale", scale.toFixed(4));
+      releaseElastic(surface);
+    };
+
+    const onWheel = (event) => {
+      const surface = findSurface(event.target);
+      if (!surface || Math.abs(event.deltaY) < 2) return;
+      markMoving(surface);
+
+      const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
+      const atTop = surface.scrollTop <= 1;
+      const atBottom = surface.scrollTop >= maxScroll - 1;
+
+      if (event.deltaY < 0 && atTop) {
+        stretch(surface, "top", Math.abs(event.deltaY) * 0.16);
+      } else if (event.deltaY > 0 && atBottom) {
+        stretch(surface, "bottom", Math.abs(event.deltaY) * 0.16);
+      }
+    };
+
+    const onTouchStart = (event) => {
+      const touch = event.touches?.[0];
+      const surface = findSurface(event.target);
+      if (!touch || !surface) {
+        touchState = null;
+        return;
+      }
+      touchState = { surface, y: touch.clientY };
+    };
+
+    const onTouchMove = (event) => {
+      if (!touchState) return;
+      const touch = event.touches?.[0];
+      if (!touch) return;
+
+      const { surface, y } = touchState;
+      markMoving(surface);
+      const maxScroll = Math.max(0, surface.scrollHeight - surface.clientHeight);
+      const dy = touch.clientY - y;
+
+      if (dy > 0 && surface.scrollTop <= 1) {
+        stretch(surface, "top", Math.abs(dy) * 0.20);
+      } else if (dy < 0 && surface.scrollTop >= maxScroll - 1) {
+        stretch(surface, "bottom", Math.abs(dy) * 0.20);
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (touchState?.surface) releaseElastic(touchState.surface, 30);
+      touchState = null;
+    };
+
+    const onAnyScroll = (event) => {
+      const surface = event.target instanceof Element
+        ? event.target.closest(selector)
+        : shellRef.current;
+      markMoving(surface);
+    };
+
+    document.addEventListener("wheel", onWheel, { passive: true, capture: true });
+    document.addEventListener("touchstart", onTouchStart, { passive: true, capture: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: true, capture: true });
+    document.addEventListener("touchend", onTouchEnd, { passive: true, capture: true });
+    document.addEventListener("touchcancel", onTouchEnd, { passive: true, capture: true });
+    document.addEventListener("scroll", onAnyScroll, true);
+
+    return () => {
+      document.removeEventListener("wheel", onWheel, true);
+      document.removeEventListener("touchstart", onTouchStart, true);
+      document.removeEventListener("touchmove", onTouchMove, true);
+      document.removeEventListener("touchend", onTouchEnd, true);
+      document.removeEventListener("touchcancel", onTouchEnd, true);
+      document.removeEventListener("scroll", onAnyScroll, true);
     };
   }, []);
   useEffect(() => {
@@ -350,7 +495,6 @@ export default function App() {
         onOpenBot={() => setBotOpen(true)}
         onOpenMenu={() => setMenuOpen(true)}
         notificationCount={notificationCount}
-        scrollMode={headerScrollMode}
       />}
       {animationOnly && <AnimationOnlyView onClose={() => setAnimationOnly(false)} />}
       {!animationOnly && warning && <div className="vi-persistence-warning">{warning}</div>}
