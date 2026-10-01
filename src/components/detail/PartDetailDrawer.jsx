@@ -349,6 +349,8 @@ export default function PartDetailDrawer({
  item,
  onHelp,
  onClose,
+ fromNotifications = false,
+ onBackToNotifications,
 }) {
  if (!item) {
    return null;
@@ -369,7 +371,7 @@ export default function PartDetailDrawer({
  return (
 <OverlayPortal onClose={onClose}>
 <div
-     className="vi-detail-overlay"
+     className={`vi-detail-overlay ${fromNotifications ? "vi-detail-from-notifications" : ""}`}
      onMouseDown={
        (event) => {
          if (
@@ -410,6 +412,17 @@ export default function PartDetailDrawer({
                gap-3
              "
 >
+             {fromNotifications && (
+               <button
+                 type="button"
+                 className="vi-detail-back-notifications"
+                 onClick={onBackToNotifications}
+                 aria-label="Regresar a notificaciones"
+               >
+                 <span aria-hidden="true">‹</span>
+                 <strong>NOTIFICACIONES</strong>
+               </button>
+             )}
              {master.isPhantom && <Ghost size={18} tone="violet" />}
 
 <div>
