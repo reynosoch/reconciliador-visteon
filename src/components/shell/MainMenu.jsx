@@ -40,6 +40,16 @@ export default function MainMenu({ open, onClose, onAnimationOnly }) {
           </div>
 
           <section className="vi-menu-section">
+            <span className="vi-menu-section-title">IDIOMA</span>
+            <div className="vi-menu-language" title="Selector de idioma en desarrollo">
+              <button type="button" className="is-active" disabled>ES</button>
+              <span>/</span>
+              <button type="button" disabled>EN</button>
+              <em>DEV</em>
+            </div>
+          </section>
+
+          <section className="vi-menu-section">
             <span className="vi-menu-section-title">DEVELOPMENT</span>
             {DEV_ITEMS.map(([title, detail]) => (
               <button type="button" className="vi-menu-item is-development" disabled key={title}>
