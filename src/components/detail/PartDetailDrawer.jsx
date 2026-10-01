@@ -200,7 +200,7 @@ function BomMaze({
 </p>
 </div>
 
-<div className="flex items-center gap-2">{master.isPhantom && <Ghost size={17} tone="violet" />}<HelpButton topic="phantom" onHelp={onHelp} /></div>
+<div className="flex items-center gap-2">{master.isPhantom && <Ghost size={17} tone="violet" />}<HelpButton topic="detailPhantomRule" onHelp={onHelp} /></div>
 </div>
 
 <PelletRail
@@ -444,7 +444,7 @@ export default function PartDetailDrawer({
 >
 <Metric
              label="NET USD"
-             topic="net" onHelp={onHelp}
+             topic="detailNet" onHelp={onHelp}
              value={master.hasCost ? money(financial.netUsd) : "SIN VALORAR"}
              className={
                Number(
@@ -456,13 +456,13 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="SWING"
-             topic="swing" onHelp={onHelp}
+             topic="detailSwing" onHelp={onHelp}
              value={master.hasCost ? money(financial.swingUsd) : financial.swingPieces > 0 ? "SIN VALORAR" : money(0)}
              className="vi-money-swing"
            />
 <Metric
              label="FÍSICO"
-             topic="physical" onHelp={onHelp}
+             topic="detailPhysical" onHelp={onHelp}
              value={
                number(
                  physical.total
@@ -471,7 +471,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="QAD"
-             topic="qad" onHelp={onHelp}
+             topic="detailQad" onHelp={onHelp}
              value={
                number(
                  qad.total
@@ -493,14 +493,14 @@ export default function PartDetailDrawer({
 >
 <LocationColumn
              title="4Wall / Físico"
-             topic="physical" onHelp={onHelp}
+             topic="detailPhysicalLocations" onHelp={onHelp}
              locations={
                physical.locations
              }
            />
 <LocationColumn
              title="QAD / Sistema"
-             topic="qad" onHelp={onHelp}
+             topic="detailQadLocations" onHelp={onHelp}
              locations={
                qad.locations
              }
@@ -518,7 +518,7 @@ export default function PartDetailDrawer({
 >
 <Metric
              label="COSTO UNITARIO"
-             topic="cost" onHelp={onHelp}
+             topic="detailCost" onHelp={onHelp}
              value={
                master.hasCost
                  ? money(
@@ -529,7 +529,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="ESTADO COST PART"
-             topic="status" onHelp={onHelp}
+             topic="detailCostStatus" onHelp={onHelp}
              value={
                master.costStatus ||
                "—"
@@ -537,7 +537,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="ESTADO ISPBB"
-             topic="status" onHelp={onHelp}
+             topic="detailPlanningStatus" onHelp={onHelp}
              value={
                master.planningStatus ||
                "—"
@@ -545,7 +545,7 @@ export default function PartDetailDrawer({
            />
 <Metric
              label="PHANTOM"
-             topic="phantom" onHelp={onHelp}
+             topic="detailPhantom" onHelp={onHelp}
              value={
                master.phantomKnown
                  ? master.isPhantom ? "SÍ" : "NO"
