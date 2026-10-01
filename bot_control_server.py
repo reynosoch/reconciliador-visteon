@@ -79,10 +79,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self._origin_ok():self.send_json(403,{"message":"Origen no autorizado."});return
         if self.path not in {"/bot/start","/bot/status","/bot/stop"}:self.send_json(404,{"message":"Ruta no encontrada."});return
+        if self.path=="/bot/status":
+            self.send_json(200,controller.status());return
         data=self._body()
         if data is None:self.send_json(400,{"message":"Solicitud inválida."});return
         if not hmac.compare_digest(str(data.get("password","")),PASSWORD):self.send_json(401,{"message":"Autorización rechazada."});return
-        if self.path=="/bot/status":self.send_json(200,controller.status());return
         if self.path=="/bot/stop":
             result=controller.stop();self.send_json(200 if result["state"] in {"stopped","already_stopped"} else 500,result);return
         result=controller.start();self.send_json(202 if result["state"]=="accepted" else 200 if result["state"]=="already_running" else 500,result)

@@ -27,7 +27,7 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
   };
 
   const refreshStatus = async () => {
-    if (!endpoint || !password) return;
+    if (!endpoint) return;
     try {
       publishStatus(await call("/bot/status"));
     } catch {
@@ -36,11 +36,11 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
   };
 
   useEffect(() => {
-    if (!open || !endpoint || !password) return;
+    if (!open || !endpoint) return;
     refreshStatus();
     const id = setInterval(refreshStatus, 3000);
     return () => clearInterval(id);
-  }, [open, endpoint, password]);
+  }, [open, endpoint]);
 
   const runAction = async (path) => {
     if (requestRef.current) return;
@@ -141,7 +141,7 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
               </button>
               <button
                 className="vi-button"
-                disabled={busy || !password}
+                disabled={busy}
                 onClick={refreshStatus}
               >
                 CONSULTAR ESTADO
