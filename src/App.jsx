@@ -354,6 +354,7 @@ export default function App() {
         onOpenBot={() => setBotOpen(true)}
         onOpenMenu={() => setMenuOpen(true)}
         notificationCount={notificationCount}
+        scrollViewportRef={shellRef}
       />
       {warning && <div className="vi-persistence-warning">{warning}</div>}
       {<div className="vi-rubber-clip"><div className="vi-rubber-content" ref={mainMotionRef}><main className="vi-main">
