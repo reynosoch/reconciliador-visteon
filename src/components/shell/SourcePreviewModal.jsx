@@ -86,7 +86,8 @@ export default function SourcePreviewModal({ selection, onClose }) {
             <button type="button" disabled={Boolean(busy)} onClick={() => download("txt")}>TXT</button>
           </div>
           <p className="vi-source-preview-note">
-            Vista previa de las primeras {Math.min(rows.length, 150).toLocaleString("es-MX")} filas. La descarga contiene toda la selección.
+            <strong>SOLO LECTURA.</strong> Vista previa de las primeras {Math.min(rows.length, 150).toLocaleString("es-MX")} filas.
+            Para cambiar datos, edita el archivo original y vuelve a subirlo en Fuentes. La descarga contiene toda la selección.
           </p>
           <div className="vi-source-preview-table-wrap">
             <table className="vi-source-preview-table">
