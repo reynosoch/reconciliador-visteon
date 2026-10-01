@@ -1,5 +1,4 @@
 // src/components/dashboard/FinancialGrid.jsx
-import React from "react";
 import {
  Ghost,
 } from "../visual/PacmanGlyphs";
