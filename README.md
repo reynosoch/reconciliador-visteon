@@ -1,5 +1,7 @@
 # Visteon Inventory Reconciler — 4Wall vs QAD
 
+> **Fuente de verdad del proyecto:** reglas, decisiones, pendientes, seguridad, arquitectura y operación deben mantenerse en este README. Evitar documentos paralelos que repitan o contradigan esta información.
+
 Dashboard web para apoyar la conciliación del inventario físico de planta durante el día de inventario. El sistema compara el físico proveniente de **4Wall** contra el congelado de **QAD**, incorpora referencias de planeación, BOM y costos, y presenta diferencias en piezas y dólares para las juntas periódicas de Finanzas.
 
 > **Importante:** los archivos usados actualmente para desarrollo y demostración son archivos de prueba. Las discrepancias mostradas por el sistema no deben interpretarse como pérdidas reales de planta.
@@ -37,10 +39,10 @@ La aplicación incluye:
 - Manejo de fallos de almacenamiento y Error Boundary.
 - Diseño responsive para laptop, iPad y móvil.
 - Referencias visuales sutiles de Pac-Man.
-- Superficies principales con tratamiento Liquid Glass: blur, transparencia, reflejos suaves y profundidad, manteniendo el contenido legible y evitando apilar vidrio sobre vidrio.
+- Drawers laterales con apariencia líquida pero mayor opacidad; el dashboard prioriza legibilidad y rendimiento sobre blur/transparencias costosas.
 - `Estado de datos` abre un visor tipo hoja de cálculo con letras de columna, números de fila, búsqueda, pestaña de hoja y navegación de regreso al hallazgo.
 - `Posible ubicación` explica su cálculo en UI y permite abrir el PN directamente en el visor por localidad; los vínculos de cantidades son evidencia navegable, no ajustes automáticos.
-- El ambiente Pac-Man incluye persecución normal, modo power con phantoms azules, varios power pellets, frutas, puntaje visual y mayor separación entre personajes.
+- La animación ambiental de Pac-Man puede activarse o desactivarse desde el menú; la preferencia se guarda en este dispositivo.
 
 ## Arquitectura
 
@@ -62,7 +64,7 @@ RESUMEN FINANCIERO
 REACT / UI
 ```
 
-React presenta resultados; las reglas financieras y de hallazgos viven en `src/domain`.
+React presenta resultados; las reglas financieras y de hallazgos viven en `src/domain`. Motion se limita a microinteracciones y no controla el scroll principal. La tabla grande de conciliación usa TanStack Virtual para mantener pequeño el DOM.
 
 ### Estructura principal
 
@@ -240,6 +242,8 @@ Las preguntas vigentes no se muestran en la interfaz. Se documentan en este READ
 
 ## Bot 4Wall
 
+El frontend usa `VITE_BOT_CONTROL_URL` para hablar con el controlador. GitHub Pages no puede ejecutar Python: `bot_control_server.py` y `bot_extractor.py` deben correr en el equipo/servidor autorizado que tenga acceso a 4Wall. El controlador usa `BOT_CONTROL_PASSWORD` y `BOT_CONTROL_ORIGIN`; ninguna contraseña debe vivir en una variable `VITE_*`.
+
 `bot_extractor.py` usa Playwright para entrar al 4Wall interno, exportar el reporte, limpiar cantidades inválidas y publicar un corte mediante el RPC de Supabase.
 
 `bot_control_server.py` controla el arranque del extractor localmente:
@@ -251,7 +255,9 @@ Las preguntas vigentes no se muestran en la interfaz. Se documentan en este READ
 - usa contraseña desde `BOT_CONTROL_PASSWORD`;
 - por defecto solo escucha en loopback.
 
-No guardar usuarios, contraseñas ni `service_role` dentro del frontend o del repositorio.
+No guardar usuarios, contraseñas ni `service_role` dentro del frontend o del repositorio. `WALL_USER`, `WALL_PASS`, `SUPABASE_SERVICE_KEY` y `BOT_CONTROL_PASSWORD` pertenecen únicamente al entorno del bot/servidor. Si una credencial apareció alguna vez en Git, quitarla del archivo actual no la revoca: debe rotarse.
+
+Antes de producción, un administrador de Supabase debe verificar que `anon` y `authenticated` no puedan ejecutar `reemplazar_escaneos`, que RLS esté habilitado y que la escritura del snapshot quede reservada al rol del bot/servidor.
 
 ## Metadatos de snapshot
 
@@ -286,7 +292,7 @@ Verificación y build:
 npm.cmd run build
 ```
 
-El build ejecuta primero verificaciones de Finanzas, discrepancias, seguridad de UI, IndexedDB y generación XLSX; después compila Vite.
+El build ejecuta primero verificaciones de higiene del repo, módulos `src/` huérfanos, Finanzas, discrepancias, seguridad de UI, IndexedDB, XLSX, imports, reglas de junta y migraciones Supabase; después compila Vite.
 
 ## Variables del frontend
 
@@ -362,7 +368,7 @@ Proyecto PoC de conciliación de inventario para Visteon. El dashboard apoya la 
 
 La interfaz usa una temática **Liquid Glass** como sistema visual global: paneles principales, botones, menús laterales, diálogos y controles comparten transparencia, blur, reflejos suaves y bordes translúcidos. El objetivo es mantener visible el ambiente Pac-Man sin sacrificar lectura financiera.
 
-El menú hamburguesa contiene opciones futuras marcadas como **DEVELOPMENT** y una entrada discreta de laboratorio para activar **Modo animación**, que oculta el dashboard y deja únicamente el ambiente visual hasta cerrar con `×`.
+El menú hamburguesa contiene opciones futuras marcadas como **DEVELOPMENT**, el Trazador de pieza y el switch persistente para activar/desactivar Pac-Man. Ya no existe un modo separado que oculte el dashboard.
 
 ### Discrepancias por investigar
 
@@ -471,11 +477,18 @@ Esta actualización se sube a **main solamente**. No ejecutar el despliegue manu
 
 La app usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` para escaneos, BOM y reportes. El proyecto usado por Pages es `uukhwkywmnarcfruerpp` (`visteon-demo`). Las 97 columnas de fuentes y la limpieza de tablas se verificaron allí el 01/10/2026. El respaldo BOM sin login requiere su esquema y permiso de lectura/guardado incremental.
 
-Aplicar, en orden y solo si faltan, las migraciones de feedback y BOM existentes, después `supabase/migrations/20261001140733_inventory_bom_incremental_no_login.sql` y finalmente `supabase/bom-delete-no-login.sql`. No se necesita correo, contraseña ni habilitar usuarios anónimos en Auth. El cliente consulta el consolidado y agrega padres nuevos mediante `merge_inventory_bom`; el borrado explícito de un archivo usa `remove_inventory_bom`, exige la revisión actual y la huella SHA-256 exacta, crea una nueva revisión de respaldo y elimina las filas con la procedencia de ese archivo. Las tablas siguen sin admitir escrituras directas desde el navegador y el historial permanece privado.
+Aplicar las migraciones en orden histórico. Para BOM incremental/borrado, las relevantes son `supabase/migrations/20261001140733_inventory_bom_incremental_no_login.sql`, `supabase/migrations/20261001142606_inventory_source_columns.sql` y `supabase/migrations/20261001144500_inventory_bom_delete_no_login.sql`. No se necesita correo, contraseña ni habilitar usuarios anónimos en Auth. El cliente consulta el consolidado y agrega padres nuevos mediante `merge_inventory_bom`; el borrado explícito de un archivo usa `remove_inventory_bom`, exige la revisión actual y la huella SHA-256 exacta, crea una nueva revisión de respaldo y elimina las filas con la procedencia de ese archivo. Las tablas siguen sin admitir escrituras directas desde el navegador y el historial permanece privado.
 
 El respaldo local se guarda primero en IndexedDB al agregar BOM. Para borrar, el orden se invierte deliberadamente: primero debe confirmarse la eliminación compartida en Supabase y solo entonces se actualiza IndexedDB. Si el RPC de borrado no está instalado, la X muestra un error y conserva tanto la copia local como la compartida. Al abrir la app, recuperar conexión o cada dos minutos, la colección se compara contra Supabase. Repetir un archivo no crea filas ni revisiones; una definición distinta para un padre existente sigue tratándose como conflicto. Este flujo sin login permite a quien tenga la configuración pública consultar/agregar y, una vez habilitado el RPC de borrado, eliminar un BOM con su fingerprint; por eso debe usarse solo en el entorno controlado previsto para este PoC.
 
 REPORTAR usa `development_feedback` con permiso de inserción y sin lectura desde el navegador. Para verificarlo en el proyecto correcto, enviar un reporte de prueba y comprobarlo desde el panel administrativo. Una configuración de otro proyecto no valida la instalación local.
+
+### Rendimiento y librerías UI
+
+- `motion` / `motion/react`: solo microinteracciones pequeñas; no reemplaza la física del scroll.
+- React Bits: se toman patrones/componentes puntuales y se guardan localmente en `src/components/ui/`; no se instala una librería monolítica.
+- `@tanstack/react-virtual`: virtualiza la tabla de conciliación para no montar miles de filas simultáneamente. En React 19 se usa `useFlushSync: false`.
+- `src/components/visual/ScrollEffects.jsx`: mantiene scroll nativo en el centro y aplica rubber band únicamente en los extremos. No crear una segunda implementación paralela del efecto.
 
 ### Instalación en redes corporativas
 
@@ -496,3 +509,17 @@ Estas preguntas se mantienen fuera del dashboard para no mezclarlas con alertas 
 - Definir cómo presentar durante el día los Part Numbers de QAD que todavía no han sido escaneados, sin tratarlos prematuramente como pérdida confirmada.
 - Mantener documentado cualquier cambio futuro de filtros QAD (Site / Item Type) antes de modificar la lógica.
 - Cuando cambie una regla financiera o BOM, registrar aquí la decisión, la fecha y el responsable antes de desplegarla.
+
+
+## Higiene del repositorio
+
+Este README es la conciencia técnica; no crear `PROJECT_CONTEXT.md`, `SECURITY_REVIEW.md`, `BOT_CONTROL_SETUP.md` u otros documentos paralelos con reglas duplicadas.
+
+El build ejecuta:
+
+- `scripts/verify-repo-clean.mjs` para bloquear backups/artefactos legacy conocidos.
+- `scripts/verify-unused.mjs` para exigir que todo módulo JavaScript/JSX dentro de `src/` sea alcanzable desde `src/main.jsx`.
+
+No versionar `node_modules/`, `dist/`, `.env.local`, `inventario.db`, descargas temporales de 4Wall ni `bot_snapshot_status.json`. `dist/` es generado por Vite y se puede borrar localmente en cualquier momento.
+
+Sí conservar aunque no aparezcan directamente en la UI: migraciones históricas, verificadores de CI, scripts del bot, `supabase/source-column-map.json`, el vendor de SheetJS y archivos claramente ligados al roadmap vigente.
