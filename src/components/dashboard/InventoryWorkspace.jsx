@@ -161,7 +161,7 @@ function Radar({
 <span className="vi-obsolete-icon"><ObsoleteIcon/></span>
 <span>OBSOLETOS +</span>
 </div>
-<HelpButton topic="obsolete" onHelp={onHelp}/>
+<HelpButton topic="obsoleteRadar" onHelp={onHelp}/>
 </header>
 <p className="vi-radar-caption">Material obsoleto con sobrante en dólares.</p>
 <div className="vi-radar-card-body">{list(obsolete,"No hay obsoletos con sobrante.")}</div>
@@ -444,7 +444,7 @@ option.id
 <tr>
 <th>
 <HeaderHelp
-                     topic="status"
+                     topic="tableStatus"
                      onHelp={onHelp}
 >
                      Part Number / Estado
@@ -452,7 +452,7 @@ option.id
 </th>
 <th className="text-right">
 <HeaderHelp
-                     topic="net"
+                     topic="tableNet"
                      onHelp={onHelp}
                      align="right"
 >
@@ -461,7 +461,7 @@ option.id
 </th>
 <th className="text-right">
 <HeaderHelp
-                     topic="swing"
+                     topic="tableSwing"
                      onHelp={onHelp}
                      align="right"
 >
@@ -470,7 +470,7 @@ option.id
 </th>
 <th className="text-right">
 <HeaderHelp
-                     topic="physical"
+                     topic="tablePhysical"
                      onHelp={onHelp}
                      align="right"
 >
@@ -479,7 +479,7 @@ option.id
 </th>
 <th className="text-right">
 <HeaderHelp
-                     topic="qad"
+                     topic="tableQad"
                      onHelp={onHelp}
                      align="right"
 >
@@ -488,7 +488,7 @@ option.id
 </th>
 <th className="text-right">
 <HeaderHelp
-                     topic="cost"
+                     topic="tableCost"
                      onHelp={onHelp}
                      align="right"
 >
@@ -497,7 +497,7 @@ option.id
 </th>
 <th className="text-center">
 <HeaderHelp
-                     topic="flags"
+                     topic="tableFlags"
                      onHelp={onHelp}
                      align="center"
 >
