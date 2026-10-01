@@ -1,6 +1,6 @@
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 // src/components/shell/SourcesDrawer.jsx
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { HelpButton } from "../help/HelpDrawer";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import OverlayPortal from "./OverlayPortal.jsx";
