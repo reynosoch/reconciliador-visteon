@@ -16,6 +16,14 @@ const SOURCE_CONFIG = [
     suggested: "4wSc*.csv",
   },
   {
+    type: REFERENCE_SOURCE_TYPES.BOM,
+    label: "BOM Export",
+    description: "Relaciones Parent → Component y Usage usadas para Phantoms.",
+    topic: "source:bom",
+    short: "BOM",
+    suggested: "BOM*.txt / .csv / .xlsx",
+  },
+  {
     type: REFERENCE_SOURCE_TYPES.AREAS,
     label: "Áreas 4Wall",
     description: "Diccionario que traduce cada área escaneada a Localidad QAD.",
@@ -38,14 +46,6 @@ const SOURCE_CONFIG = [
     topic: "source:ispbb",
     short: "ISPBB",
     suggested: "ISPBB*.csv",
-  },
-  {
-    type: REFERENCE_SOURCE_TYPES.BOM,
-    label: "BOM Export",
-    description: "Relaciones Parent → Component y Usage usadas para Phantoms.",
-    topic: "source:bom",
-    short: "BOM",
-    suggested: "BOM*.txt / .csv / .xlsx",
   },
   {
     type: REFERENCE_SOURCE_TYPES.COST,
@@ -290,7 +290,7 @@ export default function SourcesDrawer({
           if (event.target === event.currentTarget) onClose?.();
         }}
       >
-        <aside className="vi-drawer-panel absolute right-0 top-0 bottom-0 w-full max-w-[500px] overflow-y-auto">
+        <aside className="vi-drawer-panel vi-sources-drawer absolute right-0 top-0 bottom-0 w-full max-w-[620px] overflow-y-auto">
           <input
             ref={bulkInput}
             type="file"
@@ -300,7 +300,7 @@ export default function SourcesDrawer({
             onChange={handleBulkFiles}
           />
 
-          <div className="sticky top-0 z-10 px-5 py-5">
+          <div className="vi-sources-head sticky top-0 z-10 px-5 py-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="vi-eyebrow">ARCHIVOS DE REFERENCIA</p>
