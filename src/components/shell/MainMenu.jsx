@@ -2,6 +2,7 @@ import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import { useRef } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import SnapshotStamp from "./SnapshotStamp.jsx";
+import SquishSwitch from "../ui/SquishSwitch.jsx";
 
 const DEV_ITEMS = [
   ["Análisis histórico", "Comparar inventarios y tendencias entre cortes."],
@@ -62,20 +63,17 @@ export default function MainMenu({
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">APARIENCIA</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={pacmanEnabled}
-              aria-label="Animación de Pac-Man"
-              className="vi-menu-item vi-pacman-toggle"
-              onClick={onTogglePacman}
-            >
+            <div className="vi-menu-item vi-pacman-toggle">
               <span>
                 <strong>Animación de Pac-Man</strong>
                 <small>{pacmanEnabled ? "Activada" : "Desactivada"} · Se guarda en este dispositivo.</small>
               </span>
-              <span className="vi-switch-track" aria-hidden="true"><span /></span>
-            </button>
+              <SquishSwitch
+                checked={pacmanEnabled}
+                onChange={() => onTogglePacman?.()}
+                ariaLabel="Animación de Pac-Man"
+              />
+            </div>
           </section>
 
           <section className="vi-menu-section">
