@@ -60,6 +60,22 @@ export default function CommandHeader({
   const referencesReady = referenceStatus?.allLoaded === true;
   const loaded = referenceStatus?.loadedCount || 0;
   const total = referenceStatus?.totalSources || 5;
+  const scanState = connectionStatus?.state;
+  const physicalLabel = manual
+    ? "MANUAL"
+    : liveError
+      ? "ERROR"
+      : scanState === "DEV_LOADING"
+        ? "CARGANDO"
+        : scanState === "DEV_SNAPSHOT"
+          ? "SNAPSHOT"
+          : "PENDIENTE";
+  const physicalTone =
+    manual || scanState === "DEV_SNAPSHOT"
+      ? "is-good"
+      : liveError
+        ? "is-error"
+        : "is-warning";
   const ribbonRef = useRef(null);
   const ribbonHeightRef = useRef(51);
   const reduceMotion = useReducedMotion();
@@ -263,30 +279,80 @@ export default function CommandHeader({
     <header className="vi-command-header">
       <div className="vi-header-main">
         <div className="vi-header-brand">
-          <img src={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`} alt="Visteon" className="vi-brand-logo" />
+          <img
+            src={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`}
+            alt="Visteon"
+            className="vi-brand-logo"
+          />
           <span className="vi-brand-divider" aria-hidden="true" />
-          <span className="vi-product-name">INVENTORY RECONCILER</span>
+          <span className="vi-product-name">179A</span>
+        </div>
+
+        <div className="vi-header-glance" aria-label="Estado rápido del inventario">
+          <span className={`vi-nav-state ${physicalTone}`}>
+            <i aria-hidden="true" />
+            <small>4WALL</small>
+            <strong>{physicalLabel}</strong>
+          </span>
+          <span className="vi-fetch-time">
+            <small>ACTUALIZADO</small>
+            <strong>{formatTime(lastUpdated)}</strong>
+          </span>
         </div>
 
         <div className="vi-header-actions">
-          <span className="vi-fetch-time">
-            <small>ÚLTIMA CONSULTA</small>
-            <strong>{formatTime(lastUpdated)}</strong>
-          </span>
-          <button type="button" onClick={onOpenNotifications} className="vi-button vi-button-light vi-icon-button" aria-label="Abrir notificaciones">
+          <button
+            type="button"
+            onClick={onToggleSources}
+            className={`vi-button vi-button-light vi-sources-button ${sourcesOpen ? "is-selected" : ""} ${referencesReady ? "is-ready" : ""}`}
+            aria-expanded={sourcesOpen}
+            title="Abrir fuentes de inventario"
+          >
+            <span>FUENTES</span>
+            <b className="vi-button-count">{loaded}/{total}</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenNotifications}
+            className="vi-button vi-button-light vi-icon-button"
+            aria-label="Abrir notificaciones"
+            title="Notificaciones"
+          >
             <Bell />
             {notificationCount > 0 && <b className="vi-notification-badge">{notificationCount}</b>}
           </button>
-          <button type="button" onClick={onOpenBot} className="vi-button vi-button-light vi-bot-button" aria-label="Control del bot de escaneo 4Wall">
-            <span aria-hidden="true">▶</span><span>BOT ESCANEO 4WALL</span><small className="vi-dev-badge">DEV</small>
+
+          <button
+            type="button"
+            onClick={onOpenBot}
+            className="vi-button vi-button-light vi-bot-button"
+            aria-label="Control del bot de escaneo 4Wall"
+            title="Control del bot de escaneo 4Wall"
+          >
+            <span className="vi-bot-play" aria-hidden="true">▶</span>
+            <span>BOT</span>
+            <small className="vi-dev-badge">DEV</small>
           </button>
-          <button type="button" onClick={onToggleSources} className={`vi-button vi-button-light vi-sources-button ${sourcesOpen ? "is-selected" : ""}`} aria-expanded={sourcesOpen}>
-            FUENTES <span className="vi-button-count">{loaded}/{total}</span>
-          </button>
-          <button type="button" disabled={loading || manual} onClick={onRefresh} className="vi-button vi-button-primary vi-refresh-button" aria-label={loading ? "Actualizando datos" : "Actualizar datos"} title={manual ? "Reemplaza el archivo manual en Fuentes para actualizar" : "Actualizar datos"}>
+
+          <button
+            type="button"
+            disabled={loading || manual}
+            onClick={onRefresh}
+            className="vi-button vi-button-primary vi-refresh-button"
+            aria-label={loading ? "Actualizando datos" : "Actualizar datos"}
+            title={manual ? "Reemplaza el archivo manual en Fuentes para actualizar" : "Actualizar datos"}
+          >
             <RefreshIcon spinning={loading} />
           </button>
-          <button type="button" className="vi-button vi-button-light vi-menu-button" onClick={onOpenMenu} aria-label="Abrir menú">
+
+          <button
+            type="button"
+            className="vi-button vi-button-light vi-menu-button"
+            onClick={onOpenMenu}
+            aria-label="Abrir menú"
+            title="Menú"
+          >
             <span className="vi-hamburger" aria-hidden="true"><i /><i /><i /></span>
           </button>
         </div>
