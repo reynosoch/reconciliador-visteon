@@ -39,19 +39,21 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Phantom/BOM | `src/domain/explodeBom.js`, `src/domain/bomLibrary.js`, `src/parsers/parseBom.js` |
 | Áreas/localidades | `src/domain/normalize.js`, `src/parsers/parse4WallAreas.js` |
 | Hallazgos/notificaciones | `src/domain/buildDiscrepancyFindings.js`, `src/domain/notificationState.js`, `src/components/shell/NotificationCenter.jsx` |
-| Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx` |
-| Fuentes/importación | `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`, `src/components/shell/SourcesDrawer.jsx` |
+| Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
+| Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
+| Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático | `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py` |
 | Supabase/BOM cloud | `src/services/bomCloud.js`, `supabase/migrations/` |
 | Scroll/rubber band | `src/components/visual/ScrollEffects.jsx` + `src/styles/modules/interaction-motion.css` |
 | Pac-Man / LAB visual | `src/components/visual/PacmanGlyphs.jsx` + `src/styles/modules/interaction-motion.css` |
 | Navbar / footer | `src/components/shell/CommandHeader.jsx`, `src/components/shell/SystemFooter.jsx` + `src/styles/modules/navigation-footer.css` |
-| Drawers / overlays / ayuda | `src/components/shell/`, `src/components/help/` + `src/styles/modules/overlays-drawers.css` |
+| Drawers / overlays / ayuda | componentes en `src/components/shell/` y `src/components/help/`; textos en `src/components/help/helpContent.js`; estilos en `src/styles/modules/overlays-drawers.css` |
 | Fuentes visual | `src/components/shell/SourcesDrawer.jsx` + `src/styles/modules/sources-drawer.css` |
 | Visores, tablas y superficies de datos | componente correspondiente + `src/styles/modules/data-review.css` |
 | Base visual / dashboard general | `src/styles/modules/foundation-dashboard.css` |
 | Excel/exportación | `src/services/exportInventoryWorkbook.js`, `src/services/exportBomWorkbook.js` |
 | Persistencia local | `src/services/browserStorage.js` |
+| Estado/gestos auxiliares de App | `src/hooks/useBotRunningStatus.js`, `src/hooks/useMobileMenuSwipe.js`; `App.jsx` queda como orquestador |
 | Reglas/decisiones del proyecto | sección relevante de este `README.md` |
 
 ### Comandos
@@ -610,6 +612,15 @@ Aplicar las migraciones en orden histórico. Para BOM incremental/borrado, las r
 El respaldo local se guarda primero en IndexedDB al agregar BOM. Para borrar, el orden se invierte deliberadamente: primero debe confirmarse la eliminación compartida en Supabase y solo entonces se actualiza IndexedDB. Si el RPC de borrado no está instalado, la X muestra un error y conserva tanto la copia local como la compartida. Al abrir la app, recuperar conexión o cada dos minutos, la colección se compara contra Supabase. Repetir un archivo no crea filas ni revisiones; una definición distinta para un padre existente sigue tratándose como conflicto. Este flujo sin login permite a quien tenga la configuración pública consultar/agregar y, una vez habilitado el RPC de borrado, eliminar un BOM con su fingerprint; por eso debe usarse solo en el entorno controlado previsto para este PoC.
 
 REPORTAR usa `development_feedback` con permiso de inserción y sin lectura desde el navegador. Para verificarlo en el proyecto correcto, enviar un reporte de prueba y comprobarlo desde el panel administrativo. Una configuración de otro proyecto no valida la instalación local.
+
+### Organización de UI para agentes
+
+- `App.jsx`: orquesta estado y conecta dominios; evitar meter polling, gestos o contenido estático aquí.
+- `components/help/helpContent.js`: textos y explicaciones; `HelpDrawer.jsx` solo renderiza.
+- `components/dashboard/dataInspectionSupport.js`: arma vistas, columnas y exportación; `DataInspectionPanel.jsx` maneja interacción.
+- `components/dashboard/inventoryWorkspaceSupport.js`: filtros y formatos; `InventoryRadar.jsx`: radar; `InventoryWorkspace.jsx`: búsqueda, virtualización y tabla.
+- `components/shell/sources/sourceConfig.js`: catálogo visual de Fuentes; `SourceRow.jsx`: una fila; `SourcesDrawer.jsx`: carga masiva, BOM Focus y coordinación.
+- Los motores de `src/domain/` se mantienen cohesionados a propósito: no separarlos solo por tamaño. Cambiar fórmulas exige revisar verificadores financieros.
 
 ### Rendimiento y librerías UI
 

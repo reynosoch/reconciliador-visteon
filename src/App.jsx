@@ -25,6 +25,8 @@ import SystemFooter from "./components/shell/SystemFooter.jsx";
 import PartLogicTracer from "./components/shell/PartLogicTracer.jsx";
 import { REFERENCE_SOURCE_LABELS, useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
+import { useBotRunningStatus } from "./hooks/useBotRunningStatus.js";
+import { useMobileMenuSwipe } from "./hooks/useMobileMenuSwipe.js";
 import {
   buildDiscrepancyFindings,
   buildSnapshot,
@@ -62,7 +64,6 @@ export default function App() {
   useEffect(() => {
     safeWriteJson("visteon.ui.pacman.v1", pacmanEnabled);
   }, [pacmanEnabled]);
-  const mobileSwipeStart = useRef(null);
   const shellRef = useRef(null);
   const mainMotionRef = useRef(null);
   const [sourcesOpen, setSourcesOpen] = useState(false),
@@ -78,7 +79,6 @@ export default function App() {
     [focusFindingId, setFocusFindingId] = useState(null),
     [focusFindingOrigin, setFocusFindingOrigin] = useState(null),
     [notificationReturnToken, setNotificationReturnToken] = useState(0),
-    [botRunning, setBotRunning] = useState(false),
     [previousCut, setPreviousCut] = useState(null),
     [identity, setIdentity] = useState(initial),
     [warning, setWarning] = useState(""),
@@ -87,6 +87,7 @@ export default function App() {
     [logicTracerOpen, setLogicTracerOpen] = useState(false),
     [animationLabOpen, setAnimationLabOpen] = useState(false),
     [detailFromNotifications, setDetailFromNotifications] = useState(false);
+  const [botRunning, setBotRunning] = useBotRunningStatus();
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
       manualScans: references.manualScans,
@@ -193,39 +194,6 @@ export default function App() {
     activeDataView,
   ]);
   useEffect(() => {
-    const endpoint = String(import.meta.env.VITE_BOT_CONTROL_URL || "").replace(/\/$/, "");
-    if (!endpoint) return undefined;
-    let cancelled = false;
-    let controller = null;
-    const readBotStatus = async () => {
-      controller?.abort();
-      controller = new AbortController();
-      try {
-        const response = await fetch(endpoint + "/bot/status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: "{}",
-          signal: controller.signal,
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!cancelled && response.ok) {
-          setBotRunning(data?.processState === "running");
-        }
-      } catch (error) {
-        if (!cancelled && error?.name !== "AbortError") {
-          // El estado del bot es auxiliar; un controlador inaccesible no bloquea el dashboard.
-        }
-      }
-    };
-    void readBotStatus();
-    const timer = window.setInterval(readBotStatus, 5000);
-    return () => {
-      cancelled = true;
-      controller?.abort();
-      window.clearInterval(timer);
-    };
-  }, []);
-  useEffect(() => {
     if (selectedPart?.partNumber) {
       const r = inventory.reconciliation.find(
         (x) => x.partNumber === selectedPart.partNumber,
@@ -242,30 +210,16 @@ export default function App() {
     addEventListener("beforeunload", h);
     return () => removeEventListener("beforeunload", h);
   }, [references.status.loadedCount, warning]);
-  useEffect(() => {
-    const start = (event) => {
-      if (window.innerWidth > 760 || sourcesOpen || notificationsOpen || botOpen || helpTopic || selectedPart || menuOpen || logicTracerOpen) return;
-      const touch = event.touches?.[0];
-      if (!touch || touch.clientX < window.innerWidth - 28) return;
-      mobileSwipeStart.current = { x: touch.clientX, y: touch.clientY };
-    };
-    const end = (event) => {
-      const origin = mobileSwipeStart.current;
-      mobileSwipeStart.current = null;
-      if (!origin) return;
-      const touch = event.changedTouches?.[0];
-      if (!touch) return;
-      const dx = touch.clientX - origin.x;
-      const dy = Math.abs(touch.clientY - origin.y);
-      if (dx < -58 && dy < 70) setMenuOpen(true);
-    };
-    addEventListener("touchstart", start, { passive: true });
-    addEventListener("touchend", end, { passive: true });
-    return () => {
-      removeEventListener("touchstart", start);
-      removeEventListener("touchend", end);
-    };
-  }, [sourcesOpen, notificationsOpen, botOpen, helpTopic, selectedPart, menuOpen, logicTracerOpen]);
+  const mobileMenuBlocked = Boolean(
+    sourcesOpen ||
+      notificationsOpen ||
+      botOpen ||
+      helpTopic ||
+      selectedPart ||
+      menuOpen ||
+      logicTracerOpen,
+  );
+  useMobileMenuSwipe({ disabled: mobileMenuBlocked, setOpen: setMenuOpen });
   const openPartFromNotification = (alert) => {
     const item = inventory.reconciliation.find(
       (row) => row.partNumber === alert?.partNumber,

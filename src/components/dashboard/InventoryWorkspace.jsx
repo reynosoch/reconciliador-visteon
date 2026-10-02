@@ -1,4 +1,3 @@
-const unitMoney = value => new Intl.NumberFormat("en-US", {style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}).format(value);
 // src/components/dashboard/InventoryWorkspace.jsx
 import {
  useEffect,
@@ -8,170 +7,17 @@ import {
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
- Ghost,
-} from "../visual/PacmanGlyphs";
-import {
  HelpButton,
 } from "../help/HelpDrawer";
-
-const FILTERS = [
- {
-   id: "ALL",
-   label: "TODOS",
- },
- {
-   id: "LOSS",
-   label: "PÉRDIDA",
- },
- {
-   id: "GAIN",
-   label: "GANANCIA",
- },
- {
-   id: "HAS_SWING",
-   label: "CON SWING",
- },
- {
-   id: "UNEXPECTED",
-   label: "QAD 0",
- },
- {
-   id: "OBSOLETE_GAIN",
-   label: "OBSOLETO +",
- },
- {
-   id: "PHANTOM",
-   label: "PHANTOM",
- },
- {
-   id: "BOM_REVIEW",
-   label: "REVISAR BOM",
- },
- {
-   id: "UNVALUED",
-   label: "SIN VALORAR",
- },
-];
-
-const STATUS_LABELS = {
- LOSS: "PÉRDIDA", GAIN: "GANANCIA", OBSOLETE_GAIN: "OBSOLETO +",
- UNEXPECTED: "INESPERADO", MISSING_PHYSICAL: "SIN FÍSICO",
- SWING: "SWING", UNVALUED: "SIN VALORAR", BALANCED: "BALANCEADO",
-};
-
-function money(value) {
- return new Intl.NumberFormat(
-   "en-US",
-   {
-     style: "currency",
-     currency: "USD",
-     maximumFractionDigits: 0,
-     minimumFractionDigits: 0,
-   }
- ).format(
-   Number(value) || 0
- );
-}
-
-function number(value) {
- return new Intl.NumberFormat(
-   "en-US",
-   {
-     maximumFractionDigits: 2,
-   }
- ).format(
-   Number(value) || 0
- );
-}
-
-function moneyTone(value) {
- const n =
-   Number(value) || 0;
- if (n < 0) {
-   return "vi-money-loss";
- }
- if (n > 0) {
-   return "vi-money-gain";
- }
- return "text-slate-500";
-}
-
-function ObsoleteIcon() {
- return (
-<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-<path d="M4 8.5A8 8 0 0 1 18.5 6"/><path d="M18.5 3v3h-3"/>
-<path d="M20 15.5A8 8 0 0 1 5.5 18"/><path d="M5.5 21v-3h3"/>
-<path d="M9 9h6v6H9z"/>
-</svg>
- );
-}
-
-function Radar({
- rows,
- onSelectPart,
- onHelp,
-}) {
- const ghosts = useMemo(
-   () => rows
-     .filter((item) => item?.master?.isPhantom === true)
-     .sort((a,b) => Math.abs(Number(b?.financial?.netUsd)||0)-Math.abs(Number(a?.financial?.netUsd)||0))
-     .slice(0,6),
-   [rows]
- );
- const obsolete = useMemo(
-   () => rows
-     .filter((item) => item?.flags?.isObsolete === true && Number(item?.financial?.obsoleteGainUsd || 0) > 0)
-     .sort((a,b) => Number(b?.financial?.obsoleteGainUsd||0)-Number(a?.financial?.obsoleteGainUsd||0))
-     .slice(0,6),
-   [rows]
- );
-
- const list = (items, empty) => items.length ? (
-<div className="space-y-1">
- {items.map((item) => (
-<button
-  type="button"
-  key={item.partNumber}
-  onClick={() => onSelectPart?.(item)}
-  className="vi-radar-row"
->
-<span className="vi-radar-pn">{item.partNumber}</span>
-<span className={`vi-money text-[11px] ${moneyTone(item?.financial?.netUsd)}`}>
- {money(item?.financial?.netUsd)}
-</span>
-</button>
- ))}
-</div>
- ) : <p className="vi-radar-empty">{empty}</p>;
-
- return (
-<aside className="vi-radar-stack">
-<section className="vi-radar-card vi-liquid-mini">
-<header className="vi-radar-card-head">
-<div className="flex items-center gap-2">
-<Ghost size={15} tone="violet" />
-<span>PHANTOM RADAR</span>
-</div>
-<HelpButton topic="phantomRadar" onHelp={onHelp}/>
-</header>
-<p className="vi-radar-caption">Phantoms con las mayores diferencias en dólares.</p>
-<div className="vi-radar-card-body">{list(ghosts,"No hay phantoms para mostrar.")}</div>
-</section>
-
-<section className="vi-radar-card vi-liquid-mini vi-obsolete-radar">
-<header className="vi-radar-card-head">
-<div className="flex items-center gap-2">
-<span className="vi-obsolete-icon"><ObsoleteIcon/></span>
-<span>OBSOLETOS +</span>
-</div>
-<HelpButton topic="obsoleteRadar" onHelp={onHelp}/>
-</header>
-<p className="vi-radar-caption">Material obsoleto con sobrante en dólares.</p>
-<div className="vi-radar-card-body">{list(obsolete,"No hay obsoletos con sobrante.")}</div>
-</section>
-</aside>
- );
-}
+import InventoryRadar from "./InventoryRadar.jsx";
+import {
+ FILTERS,
+ STATUS_LABELS,
+ money,
+ moneyTone,
+ number,
+ unitMoney,
+} from "./inventoryWorkspaceSupport.js";
 
 function HeaderHelp({
  children,
@@ -702,7 +548,7 @@ option.id
 </div>
 
 <div className="vi-radar-slot">
-<Radar
+<InventoryRadar
              rows={rows}
              onSelectPart={
                onSelectPart
