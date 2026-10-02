@@ -118,7 +118,9 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     let height = 0;
     let lastReleaseAt = 0;
     const shell = viewport.classList.contains("vi-shell");
+    const sourcesDrawer = viewport.classList.contains("vi-sources-drawer");
     rail.classList.toggle("vi-page-scroll-rail", shell);
+    rail.classList.toggle("vi-sources-scroll-rail", sourcesDrawer);
 
     const scheduleThumb = () => {
       if (thumbFrame) return;
@@ -132,7 +134,9 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       const rect = viewport.getBoundingClientRect();
       height = viewport.clientHeight;
       const extent = Math.max(0, viewport.scrollHeight - height);
-      const track = Math.max(0, rect.height - 24);
+      const railInset = sourcesDrawer ? 8 : 13;
+      const railEdge = sourcesDrawer ? 9 : 12;
+      const track = Math.max(0, rect.height - railEdge * 2);
       const thumbSize = Math.min(
         track,
         Math.max(36, (track * height) / Math.max(1, viewport.scrollHeight)),
@@ -142,8 +146,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       metricsRef.current.track = track;
       metricsRef.current.thumbSize = thumbSize;
 
-      rail.style.top = `${rect.top + 12}px`;
-      rail.style.left = `${rect.right - 13}px`;
+      rail.style.top = `${rect.top + railEdge}px`;
+      rail.style.left = `${rect.right - railInset}px`;
       rail.style.height = `${track}px`;
       rail.hidden = extent <= 1;
       scheduleThumb();
