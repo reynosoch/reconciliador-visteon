@@ -92,7 +92,8 @@ function SourceLine({
   botRunning,
 }) {
   const input = useRef(null);
-  const manualLocked = config.type === REFERENCE_SOURCE_TYPES.SCANS && botRunning;
+  const manualLocked =
+    config.type === REFERENCE_SOURCE_TYPES.SCANS && botRunning;
   const status = sourceStatus(source);
   const bomFiles = Array.isArray(source?.files) ? source.files : [];
   const bomRows = Array.isArray(source?.rows) ? source.rows : [];
@@ -106,9 +107,13 @@ function SourceLine({
       )[0]
     : null;
   const latestBomRows = latestBom ? bomRowsForFile(latestBom.fileName) : 0;
+  const rowCount = Number(source?.rows?.length || 0);
+  const isBom = config.type === REFERENCE_SOURCE_TYPES.BOM;
 
   return (
-    <article className={`vi-source-card ${source?.loaded ? "is-loaded" : ""}`}>
+    <article
+      className={`vi-source-row ${source?.loaded ? "is-loaded" : ""} ${isBom ? "is-bom" : ""}`}
+    >
       <input
         ref={input}
         type="file"
@@ -120,183 +125,80 @@ function SourceLine({
             try {
               await loadFile(config.type, file);
             } catch {
-              // El error queda visible en la tarjeta.
+              // El error queda visible en la fila.
             }
           }
           event.target.value = "";
         }}
       />
 
-      <div className="vi-source-line vi-source-card-inner">
-        <div className="vi-source-line-head">
-          <div className="vi-source-title">
-            <span
-              className={`vi-source-status-dot ${status.tone}`}
-              aria-hidden="true"
-            />
-            <span>{config.label}</span>
+      <div className="vi-source-row-main">
+        <div className="vi-source-row-identity" title={config.description}>
+          <span
+            className={`vi-source-status-dot ${status.tone}`}
+            aria-hidden="true"
+          />
+          <span>
+            <strong>{config.label}</strong>
             <small>{status.label}</small>
-          </div>
-          <div className="vi-source-card-tools">
-            <span className="vi-source-scope">{config.scope}</span>
-            <HelpButton topic={config.topic} onHelp={onHelp} />
-          </div>
+          </span>
         </div>
 
-        <p className="vi-source-description">{config.description}</p>
-
-        {source?.error && (
-          <p role="alert" className="vi-source-warning">
-            {source.error.message}
-          </p>
-        )}
-
-        {manualLocked && (
-          <p className="vi-source-warning vi-bot-upload-lock">
-            El bot 4Wall está corriendo. Detén solo el bot si quieres sustituir
-            el físico con un archivo manual.
-          </p>
-        )}
-
-        {source?.loaded ? (
-          config.type === REFERENCE_SOURCE_TYPES.BOM ? (
-            <div className="vi-bom-source-summary">
-              <div className="vi-bom-latest-row">
-                <button
-                  type="button"
-                  className="vi-bom-latest"
-                  onClick={() =>
-                    latestBom &&
-                    onPreview?.({
-                      config,
-                      source,
-                      fileName: latestBom.fileName,
-                    })
-                  }
-                  disabled={!latestBom}
-                >
-                  <span>
-                    <small>ÚLTIMO ARCHIVO</small>
-                    <strong>{latestBom?.fileName || "Sin archivo BOM"}</strong>
-                  </span>
-                  <b>{latestBomRows.toLocaleString("es-MX")} filas</b>
-                </button>
-
-                {latestBom && (
-                  <button
-                    type="button"
-                    className="vi-bom-delete"
-                    onClick={() => onRequestDeleteBom?.(latestBom)}
-                    disabled={deletingBom === latestBom.fingerprint}
-                    aria-label={`Borrar ${latestBom.fileName} de BOM local y Supabase`}
-                    title="Quitar este BOM del respaldo compartido"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-
-              <div className="vi-bom-total">
-                <span>BIBLIOTECA BOM</span>
-                <strong>{bomRows.length.toLocaleString("es-MX")} filas</strong>
+        <div className="vi-source-row-file">
+          {source?.loaded ? (
+            isBom ? (
+              <button
+                type="button"
+                onClick={() =>
+                  latestBom &&
+                  onPreview?.({
+                    config,
+                    source,
+                    fileName: latestBom.fileName,
+                  })
+                }
+                disabled={!latestBom}
+              >
+                <strong>{latestBom?.fileName || "Biblioteca BOM"}</strong>
                 <small>
+                  {bomRows.length.toLocaleString("es-MX")} filas ·{" "}
                   {bomFiles.length.toLocaleString("es-MX")} archivo
                   {bomFiles.length === 1 ? "" : "s"}
                 </small>
-              </div>
-
-              <details className="vi-source-file-list">
-                <summary>
-                  <span>ARCHIVOS BOM</span>
-                  <strong>VER ▾</strong>
-                </summary>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onPreview?.({ config, source, fileName: "__all" })
-                    }
-                  >
-                    <span>VER TODOS</span>
-                    <small>{bomRows.length.toLocaleString("es-MX")} filas</small>
-                  </button>
-
-                  {bomFiles.map((file) => {
-                    const actualRows = bomRowsForFile(file.fileName);
-                    return (
-                      <div
-                        className="vi-bom-file-entry"
-                        key={file.fingerprint || file.fileName}
-                      >
-                        <button
-                          type="button"
-                          className="vi-bom-file-preview"
-                          onClick={() =>
-                            onPreview?.({
-                              config,
-                              source,
-                              fileName: file.fileName,
-                            })
-                          }
-                        >
-                          <span>{file.fileName}</span>
-                          <small>
-                            {actualRows.toLocaleString("es-MX")} filas
-                          </small>
-                        </button>
-                        <button
-                          type="button"
-                          className="vi-bom-delete"
-                          onClick={() => onRequestDeleteBom?.(file)}
-                          disabled={deletingBom === file.fingerprint}
-                          aria-label={`Borrar ${file.fileName} de BOM local y Supabase`}
-                          title="Quitar este BOM del respaldo compartido"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </details>
-            </div>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  onPreview?.({
+                    config,
+                    source,
+                    fileName: source.fileName,
+                  })
+                }
+              >
+                <strong>{source.fileName}</strong>
+                <small>{rowCount.toLocaleString("es-MX")} filas · Ver</small>
+              </button>
+            )
           ) : (
-            <button
-              type="button"
-              className="vi-source-file-chip"
-              onClick={() =>
-                onPreview?.({
-                  config,
-                  source,
-                  fileName: source.fileName,
-                })
-              }
-            >
-              <span>{source.fileName}</span>
-              <small>
-                {Number(source.rows?.length || 0).toLocaleString("es-MX")} filas
-                · VER
-              </small>
-            </button>
-          )
-        ) : (
-          <p className="vi-source-example">Ejemplo: {config.suggested}</p>
-        )}
+            <span className="vi-source-row-empty">
+              <strong>Sin archivo</strong>
+              <small>{config.suggested}</small>
+            </span>
+          )}
+        </div>
 
-        {source?.warnings?.length > 0 && (
-          <p className="vi-source-warning">
-            {source.warnings.map((warning) => warning.message).join(" ")}
-          </p>
-        )}
+        <div className="vi-source-row-actions">
+          <HelpButton topic={config.topic} onHelp={onHelp} />
 
-        <div className="vi-source-actions">
           <button
             type="button"
             disabled={source?.loading || manualLocked}
             onClick={() => {
               if (!manualLocked) input.current?.click();
             }}
-            className="source-mini-button"
+            className="source-mini-button vi-source-row-load"
             title={
               manualLocked
                 ? "Detén el bot 4Wall para cargar escaneos manuales."
@@ -305,14 +207,14 @@ function SourceLine({
           >
             {source?.loading
               ? "CARGANDO…"
-              : config.type === REFERENCE_SOURCE_TYPES.BOM
-                ? "AGREGAR BOM"
+              : isBom
+                ? "AGREGAR"
                 : source?.loaded
                   ? "REEMPLAZAR"
                   : "CARGAR"}
           </button>
 
-          {source?.loaded && config.type !== REFERENCE_SOURCE_TYPES.BOM && (
+          {source?.loaded && !isBom && (
             <button
               type="button"
               onClick={() => clearFile(config.type)}
@@ -325,6 +227,95 @@ function SourceLine({
           )}
         </div>
       </div>
+
+      {(source?.error || manualLocked || source?.warnings?.length > 0) && (
+        <div className="vi-source-row-message">
+          {source?.error && (
+            <p role="alert">{source.error.message}</p>
+          )}
+          {manualLocked && (
+            <p>
+              El bot 4Wall está corriendo. Detén el bot para sustituir el físico
+              con un archivo manual.
+            </p>
+          )}
+          {source?.warnings?.length > 0 && (
+            <p>{source.warnings.map((warning) => warning.message).join(" ")}</p>
+          )}
+        </div>
+      )}
+
+      {isBom && source?.loaded && (
+        <div className="vi-bom-row-expand">
+          <div className="vi-bom-row-summary">
+            <span>
+              <small>ÚLTIMO</small>
+              <strong>{latestBomRows.toLocaleString("es-MX")} filas</strong>
+            </span>
+            <span>
+              <small>BIBLIOTECA</small>
+              <strong>{bomRows.length.toLocaleString("es-MX")} filas</strong>
+            </span>
+            <span>
+              <small>ARCHIVOS</small>
+              <strong>{bomFiles.length.toLocaleString("es-MX")}</strong>
+            </span>
+          </div>
+
+          <details className="vi-source-file-list">
+            <summary>
+              <span>Archivos BOM</span>
+              <strong>Ver lista ▾</strong>
+            </summary>
+            <div>
+              <button
+                type="button"
+                onClick={() =>
+                  onPreview?.({ config, source, fileName: "__all" })
+                }
+              >
+                <span>VER TODOS</span>
+                <small>{bomRows.length.toLocaleString("es-MX")} filas</small>
+              </button>
+
+              {bomFiles.map((file) => {
+                const actualRows = bomRowsForFile(file.fileName);
+                return (
+                  <div
+                    className="vi-bom-file-entry"
+                    key={file.fingerprint || file.fileName}
+                  >
+                    <button
+                      type="button"
+                      className="vi-bom-file-preview"
+                      onClick={() =>
+                        onPreview?.({
+                          config,
+                          source,
+                          fileName: file.fileName,
+                        })
+                      }
+                    >
+                      <span>{file.fileName}</span>
+                      <small>{actualRows.toLocaleString("es-MX")} filas</small>
+                    </button>
+                    <button
+                      type="button"
+                      className="vi-bom-delete"
+                      onClick={() => onRequestDeleteBom?.(file)}
+                      disabled={deletingBom === file.fingerprint}
+                      aria-label={`Borrar ${file.fileName} de BOM local y Supabase`}
+                      title="Quitar este BOM del respaldo compartido"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        </div>
+      )}
     </article>
   );
 }
