@@ -3672,7 +3672,7 @@ body.vi-system-footer-visible .vi-footer-underlay {
   position: relative;
   z-index: 1;
   width: 100%;
-  margin-top: 64px;
+  margin-top: 0;
   color: #edf5f7;
   background:
     radial-gradient(circle at 50% 0%, rgba(36,93,116,.13), transparent 38%),
@@ -3685,8 +3685,8 @@ body.vi-system-footer-visible .vi-footer-underlay {
   z-index: -1;
   left: 0;
   right: 0;
-  top: -96px;
-  height: 98px;
+  top: -42px;
+  height: 44px;
   pointer-events: none;
   background:
     linear-gradient(
@@ -3910,12 +3910,9 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
   }
 }
 @media (max-width: 640px) {
-  .vi-system-footer {
-    margin-top: 48px;
-  }
   .vi-system-footer::before {
-    top: -72px;
-    height: 74px;
+    top: -34px;
+    height: 36px;
   }
   .vi-system-footer-shell {
     padding: 18px 14px 14px;
@@ -3945,3 +3942,296 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
   }
 }
 
+
+
+/* 2026-10-02 · Compact command navbar */
+.vi-main {
+  padding-bottom: 0 !important;
+}
+
+.vi-command-header {
+  background:
+    radial-gradient(circle at 50% -20%,rgba(39,101,124,.16),transparent 42%),
+    linear-gradient(180deg,rgba(8,34,47,.98),rgba(6,27,39,.98)) !important;
+  border-bottom: 1px solid rgba(255,255,255,.075) !important;
+  box-shadow: 0 12px 30px rgba(0,8,14,.16) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.vi-header-main {
+  min-height: 62px !important;
+  display: grid !important;
+  grid-template-columns: minmax(150px,1fr) auto minmax(320px,1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 8px clamp(16px,3vw,46px) !important;
+  background: transparent !important;
+}
+.vi-header-brand {
+  min-width: 0;
+  gap: 11px !important;
+}
+.vi-brand-logo {
+  width: 132px !important;
+}
+.vi-brand-divider {
+  height: 22px !important;
+  background: rgba(255,255,255,.14) !important;
+}
+.vi-product-name {
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(255,255,255,.035);
+  color: #8fa8b2 !important;
+  font-size: 8px !important;
+  font-weight: 850 !important;
+  letter-spacing: .10em !important;
+}
+
+.vi-header-glance {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  min-height: 34px;
+  padding: 3px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(2,14,21,.25);
+  box-shadow: inset 0 1px rgba(255,255,255,.018);
+}
+.vi-nav-state,
+.vi-fetch-time {
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px !important;
+  padding: 4px 10px !important;
+  color: #dce9ed;
+  text-align: left !important;
+}
+.vi-nav-state {
+  border-right: 1px solid rgba(255,255,255,.075);
+}
+.vi-nav-state > i {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 999px;
+  background: #849ca7;
+}
+.vi-nav-state > small,
+.vi-fetch-time small {
+  color: #8099a4 !important;
+  font-size: 7px !important;
+  font-weight: 900 !important;
+  letter-spacing: .09em !important;
+}
+.vi-nav-state > strong,
+.vi-fetch-time strong {
+  color: #f0f6f8 !important;
+  font-size: 9px !important;
+  font-weight: 820 !important;
+  font-variant-numeric: tabular-nums;
+}
+.vi-nav-state.is-good > i {
+  background: #79deb3;
+  box-shadow: 0 0 0 3px rgba(121,222,179,.07);
+}
+.vi-nav-state.is-warning > i {
+  background: #ffc06e;
+}
+.vi-nav-state.is-error > i {
+  background: #ff8d99;
+}
+
+.vi-header-actions {
+  justify-self: end;
+  gap: 6px !important;
+}
+.vi-command-header .vi-header-actions .vi-button {
+  min-height: 36px !important;
+  height: 36px;
+  padding: 0 11px !important;
+  border-color: rgba(255,255,255,.10) !important;
+  border-radius: 11px !important;
+  background: rgba(255,255,255,.045) !important;
+  color: #dce8ec !important;
+  font-size: 9px !important;
+  letter-spacing: .035em !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.02);
+  transition:
+    background-color .14s ease,
+    border-color .14s ease,
+    color .14s ease,
+    transform .14s ease !important;
+}
+.vi-command-header .vi-header-actions .vi-button:hover {
+  border-color: rgba(245,130,31,.38) !important;
+  background: rgba(255,255,255,.075) !important;
+  transform: translateY(-1px);
+}
+.vi-command-header .vi-header-actions .vi-button:active {
+  transform: translateY(0);
+}
+.vi-command-header .vi-sources-button {
+  gap: 7px !important;
+}
+.vi-command-header .vi-sources-button.is-ready {
+  border-color: rgba(121,222,179,.16) !important;
+}
+.vi-command-header .vi-sources-button.is-selected {
+  border-color: rgba(245,130,31,.42) !important;
+  background: rgba(245,130,31,.09) !important;
+}
+.vi-command-header .vi-button-count {
+  min-width: 24px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(245,130,31,.10);
+  color: #ffb36e !important;
+  font-size: 8px;
+  text-align: center;
+}
+.vi-command-header .vi-icon-button,
+.vi-command-header .vi-refresh-button,
+.vi-command-header .vi-menu-button {
+  width: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+}
+.vi-command-header .vi-refresh-button {
+  border-color: rgba(245,130,31,.70) !important;
+  background: #f5821f !important;
+  color: #102c39 !important;
+}
+.vi-command-header .vi-refresh-button:hover {
+  background: #ff982f !important;
+}
+.vi-command-header .vi-bot-button {
+  gap: 6px !important;
+}
+.vi-bot-play {
+  color: #ffae65;
+  font-size: 8px;
+}
+.vi-command-header .vi-dev-badge {
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(245,130,31,.10);
+  color: #d99a62;
+  font-size: 6px;
+}
+.vi-command-header .vi-notification-badge {
+  top: -5px;
+  right: -5px;
+  min-width: 16px;
+  height: 16px;
+  border: 2px solid #071e2b;
+  background: #f5821f;
+  color: #092536;
+  font-size: 7px;
+}
+
+/* The detailed data flow remains secondary and collapses on scroll. */
+.vi-source-ribbon {
+  background: rgba(4,24,35,.84) !important;
+  border-top: 1px solid rgba(255,255,255,.04) !important;
+}
+.vi-source-ribbon-inner {
+  min-height: 46px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+.vi-flow-label {
+  color: #8ea7b1 !important;
+  font-size: 8px !important;
+}
+.vi-source-copy strong {
+  color: #edf5f7 !important;
+  font-size: 9px !important;
+}
+.vi-source-copy small {
+  color: #8fa6b0 !important;
+  font-size: 9px !important;
+}
+.vi-source-detail {
+  color: #6f8994 !important;
+}
+.vi-source-indicator {
+  width: 6px !important;
+  height: 6px !important;
+}
+.vi-ribbon-help {
+  min-height: 30px;
+}
+
+@media (max-width: 1120px) {
+  .vi-header-main {
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+  }
+  .vi-header-glance {
+    justify-self: start;
+  }
+  .vi-command-header .vi-bot-button > span:not(.vi-bot-play),
+  .vi-command-header .vi-bot-button .vi-dev-badge {
+    display: none;
+  }
+  .vi-command-header .vi-bot-button {
+    width: 36px;
+    min-width: 36px;
+    padding: 0 !important;
+  }
+}
+@media (max-width: 820px) {
+  .vi-brand-logo {
+    width: 112px !important;
+  }
+  .vi-product-name,
+  .vi-brand-divider {
+    display: none;
+  }
+  .vi-fetch-time {
+    display: none !important;
+  }
+  .vi-header-glance {
+    padding-right: 3px;
+  }
+  .vi-nav-state {
+    border-right: 0;
+  }
+  .vi-command-header .vi-sources-button > span:first-child {
+    display: none;
+  }
+  .vi-command-header .vi-sources-button {
+    width: 42px;
+    min-width: 42px;
+    padding: 0 !important;
+  }
+}
+@media (max-width: 600px) {
+  .vi-header-main {
+    grid-template-columns: auto 1fr;
+  }
+  .vi-header-glance {
+    display: none;
+  }
+  .vi-header-actions {
+    gap: 4px !important;
+  }
+  .vi-brand-logo {
+    width: 104px !important;
+  }
+  .vi-command-header .vi-header-actions .vi-button {
+    min-height: 34px !important;
+    height: 34px;
+  }
+  .vi-command-header .vi-icon-button,
+  .vi-command-header .vi-refresh-button,
+  .vi-command-header .vi-menu-button,
+  .vi-command-header .vi-bot-button {
+    width: 34px !important;
+    min-width: 34px !important;
+  }
+}
