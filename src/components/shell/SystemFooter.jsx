@@ -9,8 +9,8 @@ function sourceState(referenceStatus, connectionStatus) {
 
   if (referenceStatus?.hasErrors || scanState === "ERROR") {
     return {
-      value: "REVISAR",
-      detail: `${loaded}/${total} referencias · error de fuente`,
+      value: `${loaded}/${total}`,
+      detail: "revisar fuentes",
       tone: "error",
     };
   }
@@ -23,15 +23,18 @@ function sourceState(referenceStatus, connectionStatus) {
           ? "4Wall snapshot"
           : "4Wall pendiente";
     return {
-      value: "LISTAS",
-      detail: `${loaded}/${total} referencias · ${physical}`,
-      tone: scanState === "MANUAL" || scanState === "DEV_SNAPSHOT" ? "good" : "warning",
+      value: `${loaded}/${total}`,
+      detail: physical,
+      tone:
+        scanState === "MANUAL" || scanState === "DEV_SNAPSHOT"
+          ? "good"
+          : "warning",
     };
   }
 
   return {
-    value: "INCOMPLETAS",
-    detail: `${loaded}/${total} referencias cargadas`,
+    value: `${loaded}/${total}`,
+    detail: "referencias cargadas",
     tone: "warning",
   };
 }
@@ -39,17 +42,18 @@ function sourceState(referenceStatus, connectionStatus) {
 function environmentLabel() {
   if (import.meta.env.DEV) return "LOCAL · DEV";
   if (globalThis.location?.hostname?.endsWith("github.io")) {
-    return "GITHUB PAGES · PROD";
+    return "PAGES · PROD";
   }
-  return `${String(import.meta.env.MODE || "production").toUpperCase()} · BUILD`;
+  return String(import.meta.env.MODE || "production").toUpperCase();
 }
 
-function MetaCard({ label, value, detail, tone = "normal" }) {
+function StatusItem({ label, value, detail, tone = "normal" }) {
   return (
-    <div className={`vi-system-meta is-${tone}`}>
-      <span>{label}</span>
+    <div className={`vi-footer-status is-${tone}`}>
+      <span className="vi-footer-status-dot" aria-hidden="true" />
+      <span className="vi-footer-status-label">{label}</span>
       <strong>{value}</strong>
-      <small>{detail}</small>
+      {detail && <small>{detail}</small>}
     </div>
   );
 }
@@ -69,50 +73,56 @@ export default function SystemFooter({
   );
 
   return (
-    <footer className="vi-system-footer" aria-label="Estado crítico del sistema">
+    <footer className="vi-system-footer" aria-label="Estado del sistema">
       <div className="vi-system-footer-shell">
-        <div className="vi-system-footer-heading">
-          <div>
-            <span className="vi-system-footer-kicker">SYSTEM STATUS</span>
-            <strong>Visteon Inventory Reconciler</strong>
-            <small>
-              Construido por Javier Reynoso · con ayuda de Yessica Pina
-            </small>
+        <div className="vi-system-footer-main">
+          <div className="vi-system-footer-brand">
+            <span className="vi-system-footer-mark" aria-hidden="true" />
+            <div>
+              <strong>Inventory Reconciler</strong>
+              <small>Visteon · Planta 179A</small>
+            </div>
           </div>
-          <span className="vi-system-footer-site">PLANTA 179A</span>
+
+          <div className="vi-system-footer-statuses">
+            <StatusItem
+              label="Fuentes"
+              value={sources.value}
+              detail={sources.detail}
+              tone={sources.tone}
+            />
+            <StatusItem
+              label="Calidad"
+              value={quality.label}
+              detail={quality.count ? `${quality.count} alertas` : "sin alertas"}
+              tone={quality.tone}
+            />
+            <StatusItem
+              label="Entorno"
+              value={environmentLabel()}
+            />
+            <StatusItem
+              label="Versión"
+              value={`v${packageInfo.version}`}
+            />
+          </div>
         </div>
 
-        <div className="vi-system-footer-grid">
-          <MetaCard
-            label="ESTADO DE FUENTES"
-            value={sources.value}
-            detail={sources.detail}
-            tone={sources.tone}
+        <div className="vi-system-footer-lower">
+          <SnapshotStamp
+            snapshotMeta={snapshotMeta}
+            scanCount={scanCount}
+            lastUpdated={lastUpdated}
+            compact
+            className="vi-system-footer-snapshot"
           />
-          <MetaCard
-            label="CALIDAD DE DATOS"
-            value={quality.label}
-            detail={quality.detail}
-            tone={quality.tone}
-          />
-          <MetaCard
-            label="VERSIÓN DEL SISTEMA"
-            value={`v${packageInfo.version}`}
-            detail="PoC · reglas controladas por README"
-          />
-          <MetaCard
-            label="ENTORNO"
-            value={environmentLabel()}
-            detail="Build React + Vite"
-          />
-        </div>
 
-        <SnapshotStamp
-          snapshotMeta={snapshotMeta}
-          scanCount={scanCount}
-          lastUpdated={lastUpdated}
-          className="vi-system-footer-snapshot"
-        />
+          <div className="vi-system-footer-credit" aria-label="Créditos del proyecto">
+            <span>Desarrollo · Javier Reynoso</span>
+            <i aria-hidden="true" />
+            <span>Supervisión · Yessica Pina</span>
+          </div>
+        </div>
       </div>
     </footer>
   );
