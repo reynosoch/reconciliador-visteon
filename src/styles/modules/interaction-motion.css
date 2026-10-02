@@ -651,6 +651,28 @@
   border: 0 !important;
   padding: 0 !important;
 }
+
+/* The dashboard footer must keep its dark base visible while the content
+   translates upward during bottom rubber-band feedback. */
+.vi-shell > .vi-rubber-clip {
+  position: relative;
+}
+.vi-shell > .vi-rubber-clip::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96px;
+  pointer-events: none;
+  background: #05151e;
+}
+.vi-shell > .vi-rubber-clip > .vi-rubber-content {
+  position: relative;
+  z-index: 1;
+}
+
 .vi-rubber-content { display: flow-root; min-width: 0; }
 .vi-rubber-content > :is(.vi-sources-head,.vi-notification-head,.vi-menu-head) {
   background: linear-gradient(180deg,#103b51,#0c3145) !important;
