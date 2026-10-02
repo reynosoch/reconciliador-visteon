@@ -11,9 +11,9 @@
   background:
     linear-gradient(
       180deg,
-      rgba(5,18,27,0) 0%,
-      rgba(5,18,27,.52) 42%,
-      #05151e 100%
+      rgba(8,33,46,0) 0%,
+      rgba(8,33,46,.42) 40%,
+      #08212e 100%
     );
   transition: opacity .30s cubic-bezier(.2,.8,.2,1);
 }
@@ -28,8 +28,8 @@ body.vi-system-footer-visible .vi-footer-underlay {
   margin-top: 0;
   color: #edf5f7;
   background:
-    radial-gradient(circle at 50% 0%, rgba(36,93,116,.13), transparent 38%),
-    linear-gradient(180deg,#08212e 0%,#05151e 100%);
+    radial-gradient(circle at 50% 0%, rgba(36,93,116,.08), transparent 46%),
+    linear-gradient(180deg,#08212e 0%,#061923 44%,#05151e 100%);
   isolation: isolate;
 }
 .vi-system-footer::before {
@@ -54,14 +54,14 @@ body.vi-system-footer-visible .vi-footer-underlay {
   position: absolute;
   inset: 0 0 auto;
   height: 1px;
-  opacity: .46;
+  opacity: .12;
   background:
     linear-gradient(
       90deg,
       transparent 0%,
-      rgba(138,197,219,.18) 26%,
-      rgba(245,130,31,.34) 50%,
-      rgba(138,197,219,.16) 74%,
+      rgba(138,197,219,.10) 34%,
+      rgba(138,197,219,.12) 50%,
+      rgba(138,197,219,.10) 66%,
       transparent 100%
     );
 }
