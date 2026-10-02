@@ -10,14 +10,15 @@ import {
 const TOP_RUBBER_MAX_PX = 54;
 const TOP_RUBBER_CURVE = 122;
 const BOTTOM_RUBBER_MAX_PX = 42;
-const BOTTOM_RUBBER_CURVE = 118;
-const BOTTOM_MIN_RAW_IMPULSE = 20;
-const BOTTOM_HANDOFF_WINDOW_MS = 120;
-const BOTTOM_GESTURE_IDLE_MS = 140;
+const BOTTOM_RUBBER_CURVE = 110;
+const BOTTOM_MIN_RAW_IMPULSE = 48;
+const BOTTOM_MAX_RAW_IMPULSE = 72;
+const BOTTOM_HANDOFF_WINDOW_MS = 140;
+const BOTTOM_GESTURE_IDLE_MS = 180;
 const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
-const BOTTOM_WHEEL_RELEASE_MS = 84;
-const BOTTOM_RELEASE_MS = 72;
+const BOTTOM_WHEEL_RELEASE_MS = 110;
+const BOTTOM_RELEASE_MS = 105;
 const MOMENTUM_GUARD_MS = 90;
 const MOMENTUM_GUARD_DELTA = 2.4;
 
@@ -30,6 +31,9 @@ const SPRING = {
 };
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const bottomImpulse = (delta) =>
+  clamp(delta, -BOTTOM_MAX_RAW_IMPULSE, -BOTTOM_MIN_RAW_IMPULSE);
 
 const rubberDistance = (distance) => {
   const bottom = distance < 0;
@@ -220,7 +224,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       }
 
       bottomIntent = {
-        delta: Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE),
+        delta: bottomImpulse(delta),
         mode,
         at: performance.now(),
       };
@@ -303,7 +307,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
         holdBottomGestureLock();
         bottomIntent = null;
-        if (pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), "wheel")) {
+        if (pullBy(bottomImpulse(delta), "wheel")) {
           timer = window.setTimeout(release, BOTTOM_WHEEL_RELEASE_MS);
         }
         return;
@@ -385,12 +389,12 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
             holdBottomGestureLock();
           } else {
             holdBottomGestureLock();
-            pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), mode);
+            pullBy(bottomImpulse(delta), mode);
             clearTimeout(timer);
             timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
           }
         } else {
-          pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), mode);
+          pullBy(bottomImpulse(delta), mode);
           if (!touch) {
             clearTimeout(timer);
             timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
