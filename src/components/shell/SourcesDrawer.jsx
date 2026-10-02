@@ -349,7 +349,10 @@ export default function SourcesDrawer({
   const [preview, setPreview] = useState(null);
   const [bomPart, setBomPart] = useState("");
 
-  const bomRows = Array.isArray(sources?.bom?.rows) ? sources.bom.rows : [];
+  const bomRows = useMemo(
+    () => (Array.isArray(sources?.bom?.rows) ? sources.bom.rows : []),
+    [sources?.bom?.rows],
+  );
   const normalizedBomPart = bomPart.trim().toUpperCase();
   const bomFocusRows = useMemo(() => {
     if (!normalizedBomPart) return [];
