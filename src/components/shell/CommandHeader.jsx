@@ -123,7 +123,7 @@ export default function CommandHeader({
         previousY = viewport.scrollTop;
         direction = 0;
         travel = 0;
-      }, 180);
+      }, 280);
     };
 
     const setHidden = (next) => {
