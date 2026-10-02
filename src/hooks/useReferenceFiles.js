@@ -4,6 +4,18 @@ import { mergeBomLibrary } from "../domain/bomLibrary.js";
 import { idbGet, idbSet } from "../services/browserStorage.js";
 import { removeBomFileFromCloud, syncBomLibrary } from "../services/bomCloud.js";
 import { downloadBomWorkbook } from "../services/exportBomWorkbook.js";
+import {
+  REFERENCE_REQUIRED_FIELDS,
+  REFERENCE_SOURCE_LABELS,
+  REFERENCE_SOURCE_TYPES,
+} from "../domain/sourceCatalog.js";
+
+export {
+  REFERENCE_REQUIRED_FIELDS,
+  REFERENCE_SOURCE_LABELS,
+  REFERENCE_SOURCE_TYPES,
+} from "../domain/sourceCatalog.js";
+
 const BOM_KEY = "reference:bom-library.v1";
 const empty = () => ({
   rows: [],
@@ -19,40 +31,6 @@ const initial = () =>
   Object.fromEntries(
     ["areas", "qad", "ispbb", "bom", "cost", "scans"].map((k) => [k, empty()]),
   );
-export const REFERENCE_SOURCE_TYPES = {
-  AREAS: "areas",
-  QAD: "qad",
-  ISPBB: "ispbb",
-  BOM: "bom",
-  COST: "cost",
-  SCANS: "scans",
-};
-export const REFERENCE_SOURCE_LABELS = {
-  areas: "Áreas 4Wall",
-  qad: "Inventario QAD",
-  ispbb: "ISPBB / Phantoms",
-  bom: "BOM",
-  cost: "Cost Part",
-  scans: "Escaneos 4Wall",
-};
-export const REFERENCE_REQUIRED_FIELDS = {
-  areas: [["Nombre"], ["Localidad QAD"]],
-  qad: [
-    ["Item Number"],
-    ["Site"],
-    ["Location"],
-    ["Quantity On Hand"],
-    ["Item Type"],
-  ],
-  ispbb: [["Item Number"], ["Site"], ["Phantom"]],
-  bom: [["Parent Item"], ["Component"], ["Usage"], ["Level"], ["Comp Phantom"]],
-  cost: [["Item Number"], ["Cost Total"], ["Status"]],
-  scans: [
-    ["Número Parte QAD", "Numero Parte QAD", "numero_parte", "Numero de parte"],
-    ["Quantity", "cantidad"],
-    ["AreaName", "area_escaneo"],
-  ],
-};
 async function parseReferenceFile(type, file) {
   if (type !== 'bom' || !file.name.toLowerCase().endsWith('.json')) return parseDelimitedFile(file, { requiredFields: REFERENCE_REQUIRED_FIELDS[type] });
   const value=JSON.parse(await file.text());
