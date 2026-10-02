@@ -14,11 +14,10 @@ const BOTTOM_RUBBER_CURVE = 110;
 const BOTTOM_MIN_RAW_IMPULSE = 48;
 const BOTTOM_MAX_RAW_IMPULSE = 72;
 const BOTTOM_HANDOFF_WINDOW_MS = 140;
-const BOTTOM_GESTURE_IDLE_MS = 180;
 const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
-const BOTTOM_WHEEL_RELEASE_MS = 110;
-const BOTTOM_RELEASE_MS = 105;
+const BOTTOM_WHEEL_RELEASE_MS = 96;
+const BOTTOM_RELEASE_MS = 96;
 const MOMENTUM_GUARD_MS = 90;
 const MOMENTUM_GUARD_DELTA = 2.4;
 
@@ -127,8 +126,6 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     let height = 0;
     let lastReleaseAt = 0;
     let bottomIntent = null;
-    let bottomGestureLocked = false;
-    let bottomGestureTimer = 0;
     const shell = viewport.classList.contains("vi-shell");
     const sourcesDrawer = viewport.classList.contains("vi-sources-drawer");
     rail.classList.toggle("vi-page-scroll-rail", shell);
@@ -196,30 +193,13 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     const reset = () => {
       raw = 0;
       bottomIntent = null;
-      bottomGestureLocked = false;
-      clearTimeout(bottomGestureTimer);
-      bottomGestureTimer = 0;
       if (reduceMotion) jumpToRest();
       else pullTarget.set(0);
-    };
-
-    const holdBottomGestureLock = () => {
-      bottomGestureLocked = true;
-      clearTimeout(bottomGestureTimer);
-      bottomGestureTimer = window.setTimeout(() => {
-        bottomGestureLocked = false;
-        bottomGestureTimer = 0;
-      }, BOTTOM_GESTURE_IDLE_MS);
     };
 
     const rememberBottomIntent = (delta, mode) => {
       if (delta >= 0) {
         bottomIntent = null;
-        if (mode === "wheel") {
-          bottomGestureLocked = false;
-          clearTimeout(bottomGestureTimer);
-          bottomGestureTimer = 0;
-        }
         return;
       }
 
@@ -276,6 +256,27 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       return true;
     };
 
+    const pullBottomWheel = (delta, releaseMs = BOTTOM_WHEEL_RELEASE_MS) => {
+      if (reduceMotion) return false;
+
+      clearTimeout(timer);
+      timer = 0;
+
+      const bounded = clamp(delta, -120, -0.01);
+      raw =
+        raw < 0
+          ? clamp(
+              raw + bounded * 0.34,
+              -BOTTOM_MAX_RAW_IMPULSE,
+              -BOTTOM_MIN_RAW_IMPULSE,
+            )
+          : bottomImpulse(bounded);
+
+      pullTarget.set(rubberDistance(raw));
+      timer = window.setTimeout(release, releaseMs);
+      return true;
+    };
+
     const wheel = (event) => {
       if (
         event.ctrlKey ||
@@ -299,22 +300,13 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       }
 
       if (delta < 0) {
-        if (bottomGestureLocked) {
-          bottomIntent = null;
-          holdBottomGestureLock();
-          return;
-        }
-
-        holdBottomGestureLock();
         bottomIntent = null;
-        if (pullBy(bottomImpulse(delta), "wheel")) {
-          timer = window.setTimeout(release, BOTTOM_WHEEL_RELEASE_MS);
-        }
+        pullBottomWheel(delta);
         return;
       }
 
-      // Keep the original top-edge momentum guard; the bottom edge is handled
-      // by a per-gesture lock so trailing packets cannot restart its spring.
+      // Keep the original top-edge momentum guard. Bottom wheel packets are
+      // debounced as one continuous gesture and release only after input stops.
       if (
         performance.now() - lastReleaseAt < MOMENTUM_GUARD_MS &&
         Math.abs(delta) < MOMENTUM_GUARD_DELTA
@@ -385,14 +377,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
         bottomIntent = null;
 
         if (mode === "wheel") {
-          if (bottomGestureLocked) {
-            holdBottomGestureLock();
-          } else {
-            holdBottomGestureLock();
-            pullBy(bottomImpulse(delta), mode);
-            clearTimeout(timer);
-            timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
-          }
+          pullBottomWheel(delta, BOTTOM_RELEASE_MS);
         } else {
           pullBy(bottomImpulse(delta), mode);
           if (!touch) {
@@ -492,7 +477,6 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
     return () => {
       clearTimeout(timer);
-      clearTimeout(bottomGestureTimer);
       cancelAnimationFrame(thumbFrame);
       observer.disconnect();
 
