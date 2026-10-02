@@ -7,7 +7,7 @@ import SourcePreviewModal from "./SourcePreviewModal.jsx";
 import {
   REFERENCE_SOURCE_LABELS,
   REFERENCE_SOURCE_TYPES,
-} from "../../hooks/useReferenceFiles";
+} from "../../domain/sourceCatalog.js";
 import { detectInventorySource } from "../../services/sourceDetection.js";
 
 const SOURCE_CONFIG = [
