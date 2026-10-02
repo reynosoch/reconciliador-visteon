@@ -23,9 +23,29 @@ export default function SourcePreviewModal({ selection, onClose }) {
   const [busy, setBusy] = useState("");
   const rows = useMemo(() => {
     if (!selection) return [];
-    const all = selection.source?.rows || [];
-    if (selection.config?.type !== "bom" || !selection.fileName || selection.fileName === "__all") return all;
-    return all.filter((row) => String(row.__sourceFile || "") === selection.fileName);
+    let all = selection.source?.rows || [];
+
+    if (selection.config?.type === "bom" && selection.partNumber) {
+      const target = String(selection.partNumber).trim().toUpperCase();
+      all = all.filter(
+        (row) =>
+          String(row?.["Parent Item"] || "")
+            .trim()
+            .toUpperCase() === target,
+      );
+    }
+
+    if (
+      selection.config?.type !== "bom" ||
+      !selection.fileName ||
+      selection.fileName === "__all"
+    ) {
+      return all;
+    }
+
+    return all.filter(
+      (row) => String(row.__sourceFile || "") === selection.fileName,
+    );
   }, [selection]);
   const columns = useMemo(() => {
     const keys = new Set();
@@ -36,10 +56,21 @@ export default function SourcePreviewModal({ selection, onClose }) {
   }, [rows]);
   if (!selection) return null;
 
-  const displayName = selection.fileName === "__all"
-    ? "Todos los BOM cargados"
-    : selection.fileName || selection.source?.fileName || selection.config?.label || "Fuente";
-  const base = cleanFileName(displayName === "Todos los BOM cargados" ? "BOM-todos" : displayName);
+  const displayName = selection.partNumber
+    ? `BOM · ${selection.partNumber}`
+    : selection.fileName === "__all"
+      ? "Todos los BOM cargados"
+      : selection.fileName ||
+        selection.source?.fileName ||
+        selection.config?.label ||
+        "Fuente";
+  const base = cleanFileName(
+    selection.partNumber
+      ? `BOM-${selection.partNumber}`
+      : displayName === "Todos los BOM cargados"
+        ? "BOM-todos"
+        : displayName,
+  );
 
   const download = async (format) => {
     if (busy) return;
@@ -90,8 +121,14 @@ export default function SourcePreviewModal({ selection, onClose }) {
             <button type="button" disabled={Boolean(busy)} onClick={() => download("txt")}>TXT</button>
           </div>
           <p className="vi-source-preview-note">
-            <strong>SOLO LECTURA.</strong> Vista previa de las primeras {Math.min(rows.length, 150).toLocaleString("es-MX")} filas.
-            Para cambiar datos, edita el archivo original y vuelve a subirlo en Fuentes. La descarga contiene toda la selección.
+            <strong>SOLO LECTURA.</strong>{" "}
+            {selection.partNumber
+              ? `Filtro exacto por Parent Item ${selection.partNumber}. `
+              : ""}
+            Vista previa de las primeras{" "}
+            {Math.min(rows.length, 150).toLocaleString("es-MX")} filas.
+            Para cambiar datos, edita el archivo original y vuelve a subirlo en
+            Fuentes. La descarga contiene toda la selección.
           </p>
           <div className="vi-source-preview-table-wrap">
             <table className="vi-source-preview-table">
