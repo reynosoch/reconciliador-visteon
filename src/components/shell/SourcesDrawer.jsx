@@ -10,6 +10,8 @@ import {
 } from "../../domain/sourceCatalog.js";
 import { detectInventorySource } from "../../services/sourceDetection.js";
 
+const IMPORT_PREVIEW_LIMIT = 3;
+
 const SOURCE_CONFIG = [
   {
     type: REFERENCE_SOURCE_TYPES.SCANS,
@@ -341,6 +343,7 @@ export default function SourcesDrawer({
   const bulkInput = useRef(null);
   const [processing, setProcessing] = useState(false);
   const [importResults, setImportResults] = useState([]);
+  const [importResultsExpanded, setImportResultsExpanded] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [pendingClear, setPendingClear] = useState(null);
   const [pendingBomDelete, setPendingBomDelete] = useState(null);
@@ -379,12 +382,24 @@ export default function SourcesDrawer({
 
   const loaded = status?.loadedCount || 0;
   const total = status?.totalSources || 5;
+  const visibleImportResults = importResultsExpanded
+    ? importResults
+    : importResults.slice(0, IMPORT_PREVIEW_LIMIT);
+  const hiddenImportResults = Math.max(
+    0,
+    importResults.length - IMPORT_PREVIEW_LIMIT,
+  );
+  const loadedImportCount = importResults.filter(
+    (result) => result.status === "loaded",
+  ).length;
+  const reviewImportCount = importResults.length - loadedImportCount;
 
   const handleFiles = async (filesLike) => {
     const files = Array.from(filesLike || []);
     if (!files.length || processing) return;
 
     setProcessing(true);
+    setImportResultsExpanded(false);
     const results = [];
 
     try {
@@ -456,7 +471,7 @@ export default function SourcesDrawer({
           if (event.target === event.currentTarget) onClose?.();
         }}
       >
-        <RubberDrawer className="vi-drawer-panel vi-sources-drawer absolute right-0 top-0 bottom-0 w-full max-w-[720px] overflow-y-auto">
+        <RubberDrawer className="vi-drawer-panel vi-sources-drawer absolute right-0 top-0 bottom-0 w-full overflow-y-auto">
           <input
             ref={bulkInput}
             type="file"
@@ -544,26 +559,58 @@ export default function SourcesDrawer({
               </button>
 
               {importResults.length > 0 && (
-                <div className="vi-import-results" aria-label="Resultado de la última carga">
-                  {importResults.map((result, index) => (
-                    <div
-                      key={`${result.name}-${index}`}
-                      className={`vi-import-result is-${result.status}`}
-                    >
-                      <i aria-hidden="true" />
-                      <span>
-                        <strong>{result.name}</strong>
-                        <small>{result.message}</small>
-                      </span>
-                      {result.type && (
-                        <b>
-                          {CONFIG_BY_TYPE[result.type]?.short ||
-                            REFERENCE_SOURCE_LABELS[result.type] ||
-                            result.type}
-                        </b>
-                      )}
-                    </div>
-                  ))}
+                <div
+                  className="vi-import-results"
+                  aria-label="Resultado de la última carga"
+                >
+                  <div className="vi-import-results-summary">
+                    <span>
+                      <strong>{importResults.length} archivos</strong>
+                      <small>
+                        {loadedImportCount} listos
+                        {reviewImportCount > 0
+                          ? ` · ${reviewImportCount} por revisar`
+                          : " · sin errores"}
+                      </small>
+                    </span>
+
+                    {hiddenImportResults > 0 && (
+                      <button
+                        type="button"
+                        className="vi-import-results-toggle"
+                        onClick={() =>
+                          setImportResultsExpanded((expanded) => !expanded)
+                        }
+                        aria-expanded={importResultsExpanded}
+                      >
+                        {importResultsExpanded
+                          ? "Ver menos"
+                          : `Ver más (${hiddenImportResults})`}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="vi-import-results-list">
+                    {visibleImportResults.map((result, index) => (
+                      <div
+                        key={`${result.name}-${index}`}
+                        className={`vi-import-result is-${result.status}`}
+                      >
+                        <i aria-hidden="true" />
+                        <span>
+                          <strong>{result.name}</strong>
+                          <small>{result.message}</small>
+                        </span>
+                        {result.type && (
+                          <b>
+                            {CONFIG_BY_TYPE[result.type]?.short ||
+                              REFERENCE_SOURCE_LABELS[result.type] ||
+                              result.type}
+                          </b>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </section>
