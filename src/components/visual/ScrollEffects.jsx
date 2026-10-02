@@ -15,9 +15,12 @@ const BOTTOM_MIN_RAW_IMPULSE = 18;
 const BOTTOM_HANDOFF_WINDOW_MS = 120;
 const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
-const BOTTOM_RELEASE_MS = 58;
+const BOTTOM_WHEEL_RELEASE_MS = 92;
+const BOTTOM_RELEASE_MS = 72;
 const MOMENTUM_GUARD_MS = 90;
 const MOMENTUM_GUARD_DELTA = 2.4;
+const BOTTOM_MOMENTUM_GUARD_MS = 150;
+const BOTTOM_MOMENTUM_GUARD_DELTA = 7;
 
 const SPRING = {
   stiffness: 520,
@@ -275,19 +278,25 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
       // Ignore tiny trailing momentum packets just after release. Without this
       // guard they can wake the spring again and create the visible "tremble".
-      if (
-        performance.now() - lastReleaseAt < MOMENTUM_GUARD_MS &&
-        Math.abs(delta) < MOMENTUM_GUARD_DELTA
-      ) {
+      const sinceRelease = performance.now() - lastReleaseAt;
+      const trailingMomentum =
+        delta < 0
+          ? sinceRelease < BOTTOM_MOMENTUM_GUARD_MS &&
+            Math.abs(delta) < BOTTOM_MOMENTUM_GUARD_DELTA
+          : sinceRelease < MOMENTUM_GUARD_MS &&
+            Math.abs(delta) < MOMENTUM_GUARD_DELTA;
+
+      if (trailingMomentum) {
+        bottomIntent = null;
         return;
       }
 
-      if (pullBy(
-        delta < 0 ? Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE) : delta,
-        "wheel",
-      )) {
+      if (pullBy(delta, "wheel")) {
         bottomIntent = null;
-        timer = window.setTimeout(release, WHEEL_RELEASE_MS);
+        timer = window.setTimeout(
+          release,
+          delta < 0 ? BOTTOM_WHEEL_RELEASE_MS : WHEEL_RELEASE_MS,
+        );
       }
     };
 
@@ -323,10 +332,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       if (atEdge(dy) && !reduceMotion) {
         if (event.cancelable) event.preventDefault();
         bottomIntent = null;
-        pullBy(
-          dy < 0 ? Math.min(dy, -BOTTOM_MIN_RAW_IMPULSE) : dy,
-          "touch",
-        );
+        pullBy(dy, "touch");
       } else if (Math.abs(metricsRef.current.pull) > 0.05) {
         raw = 0;
         pullTarget.set(0);
@@ -349,7 +355,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       ) {
         const { delta, mode } = bottomIntent;
         bottomIntent = null;
-        pullBy(delta, mode);
+        pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), mode);
 
         if (mode === "wheel" || !touch) {
           clearTimeout(timer);
