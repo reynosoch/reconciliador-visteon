@@ -1,8 +1,9 @@
-import { parseDelimitedFile } from "../parsers/parseDelimitedFile.js";
+import Papa from "papaparse";
 import {
   REFERENCE_REQUIRED_FIELDS,
   REFERENCE_SOURCE_TYPES,
-} from "../hooks/useReferenceFiles.js";
+  SOURCE_DETECTION_ORDER,
+} from "../domain/sourceCatalog.js";
 
 const NAME_RULES = [
   [REFERENCE_SOURCE_TYPES.SCANS, /(^4wsc|escaneos|4wall.*scan|scan.*4wall)/i],
@@ -13,34 +14,76 @@ const NAME_RULES = [
   [REFERENCE_SOURCE_TYPES.QAD, /(qad.*3[._ -]?(?:12|2)|congelado.*qad|inventory.*detail)/i],
 ];
 
-const DETECTION_ORDER = [
-  REFERENCE_SOURCE_TYPES.SCANS,
-  REFERENCE_SOURCE_TYPES.AREAS,
-  REFERENCE_SOURCE_TYPES.QAD,
-  REFERENCE_SOURCE_TYPES.ISPBB,
-  REFERENCE_SOURCE_TYPES.BOM,
-  REFERENCE_SOURCE_TYPES.COST,
-];
-
-function hasSchema(fields, groups) {
-  const set = new Set((fields || []).map((field) => String(field).trim()));
-  return groups.every((group) => group.some((field) => set.has(field)));
+function decode(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const utf8 = new TextDecoder("utf-8").decode(bytes);
+  return utf8.includes("�")
+    ? new TextDecoder("windows-1252").decode(bytes)
+    : utf8;
 }
 
-async function detectJsonBom(file) {
-  if (!/\.json$/i.test(file.name || "")) return false;
+function rowMatches(row, groups) {
+  const fields = new Set(
+    (row || []).map((value) => String(value ?? "").trim()),
+  );
+  return groups.every((group) => group.some((field) => fields.has(field)));
+}
+
+function detectFromMatrices(matrices) {
+  for (const type of SOURCE_DETECTION_ORDER) {
+    const required = REFERENCE_REQUIRED_FIELDS[type];
+    const found = matrices.some((matrix) =>
+      matrix
+        .slice(0, 50)
+        .some((row) => rowMatches(row, required)),
+    );
+    if (found) return type;
+  }
+  return null;
+}
+
+async function inspectJson(file) {
+  if (!/\.json$/i.test(file.name || "")) return null;
   try {
     const value = JSON.parse(await file.text());
     const row = Array.isArray(value?.rows) ? value.rows.find(Boolean) : null;
-    return Boolean(
+    if (
       row &&
       Object.hasOwn(row, "Parent Item") &&
       Object.hasOwn(row, "Component") &&
-      Object.hasOwn(row, "Usage"),
-    );
+      Object.hasOwn(row, "Usage")
+    ) {
+      return REFERENCE_SOURCE_TYPES.BOM;
+    }
   } catch {
-    return false;
+    // Unknown JSON is simply not a supported inventory source.
   }
+  return null;
+}
+
+async function inspectXlsx(file) {
+  const XLSX = await import("xlsx");
+  const bytes = await file.arrayBuffer();
+  const book = XLSX.read(bytes, { type: "array", cellText: true });
+  const matrices = book.SheetNames.map((name) =>
+    XLSX.utils.sheet_to_json(book.Sheets[name], {
+      header: 1,
+      raw: true,
+      defval: "",
+      blankrows: false,
+    }),
+  );
+  return detectFromMatrices(matrices);
+}
+
+async function inspectDelimited(file) {
+  const text = decode(await file.arrayBuffer());
+  const parsed = Papa.parse(text, {
+    header: false,
+    delimiter: "",
+    skipEmptyLines: true,
+  });
+  return detectFromMatrices([parsed.data || []]);
 }
 
 export async function detectInventorySource(file) {
@@ -51,22 +94,16 @@ export async function detectInventorySource(file) {
     if (rule.test(name)) return { type, confidence: "name" };
   }
 
-  if (await detectJsonBom(file)) {
-    return { type: REFERENCE_SOURCE_TYPES.BOM, confidence: "schema" };
-  }
+  const jsonType = await inspectJson(file);
+  if (jsonType) return { type: jsonType, confidence: "schema" };
 
-  for (const type of DETECTION_ORDER) {
-    try {
-      const parsed = await parseDelimitedFile(file, {
-        requiredFields: REFERENCE_REQUIRED_FIELDS[type],
-      });
-      if (hasSchema(parsed.fields, REFERENCE_REQUIRED_FIELDS[type])) {
-        return { type, confidence: "schema" };
-      }
-    } catch {
-      // Try the next known source schema.
-    }
-  }
+  try {
+    const type = /\.xlsx$/i.test(name)
+      ? await inspectXlsx(file)
+      : await inspectDelimited(file);
 
-  return null;
+    return type ? { type, confidence: "schema" } : null;
+  } catch {
+    return null;
+  }
 }
