@@ -101,8 +101,15 @@ function SourceLine({
   const manualLocked =
     config.type === REFERENCE_SOURCE_TYPES.SCANS && botRunning;
   const status = sourceStatus(source);
-  const bomFiles = Array.isArray(source?.files) ? source.files : [];
-  const bomRows = Array.isArray(source?.rows) ? source.rows : [];
+  const isBom = config.type === REFERENCE_SOURCE_TYPES.BOM;
+  const bomFiles = useMemo(
+    () => (isBom && Array.isArray(source?.files) ? source.files : []),
+    [isBom, source?.files],
+  );
+  const bomRows = useMemo(
+    () => (isBom && Array.isArray(source?.rows) ? source.rows : []),
+    [isBom, source?.rows],
+  );
   const sortedBomFiles = useMemo(
     () =>
       [...bomFiles].sort(
@@ -131,7 +138,6 @@ function SourceLine({
   const latestBom = sortedBomFiles[0] || null;
   const latestBomRows = latestBom ? bomRowsForFile(latestBom.fileName) : 0;
   const rowCount = Number(source?.rows?.length || 0);
-  const isBom = config.type === REFERENCE_SOURCE_TYPES.BOM;
 
   return (
     <article
