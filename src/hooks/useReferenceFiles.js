@@ -35,7 +35,7 @@ export const REFERENCE_SOURCE_LABELS = {
   cost: "Cost Part",
   scans: "Escaneos 4Wall",
 };
-const REQUIRED = {
+export const REFERENCE_REQUIRED_FIELDS = {
   areas: [["Nombre"], ["Localidad QAD"]],
   qad: [
     ["Item Number"],
@@ -54,7 +54,7 @@ const REQUIRED = {
   ],
 };
 async function parseReferenceFile(type, file) {
-  if (type !== 'bom' || !file.name.toLowerCase().endsWith('.json')) return parseDelimitedFile(file, { requiredFields: REQUIRED[type] });
+  if (type !== 'bom' || !file.name.toLowerCase().endsWith('.json')) return parseDelimitedFile(file, { requiredFields: REFERENCE_REQUIRED_FIELDS[type] });
   const value=JSON.parse(await file.text());
   if (!Array.isArray(value.rows) || value.rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) throw new Error('El respaldo BOM no tiene un formato válido.');
   const fields=[...new Set(value.rows.flatMap(row => Object.keys(row)))];
@@ -143,7 +143,7 @@ export function useReferenceFiles() {
   }, [syncCloud]);
   const loadFile = useCallback((type, file) => {
     const operation = queue.current.then(async () => {
-      if (!REQUIRED[type] || !file)
+      if (!REFERENCE_REQUIRED_FIELDS[type] || !file)
         throw new Error("Selecciona un archivo y una fuente válida.");
       setSources((s) => ({
         ...s,
@@ -154,7 +154,7 @@ export function useReferenceFiles() {
           parseReferenceFile(type, file),
           fingerprint(file),
         ]);
-        const missing = REQUIRED[type].filter(
+        const missing = REFERENCE_REQUIRED_FIELDS[type].filter(
           (g) => !g.some((k) => parsed.fields.includes(k)),
         );
         if (missing.length)
@@ -162,7 +162,7 @@ export function useReferenceFiles() {
             `Faltan columnas: ${missing.map((g) => g.join(" / ")).join(", ")}.`,
           );
         const duplicates = (parsed.duplicateHeaders ?? []).filter((k) =>
-          REQUIRED[type].flat().includes(k),
+          REFERENCE_REQUIRED_FIELDS[type].flat().includes(k),
         );
         if (duplicates.length)
           throw new Error(`Columnas repetidas: ${duplicates.join(", ")}.`);
