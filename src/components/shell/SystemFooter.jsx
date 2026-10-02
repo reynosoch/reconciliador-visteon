@@ -9,24 +9,12 @@ function sourceState(referenceStatus, connectionStatus) {
   const scanState = connectionStatus?.state || "WAITING";
 
   if (referenceStatus?.hasErrors || scanState === "ERROR") {
-    return {
-      value: `${loaded}/${total}`,
-      detail: "revisar fuentes",
-      tone: "error",
-    };
+    return { value: `${loaded}/${total}`, tone: "error" };
   }
 
   if (referenceStatus?.allLoaded) {
-    const physical =
-      scanState === "MANUAL"
-        ? "4Wall manual"
-        : scanState === "DEV_SNAPSHOT"
-          ? "4Wall snapshot"
-          : "4Wall pendiente";
-
     return {
       value: `${loaded}/${total}`,
-      detail: physical,
       tone:
         scanState === "MANUAL" || scanState === "DEV_SNAPSHOT"
           ? "good"
@@ -34,38 +22,22 @@ function sourceState(referenceStatus, connectionStatus) {
     };
   }
 
-  return {
-    value: `${loaded}/${total}`,
-    detail: "referencias cargadas",
-    tone: "warning",
-  };
+  return { value: `${loaded}/${total}`, tone: "warning" };
 }
 
 function environmentLabel() {
-  if (import.meta.env.DEV) return "LOCAL · DEV";
-  if (globalThis.location?.hostname?.endsWith("github.io")) {
-    return "PAGES · PROD";
-  }
+  if (import.meta.env.DEV) return "LOCAL";
+  if (globalThis.location?.hostname?.endsWith("github.io")) return "PAGES";
   return String(import.meta.env.MODE || "production").toUpperCase();
 }
 
-function StatusPill({ label, value, detail, tone = "normal" }) {
+function InlineStatus({ label, value, tone = "normal" }) {
   return (
-    <div className={`vi-footer-pill is-${tone}`}>
-      <span className="vi-footer-pill-dot" aria-hidden="true" />
+    <span className={`vi-footer-inline-status is-${tone}`}>
+      <i aria-hidden="true" />
       <span>{label}</span>
       <strong>{value}</strong>
-      {detail && <small>{detail}</small>}
-    </div>
-  );
-}
-
-function MetaGroup({ title, children }) {
-  return (
-    <section className="vi-footer-meta-group">
-      <h3>{title}</h3>
-      <div>{children}</div>
-    </section>
+    </span>
   );
 }
 
@@ -108,94 +80,62 @@ export default function SystemFooter({
   return (
     <footer ref={footerRef} className="vi-system-footer" aria-label="Estado del sistema">
       <div className="vi-system-footer-shell">
-        <div className="vi-footer-showcase">
-          <div className="vi-footer-showcase-identity">
-            <img
-              src={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`}
-              alt="Visteon"
-            />
-            <span>PLANTA 179A</span>
-            <small>Inventory control · PoC</small>
-          </div>
-
-          <div className="vi-footer-showcase-copy">
-            <span className="vi-footer-showcase-kicker">INVENTORY RECONCILER</span>
-            <h2>Conciliar antes del cierre.</h2>
-            <p>
-              4Wall ↔ QAD · diferencias, ubicación e impacto en USD
-              para investigar durante el inventario físico.
-            </p>
-
-            <div className="vi-footer-showcase-pills">
-              <StatusPill
-                label="Fuentes"
-                value={sources.value}
-                detail={sources.detail}
-                tone={sources.tone}
-              />
-              <StatusPill
-                label="Calidad"
-                value={quality.label}
-                detail={quality.count ? `${quality.count} alertas` : "sin alertas"}
-                tone={quality.tone}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="vi-footer-directory">
-          <div className="vi-footer-directory-brand">
-            <span className="vi-footer-directory-mark" aria-hidden="true" />
+        <div className="vi-system-footer-primary">
+          <div className="vi-system-footer-brand">
+            <span className="vi-system-footer-mark" aria-hidden="true" />
             <div>
               <strong>Inventory Reconciler</strong>
-              <small>Visteon · Planta 179A</small>
+              <small>Visteon · 179A</small>
             </div>
           </div>
 
-          <MetaGroup title="Sistema">
-            <span>Fuentes <b>{sources.value}</b></span>
-            <span>Calidad <b>{quality.label}</b></span>
-          </MetaGroup>
-
-          <MetaGroup title="Build">
-            <span>Entorno <b>{environmentLabel()}</b></span>
-            <span>Versión <b>v{packageInfo.version}</b></span>
-          </MetaGroup>
-
-          <MetaGroup title="Corte">
-            <SnapshotStamp
-              snapshotMeta={snapshotMeta}
-              scanCount={scanCount}
-              lastUpdated={lastUpdated}
-              compact
-              className="vi-system-footer-snapshot"
+          <div className="vi-system-footer-statuses" aria-label="Resumen del sistema">
+            <InlineStatus
+              label="Fuentes"
+              value={sources.value}
+              tone={sources.tone}
             />
-          </MetaGroup>
+            <InlineStatus
+              label="Calidad"
+              value={quality.label}
+              tone={quality.tone}
+            />
+            <InlineStatus label="Entorno" value={environmentLabel()} />
+            <InlineStatus label="Versión" value={`v${packageInfo.version}`} />
+          </div>
 
-          <MetaGroup title="Proyecto">
-            <span>Desarrollo <b>Javier Reynoso</b></span>
-            <span>Supervisión <b>Yessica Pina</b></span>
-            <a
-              className="vi-system-footer-github"
-              href="https://github.com/reynosoch"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Abrir perfil de GitHub de Javier Reynoso"
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 .7a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2.02c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.95.1-.75.4-1.25.73-1.54-2.57-.29-5.27-1.29-5.27-5.73 0-1.27.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.07 0 0 .97-.31 3.16 1.19A10.9 10.9 0 0 1 12 6.27c.98 0 1.95.13 2.87.38 2.19-1.5 3.16-1.19 3.16-1.19.63 1.6.23 2.78.11 3.07.74.81 1.19 1.84 1.19 3.11 0 4.45-2.71 5.43-5.29 5.72.42.36.79 1.07.79 2.16v3.04c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
-                />
-              </svg>
-              <span>reynosoch</span>
-            </a>
-          </MetaGroup>
+          <a
+            className="vi-system-footer-github"
+            href="https://github.com/reynosoch"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Abrir perfil de GitHub de Javier Reynoso"
+            title="GitHub · reynosoch"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 .7a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2.02c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.95.1-.75.4-1.25.73-1.54-2.57-.29-5.27-1.29-5.27-5.73 0-1.27.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.07 0 0 .97-.31 3.16 1.19A10.9 10.9 0 0 1 12 6.27c.98 0 1.95.13 2.87.38 2.19-1.5 3.16-1.19 3.16-1.19.63 1.6.23 2.78.11 3.07.74.81 1.19 1.84 1.19 3.11 0 4.45-2.71 5.43-5.29 5.72.42.36.79 1.07.79 2.16v3.04c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"
+              />
+            </svg>
+            <span>reynosoch</span>
+          </a>
         </div>
 
-        <div className="vi-footer-base">
-          <span>Inventory Reconciler · PoC 2026</span>
-          <span>4Wall × QAD · Visteon 179A</span>
+        <div className="vi-system-footer-secondary">
+          <SnapshotStamp
+            snapshotMeta={snapshotMeta}
+            scanCount={scanCount}
+            lastUpdated={lastUpdated}
+            compact
+            className="vi-system-footer-snapshot"
+          />
+
+          <span className="vi-system-footer-credit">
+            Desarrollo · Javier Reynoso
+            <i aria-hidden="true" />
+            Supervisión · Yessica Pina
+          </span>
         </div>
       </div>
 
