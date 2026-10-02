@@ -370,8 +370,7 @@ body.vi-overlay-open .vi-shell {
   background: rgba(255,255,255,.055) !important;
   color: #a9c0ca !important;
 }
-.vi-notification-drawer .vi-notification-empty,
-.vi-notification-drawer .vi-bot-status {
+.vi-notification-drawer .vi-notification-empty {
   border: 1px solid rgba(255,255,255,.09) !important;
   background: rgba(255,255,255,.035) !important;
   color: #aec4cd !important;
