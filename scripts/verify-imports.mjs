@@ -4,6 +4,8 @@ import { parseDelimitedFile } from "../src/parsers/parseDelimitedFile.js";
 import { rawScanObject } from "../src/domain/scanView.js";
 import { combineLibraries, newBomPayload, syncBomLibrary } from "../src/services/bomCloud.js";
 import { mergeBomLibrary } from "../src/domain/bomLibrary.js";
+import { detectInventorySource } from "../src/services/sourceDetection.js";
+import { REFERENCE_SOURCE_TYPES } from "../src/domain/sourceCatalog.js";
 const fields = [["Item Number"], ["Cost Total"], ["Status"]];
 const book = XLSX.utils.book_new();
 const sheet = XLSX.utils.aoa_to_sheet([["Título"], [], ["Item Number", "Cost Total", "Status"], [123, 1.23456, "Active"]]);
@@ -62,3 +64,61 @@ assert.equal(bomSheet.B2.v,"=TEST");
 assert.equal(bomSheet.B2.f,undefined);
 assert.equal(XLSX.utils.sheet_to_json(bomSheet)[0].Usage,0.123456);
 assert.equal(XLSX.utils.sheet_to_json(bomSheet)[0].__sourceFile,undefined);
+
+
+const textFile = (name, text) => ({
+  name,
+  arrayBuffer: async () => new TextEncoder().encode(text).buffer,
+  text: async () => text,
+});
+
+const detectedQad = await detectInventorySource(
+  textFile(
+    "mystery.csv",
+    "Item Number,Site,Location,Quantity On Hand,Item Type\n000123,179A,ZWHSE,5,PP\n",
+  ),
+);
+assert.equal(detectedQad.type, REFERENCE_SOURCE_TYPES.QAD);
+assert.equal(detectedQad.confidence, "schema");
+
+const detectorBook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(
+  detectorBook,
+  XLSX.utils.aoa_to_sheet([
+    ["Reporte"],
+    [],
+    ["Item Number", "Cost Total", "Status"],
+    ["000456", 12.34, "ACTIVE"],
+  ]),
+  "Datos",
+);
+const detectedCost = await detectInventorySource({
+  name: "mystery.xlsx",
+  arrayBuffer: async () =>
+    XLSX.write(detectorBook, { bookType: "xlsx", type: "array" }),
+});
+assert.equal(detectedCost.type, REFERENCE_SOURCE_TYPES.COST);
+assert.equal(detectedCost.confidence, "schema");
+
+const detectedBomBackup = await detectInventorySource(
+  textFile(
+    "backup.json",
+    JSON.stringify({
+      rows: [
+        {
+          "Parent Item": "A",
+          Component: "B",
+          Usage: 1,
+          Level: ".2",
+          "Comp Phantom": "no",
+        },
+      ],
+    }),
+  ),
+);
+assert.equal(detectedBomBackup.type, REFERENCE_SOURCE_TYPES.BOM);
+assert.equal(detectedBomBackup.confidence, "schema");
+
+console.log(
+  "Source detection OK: unnamed CSV/XLSX schemas and BOM JSON backup recognized",
+);
