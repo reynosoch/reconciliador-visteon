@@ -615,27 +615,6 @@ export default function SourcesDrawer({
               )}
             </section>
 
-            <section className="vi-source-overview">
-              <div className="vi-sources-section-heading">
-                <div>
-                  <span>FUENTES ACTIVAS</span>
-                  <strong>Abre, reemplaza o quita cada fuente.</strong>
-                </div>
-                <small>Los BOM se conservan por archivo.</small>
-              </div>
-
-              <div className="vi-source-progress-row">
-                {SOURCE_CONFIG.map((item) => (
-                  <span
-                    key={item.type}
-                    className={`source-progress-node ${sources?.[item.type]?.loaded ? "source-progress-ready" : ""}`}
-                  >
-                    {item.short}
-                  </span>
-                ))}
-              </div>
-            </section>
-
             <section className="vi-source-stack">
               {SOURCE_CONFIG.filter(
                 (config) => config.type !== REFERENCE_SOURCE_TYPES.BOM,
