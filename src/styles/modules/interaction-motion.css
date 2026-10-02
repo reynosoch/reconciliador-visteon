@@ -952,4 +952,18 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
     linear-gradient(145deg,rgba(66,149,180,.09),rgba(255,255,255,.025)) !important;
 }
 
-
+/* User-controlled performance mode.
+   Keeps native scroll + rubber band intact; only decorative motion is removed. */
+body.vi-performance-motion-off .vi-shell .vi-ambient-chase {
+  display: none !important;
+}
+body.vi-performance-motion-off .vi-overlay-root,
+body.vi-performance-motion-off .vi-overlay-root .vi-rubber-viewport,
+body.vi-performance-motion-off .vi-refresh-icon.is-spinning,
+body.vi-performance-motion-off .vi-notification-head-ghost .ghost-sprite,
+body.vi-performance-motion-off .vi-notification-ghost-pulse,
+body.vi-performance-motion-off .vi-notification-empty-state .ghost-sprite,
+body.vi-performance-motion-off .vi-notification-orbit {
+  animation: none !important;
+  transition: none !important;
+}

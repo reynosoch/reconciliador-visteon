@@ -61,9 +61,17 @@ export default function App() {
   const [pacmanEnabled, setPacmanEnabled] = useState(
     () => safeReadJson("visteon.ui.pacman.v1", true).value !== false,
   );
+  const [reduceAnimations, setReduceAnimations] = useState(
+    () => safeReadJson("visteon.ui.reduceAnimations.v1", false).value === true,
+  );
   useEffect(() => {
     safeWriteJson("visteon.ui.pacman.v1", pacmanEnabled);
   }, [pacmanEnabled]);
+  useEffect(() => {
+    safeWriteJson("visteon.ui.reduceAnimations.v1", reduceAnimations);
+    document.body.classList.toggle("vi-performance-motion-off", reduceAnimations);
+    return () => document.body.classList.remove("vi-performance-motion-off");
+  }, [reduceAnimations]);
   const shellRef = useRef(null);
   const mainMotionRef = useRef(null);
   const [sourcesOpen, setSourcesOpen] = useState(false),
@@ -319,7 +327,7 @@ export default function App() {
   return (
     <div className="vi-shell vi-rubber-viewport" ref={shellRef}>
       <div className="vi-footer-underlay" aria-hidden="true" />
-      {pacmanEnabled && <AmbientChase />}
+      {pacmanEnabled && !reduceAnimations && <AmbientChase />}
       <CommandHeader
         connectionStatus={inventory.connectionStatus}
         lastUpdated={inventory.lastUpdated}
@@ -522,7 +530,11 @@ export default function App() {
       />}
       <MainMenu
         pacmanEnabled={pacmanEnabled}
+        reduceAnimations={reduceAnimations}
         onTogglePacman={() => setPacmanEnabled((enabled) => !enabled)}
+        onToggleReduceAnimations={() =>
+          setReduceAnimations((enabled) => !enabled)
+        }
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         onOpenLogicTracer={() => setLogicTracerOpen(true)}

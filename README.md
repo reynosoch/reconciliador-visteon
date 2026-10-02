@@ -38,14 +38,14 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Fórmulas NET/SWING/flags | `src/domain/reconcileInventory.js`, `src/domain/inventoryEngine.js` |
 | Phantom/BOM | `src/domain/explodeBom.js`, `src/domain/bomLibrary.js`, `src/parsers/parseBom.js` |
 | Áreas/localidades | `src/domain/normalize.js`, `src/parsers/parse4WallAreas.js` |
-| Hallazgos/notificaciones | `src/domain/buildDiscrepancyFindings.js`, `src/domain/notificationState.js`, `src/components/shell/NotificationCenter.jsx` |
+| Hallazgos/notificaciones | lógica: `src/domain/buildDiscrepancyFindings.js`, `src/domain/notificationState.js`; UI: `src/components/shell/NotificationCenter.jsx` + `src/styles/modules/notifications-drawer.css` |
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático | `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py` |
 | Supabase/BOM cloud | `src/services/bomCloud.js`, `supabase/migrations/` |
 | Scroll/rubber band | `src/components/visual/ScrollEffects.jsx` + `src/styles/modules/interaction-motion.css` |
-| Pac-Man / LAB visual | `src/components/visual/PacmanGlyphs.jsx` + `src/styles/modules/interaction-motion.css` |
+| Pac-Man / LAB / rendimiento | `src/components/visual/PacmanGlyphs.jsx`, `src/components/shell/MainMenu.jsx` + `src/styles/modules/interaction-motion.css` |
 | Navbar / footer | `src/components/shell/CommandHeader.jsx`, `src/components/shell/SystemFooter.jsx` + `src/styles/modules/navigation-footer.css` |
 | Drawers / overlays / ayuda | componentes en `src/components/shell/` y `src/components/help/`; textos en `src/components/help/helpContent.js`; estilos en `src/styles/modules/overlays-drawers.css` |
 | Fuentes visual | `src/components/shell/SourcesDrawer.jsx` + `src/styles/modules/sources-drawer.css` |
@@ -90,8 +90,8 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 
 - **No eliminar funcionalidad para "optimizar".** Se puede reducir memoria/composición o simplificar CSS, pero funciones existentes deben conservarse salvo instrucción explícita.
 - Navbar: `CommandHeader.jsx` muestra logo Visteon + 179A, estado rápido de 4Wall, hora de actualización y acciones esenciales. Debajo vive **Flujo de datos**, que se repliega al bajar y reaparece al subir con spring/histéresis.
-- Rubber band: scroll medio 100% nativo; Motion spring en bordes. Configuración vigente aproximada: `stiffness 520 / damping 34 / mass .55`; arriba ~54 px, abajo ~62 px y un poco más sensible. No reintroducir interpoladores/timers visuales manuales ni transformar el elemento que posee el scroll.
-- Pac-Man ambiental continúa durante scroll/rubber band. El menú guarda un switch persistente y **LAB → Ver animación** permite verlo solo a pantalla completa.
+- Rubber band: scroll medio 100% nativo; Motion spring en bordes. Configuración vigente: `stiffness 520 / damping 34 / mass .55`; arriba ~54 px y abajo ~42 px. **Ambos bordes usan exactamente la misma acumulación, guard de momentum, handoff, release de 46 ms y spring; solo cambia la amplitud visual máxima inferior.** No volver a crear una ruta/timer/impulso exclusivo para abajo ni transformar el elemento que posee el scroll.
+- Pac-Man ambiental continúa durante scroll/rubber band cuando está habilitado. El menú guarda preferencias persistentes en **RENDIMIENTO**: Pac-Man puede apagarse por separado y **Quitar animaciones** pausa movimiento decorativo/transiciones sin quitar scroll ni rubber band. **LAB → Ver animación** sigue siendo una vista explícita a pantalla completa.
 - Footer: está **pegado al final del dashboard**, con logo Visteon, `/reynosoch`, Fuentes/Calidad/Entorno/Versión centrados, snapshot y créditos lowkey. El botón **Reportar** se desvanece cuando el footer entra al viewport para no taparlo.
 - Fuentes: `SourcesDrawer.jsx` usa entrada universal multiarquivo, filas compactas de estado y resultados de carga colapsados: muestra 3 y luego **Ver más / Ver menos**. BOM conserva lista/preview/borrado controlado y BOM Focus.
 - El drawer de Fuentes fue reconstruido recientemente; cualquier siguiente ajuste debe ser **visual/ergonómico**, no volver a tarjetas grandes ni desplegar todos los archivos de golpe.
@@ -140,10 +140,10 @@ La aplicación incluye:
 - Manejo de fallos de almacenamiento y Error Boundary.
 - Diseño responsive para laptop, iPad y móvil.
 - Referencias visuales sutiles de Pac-Man.
-- Drawers laterales con apariencia líquida pero mayor opacidad; el dashboard prioriza legibilidad y rendimiento sobre blur/transparencias costosas.
+- Drawers laterales compactos y legibles. **Fuentes** y **Notificaciones** comparten el mismo lenguaje industrial: panel derecho de 560 px máx., header compacto, listas densas y naranja solo como acento.
 - `Estado de datos` abre un visor tipo hoja de cálculo con letras de columna, números de fila, búsqueda, pestaña de hoja y navegación de regreso al hallazgo.
 - `Posible ubicación` explica su cálculo en UI y permite abrir el PN directamente en el visor por localidad; los vínculos de cantidades son evidencia navegable, no ajustes automáticos.
-- La animación ambiental de Pac-Man puede activarse o desactivarse desde el menú; la preferencia se guarda en este dispositivo. El LAB permite verla a pantalla completa sin alterar esa preferencia.
+- La animación ambiental de Pac-Man puede activarse o desactivarse desde **RENDIMIENTO** en el menú; la preferencia se guarda en este dispositivo. **Quitar animaciones** pausa Pac-Man, fantasmas y transiciones decorativas sin tocar el scroll/rubber band. El LAB permite verla a pantalla completa de forma explícita.
 - Navbar compacto orientado a lectura rápida: estado de 4Wall, actualización, Fuentes, notificaciones, bot, refresh y menú; el detalle secundario vive en **Flujo de datos** y se repliega con el scroll.
 - Footer de sistema pegado al final del dashboard con estado de Fuentes/Calidad/Entorno/Versión, snapshot, logo Visteon, `/reynosoch` y créditos discretos.
 
@@ -210,7 +210,8 @@ src/
         ├── data-review.css           # tablas, Excel-like views, notificaciones y revisión
         ├── interaction-motion.css    # scroll, rubber band, Motion, Pac-Man y LAB
         ├── navigation-footer.css     # navbar, flujo de datos y footer
-        └── sources-drawer.css        # workspace visual de Fuentes
+        ├── sources-drawer.css        # workspace visual de Fuentes
+        └── notifications-drawer.css  # workspace visual de Notificaciones
 ```
 
 ## Fuentes de datos

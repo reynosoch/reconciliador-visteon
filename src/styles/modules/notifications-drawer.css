@@ -1,0 +1,432 @@
+/* 2026-10-02 · Notifications workspace — compact Sources-like drawer */
+.vi-notification-drawer {
+  position: absolute !important;
+  right: 0 !important;
+  left: auto !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: min(560px, calc(100vw - 32px)) !important;
+  max-width: min(560px, calc(100vw - 32px)) !important;
+  height: 100dvh !important;
+  box-sizing: border-box;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  border-radius: 0 !important;
+  border-left: 1px solid rgba(255,255,255,.10) !important;
+  background: #071f2c !important;
+  box-shadow: -22px 0 52px rgba(0,7,13,.30) !important;
+  color: #eef7fa !important;
+}
+.vi-notification-drawer > .vi-rubber-clip,
+.vi-notification-drawer .vi-rubber-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.vi-notification-head {
+  position: sticky !important;
+  top: 0;
+  z-index: 14;
+  padding: 15px 17px 12px !important;
+  border-bottom: 1px solid rgba(255,255,255,.075) !important;
+  background: #0a2938 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.vi-notification-head-row {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.vi-notification-head-copy {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vi-notification-heading-copy {
+  min-width: 0;
+  padding: 0 !important;
+}
+.vi-notification-heading-copy .vi-eyebrow {
+  margin: 0;
+  color: #f4a25a !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+.vi-notification-heading-copy h2 {
+  margin: 2px 0 2px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f7fbfc !important;
+  font-size: 19px !important;
+  line-height: 1.1 !important;
+  font-weight: 820 !important;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+.vi-notification-heading-copy > p:last-child {
+  max-width: 39ch;
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #91a8b2 !important;
+  font-size: 9px !important;
+  line-height: 1.35 !important;
+  white-space: nowrap;
+}
+.vi-notification-head-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vi-notification-head .vi-icon-close {
+  width: 31px !important;
+  min-width: 31px !important;
+  height: 31px !important;
+  min-height: 31px !important;
+}
+.vi-notification-head .vi-back-button {
+  min-height: 31px;
+  padding: 0 6px 0 2px;
+  color: #a9bdc5;
+}
+.vi-notification-head .vi-back-button > span { font-size: 23px; }
+.vi-notification-head-ghost {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(207,183,244,.16);
+  border-radius: 9px;
+  background: rgba(207,183,244,.055);
+}
+.vi-notification-head-ghost .ghost-sprite,
+.vi-notification-empty-state .ghost-sprite {
+  animation: vi-notification-ghost-float 1.85s ease-in-out infinite !important;
+}
+.vi-notification-ghost-pulse {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 19px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(207,183,244,.18);
+  transform: translateX(-50%);
+  animation: vi-notification-ghost-shadow 1.85s ease-in-out infinite !important;
+}
+.vi-notification-empty-state .vi-notification-orbit {
+  animation: vi-notification-orbit 7s linear infinite !important;
+}
+@keyframes vi-notification-ghost-float {
+  0%,100% { transform: translate3d(0,1px,0) rotate(-1deg); }
+  50% { transform: translate3d(0,-4px,0) rotate(1deg); }
+}
+@keyframes vi-notification-ghost-shadow {
+  0%,100% { opacity: .72; transform: translateX(-50%) scaleX(1); }
+  50% { opacity: .34; transform: translateX(-50%) scaleX(.72); }
+}
+@keyframes vi-notification-orbit { to { transform: rotate(360deg); } }
+.vi-notification-mode-tabs {
+  margin-top: 10px !important;
+  padding: 3px;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px !important;
+  border: 1px solid rgba(255,255,255,.065);
+  border-radius: 8px;
+  background: #061b27;
+}
+.vi-notification-mode-tabs button {
+  min-height: 28px !important;
+  padding: 0 8px !important;
+  justify-content: center;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #879ea8 !important;
+  font-size: 8px !important;
+  letter-spacing: .07em !important;
+}
+.vi-notification-mode-tabs button.is-active {
+  background: rgba(245,130,31,.085) !important;
+  color: #ffc08a !important;
+}
+.vi-notification-mode-tabs b {
+  min-width: 16px !important;
+  height: 16px !important;
+  background: #f5821f !important;
+  color: #082536 !important;
+  font-size: 7px !important;
+}
+.vi-notification-list {
+  display: grid;
+  gap: 10px;
+  padding: 14px 17px 24px !important;
+  background: transparent !important;
+}
+.vi-notification-summary {
+  min-height: 32px;
+  margin: 0 !important;
+  padding: 0 2px !important;
+  display: flex !important;
+  align-items: baseline;
+  gap: 7px;
+  border: 0 !important;
+  background: transparent !important;
+}
+.vi-notification-summary strong {
+  color: #f1f7f8;
+  font-size: 15px;
+  font-weight: 830;
+}
+.vi-notification-summary span {
+  color: #8299a3;
+  font-size: 8px;
+  font-weight: 760;
+}
+.vi-alert-summary {
+  display: flex !important;
+  gap: 5px !important;
+  padding: 0 0 2px !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.vi-alert-summary::-webkit-scrollbar { display: none; }
+.vi-notification-drawer .vi-alert-summary button {
+  min-width: max-content;
+  min-height: 29px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(255,255,255,.085) !important;
+  border-radius: 6px !important;
+  background: rgba(255,255,255,.025) !important;
+  box-shadow: none !important;
+  color: #9fb2ba !important;
+}
+.vi-notification-drawer .vi-alert-summary button > b {
+  color: #e7f0f2 !important;
+  font-size: 8px;
+}
+.vi-notification-drawer .vi-alert-summary button > span {
+  color: #8fa4ad !important;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: .045em;
+  white-space: nowrap;
+}
+.vi-notification-drawer .vi-alert-summary button:hover,
+.vi-notification-drawer .vi-alert-summary button.is-active {
+  border-color: rgba(245,130,31,.36) !important;
+  background: rgba(245,130,31,.06) !important;
+}
+.vi-notification-drawer .vi-alert-summary button.is-active > b,
+.vi-notification-drawer .vi-alert-summary button.is-active > span {
+  color: #ffb36f !important;
+}
+.vi-notification-cards {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 9px;
+  background: #092633;
+}
+.vi-notification-drawer .vi-operational-alert {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 9px 8px 11px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto 14px;
+  align-items: center;
+  gap: 8px;
+  border: 0 !important;
+  border-top: 1px solid rgba(255,255,255,.05) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #eaf3f5 !important;
+  text-align: left;
+}
+.vi-notification-cards .vi-operational-alert:first-child { border-top: 0 !important; }
+.vi-notification-drawer .vi-operational-alert.is-unread {
+  box-shadow: inset 2px 0 0 rgba(245,130,31,.72) !important;
+}
+.vi-notification-drawer .vi-operational-alert:hover { background: rgba(255,255,255,.028) !important; }
+.vi-notification-drawer .vi-alert-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.vi-notification-drawer .vi-alert-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #eff6f8 !important;
+  font-size: 10px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+.vi-notification-drawer .vi-alert-main em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #8198a2 !important;
+  font-size: 8px;
+  font-style: normal;
+  white-space: nowrap;
+}
+.vi-notification-drawer .vi-operational-alert > small {
+  min-width: 38px;
+  padding: 3px 5px;
+  border: 1px solid rgba(255,255,255,.065) !important;
+  border-radius: 5px;
+  background: rgba(255,255,255,.025) !important;
+  color: #7f959e !important;
+  font-size: 7px;
+  font-weight: 900;
+  text-align: center;
+}
+.vi-notification-drawer .vi-operational-alert.is-unread > small {
+  border-color: rgba(245,130,31,.18) !important;
+  background: rgba(245,130,31,.055) !important;
+  color: #f2a05a !important;
+}
+.vi-notification-drawer .vi-operational-alert > b {
+  color: #718b96;
+  font-size: 17px;
+  font-weight: 400;
+}
+.vi-notification-empty-state {
+  min-height: 220px !important;
+  padding: 22px 14px !important;
+  gap: 12px !important;
+  border: 1px dashed rgba(255,255,255,.09) !important;
+  border-radius: 9px !important;
+  background: #092633 !important;
+}
+.vi-notification-empty-state.is-clear { min-height: 180px !important; }
+.vi-notification-phantom {
+  width: 74px !important;
+  height: 62px !important;
+}
+.vi-notification-empty-state h3 {
+  margin: 3px 0 5px !important;
+  font-size: 14px !important;
+}
+.vi-notification-empty-state p:not(.vi-eyebrow) {
+  max-width: 42ch !important;
+  font-size: 9px !important;
+  line-height: 1.45 !important;
+}
+.vi-notification-missing { margin-top: 10px !important; }
+.vi-product-updates {
+  display: grid !important;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 9px;
+  background: #092633;
+}
+.vi-product-update-card {
+  padding: 11px 12px !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255,255,255,.05) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.vi-product-update-card:first-child { border-top: 0 !important; }
+.vi-product-update-card h3 {
+  margin: 4px 0 3px !important;
+  font-size: 12px !important;
+}
+.vi-product-update-card > p {
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+}
+.vi-product-update-card ul {
+  margin-top: 7px !important;
+  gap: 4px !important;
+}
+.vi-product-update-card li { font-size: 8px !important; }
+.vi-product-update-meta span,
+.vi-product-update-meta em { font-size: 7px !important; }
+.vi-notification-drawer .vi-pager {
+  min-height: 31px;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #8299a3;
+  font-size: 8px;
+}
+.vi-notification-drawer .vi-pager button {
+  min-height: 28px !important;
+  padding: 0 8px !important;
+  border: 1px solid rgba(255,255,255,.085) !important;
+  border-radius: 6px !important;
+  background: rgba(255,255,255,.025) !important;
+  color: #a9bbc2 !important;
+  font-size: 8px;
+}
+.vi-notification-drawer .vi-pager button:hover:not(:disabled) {
+  border-color: rgba(245,130,31,.35) !important;
+  background: rgba(245,130,31,.05) !important;
+}
+@media (max-width: 1100px) {
+  .vi-notification-drawer {
+    width: min(540px, 52vw) !important;
+    max-width: min(540px, 52vw) !important;
+  }
+}
+@media (max-width: 900px) {
+  .vi-notification-drawer {
+    width: min(520px, 68vw) !important;
+    max-width: min(520px, 68vw) !important;
+  }
+  .vi-notification-head,
+  .vi-notification-list {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}
+@media (max-width: 700px) {
+  .vi-notification-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    border-left: 0 !important;
+  }
+  .vi-notification-head,
+  .vi-notification-list {
+    padding-left: 13px !important;
+    padding-right: 13px !important;
+  }
+}
+@media (max-width: 520px) {
+  .vi-notification-heading-copy > p:last-child { display: none; }
+  .vi-notification-head-ghost {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+  .vi-notification-head .vi-back-button strong { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vi-notification-head-ghost .ghost-sprite,
+  .vi-notification-ghost-pulse,
+  .vi-notification-empty-state .ghost-sprite,
+  .vi-notification-empty-state .vi-notification-orbit {
+    animation: none !important;
+  }
+}

@@ -12,7 +12,9 @@ const DEV_ITEMS = [
 
 export default function MainMenu({
   pacmanEnabled = true,
+  reduceAnimations = false,
   onTogglePacman,
+  onToggleReduceAnimations,
   open,
   onClose,
   onOpenLogicTracer,
@@ -62,15 +64,39 @@ export default function MainMenu({
             />
           </section>
 
-          <section className="vi-menu-section">
-            <span className="vi-menu-section-title">APARIENCIA</span>
+          <section className="vi-menu-section vi-menu-performance-section">
+            <span className="vi-menu-section-title">RENDIMIENTO</span>
+            <div className="vi-menu-performance-copy">
+              <strong>Movimiento y carga visual</strong>
+              <small>Controles locales para bajar trabajo gráfico sin tocar el scroll ni el rubber-band.</small>
+            </div>
+            <div className="vi-menu-item vi-performance-toggle">
+              <span>
+                <strong>Quitar animaciones</strong>
+                <small>
+                  {reduceAnimations
+                    ? "Activo · Pausa Pac-Man, fantasmas y transiciones decorativas."
+                    : "Normal · La interfaz conserva sus animaciones decorativas."}
+                </small>
+              </span>
+              <SquishSwitch
+                checked={reduceAnimations}
+                onChange={() => onToggleReduceAnimations?.()}
+                ariaLabel="Quitar animaciones decorativas"
+              />
+            </div>
             <div className="vi-menu-item vi-pacman-toggle">
               <span>
                 <strong>Animación de Pac-Man</strong>
-                <small>{pacmanEnabled ? "Activada" : "Desactivada"} · Se guarda en este dispositivo.</small>
+                <small>
+                  {reduceAnimations
+                    ? "Pausada por Quitar animaciones · Tu preferencia se conserva."
+                    : (pacmanEnabled ? "Activada · Se guarda en este dispositivo." : "Desactivada · Se guarda en este dispositivo.")}
+                </small>
               </span>
               <SquishSwitch
                 checked={pacmanEnabled}
+                disabled={reduceAnimations}
                 onChange={() => onTogglePacman?.()}
                 ariaLabel="Animación de Pac-Man"
               />

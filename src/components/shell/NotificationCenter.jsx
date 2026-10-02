@@ -171,41 +171,47 @@ export default function NotificationCenter({
           ].filter(Boolean).join(" ")}
         >
           <div className="vi-notification-head">
-            <div className="vi-notification-navrow">
-              {viewMode === "actions" && selectedGroup ? (
+            <div className="vi-notification-head-row">
+              <div className="vi-notification-head-copy">
+                <div className="vi-notification-head-ghost" aria-hidden="true">
+                  <Ghost size={27} tone={viewMode === "updates" ? "cyan" : "violet"} />
+                  <span className="vi-notification-ghost-pulse" />
+                </div>
+                <div className="vi-notification-heading-copy">
+                  <p className="vi-eyebrow">NOTIFICACIONES</p>
+                  <h2>{viewMode === "updates" ? "Novedades del sistema" : (selectedGroup || "Por revisar")}</h2>
+                  <p>
+                    {viewMode === "updates"
+                      ? "Cambios recientes del reconciliador."
+                      : "Alertas del corte actual para investigar por PN."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="vi-notification-head-actions">
+                {viewMode === "actions" && selectedGroup && (
+                  <button
+                    type="button"
+                    className="vi-back-button"
+                    onClick={() => {
+                      setSelectedGroup(null);
+                      setPage(0);
+                    }}
+                    aria-label="Regresar a todas las notificaciones"
+                  >
+                    <span aria-hidden="true">‹</span>
+                    <strong>REGRESAR</strong>
+                  </button>
+                )}
                 <button
                   type="button"
-                  className="vi-back-button"
-                  onClick={() => {
-                    setSelectedGroup(null);
-                    setPage(0);
-                  }}
-                  aria-label="Regresar a todas las notificaciones"
+                  className="vi-icon-close"
+                  onClick={onClose}
+                  aria-label="Cerrar notificaciones"
                 >
-                  <span aria-hidden="true">‹</span>
-                  <strong>REGRESAR</strong>
+                  ×
                 </button>
-              ) : (
-                <span />
-              )}
-              <button
-                type="button"
-                className="vi-icon-close"
-                onClick={onClose}
-                aria-label="Cerrar notificaciones"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="vi-notification-heading-copy">
-              <p className="vi-eyebrow">NOTIFICACIONES</p>
-              <h2>{viewMode === "updates" ? "Novedades del sistema" : (selectedGroup || "Por revisar")}</h2>
-              <p>
-                {viewMode === "updates"
-                  ? "Resumen de los cambios recientes del reconciliador."
-                  : "Alertas del corte actual. Abre un Part Number para ver qué encontramos, qué archivos originan la evidencia y qué revisar."}
-              </p>
+              </div>
             </div>
 
             <div className="vi-notification-mode-tabs" role="tablist" aria-label="Áreas de notificaciones">
@@ -332,7 +338,7 @@ export default function NotificationCenter({
                   {visible.map((alert) => (
                     <button
                       disabled={!loaded}
-                      className="vi-operational-alert"
+                      className={`vi-operational-alert ${alert.read ? "" : "is-unread"}`}
                       key={alert.id}
                       onClick={() => openAlert(alert)}
                     >
