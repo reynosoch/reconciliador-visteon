@@ -9,10 +9,13 @@ import {
 
 const TOP_RUBBER_MAX_PX = 54;
 const TOP_RUBBER_CURVE = 122;
-const BOTTOM_RUBBER_MAX_PX = 62;
-const BOTTOM_RUBBER_CURVE = 108;
+const BOTTOM_RUBBER_MAX_PX = 42;
+const BOTTOM_RUBBER_CURVE = 118;
+const BOTTOM_MIN_RAW_IMPULSE = 18;
+const BOTTOM_HANDOFF_WINDOW_MS = 120;
 const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
+const BOTTOM_RELEASE_MS = 58;
 const MOMENTUM_GUARD_MS = 90;
 const MOMENTUM_GUARD_DELTA = 2.4;
 
@@ -117,6 +120,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     let drag = null;
     let height = 0;
     let lastReleaseAt = 0;
+    let bottomIntent = null;
     const shell = viewport.classList.contains("vi-shell");
     const sourcesDrawer = viewport.classList.contains("vi-sources-drawer");
     rail.classList.toggle("vi-page-scroll-rail", shell);
@@ -183,8 +187,22 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
     const reset = () => {
       raw = 0;
+      bottomIntent = null;
       if (reduceMotion) jumpToRest();
       else pullTarget.set(0);
+    };
+
+    const rememberBottomIntent = (delta, mode) => {
+      if (delta >= 0) {
+        bottomIntent = null;
+        return;
+      }
+
+      bottomIntent = {
+        delta: Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE),
+        mode,
+        at: performance.now(),
+      };
     };
 
     const atEdge = (delta) => {
@@ -245,9 +263,13 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       const unit =
         event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height : 1;
       const delta = -event.deltaY * unit;
+      rememberBottomIntent(delta, "wheel");
 
       if (!atEdge(delta)) {
-        if (Math.abs(metricsRef.current.pull) > 0.05) reset();
+        if (Math.abs(metricsRef.current.pull) > 0.05) {
+          raw = 0;
+          pullTarget.set(0);
+        }
         return;
       }
 
@@ -260,7 +282,11 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
         return;
       }
 
-      if (pullBy(delta, "wheel")) {
+      if (pullBy(
+        delta < 0 ? Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE) : delta,
+        "wheel",
+      )) {
+        bottomIntent = null;
         timer = window.setTimeout(release, WHEEL_RELEASE_MS);
       }
     };
@@ -292,24 +318,59 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
       if (Math.abs(dx) > Math.abs(dy)) return;
 
+      rememberBottomIntent(dy, "touch");
+
       if (atEdge(dy) && !reduceMotion) {
         if (event.cancelable) event.preventDefault();
-        pullBy(dy, "touch");
+        bottomIntent = null;
+        pullBy(
+          dy < 0 ? Math.min(dy, -BOTTOM_MIN_RAW_IMPULSE) : dy,
+          "touch",
+        );
       } else if (Math.abs(metricsRef.current.pull) > 0.05) {
-        reset();
+        raw = 0;
+        pullTarget.set(0);
       }
     };
 
     const scroll = (event) => {
       if (event.target !== viewport) return;
       const { extent, pull } = metricsRef.current;
+      const now = performance.now();
+      const reachedBottom =
+        extent > 1 && viewport.scrollTop >= extent - 1;
+
       if (
+        reachedBottom &&
+        bottomIntent &&
+        now - bottomIntent.at <= BOTTOM_HANDOFF_WINDOW_MS &&
+        Math.abs(pull) <= 0.05 &&
+        !reduceMotion
+      ) {
+        const { delta, mode } = bottomIntent;
+        bottomIntent = null;
+        pullBy(delta, mode);
+
+        if (mode === "wheel" || !touch) {
+          clearTimeout(timer);
+          timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
+        }
+      } else if (
         viewport.scrollTop > 1 &&
         viewport.scrollTop < extent - 1 &&
         Math.abs(pull) > 0.05
       ) {
-        reset();
+        raw = 0;
+        pullTarget.set(0);
       }
+
+      if (
+        bottomIntent &&
+        now - bottomIntent.at > BOTTOM_HANDOFF_WINDOW_MS
+      ) {
+        bottomIntent = null;
+      }
+
       scheduleThumb();
     };
 
