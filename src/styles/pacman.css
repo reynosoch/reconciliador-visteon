@@ -4312,7 +4312,6 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
   padding: 18px 20px 28px;
 }
 .vi-universal-upload-section,
-.vi-source-overview,
 .vi-bom-focus-section {
   display: grid;
   gap: 11px;
@@ -4465,30 +4464,6 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
 .vi-import-result.is-blocked > i { background: #ff8d99; }
 .vi-import-result.is-unknown > i { background: #ffc06e; }
 
-.vi-source-progress-row {
-  display: grid;
-  grid-template-columns: repeat(6,minmax(0,1fr));
-  gap: 5px;
-}
-.vi-source-progress-row .source-progress-node {
-  min-width: 0;
-  min-height: 28px;
-  display: grid;
-  place-items: center;
-  padding: 4px;
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: 8px;
-  background: rgba(255,255,255,.018);
-  color: #637d88;
-  font-size: 7px;
-  font-weight: 900;
-  letter-spacing: .055em;
-}
-.vi-source-progress-row .source-progress-ready {
-  border-color: rgba(121,222,179,.15);
-  background: rgba(121,222,179,.045);
-  color: #9ed9c0;
-}
 .vi-source-stack {
   display: grid;
   gap: 8px;
@@ -4700,14 +4675,305 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
   .vi-universal-dropzone > b {
     display: none;
   }
-  .vi-source-progress-row {
-    grid-template-columns: repeat(3,minmax(0,1fr));
-  }
   .vi-bom-focus-result {
     align-items: flex-start;
     flex-direction: column;
   }
   .vi-bom-focus-result em {
     max-width: 100%;
+  }
+}
+
+
+/* 2026-10-02 · Compact Sources drawer */
+.vi-sources-drawer {
+  width: min(580px,100vw) !important;
+  max-width: 100vw !important;
+  background:
+    linear-gradient(180deg,#082b3d 0%,#061f2d 58%,#051b27 100%) !important;
+  box-shadow: -24px 0 70px rgba(0,7,13,.30) !important;
+}
+.vi-sources-head {
+  padding: 14px 16px 12px !important;
+}
+.vi-sources-head-row {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: start !important;
+  gap: 14px !important;
+}
+.vi-sources-head h2 {
+  margin: 1px 0 3px !important;
+  font-size: 18px !important;
+}
+.vi-sources-head p:not(.vi-eyebrow) {
+  max-width: 46ch !important;
+  font-size: 9px !important;
+  line-height: 1.38 !important;
+}
+.vi-sources-head-actions {
+  gap: 7px !important;
+}
+.vi-sources-readiness {
+  min-height: 30px;
+  padding: 0 9px !important;
+  border-radius: 999px !important;
+  font-size: 7px !important;
+}
+.vi-sources-head .vi-icon-close {
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 21px !important;
+}
+
+.vi-sources-body {
+  gap: 14px !important;
+  padding: 13px 16px 22px !important;
+}
+.vi-universal-upload-section,
+.vi-bom-focus-section {
+  gap: 8px !important;
+}
+.vi-sources-section-heading {
+  align-items: center !important;
+  gap: 12px !important;
+}
+.vi-sources-section-heading > div > span {
+  font-size: 6px !important;
+}
+.vi-sources-section-heading > div > strong {
+  font-size: 10px !important;
+}
+.vi-sources-section-heading > small {
+  font-size: 6px !important;
+}
+
+.vi-universal-dropzone {
+  min-height: 70px !important;
+  grid-template-columns: 30px minmax(0,1fr) auto !important;
+  gap: 10px !important;
+  padding: 10px 11px !important;
+  border-radius: 11px !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.032),rgba(255,255,255,.012)) !important;
+}
+.vi-universal-upload-icon {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 9px !important;
+  font-size: 16px !important;
+}
+.vi-universal-dropzone strong {
+  font-size: 9px !important;
+}
+.vi-universal-dropzone small {
+  font-size: 8px !important;
+}
+.vi-universal-dropzone > b {
+  padding: 4px 7px !important;
+  font-size: 6px !important;
+}
+
+/* Bulk uploads stay summarized instead of taking over the drawer. */
+.vi-import-results {
+  gap: 6px !important;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 10px;
+  background: rgba(2,16,24,.22);
+}
+.vi-import-results-summary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.vi-import-results-summary > span {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.vi-import-results-summary strong {
+  color: #dfeaec;
+  font-size: 8px;
+  font-weight: 820;
+}
+.vi-import-results-summary small {
+  color: #76909b;
+  font-size: 7px;
+}
+.vi-import-results-toggle {
+  flex: none;
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(245,130,31,.18);
+  border-radius: 7px;
+  background: rgba(245,130,31,.055);
+  color: #ffad68;
+  font-size: 7px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.vi-import-results-toggle:hover {
+  border-color: rgba(245,130,31,.42);
+  background: rgba(245,130,31,.09);
+}
+.vi-import-results-list {
+  display: grid;
+  gap: 3px;
+}
+.vi-import-result {
+  gap: 7px !important;
+  padding: 5px 7px !important;
+  border-radius: 7px !important;
+  background: rgba(255,255,255,.016) !important;
+}
+.vi-import-result strong {
+  font-size: 7px !important;
+}
+.vi-import-result small,
+.vi-import-result > b {
+  font-size: 6px !important;
+}
+
+/* Source cards read like compact status rows, not stacked dashboard cards. */
+.vi-source-stack {
+  gap: 6px !important;
+}
+.vi-source-card {
+  border-radius: 10px !important;
+  border-color: rgba(255,255,255,.055) !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.025),rgba(255,255,255,.010)) !important;
+  box-shadow: inset 2px 0 0 rgba(118,145,156,.16);
+}
+.vi-source-card.is-loaded {
+  border-color: rgba(121,222,179,.085) !important;
+  box-shadow: inset 2px 0 0 rgba(121,222,179,.44);
+}
+.vi-source-card-inner {
+  padding: 9px 10px !important;
+  gap: 6px !important;
+}
+.vi-source-card .vi-source-line-head {
+  min-height: 23px !important;
+}
+.vi-source-card .vi-source-title {
+  gap: 6px !important;
+}
+.vi-source-card .vi-source-title > span:nth-child(2) {
+  font-size: 10px !important;
+  font-weight: 820 !important;
+}
+.vi-source-card .vi-source-title > small {
+  font-size: 6px !important;
+}
+.vi-source-card-tools {
+  gap: 5px !important;
+}
+.vi-source-scope {
+  padding: 2px 4px !important;
+  font-size: 5px !important;
+}
+.vi-source-card .vi-help-trigger {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 9px !important;
+}
+.vi-source-card .vi-source-description {
+  display: -webkit-box;
+  margin: 0 !important;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  color: #78939e !important;
+  font-size: 8px !important;
+  line-height: 1.35 !important;
+}
+.vi-source-card .vi-source-file-chip {
+  min-height: 31px;
+  padding: 6px 8px !important;
+  border-radius: 7px !important;
+}
+.vi-source-card .vi-source-file-chip > span {
+  font-size: 8px !important;
+}
+.vi-source-card .vi-source-file-chip > small {
+  font-size: 7px !important;
+}
+.vi-source-card .vi-source-actions {
+  margin-top: 0 !important;
+  gap: 5px !important;
+}
+.vi-source-card .source-mini-button {
+  min-width: 88px !important;
+  min-height: 28px !important;
+  height: 28px;
+  padding-inline: 9px !important;
+  border-radius: 7px !important;
+  font-size: 7px !important;
+}
+.vi-source-card .vi-source-remove {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  border-radius: 7px !important;
+  font-size: 17px !important;
+}
+.vi-source-warning {
+  padding: 6px 8px !important;
+  border-radius: 7px !important;
+  font-size: 7px !important;
+  line-height: 1.4 !important;
+}
+
+/* BOM remains richer, but visually belongs to the same compact system. */
+.vi-bom-focus-section {
+  padding: 11px !important;
+  border-radius: 11px !important;
+}
+.vi-bom-focus-search {
+  gap: 5px !important;
+}
+.vi-bom-focus-search input,
+.vi-bom-focus-search button {
+  min-height: 31px !important;
+}
+.vi-bom-source-summary {
+  gap: 5px !important;
+}
+.vi-bom-latest,
+.vi-bom-total,
+.vi-source-file-list {
+  border-radius: 7px !important;
+}
+
+@media (max-width: 700px) {
+  .vi-sources-drawer {
+    width: 100vw !important;
+  }
+  .vi-sources-head {
+    padding-inline: 14px !important;
+  }
+  .vi-sources-body {
+    padding-inline: 14px !important;
+  }
+}
+@media (max-width: 440px) {
+  .vi-sources-head p:not(.vi-eyebrow),
+  .vi-sources-readiness {
+    display: none;
+  }
+  .vi-universal-dropzone {
+    grid-template-columns: 28px minmax(0,1fr) !important;
+  }
+  .vi-universal-dropzone > b {
+    display: none;
+  }
+  .vi-import-results-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
