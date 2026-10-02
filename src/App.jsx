@@ -537,6 +537,8 @@ export default function App() {
         }
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
+        onOpenBot={() => setBotOpen(true)}
+        botRunning={botRunning}
         onOpenLogicTracer={() => setLogicTracerOpen(true)}
         onOpenAnimationLab={() => setAnimationLabOpen(true)}
         snapshotMeta={inventory.snapshotMeta}

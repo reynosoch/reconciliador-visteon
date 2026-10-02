@@ -17,6 +17,8 @@ export default function MainMenu({
   onToggleReduceAnimations,
   open,
   onClose,
+  onOpenBot,
+  botRunning = false,
   onOpenLogicTracer,
   onOpenAnimationLab,
   snapshotMeta,
@@ -62,6 +64,33 @@ export default function MainMenu({
               lastUpdated={lastUpdated}
               compact
             />
+          </section>
+
+          <section className="vi-menu-section vi-menu-bot-section">
+            <span className="vi-menu-section-title">AUTOMATIZACIÓN</span>
+            <button
+              type="button"
+              className={`vi-menu-item vi-bot-menu-entry ${botRunning ? "is-running" : ""}`}
+              onClick={() => {
+                onClose?.();
+                onOpenBot?.();
+              }}
+            >
+              <span className="vi-bot-menu-mark" aria-hidden="true">
+                <i className="vi-bot-menu-eye" />
+                <i className="vi-bot-menu-eye" />
+                <i className="vi-bot-menu-beam" />
+              </span>
+              <span className="vi-bot-menu-copy">
+                <strong>Bot 4Wall</strong>
+                <small>
+                  {botRunning
+                    ? "Proceso activo · abre control y revisa el último snapshot publicado."
+                    : "Inicia, detén o consulta el extractor automático de escaneos."}
+                </small>
+              </span>
+              <em>{botRunning ? "CORRIENDO" : "ABRIR"}</em>
+            </button>
           </section>
 
           <section className="vi-menu-section vi-menu-performance-section">

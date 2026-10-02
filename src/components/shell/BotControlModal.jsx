@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "./OverlayPortal.jsx";
 
 export default function BotControlModal({ open, onClose, onStatusChange }) {
@@ -82,6 +83,7 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
 
   const snap = status?.lastSnapshot;
   const running = status?.processState === "running";
+  const visualState = busy ? "is-busy" : running ? "is-running" : "is-idle";
 
   return (
     <OverlayPortal onClose={onClose}>
@@ -91,27 +93,50 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
           if (event.target === event.currentTarget) onClose?.();
         }}
       >
-        <aside className="vi-drawer-panel">
-          <div className="sticky top-0 z-10 px-5 py-5">
-            <div className="flex justify-between gap-4">
-              <div>
-                <p className="vi-eyebrow">CONTROL 4WALL · DEV</p>
-                <h2 className="mt-1 text-xl font-black">Bot de escaneo</h2>
-                <p className="mt-1 text-[11px]">
-                  El estado de proceso y el snapshot publicado son cosas distintas.
-                </p>
+        <RubberDrawer className="vi-drawer-panel vi-bot-drawer">
+          <header className="vi-bot-head">
+            <div>
+              <p className="vi-eyebrow">AUTOMATIZACIÓN · 4WALL</p>
+              <h2>Bot de escaneo</h2>
+              <p>Control del proceso y lectura del último snapshot reportado.</p>
+            </div>
+            <button className="vi-icon-close" onClick={onClose} aria-label="Cerrar bot">×</button>
+          </header>
+
+          <div className="vi-bot-body">
+            <div className={`vi-bot-visual ${visualState}`} aria-hidden="true">
+              <div className="vi-bot-machine">
+                <span className="vi-bot-machine-face">
+                  <i />
+                  <i />
+                </span>
+                <span className="vi-bot-machine-slot" />
               </div>
-              <button className="vi-icon-close" onClick={onClose} aria-label="Cerrar bot">×</button>
+              <div className="vi-bot-scan-stage">
+                <span className="vi-bot-scan-grid" />
+                <span className="vi-bot-scan-beam" />
+                <span className="vi-bot-scan-part">4WALL</span>
+              </div>
+              <div className="vi-bot-visual-copy">
+                <strong>{busy ? "PROCESANDO" : running ? "ESCANEO ACTIVO" : "BOT EN ESPERA"}</strong>
+                <span>
+                  {running
+                    ? "El proceso está corriendo; publicación y proceso se validan por separado."
+                    : "La animación es indicativa. El estado real se muestra abajo."}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="vi-bot-form">
-            <div className="vi-bot-status">
-              La contraseña autoriza iniciar, consultar o detener el proceso. No se guarda en esta página.
+            <div className="vi-bot-security-note">
+              <span aria-hidden="true">⌁</span>
+              <p>
+                La contraseña autoriza iniciar, consultar o detener el proceso.
+                <strong> No se guarda en esta página.</strong>
+              </p>
             </div>
 
-            <label>
-              CONTRASEÑA DE AUTORIZACIÓN
+            <label className="vi-bot-password">
+              <span>CONTRASEÑA DE AUTORIZACIÓN</span>
               <input
                 className="vi-input"
                 type="password"
@@ -148,29 +173,45 @@ export default function BotControlModal({ open, onClose, onStatusChange }) {
               </button>
             </div>
 
-            {message && <p className="vi-bot-status" role="status">{message}</p>}
+            {message && <p className="vi-bot-message" role="status">{message}</p>}
 
             {status && (
               <div className="vi-bot-state">
-                <strong>Proceso: {status.processState || status.state || "desconocido"}</strong>
-                <span>{status.pid ? ("PID " + status.pid) : "Sin PID activo"}</span>
+                <div className="vi-bot-state-row">
+                  <span>PROCESO</span>
+                  <strong>{status.processState || status.state || "desconocido"}</strong>
+                  <em className={running ? "is-live" : ""}>{running ? "LIVE" : "IDLE"}</em>
+                </div>
+                <div className="vi-bot-state-row">
+                  <span>PID</span>
+                  <strong>{status.pid || "Sin PID activo"}</strong>
+                </div>
                 {snap ? (
                   <>
-                    <strong>Último reporte: {snap.result || "desconocido"}</strong>
-                    <span>ID {snap.snapshotId || "—"} · {snap.rowCount ?? "—"} filas</span>
-                    <span>
-                      Extraído {snap.extractedAt ? new Date(snap.extractedAt).toLocaleString("es-MX") : "—"}
-                      {" · "}
-                      Publicado {snap.publishedAt ? new Date(snap.publishedAt).toLocaleString("es-MX") : "—"}
-                    </span>
+                    <div className="vi-bot-state-row">
+                      <span>ÚLTIMO REPORTE</span>
+                      <strong>{snap.result || "desconocido"}</strong>
+                    </div>
+                    <div className="vi-bot-snapshot-meta">
+                      <span>ID {snap.snapshotId || "—"}</span>
+                      <span>{snap.rowCount ?? "—"} filas</span>
+                      <span>
+                        Extraído {snap.extractedAt ? new Date(snap.extractedAt).toLocaleString("es-MX") : "—"}
+                      </span>
+                      <span>
+                        Publicado {snap.publishedAt ? new Date(snap.publishedAt).toLocaleString("es-MX") : "—"}
+                      </span>
+                    </div>
                   </>
                 ) : (
-                  <span>Aún no hay resultado de publicación reportado por el extractor.</span>
+                  <p className="vi-bot-no-snapshot">
+                    Aún no hay resultado de publicación reportado por el extractor.
+                  </p>
                 )}
               </div>
             )}
           </div>
-        </aside>
+        </RubberDrawer>
       </div>
     </OverlayPortal>
   );
