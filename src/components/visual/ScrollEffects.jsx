@@ -10,14 +10,12 @@ import {
 const TOP_RUBBER_MAX_PX = 54;
 const TOP_RUBBER_CURVE = 122;
 const BOTTOM_RUBBER_MAX_PX = 42;
-const BOTTOM_RUBBER_CURVE = 110;
-const BOTTOM_MIN_RAW_IMPULSE = 48;
-const BOTTOM_MAX_RAW_IMPULSE = 72;
-const BOTTOM_HANDOFF_WINDOW_MS = 140;
+const BOTTOM_RUBBER_CURVE = 122;
+const BOTTOM_MIN_RAW_IMPULSE = 44;
+const BOTTOM_MAX_RAW_IMPULSE = 100;
+const BOTTOM_HANDOFF_WINDOW_MS = 120;
 const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
-const BOTTOM_WHEEL_RELEASE_MS = 96;
-const BOTTOM_RELEASE_MS = 96;
 const MOMENTUM_GUARD_MS = 90;
 const MOMENTUM_GUARD_DELTA = 2.4;
 
@@ -87,7 +85,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     const rail = railRef.current;
     if (!content || !rail) return;
 
-    const pull = Math.abs(latest) < 0.025 ? 0 : latest;
+    const pull = Math.abs(latest) < 0.12 ? 0 : latest;
     metricsRef.current.pull = pull;
 
     if (pull === 0) {
@@ -243,37 +241,23 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
       const bounded = clamp(delta, -120, 120);
       if (mode === "wheel") {
-        // Trackpads emit uneven momentum packets. Decay prior energy and feed
-        // the spring a stable target instead of exposing every packet visually.
-        const gain = bounded < 0 ? 1.28 : 1.18;
-        raw = raw * 0.7 + bounded * gain;
+        // Both edges use the same wheel cadence. The bottom only gets a small
+        // minimum seed plus a tighter raw cap so it remains visible but calmer.
+        const gain = 1.18;
+        if (bounded < 0 && raw >= 0) {
+          raw = Math.min(bounded * gain, -BOTTOM_MIN_RAW_IMPULSE);
+        } else {
+          raw = raw * 0.7 + bounded * gain;
+        }
       } else {
         raw += bounded;
       }
 
-      raw = clamp(raw, -RAW_LIMIT, RAW_LIMIT);
-      pullTarget.set(rubberDistance(raw));
-      return true;
-    };
-
-    const pullBottomWheel = (delta, releaseMs = BOTTOM_WHEEL_RELEASE_MS) => {
-      if (reduceMotion) return false;
-
-      clearTimeout(timer);
-      timer = 0;
-
-      const bounded = clamp(delta, -120, -0.01);
       raw =
         raw < 0
-          ? clamp(
-              raw + bounded * 0.34,
-              -BOTTOM_MAX_RAW_IMPULSE,
-              -BOTTOM_MIN_RAW_IMPULSE,
-            )
-          : bottomImpulse(bounded);
-
+          ? clamp(raw, -BOTTOM_MAX_RAW_IMPULSE, 0)
+          : clamp(raw, 0, RAW_LIMIT);
       pullTarget.set(rubberDistance(raw));
-      timer = window.setTimeout(release, releaseMs);
       return true;
     };
 
@@ -301,7 +285,9 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
       if (delta < 0) {
         bottomIntent = null;
-        pullBottomWheel(delta);
+        if (pullBy(delta, "wheel")) {
+          timer = window.setTimeout(release, WHEEL_RELEASE_MS);
+        }
         return;
       }
 
@@ -377,12 +363,14 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
         bottomIntent = null;
 
         if (mode === "wheel") {
-          pullBottomWheel(delta, BOTTOM_RELEASE_MS);
+          if (pullBy(delta, mode)) {
+            timer = window.setTimeout(release, WHEEL_RELEASE_MS);
+          }
         } else {
           pullBy(bottomImpulse(delta), mode);
           if (!touch) {
             clearTimeout(timer);
-            timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
+            timer = window.setTimeout(release, WHEEL_RELEASE_MS);
           }
         }
       } else if (
