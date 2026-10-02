@@ -364,6 +364,7 @@ export default function App() {
 
   return (
     <div className="vi-shell vi-rubber-viewport" ref={shellRef}>
+      <div className="vi-footer-underlay" aria-hidden="true" />
       {pacmanEnabled && <AmbientChase />}
       <CommandHeader
         connectionStatus={inventory.connectionStatus}
