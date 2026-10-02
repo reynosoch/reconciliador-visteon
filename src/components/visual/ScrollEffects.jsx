@@ -11,16 +11,15 @@ const TOP_RUBBER_MAX_PX = 54;
 const TOP_RUBBER_CURVE = 122;
 const BOTTOM_RUBBER_MAX_PX = 42;
 const BOTTOM_RUBBER_CURVE = 118;
-const BOTTOM_MIN_RAW_IMPULSE = 18;
+const BOTTOM_MIN_RAW_IMPULSE = 20;
 const BOTTOM_HANDOFF_WINDOW_MS = 120;
+const BOTTOM_GESTURE_IDLE_MS = 140;
 const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
-const BOTTOM_WHEEL_RELEASE_MS = 92;
+const BOTTOM_WHEEL_RELEASE_MS = 84;
 const BOTTOM_RELEASE_MS = 72;
 const MOMENTUM_GUARD_MS = 90;
 const MOMENTUM_GUARD_DELTA = 2.4;
-const BOTTOM_MOMENTUM_GUARD_MS = 150;
-const BOTTOM_MOMENTUM_GUARD_DELTA = 7;
 
 const SPRING = {
   stiffness: 520,
@@ -124,6 +123,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     let height = 0;
     let lastReleaseAt = 0;
     let bottomIntent = null;
+    let bottomGestureLocked = false;
+    let bottomGestureTimer = 0;
     const shell = viewport.classList.contains("vi-shell");
     const sourcesDrawer = viewport.classList.contains("vi-sources-drawer");
     rail.classList.toggle("vi-page-scroll-rail", shell);
@@ -191,13 +192,30 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     const reset = () => {
       raw = 0;
       bottomIntent = null;
+      bottomGestureLocked = false;
+      clearTimeout(bottomGestureTimer);
+      bottomGestureTimer = 0;
       if (reduceMotion) jumpToRest();
       else pullTarget.set(0);
+    };
+
+    const holdBottomGestureLock = () => {
+      bottomGestureLocked = true;
+      clearTimeout(bottomGestureTimer);
+      bottomGestureTimer = window.setTimeout(() => {
+        bottomGestureLocked = false;
+        bottomGestureTimer = 0;
+      }, BOTTOM_GESTURE_IDLE_MS);
     };
 
     const rememberBottomIntent = (delta, mode) => {
       if (delta >= 0) {
         bottomIntent = null;
+        if (mode === "wheel") {
+          bottomGestureLocked = false;
+          clearTimeout(bottomGestureTimer);
+          bottomGestureTimer = 0;
+        }
         return;
       }
 
@@ -276,27 +294,33 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
         return;
       }
 
-      // Ignore tiny trailing momentum packets just after release. Without this
-      // guard they can wake the spring again and create the visible "tremble".
-      const sinceRelease = performance.now() - lastReleaseAt;
-      const trailingMomentum =
-        delta < 0
-          ? sinceRelease < BOTTOM_MOMENTUM_GUARD_MS &&
-            Math.abs(delta) < BOTTOM_MOMENTUM_GUARD_DELTA
-          : sinceRelease < MOMENTUM_GUARD_MS &&
-            Math.abs(delta) < MOMENTUM_GUARD_DELTA;
+      if (delta < 0) {
+        if (bottomGestureLocked) {
+          bottomIntent = null;
+          holdBottomGestureLock();
+          return;
+        }
 
-      if (trailingMomentum) {
+        holdBottomGestureLock();
         bottomIntent = null;
+        if (pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), "wheel")) {
+          timer = window.setTimeout(release, BOTTOM_WHEEL_RELEASE_MS);
+        }
+        return;
+      }
+
+      // Keep the original top-edge momentum guard; the bottom edge is handled
+      // by a per-gesture lock so trailing packets cannot restart its spring.
+      if (
+        performance.now() - lastReleaseAt < MOMENTUM_GUARD_MS &&
+        Math.abs(delta) < MOMENTUM_GUARD_DELTA
+      ) {
         return;
       }
 
       if (pullBy(delta, "wheel")) {
         bottomIntent = null;
-        timer = window.setTimeout(
-          release,
-          delta < 0 ? BOTTOM_WHEEL_RELEASE_MS : WHEEL_RELEASE_MS,
-        );
+        timer = window.setTimeout(release, WHEEL_RELEASE_MS);
       }
     };
 
@@ -355,11 +379,22 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       ) {
         const { delta, mode } = bottomIntent;
         bottomIntent = null;
-        pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), mode);
 
-        if (mode === "wheel" || !touch) {
-          clearTimeout(timer);
-          timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
+        if (mode === "wheel") {
+          if (bottomGestureLocked) {
+            holdBottomGestureLock();
+          } else {
+            holdBottomGestureLock();
+            pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), mode);
+            clearTimeout(timer);
+            timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
+          }
+        } else {
+          pullBy(Math.min(delta, -BOTTOM_MIN_RAW_IMPULSE), mode);
+          if (!touch) {
+            clearTimeout(timer);
+            timer = window.setTimeout(release, BOTTOM_RELEASE_MS);
+          }
         }
       } else if (
         viewport.scrollTop > 1 &&
@@ -453,6 +488,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
     return () => {
       clearTimeout(timer);
+      clearTimeout(bottomGestureTimer);
       cancelAnimationFrame(thumbFrame);
       observer.disconnect();
 
