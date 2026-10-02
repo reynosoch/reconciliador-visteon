@@ -4,11 +4,7 @@ import { mergeBomLibrary } from "../domain/bomLibrary.js";
 import { idbGet, idbSet } from "../services/browserStorage.js";
 import { removeBomFileFromCloud, syncBomLibrary } from "../services/bomCloud.js";
 import { downloadBomWorkbook } from "../services/exportBomWorkbook.js";
-import {
-  REFERENCE_REQUIRED_FIELDS,
-  REFERENCE_SOURCE_LABELS,
-  REFERENCE_SOURCE_TYPES,
-} from "../domain/sourceCatalog.js";
+import { REFERENCE_REQUIRED_FIELDS } from "../domain/sourceCatalog.js";
 
 export {
   REFERENCE_REQUIRED_FIELDS,
