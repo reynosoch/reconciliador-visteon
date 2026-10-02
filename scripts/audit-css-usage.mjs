@@ -12,8 +12,12 @@ async function walk(dir) {
   return files;
 }
 
-const cssPath = "src/styles/pacman.css";
-const css = await readFile(cssPath, "utf8");
+const cssFiles = (await walk("src/styles"))
+  .filter((file) => file.endsWith(".css"))
+  .sort();
+const css = (
+  await Promise.all(cssFiles.map((file) => readFile(file, "utf8")))
+).join("\n");
 const sourceFiles = (await walk("src")).filter((file) => !file.endsWith(".css"));
 sourceFiles.push("index.html");
 const source = (await Promise.all(sourceFiles.map((file) => readFile(file, "utf8")))).join("\n");
@@ -40,5 +44,5 @@ if (unused.length) {
 }
 
 console.log(
-  `Custom CSS audit OK: ${classes.length} vi-* classes; only documented dynamic classes bypass literal lookup.`,
+  `Custom CSS audit OK: ${classes.length} vi-* classes across ${cssFiles.length} CSS files; only documented dynamic classes bypass literal lookup.`,
 );
