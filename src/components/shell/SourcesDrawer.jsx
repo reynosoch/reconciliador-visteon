@@ -11,6 +11,7 @@ import {
 import { detectInventorySource } from "../../services/sourceDetection.js";
 
 const IMPORT_PREVIEW_LIMIT = 3;
+const BOM_FILE_PREVIEW_LIMIT = 3;
 
 const SOURCE_CONFIG = [
   {
@@ -73,6 +74,10 @@ const CONFIG_BY_TYPE = Object.fromEntries(
   SOURCE_CONFIG.map((config) => [config.type, config]),
 );
 
+const SESSION_SOURCE_CONFIG = SOURCE_CONFIG.filter(
+  (config) => config.type !== REFERENCE_SOURCE_TYPES.BOM,
+);
+
 function sourceStatus(source) {
   if (source?.loading) return { label: "CARGANDO", tone: "is-loading" };
   if (source?.error) return { label: "ERROR", tone: "is-error" };
@@ -92,20 +97,38 @@ function SourceLine({
   botRunning,
 }) {
   const input = useRef(null);
+  const [bomFilesExpanded, setBomFilesExpanded] = useState(false);
   const manualLocked =
     config.type === REFERENCE_SOURCE_TYPES.SCANS && botRunning;
   const status = sourceStatus(source);
   const bomFiles = Array.isArray(source?.files) ? source.files : [];
   const bomRows = Array.isArray(source?.rows) ? source.rows : [];
-  const bomRowsForFile = (fileName) =>
-    bomRows.filter(
-      (row) => String(row?.__sourceFile || "") === String(fileName || ""),
-    ).length;
-  const latestBom = bomFiles.length
-    ? [...bomFiles].sort(
+  const sortedBomFiles = useMemo(
+    () =>
+      [...bomFiles].sort(
         (a, b) => new Date(b.loadedAt || 0) - new Date(a.loadedAt || 0),
-      )[0]
-    : null;
+      ),
+    [bomFiles],
+  );
+  const bomRowCounts = useMemo(() => {
+    const counts = new Map();
+    for (const row of bomRows) {
+      const fileName = String(row?.__sourceFile || "");
+      if (!fileName) continue;
+      counts.set(fileName, (counts.get(fileName) || 0) + 1);
+    }
+    return counts;
+  }, [bomRows]);
+  const visibleBomFiles = bomFilesExpanded
+    ? sortedBomFiles
+    : sortedBomFiles.slice(0, BOM_FILE_PREVIEW_LIMIT);
+  const hiddenBomFiles = Math.max(
+    0,
+    sortedBomFiles.length - BOM_FILE_PREVIEW_LIMIT,
+  );
+  const bomRowsForFile = (fileName) =>
+    bomRowCounts.get(String(fileName || "")) || 0;
+  const latestBom = sortedBomFiles[0] || null;
   const latestBomRows = latestBom ? bomRowsForFile(latestBom.fileName) : 0;
   const rowCount = Number(source?.rows?.length || 0);
   const isBom = config.type === REFERENCE_SOURCE_TYPES.BOM;
@@ -278,7 +301,7 @@ function SourceLine({
                 <small>{bomRows.length.toLocaleString("es-MX")} filas</small>
               </button>
 
-              {bomFiles.map((file) => {
+              {visibleBomFiles.map((file) => {
                 const actualRows = bomRowsForFile(file.fileName);
                 return (
                   <div
@@ -312,6 +335,21 @@ function SourceLine({
                   </div>
                 );
               })}
+
+              {hiddenBomFiles > 0 && (
+                <button
+                  type="button"
+                  className="vi-source-file-list-toggle"
+                  onClick={() =>
+                    setBomFilesExpanded((expanded) => !expanded)
+                  }
+                  aria-expanded={bomFilesExpanded}
+                >
+                  {bomFilesExpanded
+                    ? "Ver menos"
+                    : `Ver más (${hiddenBomFiles})`}
+                </button>
+              )}
             </div>
           </details>
         </div>
@@ -373,6 +411,9 @@ export default function SourcesDrawer({
 
   const loaded = status?.loadedCount || 0;
   const total = status?.totalSources || 5;
+  const sessionLoadedCount = SESSION_SOURCE_CONFIG.filter(
+    (config) => sources?.[config.type]?.loaded,
+  ).length;
   const visibleImportResults = importResultsExpanded
     ? importResults
     : importResults.slice(0, IMPORT_PREVIEW_LIMIT);
@@ -606,26 +647,36 @@ export default function SourcesDrawer({
               )}
             </section>
 
-            <section className="vi-source-stack">
-              {SOURCE_CONFIG.filter(
-                (config) => config.type !== REFERENCE_SOURCE_TYPES.BOM,
-              ).map((config) => (
-                <SourceLine
-                  key={config.type}
-                  config={config}
-                  source={sources?.[config.type] || {}}
-                  loadFile={loadFile}
-                  clearFile={(type) => setPendingClear({ type })}
-                  onHelp={onHelp}
-                  onPreview={setPreview}
-                  onRequestDeleteBom={(file) => {
-                    setBomDeleteError("");
-                    setPendingBomDelete(file);
-                  }}
-                  deletingBom={deletingBom}
-                  botRunning={botRunning}
-                />
-              ))}
+            <section className="vi-source-files-section">
+              <div className="vi-sources-section-heading">
+                <div>
+                  <span>FUENTES DE SESIÓN</span>
+                  <strong>Archivo activo y estado de cada entrada.</strong>
+                </div>
+                <small>
+                  {sessionLoadedCount}/{SESSION_SOURCE_CONFIG.length} activas
+                </small>
+              </div>
+
+              <div className="vi-source-stack">
+                {SESSION_SOURCE_CONFIG.map((config) => (
+                  <SourceLine
+                    key={config.type}
+                    config={config}
+                    source={sources?.[config.type] || {}}
+                    loadFile={loadFile}
+                    clearFile={(type) => setPendingClear({ type })}
+                    onHelp={onHelp}
+                    onPreview={setPreview}
+                    onRequestDeleteBom={(file) => {
+                      setBomDeleteError("");
+                      setPendingBomDelete(file);
+                    }}
+                    deletingBom={deletingBom}
+                    botRunning={botRunning}
+                  />
+                ))}
+              </div>
             </section>
 
             <section className="vi-bom-focus-section">
