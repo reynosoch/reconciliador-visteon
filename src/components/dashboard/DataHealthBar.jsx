@@ -1,4 +1,5 @@
 import { HelpButton } from "../help/HelpDrawer";
+import { countDataWarnings } from "../../domain/dataQuality.js";
 
 const number = (value) => new Intl.NumberFormat("es-MX").format(Number(value) || 0);
 
@@ -32,20 +33,10 @@ export default function DataHealthBar({
   onHelp,
 }) {
   const sources = diagnostics?.sources || {};
-  const warnings = diagnostics?.warnings || {};
   const manualScan = scanState === "MANUAL";
   const devSnapshot = ["DEV_LOADING", "DEV_SNAPSHOT"].includes(scanState);
   const scanUsable = manualScan || (devSnapshot && liveReady);
-  const warningCount = referencesReady
-    ? (warnings.missingBoms?.length || 0) + (warnings.emptyBoms?.length || 0) + (warnings.unmappedAreaNames?.length || 0)
-      + (warnings.partsWithoutCost?.length || 0)
-      + (warnings.unexpectedMaterial?.length || 0)
-      + (warnings.invalidCostRows?.length || 0)
-      + (warnings.duplicateCostParts?.length || 0)
-      + (warnings.phantomDefinitionMismatches?.length || 0)
-      + (warnings.invalidPhysicalQuantityRows?.length || 0)
-      + (warnings.invalidQadQuantityRows?.length || 0)
-    : 0;
+  const warningCount = countDataWarnings(diagnostics, referencesReady);
 
   return (
     <section className="vi-panel-flat vi-health-bar" aria-label="Estado de las fuentes">
