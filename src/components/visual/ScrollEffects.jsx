@@ -7,8 +7,10 @@ import {
   useSpring,
 } from "motion/react";
 
-const RUBBER_MAX_PX = 54;
-const RUBBER_CURVE = 122;
+const TOP_RUBBER_MAX_PX = 54;
+const TOP_RUBBER_CURVE = 122;
+const BOTTOM_RUBBER_MAX_PX = 62;
+const BOTTOM_RUBBER_CURVE = 108;
 const RAW_LIMIT = 300;
 const WHEEL_RELEASE_MS = 46;
 const MOMENTUM_GUARD_MS = 90;
@@ -24,10 +26,16 @@ const SPRING = {
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-const rubberDistance = (distance) =>
-  Math.sign(distance) *
-  RUBBER_MAX_PX *
-  (1 - Math.exp(-Math.abs(distance) / RUBBER_CURVE));
+const rubberDistance = (distance) => {
+  const bottom = distance < 0;
+  const max = bottom ? BOTTOM_RUBBER_MAX_PX : TOP_RUBBER_MAX_PX;
+  const curve = bottom ? BOTTOM_RUBBER_CURVE : TOP_RUBBER_CURVE;
+  return (
+    Math.sign(distance) *
+    max *
+    (1 - Math.exp(-Math.abs(distance) / curve))
+  );
+};
 
 /**
  * Native scrolling owns the middle of the gesture.
@@ -80,7 +88,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       content.style.removeProperty("will-change");
       rail.classList.remove("is-pulling");
     } else {
-      const stretch = 1 + Math.min(RUBBER_MAX_PX, Math.abs(pull)) / 6500;
+      const maxPull = pull < 0 ? BOTTOM_RUBBER_MAX_PX : TOP_RUBBER_MAX_PX;
+      const stretch = 1 + Math.min(maxPull, Math.abs(pull)) / 6200;
       content.style.willChange = "transform";
       content.style.transformOrigin = pull > 0 ? "center top" : "center bottom";
       content.style.transform =
@@ -209,7 +218,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       if (mode === "wheel") {
         // Trackpads emit uneven momentum packets. Decay prior energy and feed
         // the spring a stable target instead of exposing every packet visually.
-        raw = raw * 0.7 + bounded * 1.18;
+        const gain = bounded < 0 ? 1.28 : 1.18;
+        raw = raw * 0.7 + bounded * gain;
       } else {
         raw += bounded;
       }
