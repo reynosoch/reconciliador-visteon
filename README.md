@@ -40,7 +40,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Áreas/localidades | `src/domain/normalize.js`, `src/parsers/parse4WallAreas.js` |
 | Hallazgos/notificaciones | `src/domain/buildDiscrepancyFindings.js`, `src/domain/notificationState.js`, `src/components/shell/NotificationCenter.jsx` |
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx` |
-| Fuentes/importación | `src/hooks/useReferenceFiles.js`, `src/parsers/`, `src/components/shell/SourcesDrawer.jsx` |
+| Fuentes/importación | `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`, `src/components/shell/SourcesDrawer.jsx` |
 | 4Wall automático | `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py` |
 | Supabase/BOM cloud | `src/services/bomCloud.js`, `supabase/migrations/` |
 | Scroll/rubber band | `src/components/visual/ScrollEffects.jsx`, luego CSS específico en `src/styles/pacman.css` |
@@ -195,6 +195,23 @@ src/
 | Cost Part Browse | Cost Total y Status para valoración financiera |
 
 Los archivos de referencia se cargan manualmente en el navegador y se validan por columnas requeridas. También se calcula una huella SHA-256 para detectar si las referencias cambiaron.
+
+### Workspace de Fuentes
+
+El drawer **Fuentes** funciona como un workspace de entrada y revisión:
+
+- La **Entrada universal** acepta `.txt`, `.csv`, `.xlsx` y respaldos BOM `.json`.
+- Puede recibir varios archivos mezclados en una sola selección o por drag & drop.
+- Primero intenta reconocer la fuente por nombre; si el nombre no ayuda, inspecciona encabezados/columnas.
+- XLSX se inspecciona una sola vez para identificar el tipo antes de pasar al parser normal.
+- Cada archivo reconocido se carga usando el mismo validador de columnas que la carga individual.
+- Si el bot 4Wall está corriendo, solo se bloquea un archivo detectado como **escaneo 4Wall manual**; QAD, Áreas, ISPBB, Cost y BOM pueden seguir cargándose.
+- QAD, Áreas, ISPBB, Cost y 4Wall manual son fuentes de **sesión**: pueden reemplazarse o quitarse sin escribir esos archivos a Supabase.
+- BOM mantiene el comportamiento especial existente: biblioteca incremental local + respaldo compartido en Supabase cuando la conexión/permisos están disponibles.
+- El borrado BOM sigue siendo controlado: se confirma el archivo exacto y se usa su fingerprint/revisión para evitar borrar una versión equivocada.
+- **BOM Focus** filtra por coincidencia exacta de `Parent Item`, muestra cuántas filas y archivos contienen ese PN y abre el visor/descarga solo con esa selección.
+
+El catálogo de tipos y columnas vive en `src/domain/sourceCatalog.js`; la detección universal vive en `src/services/sourceDetection.js`. No duplicar esquemas de columnas dentro de la UI.
 
 ### Limitación actual del 4Wall en vivo
 
