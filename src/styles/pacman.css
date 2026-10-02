@@ -3645,127 +3645,197 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 }
 
 
-/* 2026-10-02 · Product footer */
+/* 2026-10-02 · Flow end footer */
+.vi-footer-underlay {
+  position: fixed;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(48vh,440px);
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(4,14,20,0) 0%,
+      rgba(4,14,20,.72) 34%,
+      #041018 68%,
+      #030a0f 100%
+    );
+  transition: opacity .34s cubic-bezier(.2,.8,.2,1);
+}
+body.vi-system-footer-visible .vi-footer-underlay {
+  opacity: 1;
+}
+
 .vi-system-footer {
   position: relative;
   z-index: 1;
   width: 100%;
-  margin-top: 24px;
+  min-height: 390px;
+  margin-top: 112px;
   padding: 0;
-  border-top: 1px solid rgba(119,171,193,.16);
+  color: #dce9ed;
   background:
-    radial-gradient(circle at 12% 0%, rgba(28,92,118,.24), transparent 34%),
-    radial-gradient(circle at 88% 20%, rgba(245,130,31,.06), transparent 26%),
-    linear-gradient(180deg,#071f2d 0%,#061923 100%);
-  box-shadow:
-    inset 0 1px rgba(255,255,255,.025),
-    0 -18px 40px rgba(0,10,18,.10);
+    radial-gradient(circle at 14% 4%, rgba(32,96,121,.22), transparent 34%),
+    radial-gradient(circle at 84% 20%, rgba(245,130,31,.065), transparent 25%),
+    linear-gradient(180deg,#061923 0%,#041018 54%,#030a0f 100%);
+  box-shadow: 0 -24px 60px rgba(0,8,13,.08);
+  isolation: isolate;
 }
 .vi-system-footer::before {
   content: "";
   position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  top: -220px;
+  height: 222px;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(4,16,24,0) 0%,
+      rgba(4,16,24,.08) 18%,
+      rgba(4,16,24,.34) 46%,
+      rgba(4,16,24,.76) 74%,
+      #061923 100%
+    );
+}
+.vi-system-footer::after {
+  content: "";
+  position: absolute;
   inset: 0 0 auto;
   height: 1px;
-  background: linear-gradient(90deg,transparent,rgba(245,130,31,.34),transparent);
-  opacity: .65;
+  opacity: .52;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(122,178,199,.18) 24%,
+      rgba(245,130,31,.36) 50%,
+      rgba(122,178,199,.16) 76%,
+      transparent 100%
+    );
 }
+
 .vi-system-footer-shell {
   width: min(100%,1540px);
   margin: 0 auto;
   display: grid;
-  gap: 18px;
-  padding: 28px clamp(18px,3vw,48px) 24px;
-  color: #dce9ed;
+  gap: 54px;
+  padding: 68px clamp(22px,4vw,64px) 34px;
 }
-.vi-system-footer-main {
+.vi-system-footer-hero {
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
+  display: grid;
+  grid-template-columns: minmax(300px,.95fr) minmax(520px,1.35fr);
+  align-items: end;
+  gap: clamp(54px,7vw,120px);
 }
 .vi-system-footer-brand {
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 14px;
 }
 .vi-system-footer-mark {
-  width: 6px;
-  height: 34px;
+  width: 7px;
+  height: 58px;
   flex: none;
+  margin-top: 3px;
   border-radius: 999px;
-  background: linear-gradient(180deg,#ffb76f,#f5821f);
-  box-shadow: 0 0 20px rgba(245,130,31,.17);
+  background:
+    linear-gradient(180deg,#ffc082 0%,#f5821f 62%,rgba(245,130,31,.38) 100%);
+  box-shadow:
+    0 0 26px rgba(245,130,31,.17),
+    0 10px 30px rgba(245,130,31,.08);
 }
 .vi-system-footer-brand > div {
   min-width: 0;
   display: grid;
-  gap: 2px;
-}
-.vi-system-footer-brand strong {
-  color: #e7f0f3;
-  font-size: 13px;
-  font-weight: 820;
-  letter-spacing: .015em;
+  gap: 5px;
 }
 .vi-system-footer-brand small {
-  color: #7895a1;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .05em;
+  color: #6f8c98;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .14em;
 }
+.vi-system-footer-brand strong {
+  color: #f4f8f9;
+  font-size: clamp(26px,3vw,40px);
+  line-height: .98;
+  font-weight: 830;
+  letter-spacing: -.035em;
+}
+.vi-system-footer-brand p {
+  margin: 5px 0 0;
+  color: #7f9aa5;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .025em;
+}
+
 .vi-system-footer-statuses {
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  align-items: start;
   gap: 0;
-  overflow: hidden;
 }
 .vi-footer-status {
   min-width: 0;
+  min-height: 80px;
   display: grid;
-  grid-template-columns: 6px auto auto;
-  align-items: baseline;
-  column-gap: 7px;
-  padding: 4px 16px;
-  border-left: 1px solid rgba(255,255,255,.075);
-  white-space: nowrap;
+  grid-template-columns: 7px minmax(0,1fr);
+  align-content: start;
+  column-gap: 8px;
+  row-gap: 4px;
+  padding: 2px 18px 4px;
+  border-left: 1px solid rgba(255,255,255,.07);
 }
-.vi-footer-status:first-child { border-left: 0; }
+.vi-footer-status:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
 .vi-footer-status-dot {
-  grid-row: 1 / span 2;
-  align-self: center;
+  grid-row: 1 / span 3;
+  align-self: start;
   width: 5px;
   height: 5px;
+  margin-top: 5px;
   border-radius: 999px;
   background: #6f8e9b;
 }
 .vi-footer-status-label {
-  color: #6f8b97;
+  color: #64808b;
   font-size: 7px;
   font-weight: 900;
-  letter-spacing: .09em;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 .vi-footer-status strong {
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #d7e5e9;
-  font-size: 10px;
-  font-weight: 850;
+  color: #e2ecef;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 820;
+  white-space: nowrap;
 }
 .vi-footer-status small {
-  grid-column: 2 / -1;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #6e8994;
-  font-size: 7px;
+  color: #607b86;
+  font-size: 8px;
+  line-height: 1.35;
+  white-space: nowrap;
 }
 .vi-footer-status.is-good .vi-footer-status-dot {
   background: #72d6aa;
-  box-shadow: 0 0 0 3px rgba(114,214,170,.07);
+  box-shadow: 0 0 0 3px rgba(114,214,170,.065);
 }
 .vi-footer-status.is-warning .vi-footer-status-dot { background: #f4a85e; }
 .vi-footer-status.is-error .vi-footer-status-dot { background: #f17f8b; }
@@ -3774,20 +3844,20 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 .vi-system-footer-lower {
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 22px;
-  padding-top: 12px;
+  gap: 26px;
+  padding-top: 18px;
   border-top: 1px solid rgba(255,255,255,.055);
 }
 .vi-system-footer-snapshot {
   width: auto;
-  max-width: min(720px,68%);
+  max-width: min(760px,66%);
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
-  opacity: .78;
+  opacity: .76;
 }
 .vi-system-footer-snapshot .vi-snapshot-dot {
   width: 5px;
@@ -3806,33 +3876,34 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 }
 .vi-system-footer-snapshot .vi-snapshot-meta em {
   padding: 2px 4px;
-  background: rgba(245,130,31,.045);
-  color: #a9825d;
+  background: rgba(245,130,31,.04);
+  color: #9f7c5b;
   font-size: 6px;
 }
+
 .vi-system-footer-credit {
   flex: none;
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #607985;
+  color: #58727d;
   font-size: 7px;
   font-weight: 700;
-  letter-spacing: .03em;
+  letter-spacing: .035em;
   white-space: nowrap;
 }
 .vi-system-footer-credit > i {
   width: 2px;
   height: 2px;
   border-radius: 999px;
-  background: #6a8490;
+  background: #617b86;
 }
 .vi-system-footer-github {
-  margin-left: 2px;
+  margin-left: 5px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: #8099a4;
+  gap: 6px;
+  color: #718b96;
   text-decoration: none;
   transition:
     color .18s ease,
@@ -3845,56 +3916,74 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 }
 .vi-system-footer-github:focus-visible {
   outline: 2px solid #f5821f;
-  outline-offset: 3px;
-  border-radius: 4px;
+  outline-offset: 4px;
+  border-radius: 5px;
+}
+.vi-system-footer-endcap {
+  height: 78px;
+  background:
+    linear-gradient(180deg,#030a0f 0%,#02080c 100%);
 }
 
-/* Reportar remains available everywhere except where it would cover the footer.
-   IntersectionObserver toggles this class without adding a scroll hot-path. */
+/* Reportar stays available through the dashboard, then gets out of the way
+   when the end section enters. The open form is never hidden. */
 .vi-dev-feedback-trigger {
   transition:
-    opacity .22s ease,
-    transform .28s cubic-bezier(.2,.8,.2,1),
+    opacity .24s ease,
+    transform .30s cubic-bezier(.2,.8,.2,1),
     filter .22s ease,
     box-shadow .18s ease !important;
 }
 body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open) {
   opacity: 0;
-  transform: translate3d(0,22px,0) scale(.94);
-  filter: blur(1.5px);
+  transform: translate3d(0,28px,0) scale(.92);
+  filter: blur(1.8px);
   pointer-events: none;
 }
 body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
-  transform: translate3d(0,22px,0) scale(.94);
+  transform: translate3d(0,28px,0) scale(.92);
 }
 
-@media (max-width: 980px) {
-  .vi-system-footer-main {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 14px;
+@media (max-width: 1100px) {
+  .vi-system-footer-shell {
+    gap: 38px;
+  }
+  .vi-system-footer-hero {
+    grid-template-columns: 1fr;
+    gap: 34px;
   }
   .vi-system-footer-statuses {
-    width: 100%;
-    justify-content: flex-start;
-    overflow-x: auto;
-    scrollbar-width: none;
+    max-width: 760px;
   }
-  .vi-system-footer-statuses::-webkit-scrollbar { display: none; }
-  .vi-footer-status:first-child { padding-left: 0; }
 }
-@media (max-width: 680px) {
+@media (max-width: 760px) {
   .vi-system-footer {
-    margin-top: 16px;
+    min-height: 0;
+    margin-top: 88px;
+  }
+  .vi-system-footer::before {
+    top: -170px;
+    height: 172px;
   }
   .vi-system-footer-shell {
-    gap: 14px;
-    padding: 22px 14px 22px;
+    gap: 28px;
+    padding: 48px 16px 28px;
+  }
+  .vi-system-footer-brand strong {
+    font-size: clamp(25px,9vw,34px);
+  }
+  .vi-system-footer-statuses {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 18px 0;
+  }
+  .vi-footer-status:nth-child(3) {
+    border-left: 0;
+    padding-left: 0;
   }
   .vi-system-footer-lower {
     align-items: flex-start;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
   }
   .vi-system-footer-snapshot {
     width: 100%;
@@ -3907,6 +3996,25 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
   }
   .vi-system-footer-github {
     margin-left: 0;
+  }
+  .vi-system-footer-endcap {
+    height: 52px;
+  }
+}
+@media (max-width: 480px) {
+  .vi-system-footer-statuses {
+    grid-template-columns: 1fr;
+  }
+  .vi-footer-status,
+  .vi-footer-status:nth-child(3) {
+    min-height: 0;
+    padding: 10px 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(255,255,255,.05);
+  }
+  .vi-footer-status:first-child {
+    padding-top: 0;
+    border-top: 0;
   }
 }
 
