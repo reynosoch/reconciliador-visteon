@@ -3645,19 +3645,36 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 }
 
 
-/* 2026-10-02 · Low-profile system footer */
+/* 2026-10-02 · Product footer */
 .vi-system-footer {
   position: relative;
   z-index: 1;
-  max-width: 1540px;
-  margin: 0 auto;
-  padding: 6px clamp(18px,3vw,48px) 28px;
+  width: 100%;
+  margin-top: 24px;
+  padding: 0;
+  border-top: 1px solid rgba(119,171,193,.16);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(28,92,118,.24), transparent 34%),
+    radial-gradient(circle at 88% 20%, rgba(245,130,31,.06), transparent 26%),
+    linear-gradient(180deg,#071f2d 0%,#061923 100%);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.025),
+    0 -18px 40px rgba(0,10,18,.10);
+}
+.vi-system-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg,transparent,rgba(245,130,31,.34),transparent);
+  opacity: .65;
 }
 .vi-system-footer-shell {
+  width: min(100%,1540px);
+  margin: 0 auto;
   display: grid;
-  gap: 11px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,.10);
+  gap: 18px;
+  padding: 28px clamp(18px,3vw,48px) 24px;
   color: #dce9ed;
 }
 .vi-system-footer-main {
@@ -3665,36 +3682,36 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 22px;
+  gap: 28px;
 }
 .vi-system-footer-brand {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .vi-system-footer-mark {
   width: 6px;
-  height: 24px;
+  height: 34px;
   flex: none;
   border-radius: 999px;
-  background: linear-gradient(180deg,#ffac61,#f5821f);
-  box-shadow: 0 0 18px rgba(245,130,31,.18);
+  background: linear-gradient(180deg,#ffb76f,#f5821f);
+  box-shadow: 0 0 20px rgba(245,130,31,.17);
 }
 .vi-system-footer-brand > div {
   min-width: 0;
   display: grid;
-  gap: 1px;
+  gap: 2px;
 }
 .vi-system-footer-brand strong {
-  color: #dce9ed;
-  font-size: 11px;
-  font-weight: 800;
+  color: #e7f0f3;
+  font-size: 13px;
+  font-weight: 820;
   letter-spacing: .015em;
 }
 .vi-system-footer-brand small {
-  color: #6f8e9b;
-  font-size: 8px;
+  color: #7895a1;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: .05em;
 }
@@ -3711,14 +3728,12 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
   display: grid;
   grid-template-columns: 6px auto auto;
   align-items: baseline;
-  column-gap: 6px;
-  padding: 2px 13px;
-  border-left: 1px solid rgba(255,255,255,.07);
+  column-gap: 7px;
+  padding: 4px 16px;
+  border-left: 1px solid rgba(255,255,255,.075);
   white-space: nowrap;
 }
-.vi-footer-status:first-child {
-  border-left: 0;
-}
+.vi-footer-status:first-child { border-left: 0; }
 .vi-footer-status-dot {
   grid-row: 1 / span 2;
   align-self: center;
@@ -3728,7 +3743,7 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
   background: #6f8e9b;
 }
 .vi-footer-status-label {
-  color: #6d8995;
+  color: #6f8b97;
   font-size: 7px;
   font-weight: 900;
   letter-spacing: .09em;
@@ -3737,94 +3752,127 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 .vi-footer-status strong {
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #cadce2;
-  font-size: 9px;
+  color: #d7e5e9;
+  font-size: 10px;
   font-weight: 850;
 }
 .vi-footer-status small {
   grid-column: 2 / -1;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #647f8a;
+  color: #6e8994;
   font-size: 7px;
 }
 .vi-footer-status.is-good .vi-footer-status-dot {
   background: #72d6aa;
   box-shadow: 0 0 0 3px rgba(114,214,170,.07);
 }
-.vi-footer-status.is-warning .vi-footer-status-dot {
-  background: #f4a85e;
-}
-.vi-footer-status.is-error .vi-footer-status-dot {
-  background: #f17f8b;
-}
-.vi-footer-status.is-pending .vi-footer-status-dot {
-  background: #819ba6;
-}
+.vi-footer-status.is-warning .vi-footer-status-dot { background: #f4a85e; }
+.vi-footer-status.is-error .vi-footer-status-dot { background: #f17f8b; }
+.vi-footer-status.is-pending .vi-footer-status-dot { background: #819ba6; }
+
 .vi-system-footer-lower {
   min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,.045);
+  gap: 22px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.055);
 }
 .vi-system-footer-snapshot {
   width: auto;
-  max-width: min(680px,70%);
+  max-width: min(720px,68%);
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
-  opacity: .72;
+  opacity: .78;
 }
 .vi-system-footer-snapshot .vi-snapshot-dot {
   width: 5px;
   height: 5px;
   box-shadow: none;
 }
-.vi-system-footer-snapshot .vi-snapshot-copy small {
-  font-size: 6px;
-}
+.vi-system-footer-snapshot .vi-snapshot-copy small { font-size: 6px; }
 .vi-system-footer-snapshot .vi-snapshot-copy strong {
-  color: #8ea8b3;
+  color: #95aeb8;
   font-size: 8px;
   font-weight: 700;
 }
 .vi-system-footer-snapshot .vi-snapshot-meta {
-  color: #607b86;
+  color: #67818c;
   font-size: 7px;
 }
 .vi-system-footer-snapshot .vi-snapshot-meta em {
   padding: 2px 4px;
   background: rgba(245,130,31,.045);
-  color: #9f7955;
+  color: #a9825d;
   font-size: 6px;
 }
 .vi-system-footer-credit {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #58727d;
+  gap: 9px;
+  color: #607985;
   font-size: 7px;
   font-weight: 700;
   letter-spacing: .03em;
   white-space: nowrap;
 }
-.vi-system-footer-credit i {
+.vi-system-footer-credit > i {
   width: 2px;
   height: 2px;
   border-radius: 999px;
   background: #6a8490;
+}
+.vi-system-footer-github {
+  margin-left: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #8099a4;
+  text-decoration: none;
+  transition:
+    color .18s ease,
+    opacity .18s ease,
+    transform .18s ease;
+}
+.vi-system-footer-github:hover {
+  color: #f0f6f8;
+  transform: translateY(-1px);
+}
+.vi-system-footer-github:focus-visible {
+  outline: 2px solid #f5821f;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Reportar remains available everywhere except where it would cover the footer.
+   IntersectionObserver toggles this class without adding a scroll hot-path. */
+.vi-dev-feedback-trigger {
+  transition:
+    opacity .22s ease,
+    transform .28s cubic-bezier(.2,.8,.2,1),
+    filter .22s ease,
+    box-shadow .18s ease !important;
+}
+body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open) {
+  opacity: 0;
+  transform: translate3d(0,22px,0) scale(.94);
+  filter: blur(1.5px);
+  pointer-events: none;
+}
+body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
+  transform: translate3d(0,22px,0) scale(.94);
 }
 
 @media (max-width: 980px) {
   .vi-system-footer-main {
     align-items: flex-start;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
   }
   .vi-system-footer-statuses {
     width: 100%;
@@ -3832,21 +3880,21 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
     overflow-x: auto;
     scrollbar-width: none;
   }
-  .vi-system-footer-statuses::-webkit-scrollbar {
-    display: none;
-  }
-  .vi-footer-status:first-child {
-    padding-left: 0;
-  }
+  .vi-system-footer-statuses::-webkit-scrollbar { display: none; }
+  .vi-footer-status:first-child { padding-left: 0; }
 }
 @media (max-width: 680px) {
   .vi-system-footer {
-    padding: 4px 14px 20px;
+    margin-top: 16px;
+  }
+  .vi-system-footer-shell {
+    gap: 14px;
+    padding: 22px 14px 22px;
   }
   .vi-system-footer-lower {
     align-items: flex-start;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
   .vi-system-footer-snapshot {
     width: 100%;
@@ -3854,8 +3902,11 @@ body.vi-overlay-open .vi-page-scroll-rail { display: none; }
   }
   .vi-system-footer-credit {
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 7px;
     white-space: normal;
+  }
+  .vi-system-footer-github {
+    margin-left: 0;
   }
 }
 
