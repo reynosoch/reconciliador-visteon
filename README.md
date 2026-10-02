@@ -22,8 +22,8 @@ PoC de Visteon para reconciliar **4Wall físico vs QAD congelado** durante inven
 - React no debe duplicar fórmulas del motor. Lógica de negocio en `src/domain/`.
 - No mezclar 4Wall manual con automático.
 - No poner secretos en frontend, Git o variables `VITE_*`.
-- GitHub Pages es manual; push a `main` no despliega Pages automáticamente.
-- Mantener scroll nativo. `ScrollEffects.jsx` es la única implementación del rubber band.
+- GitHub Pages es manual; push a `main` no despliega Pages automáticamente. Para publicar usa `npm.cmd run deploy`, que dispara el workflow actual de Pages.
+- Mantener scroll nativo en el centro. `ScrollEffects.jsx` es la única implementación del rubber band; Motion solo controla el overscroll de borde, no reemplaza `scrollTop`.
 
 ### Arquitectura mínima
 
@@ -58,6 +58,8 @@ git pull origin main --no-edit
 npm.cmd ci
 npm.cmd run build
 npm.cmd run dev
+# publicar Pages cuando corresponda:
+npm.cmd run deploy
 ```
 
 Para cargar solo este contexto en otra sesión/agente:
@@ -73,9 +75,20 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 - React 19 + Vite 8 + Tailwind 3.
 - Supabase/PostgreSQL + Dexie/IndexedDB.
 - TanStack Virtual en la tabla grande.
-- Motion solo para microinteracciones; no controla el scroll.
+- El scroll normal es nativo. Motion usa `useSpring` únicamente para rubber band/overscroll y transiciones puntuales del shell; nunca sustituye `scrollTop`.
 - SheetJS fijado localmente en `vendor/xlsx-0.20.3.tgz`.
 - `README.md` es la única fuente de verdad documental del proyecto.
+
+### Handoff UI actual — 02 OCT 2026
+
+- **No eliminar funcionalidad para "optimizar".** Se puede reducir memoria/composición o simplificar CSS, pero funciones existentes deben conservarse salvo instrucción explícita.
+- Navbar: `CommandHeader.jsx` muestra logo Visteon + 179A, estado rápido de 4Wall, hora de actualización y acciones esenciales. Debajo vive **Flujo de datos**, que se repliega al bajar y reaparece al subir con spring/histéresis.
+- Rubber band: scroll medio 100% nativo; Motion spring en bordes. Configuración vigente aproximada: `stiffness 520 / damping 34 / mass .55`; arriba ~54 px, abajo ~62 px y un poco más sensible. No reintroducir interpoladores/timers visuales manuales ni transformar el elemento que posee el scroll.
+- Pac-Man ambiental continúa durante scroll/rubber band. El menú guarda un switch persistente y **LAB → Ver animación** permite verlo solo a pantalla completa.
+- Footer: está **pegado al final del dashboard**, con logo Visteon, `/reynosoch`, Fuentes/Calidad/Entorno/Versión centrados, snapshot y créditos lowkey. El botón **Reportar** se desvanece cuando el footer entra al viewport para no taparlo.
+- Fuentes: `SourcesDrawer.jsx` usa entrada universal multiarquivo, filas compactas de estado y resultados de carga colapsados: muestra 3 y luego **Ver más / Ver menos**. BOM conserva lista/preview/borrado controlado y BOM Focus.
+- El drawer de Fuentes fue reconstruido recientemente; cualquier siguiente ajuste debe ser **visual/ergonómico**, no volver a tarjetas grandes ni desplegar todos los archivos de golpe.
+- Antes de editar UI, revisar los últimos commits de `main` porque puede haber trabajo concurrente de otros agentes.
 
 **Solo si tu tarea requiere contexto adicional, continúa con la sección correspondiente abajo.**
 <!-- AGENT_CONTEXT_END -->
@@ -124,6 +137,8 @@ La aplicación incluye:
 - `Estado de datos` abre un visor tipo hoja de cálculo con letras de columna, números de fila, búsqueda, pestaña de hoja y navegación de regreso al hallazgo.
 - `Posible ubicación` explica su cálculo en UI y permite abrir el PN directamente en el visor por localidad; los vínculos de cantidades son evidencia navegable, no ajustes automáticos.
 - La animación ambiental de Pac-Man puede activarse o desactivarse desde el menú; la preferencia se guarda en este dispositivo. El LAB permite verla a pantalla completa sin alterar esa preferencia.
+- Navbar compacto orientado a lectura rápida: estado de 4Wall, actualización, Fuentes, notificaciones, bot, refresh y menú; el detalle secundario vive en **Flujo de datos** y se repliega con el scroll.
+- Footer de sistema pegado al final del dashboard con estado de Fuentes/Calidad/Entorno/Versión, snapshot, logo Visteon, `/reynosoch` y créditos discretos.
 
 ## Arquitectura
 
@@ -145,7 +160,7 @@ RESUMEN FINANCIERO
 REACT / UI
 ```
 
-React presenta resultados; las reglas financieras y de hallazgos viven en `src/domain`. Motion se limita a microinteracciones y no controla el scroll principal. La tabla grande de conciliación usa TanStack Virtual para mantener pequeño el DOM.
+React presenta resultados; las reglas financieras y de hallazgos viven en `src/domain`. El scroll principal sigue siendo nativo; Motion solo suaviza el rubber band en los bordes y algunas transiciones del shell. La tabla grande de conciliación usa TanStack Virtual para mantener pequeño el DOM.
 
 ### Estructura principal
 
@@ -210,6 +225,8 @@ El drawer **Fuentes** funciona como un workspace de entrada y revisión:
 - BOM mantiene el comportamiento especial existente: biblioteca incremental local + respaldo compartido en Supabase cuando la conexión/permisos están disponibles.
 - El borrado BOM sigue siendo controlado: se confirma el archivo exacto y se usa su fingerprint/revisión para evitar borrar una versión equivocada.
 - **BOM Focus** filtra por coincidencia exacta de `Parent Item`, muestra cuántas filas y archivos contienen ese PN y abre el visor/descarga solo con esa selección.
+- La UI de Fuentes usa filas compactas en lugar de cards grandes. La carga masiva enseña solo los primeros **3 resultados** y ofrece **Ver más / Ver menos** cuando se seleccionan muchos archivos.
+- No volver a renderizar todos los archivos cargados al inicio del drawer: la prioridad es que el estado de cada fuente sea visible en pocos segundos y que las listas extensas sean expandibles.
 
 El catálogo de tipos y columnas vive en `src/domain/sourceCatalog.js`; la detección universal vive en `src/services/sourceDetection.js`. No duplicar esquemas de columnas dentro de la UI.
 
