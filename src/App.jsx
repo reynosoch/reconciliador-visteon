@@ -21,7 +21,7 @@ import OverlayPortal from "./components/shell/OverlayPortal.jsx";
 import { forceUnlockPageScroll } from "./services/overlayScroll.js";
 import MainMenu from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
-import SnapshotStamp from "./components/shell/SnapshotStamp.jsx";
+import SystemFooter from "./components/shell/SystemFooter.jsx";
 import PartLogicTracer from "./components/shell/PartLogicTracer.jsx";
 import { REFERENCE_SOURCE_LABELS, useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
@@ -492,17 +492,17 @@ export default function App() {
           onSelectPart={setSelectedPart}
           onHelp={setHelpTopic}
         />
-      </main></div></div>}
+      </main>
+      <SystemFooter
+        referenceStatus={references.status}
+        connectionStatus={inventory.connectionStatus}
+        diagnostics={inventory.diagnostics}
+        snapshotMeta={inventory.snapshotMeta}
+        scanCount={inventory.scanCount}
+        lastUpdated={inventory.lastUpdated}
+      />
+      </div></div>}
       <ScrollEffects viewportRef={shellRef} contentRef={mainMotionRef} />
-      {(
-        <footer className="vi-page-snapshot-footer">
-          <SnapshotStamp
-            snapshotMeta={inventory.snapshotMeta}
-            scanCount={inventory.scanCount}
-            lastUpdated={inventory.lastUpdated}
-          />
-        </footer>
-      )}
       {<SourcesDrawer
         open={sourcesOpen}
         sources={references.sources}
