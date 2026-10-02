@@ -3274,6 +3274,31 @@ body.vi-overlay-open .vi-shell {
 .vi-scroll-rail:focus-visible { outline: 2px solid #f5821f; outline-offset: 2px; }
 body.vi-overlay-open .vi-page-scroll-rail { display: none; }
 
+/* Sources keeps the custom scrollbar without reserving a visible right strip. */
+.vi-scroll-rail.vi-sources-scroll-rail {
+  width: 6px;
+  border-radius: 999px;
+  background: transparent;
+  opacity: .72;
+}
+.vi-sources-scroll-rail .vi-scroll-thumb {
+  width: 3px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: rgba(126,166,182,.72);
+  box-shadow: none;
+}
+.vi-sources-scroll-rail:hover,
+.vi-sources-scroll-rail:focus-visible,
+.vi-sources-scroll-rail.is-pulling {
+  opacity: 1;
+}
+.vi-sources-scroll-rail:hover .vi-scroll-thumb,
+.vi-sources-scroll-rail:focus-visible .vi-scroll-thumb,
+.vi-sources-scroll-rail.is-pulling .vi-scroll-thumb {
+  background: #f5821f;
+}
+
 /* Only the panels animate, never the scrolling dashboard or its rows. */
 .vi-overlay-root .vi-rubber-viewport {
   --vi-drawer-enter: 42px;
@@ -4091,12 +4116,22 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
 
 /* 2026-10-02 · Sources workspace — compact industrial drawer */
 .vi-sources-drawer {
-  width: min(570px, 96vw) !important;
-  max-width: min(570px, 96vw) !important;
+  width: min(560px, calc(100vw - 32px)) !important;
+  max-width: min(560px, calc(100vw - 32px)) !important;
+  box-sizing: border-box;
+  overflow-x: hidden !important;
+  scrollbar-gutter: auto !important;
   background: #071f2c !important;
   border-left: 1px solid rgba(255,255,255,.10) !important;
   box-shadow: -22px 0 52px rgba(0,7,13,.30) !important;
   color: #eef7fa !important;
+}
+.vi-sources-drawer > .vi-rubber-clip,
+.vi-sources-drawer .vi-rubber-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .vi-sources-head {
@@ -4772,13 +4807,29 @@ body.vi-system-footer-visible .vi-dev-feedback-trigger:not(.is-open):hover {
   line-height: 1.4 !important;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1100px) {
   .vi-sources-drawer {
-    width: min(570px, 100vw) !important;
-    max-width: 100vw !important;
+    width: min(540px, 52vw) !important;
+    max-width: min(540px, 52vw) !important;
   }
 }
-@media (max-width: 620px) {
+@media (max-width: 900px) {
+  .vi-sources-drawer {
+    width: min(520px, 68vw) !important;
+    max-width: min(520px, 68vw) !important;
+  }
+  .vi-sources-head {
+    padding-inline: 14px;
+  }
+  .vi-sources-body {
+    padding-inline: 14px;
+  }
+  .vi-source-row-main {
+    grid-template-columns: minmax(116px,.72fr) minmax(0,1fr) auto;
+    gap: 8px;
+  }
+}
+@media (max-width: 700px) {
   .vi-sources-drawer {
     width: 100vw !important;
     max-width: 100vw !important;
