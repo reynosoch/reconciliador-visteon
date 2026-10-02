@@ -111,10 +111,29 @@ export default function CommandHeader({
     let travel = 0;
     let hidden = false;
     let frame = 0;
+    let touchY = null;
+    let settling = false;
+    let settleTimer = 0;
+
+    const markSettling = () => {
+      settling = true;
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        settling = false;
+        previousY = viewport.scrollTop;
+        direction = 0;
+        travel = 0;
+      }, 180);
+    };
 
     const setHidden = (next) => {
       if (next === hidden) return;
       hidden = next;
+      direction = 0;
+      travel = 0;
+      previousY = viewport.scrollTop;
+      markSettling();
+
       if (reduceMotion) {
         ribbonTarget.jump(next ? 0 : 1);
         ribbonSpring.jump(next ? 0 : 1);
@@ -123,11 +142,8 @@ export default function CommandHeader({
       }
     };
 
-    const evaluate = () => {
-      frame = 0;
+    const applyIntent = (delta) => {
       const y = viewport.scrollTop;
-      const delta = y - previousY;
-      previousY = y;
 
       if (y <= 12) {
         direction = 0;
@@ -146,31 +162,85 @@ export default function CommandHeader({
 
       travel += Math.abs(delta);
 
-      // A little more intent is required to hide than to reveal. This keeps
-      // the ribbon stable on trackpad noise but makes it return immediately.
+      // Hysteresis: hiding needs more travel than revealing. Input events are
+      // used here so the ribbon's own height animation cannot fake a reversal.
       if (!hidden && direction > 0 && y > 72 && travel >= 13) {
-        travel = 0;
         setHidden(true);
       } else if (hidden && direction < 0 && travel >= 7) {
-        travel = 0;
         setHidden(false);
       }
     };
 
+    const onWheel = (event) => {
+      if (event.ctrlKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      const unit =
+        event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? viewport.clientHeight
+            : 1;
+      applyIntent(event.deltaY * unit);
+    };
+
+    const onTouchStart = (event) => {
+      touchY = event.touches?.length === 1 ? event.touches[0].clientY : null;
+    };
+
+    const onTouchMove = (event) => {
+      if (touchY == null || event.touches?.length !== 1) return;
+      const nextY = event.touches[0].clientY;
+      const delta = touchY - nextY;
+      touchY = nextY;
+      applyIntent(delta);
+    };
+
+    const onTouchEnd = () => {
+      touchY = null;
+    };
+
+    const evaluateFallbackScroll = () => {
+      frame = 0;
+      const y = viewport.scrollTop;
+      const delta = y - previousY;
+      previousY = y;
+
+      if (y <= 12) {
+        setHidden(false);
+        return;
+      }
+
+      // Shrinking/expanding the sticky ribbon changes layout and can nudge
+      // scrollTop. Never feed those self-generated deltas back into the spring.
+      if (settling) return;
+      applyIntent(delta);
+    };
+
     const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(evaluate);
+      if (!frame) frame = requestAnimationFrame(evaluateFallbackScroll);
     };
 
     const onResize = () => {
       measureRibbon();
       ribbonSpring.jump(hidden ? 0 : 1);
+      previousY = viewport.scrollTop;
     };
 
+    viewport.addEventListener("wheel", onWheel, { passive: true });
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+    viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+    viewport.addEventListener("touchcancel", onTouchEnd, { passive: true });
     viewport.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
     return () => {
+      window.clearTimeout(settleTimer);
       cancelAnimationFrame(frame);
+      viewport.removeEventListener("wheel", onWheel);
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("touchend", onTouchEnd);
+      viewport.removeEventListener("touchcancel", onTouchEnd);
       viewport.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       ribbonTarget.jump(1);
