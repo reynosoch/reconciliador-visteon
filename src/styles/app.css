@@ -1,0 +1,12 @@
+/*
+ * Visteon Inventory Reconciler — application stylesheet entrypoint
+ *
+ * Keep these imports in this order. Their order preserves the existing cascade.
+ * Add or edit rules in the module that owns the UI area; keep this file as an index.
+ */
+@import "./modules/foundation-dashboard.css";
+@import "./modules/overlays-drawers.css";
+@import "./modules/data-review.css";
+@import "./modules/interaction-motion.css";
+@import "./modules/navigation-footer.css";
+@import "./modules/sources-drawer.css";
