@@ -43,10 +43,15 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Fuentes/importación | `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`, `src/components/shell/SourcesDrawer.jsx` |
 | 4Wall automático | `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py` |
 | Supabase/BOM cloud | `src/services/bomCloud.js`, `supabase/migrations/` |
-| Scroll/rubber band | `src/components/visual/ScrollEffects.jsx`, luego `src/styles/pacman.css` (entrypoint) y el módulo correspondiente en `src/styles/pacman/` |
+| Scroll/rubber band | `src/components/visual/ScrollEffects.jsx` + `src/styles/modules/interaction-motion.css` |
+| Pac-Man / LAB visual | `src/components/visual/PacmanGlyphs.jsx` + `src/styles/modules/interaction-motion.css` |
+| Navbar / footer | `src/components/shell/CommandHeader.jsx`, `src/components/shell/SystemFooter.jsx` + `src/styles/modules/navigation-footer.css` |
+| Drawers / overlays / ayuda | `src/components/shell/`, `src/components/help/` + `src/styles/modules/overlays-drawers.css` |
+| Fuentes visual | `src/components/shell/SourcesDrawer.jsx` + `src/styles/modules/sources-drawer.css` |
+| Visores, tablas y superficies de datos | componente correspondiente + `src/styles/modules/data-review.css` |
+| Base visual / dashboard general | `src/styles/modules/foundation-dashboard.css` |
 | Excel/exportación | `src/services/exportInventoryWorkbook.js`, `src/services/exportBomWorkbook.js` |
 | Persistencia local | `src/services/browserStorage.js` |
-| Shell/drawers | `src/components/shell/` |
 | Reglas/decisiones del proyecto | sección relevante de este `README.md` |
 
 ### Comandos
@@ -196,14 +201,14 @@ src/
 │   ├── shell/
 │   └── visual/
 └── styles/
-    ├── pacman.css              # entrypoint; solo imports ordenados
-    └── pacman/
-        ├── 00-foundation.css
-        ├── 10-shell-overlays.css
-        ├── 20-data-surfaces.css
-        ├── 30-interaction-motion.css
-        ├── 40-current-shell.css
-        └── 50-sources.css
+    ├── app.css                 # entrypoint; solo imports ordenados
+    └── modules/
+        ├── foundation-dashboard.css  # variables, botones, cards y dashboard base
+        ├── overlays-drawers.css      # drawers, overlays, ayuda y modales
+        ├── data-review.css           # tablas, Excel-like views, notificaciones y revisión
+        ├── interaction-motion.css    # scroll, rubber band, Motion, Pac-Man y LAB
+        ├── navigation-footer.css     # navbar, flujo de datos y footer
+        └── sources-drawer.css        # workspace visual de Fuentes
 ```
 
 ## Fuentes de datos
@@ -612,7 +617,8 @@ REPORTAR usa `development_feedback` con permiso de inserción y sin lectura desd
 - React Bits: se toman patrones/componentes puntuales y se guardan localmente en `src/components/ui/`; no se instala una librería monolítica.
 - `@tanstack/react-virtual`: virtualiza la tabla de conciliación para no montar miles de filas simultáneamente. En React 19 se usa `useFlushSync: false`.
 - `src/components/visual/ScrollEffects.jsx`: mantiene scroll nativo en el centro y aplica rubber band únicamente en los extremos. No crear una segunda implementación paralela del efecto.
-- `src/styles/pacman.css` es únicamente el entrypoint de estilos. Las reglas viven en `src/styles/pacman/*.css` y se importan en orden numérico para conservar la cascada. No volver a concentrar reglas de features dentro del entrypoint.
+- `src/styles/app.css` es únicamente el entrypoint de estilos. Las reglas viven en `src/styles/modules/` con nombres por responsabilidad. Mantener el orden de imports de `app.css` porque conserva la cascada actual; no meter reglas de features directamente en el entrypoint.
+- Mapa rápido CSS: dashboard/base → `foundation-dashboard.css`; drawers/ayuda → `overlays-drawers.css`; visores/tablas/notificaciones → `data-review.css`; scroll/rubber/Pac-Man → `interaction-motion.css`; navbar/footer → `navigation-footer.css`; Fuentes → `sources-drawer.css`.
 
 ### Instalación en redes corporativas
 
