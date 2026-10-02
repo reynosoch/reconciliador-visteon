@@ -1,5 +1,18 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-02-sources-workspace",
+    date: "02 OCT 2026",
+    title: "Fuentes universales y BOM Focus",
+    summary: "Fuentes ahora funciona como un workspace compacto para cargar, revisar, reemplazar y quitar archivos sin perder control del origen.",
+    items: [
+      "Entrada universal con selección múltiple y drag & drop para TXT, CSV, XLSX y respaldos BOM JSON.",
+      "Detección por nombre o por columnas: QAD, Áreas, ISPBB, Cost, BOM y 4Wall pueden mezclarse en una sola carga.",
+      "El bot 4Wall solo bloquea escaneos manuales; las demás referencias siguen disponibles durante su ejecución.",
+      "Cada fuente cargada conserva vista previa y acciones explícitas para reemplazar o quitar sin tocar las fórmulas del motor.",
+      "BOM conserva biblioteca incremental, archivos individuales y borrado controlado; BOM Focus permite revisar un Parent Item exacto sin ruido.",
+    ],
+  },
+  {
     id: "2026-10-01-motion-lab",
     date: "01 OCT 2026",
     title: "Scroll, Pac-Man y LAB visual",
