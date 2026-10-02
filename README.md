@@ -43,7 +43,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Fuentes/importación | `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`, `src/components/shell/SourcesDrawer.jsx` |
 | 4Wall automático | `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py` |
 | Supabase/BOM cloud | `src/services/bomCloud.js`, `supabase/migrations/` |
-| Scroll/rubber band | `src/components/visual/ScrollEffects.jsx`, luego CSS específico en `src/styles/pacman.css` |
+| Scroll/rubber band | `src/components/visual/ScrollEffects.jsx`, luego `src/styles/pacman.css` (entrypoint) y el módulo correspondiente en `src/styles/pacman/` |
 | Excel/exportación | `src/services/exportInventoryWorkbook.js`, `src/services/exportBomWorkbook.js` |
 | Persistencia local | `src/services/browserStorage.js` |
 | Shell/drawers | `src/components/shell/` |
@@ -195,7 +195,15 @@ src/
 │   ├── help/
 │   ├── shell/
 │   └── visual/
-└── styles/pacman.css
+└── styles/
+    ├── pacman.css              # entrypoint; solo imports ordenados
+    └── pacman/
+        ├── 00-foundation.css
+        ├── 10-shell-overlays.css
+        ├── 20-data-surfaces.css
+        ├── 30-interaction-motion.css
+        ├── 40-current-shell.css
+        └── 50-sources.css
 ```
 
 ## Fuentes de datos
@@ -604,6 +612,7 @@ REPORTAR usa `development_feedback` con permiso de inserción y sin lectura desd
 - React Bits: se toman patrones/componentes puntuales y se guardan localmente en `src/components/ui/`; no se instala una librería monolítica.
 - `@tanstack/react-virtual`: virtualiza la tabla de conciliación para no montar miles de filas simultáneamente. En React 19 se usa `useFlushSync: false`.
 - `src/components/visual/ScrollEffects.jsx`: mantiene scroll nativo en el centro y aplica rubber band únicamente en los extremos. No crear una segunda implementación paralela del efecto.
+- `src/styles/pacman.css` es únicamente el entrypoint de estilos. Las reglas viven en `src/styles/pacman/*.css` y se importan en orden numérico para conservar la cascada. No volver a concentrar reglas de features dentro del entrypoint.
 
 ### Instalación en redes corporativas
 
