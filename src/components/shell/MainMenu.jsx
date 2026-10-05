@@ -6,13 +6,19 @@ import SquishSwitch from "../ui/SquishSwitch.jsx";
 
 const DEV_ITEMS = [
   ["Análisis histórico", "Comparar inventarios y tendencias entre cortes."],
-  ["Reglas de investigación", "Configurar umbrales sin tocar fórmulas financieras."],
+  [
+    "Reglas de investigación",
+    "Configurar umbrales sin tocar fórmulas financieras.",
+  ],
   ["Centro de exportación", "Administrar reportes y plantillas compartibles."],
 ];
 
 export default function MainMenu({
   pacmanEnabled = true,
   reduceAnimations = false,
+  lightGlass = false,
+  onToggleLightGlass,
+  onOpenMyke,
   onTogglePacman,
   onToggleReduceAnimations,
   open,
@@ -30,14 +36,18 @@ export default function MainMenu({
   if (!open) return null;
   return (
     <OverlayPortal onClose={onClose}>
-      <div className="vi-global-overlay vi-menu-overlay" onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}>
+      <div
+        className="vi-global-overlay vi-menu-overlay"
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) onClose?.();
+        }}
+      >
         <RubberDrawer
           className="vi-menu-panel vi-liquid-drawer"
           onTouchStart={(event) => {
             const touch = event.touches?.[0];
-            if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
+            if (touch)
+              touchStart.current = { x: touch.clientX, y: touch.clientY };
           }}
           onTouchEnd={(event) => {
             const origin = touchStart.current;
@@ -54,7 +64,14 @@ export default function MainMenu({
               <p className="vi-eyebrow">MENÚ</p>
               <h2>Control de inventario</h2>
             </div>
-            <button type="button" className="vi-icon-close" onClick={onClose} aria-label="Cerrar menú">×</button>
+            <button
+              type="button"
+              className="vi-icon-close"
+              onClick={onClose}
+              aria-label="Cerrar menú"
+            >
+              ×
+            </button>
           </div>
 
           <section className="vi-menu-section vi-menu-snapshot-section">
@@ -98,7 +115,10 @@ export default function MainMenu({
             <span className="vi-menu-section-title">RENDIMIENTO</span>
             <div className="vi-menu-performance-copy">
               <strong>Movimiento y carga visual</strong>
-              <small>Controles locales para bajar trabajo gráfico sin tocar el scroll ni el rubber-band.</small>
+              <small>
+                Controles locales para bajar trabajo gráfico sin tocar el scroll
+                ni el rubber-band.
+              </small>
             </div>
             <div className="vi-menu-item vi-performance-toggle">
               <span>
@@ -115,13 +135,30 @@ export default function MainMenu({
                 ariaLabel="Quitar animaciones decorativas"
               />
             </div>
+            <div className="vi-menu-item vi-performance-toggle">
+              <span>
+                <strong>Vidrio ligero</strong>
+                <small>
+                  {lightGlass
+                    ? "Activo · Superficies sólidas, menos trabajo gráfico. Las animaciones conservan su preferencia."
+                    : "Reduce blur y sombras sin pausar animaciones ni cambiar el scroll."}
+                </small>
+              </span>
+              <SquishSwitch
+                checked={lightGlass}
+                onChange={() => onToggleLightGlass?.()}
+                ariaLabel="Usar vidrio ligero"
+              />
+            </div>
             <div className="vi-menu-item vi-pacman-toggle">
               <span>
                 <strong>Animación de Pac-Man</strong>
                 <small>
                   {reduceAnimations
                     ? "Pausada por Quitar animaciones · Tu preferencia se conserva."
-                    : (pacmanEnabled ? "Activada · Se guarda en este dispositivo." : "Desactivada · Se guarda en este dispositivo.")}
+                    : pacmanEnabled
+                      ? "Activada · Se guarda en este dispositivo."
+                      : "Desactivada · Se guarda en este dispositivo."}
                 </small>
               </span>
               <SquishSwitch
@@ -135,18 +172,56 @@ export default function MainMenu({
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">IDIOMA</span>
-            <div className="vi-menu-language" title="Selector de idioma en desarrollo">
-              <button type="button" className="is-active" disabled>ES</button>
+            <div
+              className="vi-menu-language"
+              title="Selector de idioma en desarrollo"
+            >
+              <button type="button" className="is-active" disabled>
+                ES
+              </button>
               <span>/</span>
-              <button type="button" disabled>EN</button>
+              <button type="button" disabled>
+                EN
+              </button>
               <em>DEV</em>
             </div>
           </section>
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">LAB</span>
-            <button type="button" className="vi-menu-item vi-logic-entry" onClick={() => { onClose?.(); onOpenEngineGuide?.(); }}>
-              <span><strong>Cómo funciona el motor</strong><small>Qué aporta cada archivo, cómo se reconoce el físico y de dónde salen NET, SWING y las advertencias.</small></span><b>›</b>
+            <button
+              type="button"
+              className="vi-menu-item"
+              onClick={() => {
+                onClose?.();
+                onOpenMyke?.();
+              }}
+            >
+              <span>
+                <strong>Myke · tu organizador</strong>
+                <small>
+                  Conoce a mi equipo, consulta documentación y abre la vista
+                  previa del chat.
+                </small>
+              </span>
+              <b>›</b>
+            </button>
+            <button
+              type="button"
+              className="vi-menu-item vi-logic-entry"
+              onClick={() => {
+                onClose?.();
+                onOpenEngineGuide?.();
+              }}
+            >
+              <span>
+                <strong>Cómo funciona el motor</strong>
+                <small>
+                  Qué aporta cada archivo, cómo se reconoce el físico y de dónde
+                  salen NET, SWING y las advertencias.
+                </small>
+              </span>
+              <b>›</b>
             </button>
             <button
               type="button"
@@ -158,7 +233,10 @@ export default function MainMenu({
             >
               <span>
                 <strong>Trazador de pieza</strong>
-                <small>Elige un PN y mira paso a paso cómo 4Wall, QAD, ISPBB, BOM y Cost Part producen su resultado.</small>
+                <small>
+                  Elige un PN y mira paso a paso cómo 4Wall, QAD, ISPBB, BOM y
+                  Cost Part producen su resultado.
+                </small>
               </span>
               <b>›</b>
             </button>
@@ -172,7 +250,10 @@ export default function MainMenu({
             >
               <span>
                 <strong>Ver animación</strong>
-                <small>Oculta temporalmente el dashboard y deja solo el ambiente Pac-Man en pantalla completa.</small>
+                <small>
+                  Oculta temporalmente el dashboard y deja solo el ambiente
+                  Pac-Man en pantalla completa.
+                </small>
               </span>
               <b>›</b>
             </button>
@@ -181,7 +262,12 @@ export default function MainMenu({
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">DEVELOPMENT</span>
             {DEV_ITEMS.map(([title, detail]) => (
-              <button type="button" className="vi-menu-item is-development" disabled key={title}>
+              <button
+                type="button"
+                className="vi-menu-item is-development"
+                disabled
+                key={title}
+              >
                 <span>
                   <strong>{title}</strong>
                   <small>{detail}</small>
@@ -190,8 +276,6 @@ export default function MainMenu({
               </button>
             ))}
           </section>
-
-
         </RubberDrawer>
       </div>
     </OverlayPortal>

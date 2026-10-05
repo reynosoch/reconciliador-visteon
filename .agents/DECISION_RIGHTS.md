@@ -5,7 +5,7 @@ There is one final decision owner per decision class. Contributors provide recom
 | Decision class | Final owner | Proposes / implements | Required review or evidence |
 | --- | --- | --- | --- |
 | Requested outcome and priority | Requesting human stakeholder | ORCH | Observable acceptance criteria and scope tradeoffs |
-| Work decomposition, sequencing and specialist assignment | ORCH | ORCH | Ownership map, dependency graph, execution capabilities and authorization |
+| Work decomposition, sequencing, specialist assignment and temporary position creation/merger/retirement | Myke (`ORCH`) | ORCH | Ownership map, dependency graph, execution capabilities and authorization; preserve accountability and required review coverage |
 | Technical design preserving existing inventory semantics | ORCH | Affected specialist | Interface acceptance by producer/consumer; risk-based QA |
 | Local design, copy, spacing and responsive behavior within scope | UX | UX | Existing visual language; source/domain review when explaining calculations |
 | Parser implementation preserving accepted schema and filters | ING | ING | DOM review of normalized meaning; import/provenance checks |

@@ -21,6 +21,7 @@ Paths below are repository-relative. Wildcards identify a family of files, not b
 | Verification and CI | QA | `scripts/verify-*.mjs`, `scripts/audit-css-usage.mjs`, `scripts/test_bot_control.py`, `.github/workflows/verify-main.yml` | Affected specialist reviews semantic coverage; ORCH owns gate policy |
 | Deployment and workflow automation | DATA | `.github/workflows/deploy-pages.yml`, `.github/workflows/gemini-code.yml`, `scripts/deploy-pages.mjs`, `scripts/extract-public-pages-env.mjs` | QA for release checks; SEC for workflow access; human authorizes deployment |
 | Integration and project knowledge | ORCH | `src/App.jsx`, `README.md`, `src/data/productUpdates.js`, `package.json`, `package-lock.json`, `.agents/` | Relevant boundary owner reviews; no concurrent writes |
+| Myke mascot and documented organization | ORCH | `src/domain/mykeOrganization.js`, `src/components/shell/MykePanel.jsx`, `src/components/visual/MykeGhost.jsx` | UX for presentation/performance; QA for document fidelity and honest inactive-chat state |
 
 ## Boundary contracts
 

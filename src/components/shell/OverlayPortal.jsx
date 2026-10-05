@@ -1,8 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { lockPageScroll, unlockPageScroll } from "../../services/overlayScroll.js";
+import {
+  lockPageScroll,
+  unlockPageScroll,
+} from "../../services/overlayScroll.js";
 
-export default function OverlayPortal({ children, onClose }) {
+export default function OverlayPortal({ children, onClose, className = "" }) {
   const root = useRef(null);
   const [marker] = useState(
     () => `vi-overlay-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -19,19 +22,26 @@ export default function OverlayPortal({ children, onClose }) {
     return () => {
       // A short inert visual snapshot lets the drawer finish its exit after React
       // closes it. It cannot receive input, retain scroll locks or run effects.
-      if (!host?.querySelector(".vi-rubber-viewport") ||
-          performance.now() - mountedAt < 200 ||
-          matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (
+        !host?.querySelector(".vi-rubber-viewport") ||
+        performance.now() - mountedAt < 200 ||
+        matchMedia("(prefers-reduced-motion: reduce)").matches
+      )
+        return;
       const snapshot = host.cloneNode(true);
       snapshot.classList.add("vi-overlay-exit");
       snapshot.inert = true;
       snapshot.setAttribute("aria-hidden", "true");
-      snapshot.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
+      snapshot
+        .querySelectorAll("[id]")
+        .forEach((node) => node.removeAttribute("id"));
       const originals = host.querySelectorAll(".vi-rubber-viewport");
       document.body.appendChild(snapshot);
-      snapshot.querySelectorAll(".vi-rubber-viewport").forEach((node, index) => {
-        node.scrollTop = originals[index]?.scrollTop || 0;
-      });
+      snapshot
+        .querySelectorAll(".vi-rubber-viewport")
+        .forEach((node, index) => {
+          node.scrollTop = originals[index]?.scrollTop || 0;
+        });
       const timer = setTimeout(() => snapshot.remove(), 160);
       snapshot.addEventListener("animationend", (event) => {
         if (event.target !== snapshot) return;
@@ -61,7 +71,9 @@ export default function OverlayPortal({ children, onClose }) {
 
     const key = (event) => {
       // A nested evidence viewer owns keyboard navigation until it closes.
-      const top = [...document.querySelectorAll(".vi-overlay-root:not(.vi-overlay-exit)")].at(-1);
+      const top = [
+        ...document.querySelectorAll(".vi-overlay-root:not(.vi-overlay-exit)"),
+      ].at(-1);
       if (top !== root.current || event.defaultPrevented) return;
       if (event.key === "Escape") {
         event.preventDefault();
@@ -110,5 +122,10 @@ export default function OverlayPortal({ children, onClose }) {
     };
   }, [marker]);
 
-  return createPortal(<div ref={root} className="vi-overlay-root">{children}</div>, document.body);
+  return createPortal(
+    <div ref={root} className={`vi-overlay-root ${className}`}>
+      {children}
+    </div>,
+    document.body,
+  );
 }

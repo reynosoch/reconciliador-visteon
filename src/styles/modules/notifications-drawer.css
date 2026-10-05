@@ -54,7 +54,7 @@
 .vi-notification-heading-copy .vi-eyebrow {
   margin: 0;
   color: #f4a25a !important;
-  font-size: 8px !important;
+  font-size:12px !important;
   font-weight: 900 !important;
   letter-spacing: .14em !important;
 }
@@ -63,7 +63,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #f7fbfc !important;
-  font-size: 19px !important;
+  font-size:21.28px !important;
   line-height: 1.1 !important;
   font-weight: 820 !important;
   letter-spacing: -.02em;
@@ -75,7 +75,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #91a8b2 !important;
-  font-size: 9px !important;
+  font-size:12px !important;
   line-height: 1.35 !important;
   white-space: nowrap;
 }
@@ -96,7 +96,7 @@
   padding: 0 6px 0 2px;
   color: #a9bdc5;
 }
-.vi-notification-head .vi-back-button > span { font-size: 23px; }
+.vi-notification-head .vi-back-button > span { font-size:25.76px; }
 .vi-notification-head-ghost {
   position: relative;
   width: 38px;
@@ -153,7 +153,7 @@
   border-radius: 6px !important;
   background: transparent !important;
   color: #879ea8 !important;
-  font-size: 8px !important;
+  font-size:12px !important;
   letter-spacing: .07em !important;
 }
 .vi-notification-mode-tabs button.is-active {
@@ -165,7 +165,7 @@
   height: 16px !important;
   background: #f5821f !important;
   color: #082536 !important;
-  font-size: 7px !important;
+  font-size:12px !important;
 }
 .vi-notification-list {
   display: grid;
@@ -185,12 +185,12 @@
 }
 .vi-notification-summary strong {
   color: #f1f7f8;
-  font-size: 15px;
+  font-size:16.8px;
   font-weight: 830;
 }
 .vi-notification-summary span {
   color: #8299a3;
-  font-size: 8px;
+  font-size:12px;
   font-weight: 760;
 }
 .vi-alert-summary {
@@ -216,11 +216,11 @@
 }
 .vi-notification-drawer .vi-alert-summary button > b {
   color: #e7f0f2 !important;
-  font-size: 8px;
+  font-size:12px;
 }
 .vi-notification-drawer .vi-alert-summary button > span {
   color: #8fa4ad !important;
-  font-size: 7px;
+  font-size:12px;
   font-weight: 850;
   letter-spacing: .045em;
   white-space: nowrap;
@@ -274,7 +274,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #eff6f8 !important;
-  font-size: 10px;
+  font-size:12px;
   font-weight: 820;
   white-space: nowrap;
 }
@@ -282,7 +282,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #8198a2 !important;
-  font-size: 8px;
+  font-size:12px;
   font-style: normal;
   white-space: nowrap;
 }
@@ -293,7 +293,7 @@
   border-radius: 5px;
   background: rgba(255,255,255,.025) !important;
   color: #7f959e !important;
-  font-size: 7px;
+  font-size:12px;
   font-weight: 900;
   text-align: center;
 }
@@ -304,7 +304,7 @@
 }
 .vi-notification-drawer .vi-operational-alert > b {
   color: #718b96;
-  font-size: 17px;
+  font-size:19.04px;
   font-weight: 400;
 }
 .vi-notification-empty-state {
@@ -322,11 +322,11 @@
 }
 .vi-notification-empty-state h3 {
   margin: 3px 0 5px !important;
-  font-size: 14px !important;
+  font-size:15.68px !important;
 }
 .vi-notification-empty-state p:not(.vi-eyebrow) {
   max-width: 42ch !important;
-  font-size: 9px !important;
+  font-size:12px !important;
   line-height: 1.45 !important;
 }
 .vi-notification-missing { margin-top: 10px !important; }
@@ -348,19 +348,19 @@
 .vi-product-update-card:first-child { border-top: 0 !important; }
 .vi-product-update-card h3 {
   margin: 4px 0 3px !important;
-  font-size: 12px !important;
+  font-size:13.44px !important;
 }
 .vi-product-update-card > p {
-  font-size: 9px !important;
+  font-size:12px !important;
   line-height: 1.4 !important;
 }
 .vi-product-update-card ul {
   margin-top: 7px !important;
   gap: 4px !important;
 }
-.vi-product-update-card li { font-size: 8px !important; }
+.vi-product-update-card li { font-size:12px !important; }
 .vi-product-update-meta span,
-.vi-product-update-meta em { font-size: 7px !important; }
+.vi-product-update-meta em { font-size:12px !important; }
 .vi-notification-drawer .vi-pager {
   min-height: 31px;
   margin-top: 1px;
@@ -369,7 +369,7 @@
   justify-content: center;
   gap: 7px;
   color: #8299a3;
-  font-size: 8px;
+  font-size:12px;
 }
 .vi-notification-drawer .vi-pager button {
   min-height: 28px !important;
@@ -378,7 +378,7 @@
   border-radius: 6px !important;
   background: rgba(255,255,255,.025) !important;
   color: #a9bbc2 !important;
-  font-size: 8px;
+  font-size:12px;
 }
 .vi-notification-drawer .vi-pager button:hover:not(:disabled) {
   border-color: rgba(245,130,31,.35) !important;

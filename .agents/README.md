@@ -1,6 +1,6 @@
 # Virtual engineering organization
 
-This directory defines how humans and agents deliver changes to the Inventory Reconciler together. It is an operating model: work intake, domain ownership, delegated authority, evidence contracts, review, escalation and release. The orchestrator acts as an Engineering Manager/Product Owner; specialists own technical analysis and implementation in their fields.
+This directory defines how humans and agents deliver changes to the Inventory Reconciler together. It is an operating model: work intake, domain ownership, delegated authority, evidence contracts, review, escalation and release. The orchestrator is **Myke** (stable role ID `ORCH`) and acts as an Engineering Manager/Product Owner; specialists own technical analysis and implementation in their fields.
 
 ## Start here
 

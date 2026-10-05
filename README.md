@@ -42,6 +42,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
 | Trazador de pieza / aprendizaje | `src/domain/partLearningTrace.js`, `src/domain/sourceEvidence.js`; UI: `src/components/shell/PartLogicTracer.jsx` + `SourcePreviewModal.jsx`; estilos en `data-review.css` |
 | LAB · Cómo funciona el motor | `src/domain/engineGuide.js`; UI: `src/components/shell/EngineGuideDrawer.jsx`, entrada en `MainMenu.jsx`; ejemplos calculados por `inventoryEngine`, separados del inventario real |
+| Myke / organización virtual | `.agents/ROLES.md` define equipo y textos; `src/domain/mykeOrganization.js` lee documentación; UI en `MykePanel.jsx` + `visual/MykeGhost.jsx`; chat visual sin conexión IA |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
@@ -86,6 +87,7 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 - TanStack Virtual en la tabla grande.
 - El scroll normal es nativo. Motion usa `useSpring` únicamente para rubber band/overscroll y transiciones puntuales del shell; nunca sustituye `scrollTop`.
 - SheetJS fijado localmente en `vendor/xlsx-0.20.3.tgz`.
+- Paneles pesados usan `DeferredPanel` + `React.lazy`: se cargan al primer uso, conservando las búsquedas/selecciones que antes persistían al cerrar. Vidrio ligero y Quitar animaciones son preferencias independientes; no cambian scroll ni cálculos.
 - `README.md` es la fuente de verdad de reglas, arquitectura y decisiones del proyecto. La coordinación de la organización virtual vive en [`.agents/README.md`](.agents/README.md); los agentes leen después [`.agents/AGENTS.md`](.agents/AGENTS.md) y solo los roles/contratos necesarios para su tarea.
 
 ### Handoff UI actual — 02 OCT 2026
@@ -96,7 +98,7 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 - Pac-Man ambiental continúa durante scroll/rubber band cuando está habilitado. El menú guarda preferencias persistentes en **RENDIMIENTO**: Pac-Man puede apagarse por separado y **Quitar animaciones** pausa movimiento decorativo/transiciones sin quitar scroll ni rubber band. **LAB → Ver animación** sigue siendo una vista explícita a pantalla completa.
 - **Bot 4Wall**: el mismo control seguro se abre desde navbar o hamburguesa. El menú muestra estado rápido CORRIENDO/ABRIR y el drawer del bot incluye una animación de scanner puramente visual; proceso, PID y snapshot siempre provienen del controlador real, no de la animación.
 - **Ayuda**: los botones `?` siguen usando `HelpDrawer.jsx` + `helpContent.js`, pero el drawer visual es compacto y consistente con Fuentes/Notificaciones (Qué significa → Fuente → Método → Detalles).
-- Footer: está **pegado al final del dashboard**, con logo Visteon, `/reynosoch`, Fuentes/Calidad/Entorno/Versión centrados, snapshot y créditos lowkey. El botón **Reportar** se desvanece cuando el footer entra al viewport para no taparlo.
+- Footer: está **pegado al final del dashboard**, con logo Visteon, `/reynosoch`, Fuentes/Calidad/Entorno/Versión centrados, snapshot y créditos lowkey. El botón **Reportar** permanece disponible también al llegar al footer; el acceso flotante conserva su espacio.
 - Fuentes: `SourcesDrawer.jsx` usa entrada universal multiarquivo, filas compactas de estado y resultados de carga colapsados: muestra 3 y luego **Ver más / Ver menos**. BOM conserva lista/preview/borrado controlado y BOM Focus.
 - El drawer de Fuentes fue reconstruido recientemente; cualquier siguiente ajuste debe ser **visual/ergonómico**, no volver a tarjetas grandes ni desplegar todos los archivos de golpe.
 - Antes de editar UI, revisar los últimos commits de `main` porque puede haber trabajo concurrente de otros agentes.
@@ -395,6 +397,8 @@ No guardar usuarios, contraseñas ni `service_role` dentro del frontend o del re
 Antes de producción, un administrador de Supabase debe verificar que `anon` y `authenticated` no puedan ejecutar `reemplazar_escaneos`, que RLS esté habilitado y que la escritura del snapshot quede reservada al rol del bot/servidor.
 
 ## Metadatos de snapshot
+
+Un snapshot es una copia de los escaneos de un momento concreto. Permite comparar ese conteo con el QAD congelado; la última consulta de la app no demuestra cuándo se extrajo el reporte original.
 
 El extractor prepara:
 
@@ -701,4 +705,16 @@ Sí conservar aunque no aparezcan directamente en la UI: migraciones históricas
 
 El modelo operativo está en [`.agents/README.md`](.agents/README.md): guía humana, reglas para agentes, orquestador Engineering Manager/Product Owner, especialistas, ownership del dominio/código, derechos de decisión, contratos versionados, matriz de interacción, escalaciones y gates de entrega. Incluye plantilla de trabajo y un caso ilustrativo del trazador con evidencia; no son resultados ejecutados.
 
+El orquestador se llama **Myke** y conserva el identificador `ORCH`. Puede adaptar puestos temporales al trabajo, manteniendo responsables y revisiones; los cambios permanentes siguen los derechos de decisión del modelo. La mascota web muestra esa organización; las instrucciones dadas en Work/Chat se coordinan desde esos entornos, no desde un chat autónomo en el dashboard.
+
 Puede usarse con un ejecutor, varios agentes cuando la sesión lo permita, o coordinación humana. Cada revisión declara su independencia y el SHA/árbol verificado. La autoridad humana ya concedida se conserva; cambiar reglas financieras, operar datos compartidos o desplegar requiere la autoridad correspondiente. La documentación no instala un scheduler, validación automática de mensajes, autenticación empresarial ni agentes desatendidos. Los controles automáticos actuales siguen siendo `npm run build` y Verify main; Pages continúa manual.
+
+### Myke, legibilidad y superficies — 05/10/2026
+
+- **Reportar** está siempre accesible, incluido el footer, otros drawers y LAB de animación. Usa el overlay compartido para Escape/foco/scroll y conserva borrador, captura y envío existentes. Nuevas áreas: Trazador, visor Excel/evidencia, guía del motor/LAB, Myke, ayuda, exportación, rendimiento, scroll, menús/vidrio y footer.
+- Tipografía ampliada en toda la aplicación; formularios de reporte a 16 px, controles táctiles y menús con mayor espaciado. Vidrio más denso: superficies oscuras con mayor opacidad y un blur moderado solo en el panel; encabezados/capas internas conservan lectura sin sumar filtros.
+- **Vidrio ligero** en RENDIMIENTO quita blur/sombras y usa superficies sólidas. Es independiente de **Quitar animaciones** y Pac-Man, y se guarda localmente. No se cambia física Motion, scroll nativo, implementación de `ScrollEffects` ni animación Pac-Man.
+- **Myke** es un fantasma vectorial con movimiento CSS pequeño, sin loop JS adicional. Vista previa flotante de chat con campo/envío deshabilitados, equipo leído de `.agents/ROLES.md` y ayuda extraída del README con referencia visible; no hay API, IA externa ni reparto real de tareas desde la página. Respeta Quitar animaciones y `prefers-reduced-motion`.
+- Se reutilizan React/Motion/TanStack instalados; no se agregan librerías. Fuentes, Bot, trazador, guía y Myke se cargan al primer uso y conservan estado al cerrar; el visor de inspección se carga al abrirlo y mantiene su ciclo de cierre anterior; polling del inventario/estado del bot y notificaciones siguen activos. XLSX y evidencia mantienen carga/paginación existentes. Los cambios se verifican con fixtures/mocks; no sustituyen pruebas en Safari/iPad físico ni ejecución corporativa real de 4Wall.
+
+- Verificación de esta actualización: navegación responsive en Chromium a 1366/1024/768/390 px, Reportar/borrador/overlays anidados, equipo/documentación de Myke, preferencias independientes y recarga/scroll rápido; 350 PN sintéticos a 1366/390 px verifican virtualización, NET/SWING, diez pasos, visor y búsqueda retenida. Safari/iPad físico y conexión IA siguen fuera de estas pruebas.

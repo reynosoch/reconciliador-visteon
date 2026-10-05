@@ -1,5 +1,17 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-myke-reading-performance",
+    date: "05 OCT 2026",
+    title: "Myke, texto más claro y vidrio con menos carga",
+    summary: "Myke llega como fantasma organizador con equipo y ayuda desde la documentación. Reportar queda siempre disponible y los paneles se cargan al primer uso.",
+    items: [
+      "Myke: vista previa animada de chat, siete especialistas de .agents y consultas al README; IA todavía sin conectar.",
+      "Reportar permanece visible junto al footer y agrega las áreas del trazador, visor, LAB, Myke y rendimiento.",
+      "Texto más grande, menús más cómodos y vidrio oscuro más denso con filtros limitados a una superficie.",
+      "Vidrio ligero reduce blur y sombras sin cambiar las preferencias de animación; búsquedas y selección se conservan al cerrar los paneles.",
+    ],
+  },
+  {
     id: "2026-10-05-engine-guide-and-cases",
     date: "05 OCT 2026",
     title: "LAB: entiende el motor y el origen de cada resultado",
