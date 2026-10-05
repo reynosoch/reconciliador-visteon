@@ -1,21 +1,7 @@
-import { useEffect } from "react";
 import { HelpButton } from "../help/HelpDrawer";
 import { countDataWarnings } from "../../domain/dataQuality.js";
 
 const number = (value) => new Intl.NumberFormat("es-MX").format(Number(value) || 0);
-const MYKE_DATA_VIEWS = new Set([
-  "overview",
-  "scans",
-  "alerts",
-  "areas",
-  "qad",
-  "cost",
-  "bom",
-  "parents",
-  "bomReview",
-  "ispbb",
-  "phantoms",
-]);
 
 function HealthItem({ id, label, value, tone = "normal", activeView, onSelect }) {
   return (
@@ -52,15 +38,6 @@ export default function DataHealthBar({
   const scanUsable = manualScan || (devSnapshot && liveReady);
   const warningCount = countDataWarnings(diagnostics, referencesReady);
 
-  useEffect(() => {
-    const openFromMyke = (event) => {
-      const view = event.detail?.view;
-      if (MYKE_DATA_VIEWS.has(view)) onSelect?.(view);
-    };
-    window.addEventListener("visteon:open-data-view", openFromMyke);
-    return () =>
-      window.removeEventListener("visteon:open-data-view", openFromMyke);
-  }, [onSelect]);
 
   return (
     <section className="vi-panel-flat vi-health-bar" aria-label="Estado de las fuentes">

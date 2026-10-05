@@ -1,9 +1,23 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-myke-chat-faq",
+    date: "05 OCT 2026",
+    title: "Myke se asoma: chat pequeño, preguntas y equipo",
+    summary:
+      "Myke más amable, sin recuadro y escondido en el borde: tócalo para conversar u ocúltalo con su X.",
+    items: [
+      "Chat sobre motor, código, NET, SWING, Phantom, alertas y fuentes, basado en la documentación; IA externa aún sin conectar.",
+      "Preguntas frecuentes con visor Excel de archivos reales, recorrido visual y acceso al trazador.",
+      "Mascota naranja que saluda y sigue tu escritura; posición y visibilidad guardadas. Ocúltala con su X o desde el menú y conserva el chat.",
+      "Equipo con siete puestos y sus funciones, sin claves internas; chat pequeño desde la mascota y panel completo desde hamburguesa.",
+    ],
+  },
+  {
     id: "2026-10-05-myke-reading-performance",
     date: "05 OCT 2026",
     title: "Myke, texto más claro y vidrio con menos carga",
-    summary: "Myke llega como fantasma organizador con equipo y ayuda desde la documentación. Reportar queda siempre disponible y los paneles se cargan al primer uso.",
+    summary:
+      "Myke llega como fantasma organizador con equipo y ayuda desde la documentación. Reportar queda siempre disponible y los paneles se cargan al primer uso.",
     items: [
       "Myke: vista previa animada de chat, siete especialistas de .agents y consultas al README; IA todavía sin conectar.",
       "Reportar permanece visible junto al footer y agrega las áreas del trazador, visor, LAB, Myke y rendimiento.",
@@ -15,7 +29,8 @@ export const PRODUCT_UPDATES = [
     id: "2026-10-05-engine-guide-and-cases",
     date: "05 OCT 2026",
     title: "LAB: entiende el motor y el origen de cada resultado",
-    summary: "Una guía independiente explica los archivos, Phantom/BOM, NET y SWING. El trazador muestra casos recomendados y evidencia desde cada campo del resumen.",
+    summary:
+      "Una guía independiente explica los archivos, Phantom/BOM, NET y SWING. El trazador muestra casos recomendados y evidencia desde cada campo del resumen.",
     items: [
       "Cómo funciona el motor: seis etapas navegables y tres ejemplos calculados por el motor, separados de tu inventario.",
       "Lista de PN y origen en el visor Excel; recomendaciones con casos distintos de las fuentes cargadas.",
@@ -27,7 +42,8 @@ export const PRODUCT_UPDATES = [
     id: "2026-10-05-tracer-origins-scroll",
     date: "05 OCT 2026",
     title: "Entiende de dónde viene cada PN",
-    summary: "El Trazador explica la lista inicial, abre cada caso desde arriba y muestra los datos originales en pequeñas hojas tipo Excel.",
+    summary:
+      "El Trazador explica la lista inicial, abre cada caso desde arriba y muestra los datos originales en pequeñas hojas tipo Excel.",
     items: [
       "PN sugeridos con origen 4Wall / QAD / BOM y archivos o snapshot activos; descripción con su propia evidencia.",
       "Tablas originales dentro de los pasos: toca una celda para ver original, normalizado y regla; Ver en fuente abre el mismo visor paginado.",
@@ -38,7 +54,8 @@ export const PRODUCT_UPDATES = [
     id: "2026-10-05-learning-tracer-bot",
     date: "05 OCT 2026",
     title: "Estudia una pieza, desde su fuente hasta el resultado",
-    summary: "El Trazador muestra diez pasos con evidencia real, fórmulas del motor y una conclusión del caso. El Bot prioriza estado y acciones.",
+    summary:
+      "El Trazador muestra diez pasos con evidencia real, fórmulas del motor y una conclusión del caso. El Bot prioriza estado y acciones.",
     items: [
       "Resumen del PN y timeline: busca, encontró, por qué importa, resultado y siguiente paso.",
       "Ver en fuente reutiliza el visor: filas del cálculo, columnas resaltadas y explicación de cada celda; 60 filas por página.",
@@ -51,7 +68,8 @@ export const PRODUCT_UPDATES = [
     id: "2026-10-02-sources-workspace",
     date: "02 OCT 2026",
     title: "Fuentes universales y BOM Focus",
-    summary: "Fuentes ahora funciona como un workspace compacto para cargar, revisar, reemplazar y quitar archivos sin perder control del origen.",
+    summary:
+      "Fuentes ahora funciona como un workspace compacto para cargar, revisar, reemplazar y quitar archivos sin perder control del origen.",
     items: [
       "Entrada universal con selección múltiple y drag & drop para TXT, CSV, XLSX y respaldos BOM JSON.",
       "Detección por nombre o por columnas: QAD, Áreas, ISPBB, Cost, BOM y 4Wall pueden mezclarse en una sola carga.",
@@ -64,7 +82,8 @@ export const PRODUCT_UPDATES = [
     id: "2026-10-01-motion-lab",
     date: "01 OCT 2026",
     title: "Scroll, Pac-Man y LAB visual",
-    summary: "La experiencia del dashboard ahora conserva movimiento continuo y transiciones físicas más suaves.",
+    summary:
+      "La experiencia del dashboard ahora conserva movimiento continuo y transiciones físicas más suaves.",
     items: [
       "Rubber band con spring de Motion: más sensible, sin vibración y con regreso limpio en los bordes.",
       "Flujo de datos se repliega al bajar y reaparece al subir con la misma sensación de resorte.",
@@ -77,7 +96,8 @@ export const PRODUCT_UPDATES = [
     id: "2026-10-01-logic-scroll",
     date: "01 OCT 2026",
     title: "Trazabilidad y experiencia de uso",
-    summary: "Cambios recientes del reconciliador para entender mejor la lógica y trabajar sin perder contexto.",
+    summary:
+      "Cambios recientes del reconciliador para entender mejor la lógica y trabajar sin perder contexto.",
     items: [
       "Nuevo Trazador de pieza: explica 4Wall → localidad QAD → ISPBB/Phantom → BOM → Cost Part → NET → SWING → clasificación.",
       "La versión inicial exigía todas las fuentes; desde 05/10 permite estudiar casos parciales con avisos explícitos.",

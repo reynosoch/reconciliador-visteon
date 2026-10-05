@@ -2,9 +2,8 @@ import ScrollEffects from "./components/visual/ScrollEffects.jsx";
 import { AmbientChase } from "./components/visual/PacmanGlyphs.jsx";
 import MeetingPriorities from "./components/dashboard/MeetingPriorities.jsx";
 import { lazy, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import DeferredPanel from "./components/shell/DeferredPanel.jsx";
-import MykeGhost from "./components/visual/MykeGhost.jsx";
+import MykeMascot from "./components/visual/MykeMascot.jsx";
 import CommandHeader from "./components/shell/CommandHeader";
 import DataHealthBar from "./components/dashboard/DataHealthBar";
 import FinancialGrid from "./components/dashboard/FinancialGrid";
@@ -101,6 +100,20 @@ export default function App() {
     document.body.classList.toggle("vi-performance-light-glass", lightGlass);
     return () => document.body.classList.remove("vi-performance-light-glass");
   }, [lightGlass]);
+  const [mykeEnabled, setMykeEnabled] = useState(
+    () =>
+      safeReadJson(
+        "visteon.ui.mykeEnabled.v1",
+        !safeReadJson("visteon.ui.mykeDisabled.v1", false).value,
+      ).value !== false,
+  );
+  const [mykeTab, setMykeTab] = useState("chat");
+  const [mykeCompact, setMykeCompact] = useState(false);
+  const [mykeEdge, setMykeEdge] = useState("left");
+  const [tracerRequest, setTracerRequest] = useState(null);
+  useEffect(() => {
+    safeWriteJson("visteon.ui.mykeEnabled.v1", mykeEnabled);
+  }, [mykeEnabled]);
   const shellRef = useRef(null);
   const mainMotionRef = useRef(null);
   const [sourcesOpen, setSourcesOpen] = useState(false),
@@ -614,7 +627,13 @@ export default function App() {
         reduceAnimations={reduceAnimations}
         lightGlass={lightGlass}
         onToggleLightGlass={() => setLightGlass((value) => !value)}
-        onOpenMyke={() => setMykeOpen(true)}
+        mykeEnabled={mykeEnabled}
+        onToggleMyke={() => setMykeEnabled((value) => !value)}
+        onOpenMyke={(tab = "chat") => {
+          setMykeTab(tab);
+          setMykeCompact(false);
+          setMykeOpen(true);
+        }}
         onTogglePacman={() => setPacmanEnabled((enabled) => !enabled)}
         onToggleReduceAnimations={() =>
           setReduceAnimations((enabled) => !enabled)
@@ -623,8 +642,10 @@ export default function App() {
         onClose={() => setMenuOpen(false)}
         onOpenBot={() => setBotOpen(true)}
         botRunning={botRunning}
-        onOpenLogicTracer={() => setLogicTracerOpen(true)}
-        onOpenEngineGuide={() => setEngineGuideOpen(true)}
+        onOpenLogicTracer={() => {
+          setTracerRequest(null);
+          setLogicTracerOpen(true);
+        }}
         onOpenAnimationLab={() => setAnimationLabOpen(true)}
         snapshotMeta={inventory.snapshotMeta}
         scanCount={inventory.scanCount}
@@ -635,6 +656,7 @@ export default function App() {
           open={logicTracerOpen}
           onClose={() => setLogicTracerOpen(false)}
           reconciliation={inventory.reconciliation}
+          entryRequest={tracerRequest}
           sources={references.sources}
           scanReady={Boolean(
             inventory.lastUpdated && inventory.snapshotMeta?.complete,
@@ -650,7 +672,10 @@ export default function App() {
         <EngineGuideDrawer
           open={engineGuideOpen}
           onClose={() => setEngineGuideOpen(false)}
-          onOpenTracer={() => setLogicTracerOpen(true)}
+          onOpenTracer={(pn) => {
+            setTracerRequest(pn ? { pn } : null);
+            setLogicTracerOpen(true);
+          }}
           sources={references.sources}
           scanRows={inventory.scanRows}
           scanReady={Boolean(
@@ -665,23 +690,41 @@ export default function App() {
           open={mykeOpen}
           onClose={() => setMykeOpen(false)}
           onOpenEngineGuide={() => setEngineGuideOpen(true)}
-          onOpenTracer={() => setLogicTracerOpen(true)}
+          onOpenTracer={(pn) => {
+            setTracerRequest(pn ? { pn } : null);
+            setLogicTracerOpen(true);
+          }}
+          onOpenSources={() => setSourcesOpen(true)}
+          onOpenDataAlerts={() => {
+            setDataNavigation(null);
+            setActiveDataView("alerts");
+          }}
+          initialTab={mykeTab}
+          compact={mykeCompact}
+          edge={mykeEdge}
+          onExpand={() => setMykeCompact(false)}
+          sources={references.sources}
+          scanRows={inventory.scanRows}
+          scanReady={Boolean(
+            inventory.lastUpdated && inventory.snapshotMeta?.complete,
+          )}
+          snapshotMeta={inventory.snapshotMeta}
         />
       </DeferredPanel>
-      {createPortal(
-        <button
-          type="button"
-          className="vi-myke-launcher"
-          aria-label="Abrir Myke"
-          aria-expanded={mykeOpen}
-          onClick={() => setMykeOpen(true)}
-        >
-          <MykeGhost />
-          <span>
-            Myke<small>Tu organizador</small>
-          </span>
-        </button>,
-        document.body,
+      {mykeEnabled && (
+        <MykeMascot
+          open={mykeOpen}
+          onOpen={(edge) => {
+            setMykeTab("chat");
+            setMykeEdge(edge);
+            setMykeCompact(true);
+            setMykeOpen(true);
+          }}
+          onDisable={() => {
+            setMykeEnabled(false);
+            setMykeOpen(false);
+          }}
+        />
       )}
       <DevFeedback
         key="feedback"

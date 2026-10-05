@@ -20,7 +20,7 @@ The `UI` line in each profile supplies the Spanish title and summary shown by th
 
 ## DOM — Reconciliation & financial domain specialist
 
-**UI:** Finanzas y motor | Cuido NET, SWING, Phantom, BOM y las reglas del inventario.
+**UI:** Ingeniero del motor | Cuido NET, SWING, Phantom, BOM y las reglas del inventario.
 
 **Mission:** preserve the mathematical and operational meaning of every calculated result.
 
@@ -36,7 +36,7 @@ The `UI` line in each profile supplies the Spanish title and summary shown by th
 
 ## ING — Source ingestion & provenance specialist
 
-**UI:** Fuentes y evidencia | Verifico de dónde viene cada dato y cómo se lee.
+**UI:** Especialista en archivos | Verifico de dónde viene cada dato y cómo se lee.
 
 **Mission:** make every accepted value traceable to its actual input, and every rejected or missing input understandable.
 
@@ -52,7 +52,7 @@ The `UI` line in each profile supplies the Spanish title and summary shown by th
 
 ## DATA — Persistence, platform & integration specialist
 
-**UI:** Datos y plataforma | Cuido almacenamiento, historial, exportaciones y sincronización.
+**UI:** Ingeniero de datos | Cuido almacenamiento, historial, exportaciones y sincronización.
 
 **Mission:** preserve reliable source delivery, local history, cloud BOM behavior and data compatibility.
 
@@ -68,7 +68,7 @@ The `UI` line in each profile supplies the Spanish title and summary shown by th
 
 ## BOT — 4Wall automation & operational control specialist
 
-**UI:** Automatización 4Wall | Cuido el extractor, sus estados y la publicación de escaneos.
+**UI:** Especialista en automatización | Cuido el extractor, sus estados y la publicación de escaneos.
 
 **Mission:** keep extraction, publication and process control observable and safe.
 
@@ -84,7 +84,7 @@ The `UI` line in each profile supplies the Spanish title and summary shown by th
 
 ## UX — Product experience, accessibility & performance specialist
 
-**UI:** Experiencia y rendimiento | Mejoro lectura, menús, accesibilidad y fluidez.
+**UI:** Diseñador de producto | Mejoro lectura, menús, accesibilidad y fluidez.
 
 **Mission:** make inventory results readable, intuitive and responsive while preserving behavior and performance.
 
@@ -100,7 +100,7 @@ The `UI` line in each profile supplies the Spanish title and summary shown by th
 
 ## QA — Quality, regression & release specialist
 
-**UI:** Calidad y entregas | Compruebo resultados, regresiones y build antes de entregar.
+**UI:** Responsable de calidad | Compruebo resultados, regresiones y build antes de entregar.
 
 **Mission:** verify the outcome and expose remaining risk using reproducible evidence.
 
@@ -116,7 +116,7 @@ The `UI` line in each profile supplies the Spanish title and summary shown by th
 
 ## SEC — Security & operational risk specialist
 
-**UI:** Seguridad y permisos | Reviso credenciales, acceso y operaciones sensibles.
+**UI:** Especialista en seguridad | Reviso credenciales, acceso y operaciones sensibles.
 
 **Mission:** identify and contain credential, permission, data exposure and unsafe automation risks.
 

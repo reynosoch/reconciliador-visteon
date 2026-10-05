@@ -1,9 +1,8 @@
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import SnapshotStamp from "./SnapshotStamp.jsx";
 import SquishSwitch from "../ui/SquishSwitch.jsx";
-import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
 
 const DEV_ITEMS = [
   ["Análisis histórico", "Comparar inventarios y tendencias entre cortes."],
@@ -13,7 +12,6 @@ const DEV_ITEMS = [
   ],
   ["Centro de exportación", "Administrar reportes y plantillas compartibles."],
 ];
-const MYKE_DISABLED_KEY = "visteon.ui.mykeDisabled.v1";
 
 export default function MainMenu({
   pacmanEnabled = true,
@@ -21,6 +19,8 @@ export default function MainMenu({
   lightGlass = false,
   onToggleLightGlass,
   onOpenMyke,
+  mykeEnabled = true,
+  onToggleMyke,
   onTogglePacman,
   onToggleReduceAnimations,
   open,
@@ -28,23 +28,12 @@ export default function MainMenu({
   onOpenBot,
   botRunning = false,
   onOpenLogicTracer,
-  onOpenEngineGuide,
   onOpenAnimationLab,
   snapshotMeta,
   scanCount = 0,
   lastUpdated,
 }) {
   const touchStart = useRef(null);
-  const [mykeDisabled, setMykeDisabled] = useState(
-    () => safeReadJson(MYKE_DISABLED_KEY, false).value === true,
-  );
-
-  useEffect(() => {
-    safeWriteJson(MYKE_DISABLED_KEY, mykeDisabled);
-    document.body.classList.toggle("vi-myke-mascot-off", mykeDisabled);
-    return () => document.body.classList.remove("vi-myke-mascot-off");
-  }, [mykeDisabled]);
-
   if (!open) return null;
   return (
     <OverlayPortal onClose={onClose}>
@@ -125,6 +114,23 @@ export default function MainMenu({
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">MYKE</span>
+            <div className="vi-menu-item vi-performance-toggle">
+              <span>
+                <strong>
+                  {mykeEnabled ? "Desactivar Myke" : "Activar Myke"}
+                </strong>
+                <small>
+                  {mykeEnabled
+                    ? "Oculta la mascota; el chat sigue aquí en el menú."
+                    : "Muestra el fantasma naranja. Arrástralo al borde que prefieras."}
+                </small>
+              </span>
+              <SquishSwitch
+                checked={mykeEnabled}
+                onChange={() => onToggleMyke?.()}
+                ariaLabel="Mostrar mascota Myke"
+              />
+            </div>
             <button
               type="button"
               className="vi-menu-item"
@@ -134,29 +140,31 @@ export default function MainMenu({
               }}
             >
               <span>
-                <strong>Chat con Myke</strong>
+                <strong>Chatear con Myke</strong>
                 <small>
-                  Pregunta por reglas, fuentes, alertas o un PN y abre la
-                  evidencia desde la misma app.
+                  Pregunta sobre el reconciliador, abre sus fuentes y conoce al
+                  equipo.
                 </small>
               </span>
               <b>›</b>
             </button>
-            <div className="vi-menu-item vi-performance-toggle">
+            <button
+              type="button"
+              className="vi-menu-item vi-logic-entry"
+              onClick={() => {
+                onClose?.();
+                onOpenMyke?.("help");
+              }}
+            >
               <span>
-                <strong>Desactivar Myke</strong>
+                <strong>Preguntas frecuentes</strong>
                 <small>
-                  {mykeDisabled
-                    ? "Activo · La mascota está oculta. El chat sigue disponible arriba."
-                    : "Oculta solo la mascota flotante; no desactiva su ayuda."}
+                  Qué aporta cada archivo, cómo se reconoce el físico y de dónde
+                  salen NET, SWING y las advertencias.
                 </small>
               </span>
-              <SquishSwitch
-                checked={mykeDisabled}
-                onChange={() => setMykeDisabled((value) => !value)}
-                ariaLabel="Desactivar mascota Myke"
-              />
-            </div>
+              <b>›</b>
+            </button>
           </section>
 
           <section className="vi-menu-section vi-menu-performance-section">
@@ -237,23 +245,6 @@ export default function MainMenu({
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">LAB</span>
-            <button
-              type="button"
-              className="vi-menu-item vi-logic-entry"
-              onClick={() => {
-                onClose?.();
-                onOpenEngineGuide?.();
-              }}
-            >
-              <span>
-                <strong>Cómo funciona el motor</strong>
-                <small>
-                  Qué aporta cada archivo, cómo se reconoce el físico y de dónde
-                  salen NET, SWING y las advertencias.
-                </small>
-              </span>
-              <b>›</b>
-            </button>
             <button
               type="button"
               className="vi-menu-item vi-logic-entry"

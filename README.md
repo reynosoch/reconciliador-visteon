@@ -42,7 +42,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
 | Trazador de pieza / aprendizaje | `src/domain/partLearningTrace.js`, `src/domain/sourceEvidence.js`; UI: `src/components/shell/PartLogicTracer.jsx` + `SourcePreviewModal.jsx`; estilos en `data-review.css` |
 | LAB · Cómo funciona el motor | `src/domain/engineGuide.js`; UI: `src/components/shell/EngineGuideDrawer.jsx`, entrada en `MainMenu.jsx`; ejemplos calculados por `inventoryEngine`, separados del inventario real |
-| Myke / organización virtual | `.agents/ROLES.md` define equipo y textos; `src/domain/mykeOrganization.js` lee documentación; UI en `MykePanel.jsx` + `visual/MykeGhost.jsx`; chat visual sin conexión IA |
+| Myke / organización virtual | `.agents/ROLES.md` define equipo y textos; `src/domain/mykeOrganization.js` lee documentación; UI en `MykePanel.jsx` + `visual/MykeMascot.jsx` / `MykeGhost.jsx`; chat local basado en preguntas de este README, sin conexión IA |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
@@ -705,7 +705,7 @@ Sí conservar aunque no aparezcan directamente en la UI: migraciones históricas
 
 El modelo operativo está en [`.agents/README.md`](.agents/README.md): guía humana, reglas para agentes, orquestador Engineering Manager/Product Owner, especialistas, ownership del dominio/código, derechos de decisión, contratos versionados, matriz de interacción, escalaciones y gates de entrega. Incluye plantilla de trabajo y un caso ilustrativo del trazador con evidencia; no son resultados ejecutados.
 
-El orquestador se llama **Myke** y conserva el identificador `ORCH`. Puede adaptar puestos temporales al trabajo, manteniendo responsables y revisiones; los cambios permanentes siguen los derechos de decisión del modelo. La mascota web muestra esa organización; las instrucciones dadas en Work/Chat se coordinan desde esos entornos, no desde un chat autónomo en el dashboard.
+El orquestador se llama **Myke** y conserva el identificador `ORCH`. Puede adaptar puestos temporales al trabajo, manteniendo responsables y revisiones; los cambios permanentes siguen los derechos de decisión del modelo. La mascota web muestra esa organización y ofrece ayuda local sobre el reconciliador; no ejecuta tareas de ingeniería desde el dashboard.
 
 Puede usarse con un ejecutor, varios agentes cuando la sesión lo permita, o coordinación humana. Cada revisión declara su independencia y el SHA/árbol verificado. La autoridad humana ya concedida se conserva; cambiar reglas financieras, operar datos compartidos o desplegar requiere la autoridad correspondiente. La documentación no instala un scheduler, validación automática de mensajes, autenticación empresarial ni agentes desatendidos. Los controles automáticos actuales siguen siendo `npm run build` y Verify main; Pages continúa manual.
 
@@ -714,7 +714,160 @@ Puede usarse con un ejecutor, varios agentes cuando la sesión lo permita, o coo
 - **Reportar** está siempre accesible, incluido el footer, otros drawers y LAB de animación. Usa el overlay compartido para Escape/foco/scroll y conserva borrador, captura y envío existentes. Nuevas áreas: Trazador, visor Excel/evidencia, guía del motor/LAB, Myke, ayuda, exportación, rendimiento, scroll, menús/vidrio y footer.
 - Tipografía ampliada en toda la aplicación; formularios de reporte a 16 px, controles táctiles y menús con mayor espaciado. Vidrio más denso: superficies oscuras con mayor opacidad y un blur moderado solo en el panel; encabezados/capas internas conservan lectura sin sumar filtros.
 - **Vidrio ligero** en RENDIMIENTO quita blur/sombras y usa superficies sólidas. Es independiente de **Quitar animaciones** y Pac-Man, y se guarda localmente. No se cambia física Motion, scroll nativo, implementación de `ScrollEffects` ni animación Pac-Man.
-- **Myke** es un fantasma vectorial con movimiento CSS pequeño, sin loop JS adicional. Vista previa flotante de chat con campo/envío deshabilitados, equipo leído de `.agents/ROLES.md` y ayuda extraída del README con referencia visible; no hay API, IA externa ni reparto real de tareas desde la página. Respeta Quitar animaciones y `prefers-reduced-motion`.
+- **Myke** es un fantasma vectorial con movimiento CSS pequeño, sin loop JS adicional. Chat local consultable, equipo leído de `.agents/ROLES.md` y preguntas frecuentes extraídas del README; no hay API, IA externa ni reparto real de tareas desde la página. Respeta Quitar animaciones y `prefers-reduced-motion`.
 - Se reutilizan React/Motion/TanStack instalados; no se agregan librerías. Fuentes, Bot, trazador, guía y Myke se cargan al primer uso y conservan estado al cerrar; el visor de inspección se carga al abrirlo y mantiene su ciclo de cierre anterior; polling del inventario/estado del bot y notificaciones siguen activos. XLSX y evidencia mantienen carga/paginación existentes. Los cambios se verifican con fixtures/mocks; no sustituyen pruebas en Safari/iPad físico ni ejecución corporativa real de 4Wall.
 
 - Verificación de esta actualización: navegación responsive en Chromium a 1366/1024/768/390 px, Reportar/borrador/overlays anidados, equipo/documentación de Myke, preferencias independientes y recarga/scroll rápido; 350 PN sintéticos a 1366/390 px verifican virtualización, NET/SWING, diez pasos, visor y búsqueda retenida. Safari/iPad físico y conexión IA siguen fuera de estas pruebas.
+
+## Preguntas frecuentes de Myke
+
+Estas respuestas son la ayuda humana que consume el chat local. Los identificadores y palabras de búsqueda enlazan preguntas con respuestas; no sustituyen el motor ni calculan inventarios. Las referencias de datos abren el visor común de archivos disponibles, nunca un enlace al código. Si falta una fuente se indica cómo cargarla. Una respuesta no demuestra que una fila haya sido usada: el trazador aporta esa evidencia para cada PN.
+
+### ¿Cómo funciona el reconciliador y su código?
+<!-- myke: engine | motor arquitectura codigo reconciliador funciona react parser normalizado | scans qad ispbb bom cost areas -->
+El reconciliador compara lo contado con lo que QAD esperaba encontrar. Primero lee los archivos, ordena sus campos y confirma dónde está cada pieza. Después reconoce el físico, aplica las reglas Phantom y compara cantidades y costos.
+
+El recorrido del código es: archivos originales → lectores de archivos → datos ordenados → motor de reglas → conciliación → pantalla. React presenta los resultados: las fórmulas y reglas viven en el motor, para poder probarlas sin abrir la interfaz.
+
+Abre el recorrido visual para ver cada etapa; abre el trazador para seguir una pieza real y sus filas de origen.
+
+### ¿De dónde salen los números de parte de la lista?
+<!-- myke: parts | pn numero parte numeros partes lista recomendado buscador trazador seleccion | scans qad bom -->
+La lista reúne los PN del físico, del QAD aceptado y de componentes que recibieron un ajuste BOM. Un PN que solo aparece en Cost Part o ISPBB no entra por eso a la lista.
+
+Los casos recomendados muestran situaciones distintas: diferencia total, diferencia por localidad, Phantom pendiente, componente BOM, conteo pendiente y costo por revisar. Son piezas del corte actual, no ejemplos inventados ni una lista exclusiva de pérdidas.
+
+En el trazador, «Ver fuente de los PN» abre sus registros. Selecciona un PN para conocer qué filas participaron en su resultado.
+
+### ¿De dónde viene el físico: archivo manual o bot 4Wall?
+<!-- myke: physical | fisico physical conteo cantidad escaneo escaneos manual automatico 4wall bot origen | scans areas -->
+4Wall aporta PN, cantidad y área de escaneo. La app indica si proviene de un archivo manual cargado o de la copia publicada por el bot. Un archivo manual sustituye por completo al físico automático; no se mezclan los dos.
+
+El área pasa por el catálogo de Áreas para obtener la localidad QAD. El físico reconocido puede incluir componentes obtenidos de un padre Phantom mediante BOM; por eso no siempre coincide con la cantidad escaneada directamente del PN.
+
+No se inventan auditor, ticket ni hora si el archivo o la copia del bot no los contiene.
+
+### ¿Qué es un snapshot o corte?
+<!-- myke: snapshot | snapshot corte congelado copia fecha actualizacion antiguedad publicado completo parcial | scans qad -->
+Es una copia de los escaneos de un momento concreto. Sirve para comparar ese conteo con el inventario congelado de QAD, como guardar una foto de los datos, no una captura de pantalla.
+
+La hora de la última consulta de la app no prueba cuándo se extrajo 4Wall. Si falta esa fecha o un identificador real, la antigüedad del reporte no está confirmada.
+
+Si los datos cambian mientras se leen las páginas, el corte queda incompleto. Espera una lectura estable antes de sacar conclusiones.
+
+### ¿Qué representa QAD y qué filas se aceptan?
+<!-- myke: qad | qad congelado esperado saldo localidad planta site 179a pp mp fp filtro | qad -->
+QAD 3.2 es el inventario congelado: la cantidad esperada por PN y localidad. El motor acepta Site 179A y los tipos PP, MP y FP; una coincidencia de PN en una fila fuera del filtro no significa que participó en el cálculo.
+
+Un saldo cero aceptado y un PN ausente del QAD filtrado son situaciones distintas. El trazador muestra esa diferencia y permite revisar la fila original.
+
+### ¿Cómo sale NET y qué significa su signo?
+<!-- myke: net | net diferencia total negativo positivo perdida ganancia unidades dolares usd | scans qad cost -->
+NET piezas = Físico reconocido total − QAD total.
+
+NET USD = NET piezas × costo unitario de Cost Part. Se conserva el signo: negativo indica menos físico; positivo indica más físico. Durante un conteo en curso, no confirma por sí solo una pérdida o ganancia definitiva.
+
+El desglose con los valores reales del PN está en el trazador. Sin costo confiable no se presenta un valor de cero dólares como válido.
+
+### ¿Qué es SWING y por qué no se divide entre dos?
+<!-- myke: swing | swing divide dividir dos 2 mitad absoluto ubicacion localidades diferencia traslado | scans qad cost areas -->
+SWING piezas = suma de ABS(Físico de cada localidad − QAD de esa localidad). SWING USD = SWING piezas × costo unitario.
+
+No se divide entre dos porque la regla vigente mide cada diferencia por localidad. Si sobra en una y falta en otra, ambas diferencias participan. Esto ayuda a investigar ubicación, pero no demuestra que hubo un traslado.
+
+NET mide la diferencia total; SWING mide el desajuste por localidad. No sumes NET y SWING como dos pérdidas distintas. El alcance final de localidades para SWING sigue pendiente de confirmación con el departamento.
+
+### ¿Cómo se decide Phantom y cómo participa BOM?
+<!-- myke: phantom | phantom ispbb bom usage parent component componente padre nivel level prefijo recursivo explosion | ispbb bom scans -->
+ISPBB decide Phantom con YES o NO; el prefijo del PN no lo decide. Si falta una respuesta aceptada, Phantom queda por confirmar.
+
+Para un padre Phantom YES escaneado, BOM usa Usage positivo, Level .2 / 0.2 y Comp Phantom = NO. La regla actual no es recursiva: obtiene los componentes de ese nivel y hereda la localidad del padre.
+
+El padre conserva su escaneo visible, pero no añade físico directo reconocido; los componentes reciben el ajuste. Encontrar un PN en BOM por sí solo no crea dinero ni físico adicional. El QAD del padre se conserva y puede generar una alerta.
+
+### ¿De dónde sale el costo y por qué puede faltar?
+<!-- myke: cost | costo cost part total precio valor precision invalido faltante conflicto cero redondeo | cost -->
+Cost Part Browse aporta Cost Total y Status. El motor mantiene la precisión original del costo para calcular y muestra los dólares con dos decimales.
+
+Un costo ausente, inválido o en conflicto requiere revisión; no se convierte silenciosamente en cero. Un costo realmente igual a cero sí puede ser válido.
+
+### ¿Qué significa obsoleto?
+<!-- myke: obsolete | obsoleto obsolete status estado sobrante | cost -->
+Se toma de Status = OBSOLETE en Cost Part. Un sobrante obsoleto se puede aislar para revisión, pero sigue formando parte del NET del PN; no es otra ganancia que debas sumar aparte.
+
+### ¿Qué significan Unexpected, Missing BOM y sin físico registrado?
+<!-- myke: alerts | advertencia alerta unexpected inesperado missing bom faltante sin fisico registrado clasificacion | scans qad ispbb bom cost -->
+Material inesperado: hay físico y QAD es cero. Revisa si el PN tenía saldo cero aceptado o si estaba ausente del QAD filtrado.
+
+Sin físico registrado: QAD es mayor que cero y todavía no hay físico reconocido. Durante el conteo puede faltar capturar; no se trata automáticamente como pérdida confirmada.
+
+Missing BOM indica que se requiere BOM para reconocer componentes y no existe evidencia utilizable según las reglas actuales. Revisa el padre, Usage, nivel y Comp Phantom antes de concluir.
+
+### ¿Qué reviso y qué acciones puedo tomar ante una diferencia?
+<!-- myke: action | accion acciones plan solucion resolver investigar revisar diferencia problema discrepancia | scans qad areas ispbb bom cost -->
+Primero confirma que el corte esté completo y que los archivos correspondan al mismo inventario. Verifica PN, cantidades, Site, tipo y localidad en sus fuentes.
+
+Si hay diferencias por localidad, revisa área y mapeo; no registres un traslado solo por ver SWING. Si hay Phantom o Missing BOM, revisa ISPBB y la relación padre/componente. Si falta costo, confirma Cost Part antes de valorar.
+
+Completa el conteo pendiente y documenta las filas que sustentan el hallazgo. El trazador propone revisiones según las alertas de la pieza; esta ayuda no modifica inventario ni confirma ajustes contables.
+
+### ¿Cómo veo los archivos como Excel y la evidencia?
+<!-- myke: preview | fuente fuentes excel visor fila filas celda celdas columna columnas evidencia archivo sheet hoja original normalizado | scans qad ispbb bom cost areas -->
+«Ver en fuente» abre el archivo disponible dentro de la app, con hojas, encabezados, filtros y páginas de hasta 60 filas. No te manda al código.
+
+Desde un paso del trazador se marcan las filas y columnas utilizadas, con valor original, valor ordenado y regla aplicada. Desde estas preguntas se abre la fuente general: no se marca una fila como usada sin seleccionar un PN y su paso.
+
+Si falta el archivo o no hay una coordenada real, se indica; no se inventa una fila de Excel ni una captura. La copia del bot puede mostrarse como tabla de datos aunque no exista un XLSX original disponible.
+
+### ¿Cómo cargo o reemplazo fuentes y BOM?
+<!-- myke: upload | cargar carga importar reemplazar quitar archivo csv xlsx txt json respaldo biblioteca fuentes | scans qad ispbb bom cost areas -->
+En Fuentes puedes cargar varios archivos TXT, CSV, XLSX y respaldos BOM JSON. La app reconoce el tipo y valida las columnas necesarias.
+
+QAD, Áreas, ISPBB, Cost y escaneos manuales son fuentes de sesión. BOM tiene una biblioteca incremental local y un respaldo compartido cuando la conexión y permisos están disponibles. Para borrar BOM se confirma el archivo exacto y su versión.
+
+Mientras el bot esté corriendo, detén el extractor antes de cargar escaneos manuales. Las otras referencias se pueden cargar sin mezclar físico manual y automático.
+
+### ¿Qué hace el bot y por qué puede no arrancar?
+<!-- myke: bot | bot extractor arrancar iniciar detener corriendo error conexion controlador automatico 4wall | scans -->
+El bot entra a 4Wall, exporta el reporte y publica una copia de los escaneos. La página controla el proceso mediante un servidor autorizado; GitHub Pages no ejecuta el extractor por sí solo.
+
+Una solicitud de arranque aceptada no prueba que ya se publicó un corte. Revisa el estado, el último resultado y la disponibilidad del controlador. No escribas contraseñas ni claves en este chat.
+
+### ¿Cómo funcionan historial y comparación de cortes?
+<!-- myke: history | historial anterior comparar comparacion inventario guardar dispositivo navegador indexeddb version | scans qad -->
+El historial local se guarda en este navegador; no sincroniza automáticamente con otra computadora. Para comparar cortes completos se revisan metadatos y versión de cálculo compatibles.
+
+Cambiar referencias o alcance puede volver injusta una comparación. Confirma la identidad y las fuentes de ambos cortes antes de interpretar el cambio.
+
+### ¿Cómo se cuida rendimiento, scroll y animaciones?
+<!-- myke: performance | rendimiento lento fluido optimizacion scroll congelado ipad animaciones vidrio pacman rubber band | -->
+Las tablas grandes muestran solo las filas necesarias y el visor usa páginas. Los paneles pesados se cargan al abrirlos. El centro de la página conserva scroll nativo; el efecto elástico se aplica en los bordes.
+
+«Vidrio ligero» reduce blur y sombras. «Quitar animaciones» pausa movimiento decorativo; es independiente del vidrio. Puedes ocultar a Myke sin perder su chat desde el menú.
+
+### ¿Quiénes son los agentes y qué puede hacer Myke?
+<!-- myke: team | myke equipo agente agentes empleados especialista puestos organizador tareas empleado | -->
+Myke organiza alcance, responsables y revisiones. El equipo tiene especialistas en motor y finanzas, fuentes y evidencia, datos, bot, experiencia y rendimiento, calidad y seguridad.
+
+Mi equipo cubre esas áreas del proyecto. Este chat consulta ayuda local; los cambios de código se realizan dentro del trabajo autorizado. Puede adaptar puestos en el modelo operativo, conservando responsables y los permisos de decisión correspondientes.
+
+### ¿Cómo se verifica y publica el código?
+<!-- myke: delivery | prueba pruebas test lint build ci github actions publicar despliegue deploy version import css modulo | -->
+El build verifica lint, higiene de archivos, imports, módulos y CSS usados, reglas financieras, discrepancias, trazador, exportación y otras comprobaciones del proyecto antes de compilar.
+
+Verify main ejecuta esos controles en GitHub Actions. La publicación de GitHub Pages sigue siendo manual. Cambiar una regla financiera necesita la decisión autorizada y actualizar la documentación antes de integrarla.
+
+### Myke naranja, chat y preguntas frecuentes — 05/10/2026
+
+- Fantasma naranja con poses vectoriales (reposo, saludo, lectura, escritura y arrastre), seguimiento de texto y acople al borde más cercano. Posición y visibilidad se conservan localmente; teclado permite moverlo con flechas. Sin listeners globales de scroll, nuevas dependencias ni cambios a la física.
+- Chat local funcional: búsqueda de estas respuestas, varios temas y continuidad breve; reconoce preguntas sobre piezas concretas y remite a su evidencia en el trazador. No interpreta cifras escritas por el usuario como datos reales. Respuestas sin respaldo indican el límite; no se conecta IA externa ni se ejecutan tareas.
+- Menú hamburguesa: activar/desactivar mascota, abrir chat y preguntas frecuentes aun con la mascota oculta. Equipo muestra los siete especialistas reales y sus responsabilidades. Los visores usan los archivos actuales y paginación compartida; sin archivo se ofrece cargar fuentes.
+
+### Myke asomado y conversación compacta — 05/10/2026
+
+- Se revisó e integró el commit `c62f9c6` antes de continuar. El fantasma se asoma desde el borde sin recuadro, tiene rostro más amable y mayor tamaño; se revela al tocar/enfocar y acompaña el arrastre. Su X oculta la mascota y conserva el acceso desde hamburguesa.
+- Tocar la mascota abre el chat pequeño; hamburguesa abre el panel completo con Chat, Preguntas frecuentes y Equipo. FAQ usa diálogo y archivos reales del visor compartido. Equipo muestra siete puestos y sus funciones, sin IDs internos; los textos siguen viniendo de `.agents/ROLES.md`.
+- Se consolidó la ayuda en estas preguntas del README y la búsqueda en `mykeKnowledge`; se conserva identificación de PN y se abre el trazador por props, sin inyectar eventos ni temporizadores en sus inputs. Las cifras siguen perteneciendo al motor. Se elimina el puente de eventos que quedó sin consumidores al usar los visores comunes.
+- IA externa sigue pendiente de la siguiente etapa; el chat actual ofrece respuestas documentadas y declara cuando no encuentra respaldo. No ejecuta tareas ni escribe inventario.
+
+- Verificación: chat/documentación y casos de falta de respuesta probados sin React; Chromium a 1366/1024/768/390 px con fixtures locales verifica arrastre, persistencia, X, chat pequeño/completo, siete puestos, fuentes faltantes, visor 60/10 filas, Escape anidado, PN enviado al trazador y retorno de scroll desde el borde inferior tras recarga. El build completo verifica finanzas, imports, CSS/módulos y datos parciales; Safari/iPad físico y bot corporativo quedan pendientes.

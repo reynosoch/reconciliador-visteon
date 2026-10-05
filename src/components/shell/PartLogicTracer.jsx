@@ -368,6 +368,7 @@ export default function PartLogicTracer({
   snapshotMeta = null,
   findings = [],
   reduceAnimations = false,
+  entryRequest = null,
 }) {
   const [query, setQuery] = useState("");
   const [selectedPn, setSelectedPn] = useState("");
@@ -379,6 +380,7 @@ export default function PartLogicTracer({
   const viewportRef = useRef(null);
   const resultRef = useRef(null);
   const detailRef = useRef(null);
+  const appliedRequest = useRef(null);
   const inputSources = useMemo(
     () => getTracerSourceInventory(sources, scanReady, snapshotMeta),
     [sources, scanReady, snapshotMeta],
@@ -396,6 +398,19 @@ export default function PartLogicTracer({
     if (activeMetric)
       scrollInsideDrawer(viewportRef.current, detailRef.current);
   }, [activeMetric]);
+  useLayoutEffect(() => {
+    if (!open || !entryRequest?.pn || appliedRequest.current === entryRequest)
+      return;
+    appliedRequest.current = entryRequest;
+    const pn = clean(entryRequest.pn);
+    setQuery(pn);
+    setSelectedPn(
+      reconciliation.find((row) => clean(row.partNumber) === pn)?.partNumber ||
+        "",
+    );
+    setActiveMetric("");
+    setActiveStep("");
+  }, [open, entryRequest, reconciliation]);
   const suggestions = useMemo(() => {
     const match = clean(query),
       rows = [];
