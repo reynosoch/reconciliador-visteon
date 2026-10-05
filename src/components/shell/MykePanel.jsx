@@ -38,7 +38,7 @@ function PieceReply({ pn, context, onEvidence, onTracer, onSources }) {
                 <summary>
                   <span>{metric.label}</span>
                   <strong>{metric.value}</strong>
-                  <span aria-hidden="true">＋</span>
+                  <span aria-hidden="true">+</span>
                 </summary>
                 <p>{metric.explanation}</p>
                 {metric.warning && <p>{metric.warning}</p>}
