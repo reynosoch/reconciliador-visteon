@@ -1,8 +1,9 @@
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import SnapshotStamp from "./SnapshotStamp.jsx";
 import SquishSwitch from "../ui/SquishSwitch.jsx";
+import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
 
 const DEV_ITEMS = [
   ["Análisis histórico", "Comparar inventarios y tendencias entre cortes."],
@@ -12,6 +13,7 @@ const DEV_ITEMS = [
   ],
   ["Centro de exportación", "Administrar reportes y plantillas compartibles."],
 ];
+const MYKE_DISABLED_KEY = "visteon.ui.mykeDisabled.v1";
 
 export default function MainMenu({
   pacmanEnabled = true,
@@ -33,6 +35,16 @@ export default function MainMenu({
   lastUpdated,
 }) {
   const touchStart = useRef(null);
+  const [mykeDisabled, setMykeDisabled] = useState(
+    () => safeReadJson(MYKE_DISABLED_KEY, false).value === true,
+  );
+
+  useEffect(() => {
+    safeWriteJson(MYKE_DISABLED_KEY, mykeDisabled);
+    document.body.classList.toggle("vi-myke-mascot-off", mykeDisabled);
+    return () => document.body.classList.remove("vi-myke-mascot-off");
+  }, [mykeDisabled]);
+
   if (!open) return null;
   return (
     <OverlayPortal onClose={onClose}>
@@ -109,6 +121,42 @@ export default function MainMenu({
               </span>
               <em>{botRunning ? "CORRIENDO" : "ABRIR"}</em>
             </button>
+          </section>
+
+          <section className="vi-menu-section">
+            <span className="vi-menu-section-title">MYKE</span>
+            <button
+              type="button"
+              className="vi-menu-item"
+              onClick={() => {
+                onClose?.();
+                onOpenMyke?.();
+              }}
+            >
+              <span>
+                <strong>Chat con Myke</strong>
+                <small>
+                  Pregunta por reglas, fuentes, alertas o un PN y abre la
+                  evidencia desde la misma app.
+                </small>
+              </span>
+              <b>›</b>
+            </button>
+            <div className="vi-menu-item vi-performance-toggle">
+              <span>
+                <strong>Desactivar Myke</strong>
+                <small>
+                  {mykeDisabled
+                    ? "Activo · La mascota está oculta. El chat sigue disponible arriba."
+                    : "Oculta solo la mascota flotante; no desactiva su ayuda."}
+                </small>
+              </span>
+              <SquishSwitch
+                checked={mykeDisabled}
+                onChange={() => setMykeDisabled((value) => !value)}
+                ariaLabel="Desactivar mascota Myke"
+              />
+            </div>
           </section>
 
           <section className="vi-menu-section vi-menu-performance-section">
@@ -189,23 +237,6 @@ export default function MainMenu({
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">LAB</span>
-            <button
-              type="button"
-              className="vi-menu-item"
-              onClick={() => {
-                onClose?.();
-                onOpenMyke?.();
-              }}
-            >
-              <span>
-                <strong>Myke · tu organizador</strong>
-                <small>
-                  Conoce a mi equipo, consulta documentación y abre la vista
-                  previa del chat.
-                </small>
-              </span>
-              <b>›</b>
-            </button>
             <button
               type="button"
               className="vi-menu-item vi-logic-entry"

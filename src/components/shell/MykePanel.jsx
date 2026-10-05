@@ -1,26 +1,146 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import MykeGhost from "../visual/MykeGhost.jsx";
 import { buildMykeOrganization } from "../../domain/mykeOrganization.js";
+import { answerMykeQuestion, MYKE_FAQ } from "../../domain/mykeKnowledge.js";
 import rolesMarkdown from "../../../.agents/ROLES.md?raw";
 import readmeMarkdown from "../../../README.md?raw";
 
-const REPO = "https://github.com/reynosoch/reconciliador-visteon";
+const QUICK_FAQ_IDS = ["net", "swing", "phantom", "sources"];
+const WELCOME = {
+  id: "welcome",
+  role: "myke",
+  text: "Hola, soy Myke. Pregúntame por el reconciliador: datos, reglas, fuentes, alertas o un Part Number. Si la respuesta está documentada, te digo de dónde sale y te llevo a la vista correcta.",
+  source: "Ayuda local · Reconciliador Visteon",
+};
+
+function focusTracerPart(partNumber, attempt = 0) {
+  if (!partNumber) return;
+  const input = document.getElementById("vi-logic-pn");
+  if (!input) {
+    if (attempt < 14)
+      window.setTimeout(() => focusTracerPart(partNumber, attempt + 1), 80);
+    return;
+  }
+  const setter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype,
+    "value",
+  )?.set;
+  setter?.call(input, partNumber);
+  input.dispatchEvent(new window.Event("input", { bubbles: true }));
+  input.focus();
+  window.setTimeout(() => {
+    input.dispatchEvent(
+      new window.KeyboardEvent("keydown", {
+        key: "Enter",
+        code: "Enter",
+        bubbles: true,
+      }),
+    );
+  }, 90);
+}
+
 export default function MykePanel({
   open,
   onClose,
   onOpenEngineGuide,
   onOpenTracer,
+  reduceAnimations = false,
 }) {
   const [tab, setTab] = useState("chat");
-  const [topicId, setTopicId] = useState("");
+  const [topicId, setTopicId] = useState(MYKE_FAQ[0].id);
+  const [messages, setMessages] = useState([WELCOME]);
+  const [draft, setDraft] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [composerFocused, setComposerFocused] = useState(false);
+  const timerRef = useRef(null);
+  const messageSerial = useRef(1);
+  const chatEndRef = useRef(null);
   const organization = useMemo(
     () => buildMykeOrganization(rolesMarkdown, readmeMarkdown),
     [],
   );
+  const quickQuestions = useMemo(
+    () => MYKE_FAQ.filter((entry) => QUICK_FAQ_IDS.includes(entry.id)),
+    [],
+  );
+  const topic = MYKE_FAQ.find((entry) => entry.id === topicId) || MYKE_FAQ[0];
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    if (!open || tab !== "chat") return;
+    chatEndRef.current?.scrollIntoView({ block: "nearest" });
+  }, [messages, open, tab, typing]);
+
   if (!open) return null;
-  const topic = organization.topics.find((entry) => entry.id === topicId);
+
+  const openAction = (action) => {
+    if (!action) return;
+    if (action.type === "faq") {
+      setTab("help");
+      return;
+    }
+    if (action.type === "team") {
+      setTab("team");
+      return;
+    }
+    onClose();
+    if (action.type === "engine") {
+      onOpenEngineGuide?.();
+      return;
+    }
+    if (action.type === "tracer") {
+      onOpenTracer?.();
+      if (action.partNumber)
+        window.setTimeout(() => focusTracerPart(action.partNumber), 120);
+      return;
+    }
+    if (action.type === "data") {
+      window.setTimeout(() => {
+        window.dispatchEvent(
+          new window.CustomEvent("visteon:open-data-view", {
+            detail: { view: action.view },
+          }),
+        );
+      }, 80);
+    }
+  };
+
+  const ask = (value) => {
+    const question = String(value ?? "").trim();
+    if (!question || typing) return;
+    const response = answerMykeQuestion(question);
+    const serial = messageSerial.current++;
+    setMessages((current) => [
+      ...current,
+      { id: `user-${serial}`, role: "user", text: question },
+    ]);
+    setDraft("");
+    setTyping(true);
+    timerRef.current = window.setTimeout(
+      () => {
+        setMessages((current) => [
+          ...current,
+          {
+            id: `myke-${serial}`,
+            role: "myke",
+            text: response.answer,
+            source: response.source,
+            action: response.action,
+          },
+        ]);
+        setTyping(false);
+      },
+      reduceAnimations ? 0 : 420,
+    );
+  };
+
   return (
     <OverlayPortal onClose={onClose}>
       <div
@@ -33,16 +153,16 @@ export default function MykePanel({
           className="vi-myke-panel"
           role="dialog"
           aria-modal="true"
-          aria-label="Myke · organización virtual"
+          aria-label="Myke · asistente del reconciliador"
         >
           <header className="vi-myke-head">
-            <MykeGhost />
+            <MykeGhost watching={composerFocused || typing} />
             <div>
-              <p className="vi-eyebrow">TU ORGANIZADOR</p>
+              <p className="vi-eyebrow">MYKE · RECONCILIADOR VISTEON</p>
               <h2>
                 Myke<span>·</span>
               </h2>
-              <p>Una petición. El equipo indicado.</p>
+              <p>Pregunta, revisa la fuente y sigue el dato.</p>
             </div>
             <button
               type="button"
@@ -57,7 +177,7 @@ export default function MykePanel({
             {[
               ["chat", "Chat"],
               ["team", "Equipo"],
-              ["help", "Cómo funciona"],
+              ["help", "Preguntas frecuentes"],
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -72,64 +192,128 @@ export default function MykePanel({
           <div className="vi-myke-body">
             {tab === "chat" && (
               <>
-                <div className="vi-myke-message">
-                  <strong>Hola, soy Myke.</strong>
-                  <p>
-                    Organizo las mejoras y busco al especialista adecuado.
-                    Puedes darme tus instrucciones en Work o Chat; mi
-                    organización está definida en .agents.
-                  </p>
-                </div>
-                <div
-                  className="vi-myke-demo"
-                  aria-label="Demostración visual del reparto de tareas"
-                >
-                  <span className="vi-myke-demo-label">
-                    ASÍ ORGANIZO · DEMOSTRACIÓN
-                  </span>
-                  <div className="vi-myke-flow">
-                    <span>Tu petición</span>
-                    <i aria-hidden="true">→</i>
-                    <span>Myke</span>
-                    <i aria-hidden="true">→</i>
-                    <span>Especialistas</span>
-                  </div>
-                  <p>
-                    Defino el alcance, reparto el trabajo y reviso el resultado.
-                  </p>
-                </div>
                 <div className="vi-myke-chat-state">
                   <i aria-hidden="true" />
-                  <span>Vista previa · IA aún sin conectar</span>
+                  <span>
+                    Ayuda local · {MYKE_FAQ.length} respuestas documentadas
+                  </span>
+                </div>
+                <div className="vi-myke-demo">
+                  <span className="vi-myke-demo-label">ASÍ TE AYUDO</span>
+                  <div className="vi-myke-flow" aria-hidden="true">
+                    <span>Pregunta</span>
+                    <i>→</i>
+                    <span>Myke</span>
+                    <i>→</i>
+                    <span>Fuente</span>
+                  </div>
+                  <p>
+                    No invento cálculos: uso las reglas y ayudas documentadas del
+                    proyecto.
+                  </p>
+                </div>
+                <div className="vi-myke-conversation" aria-live="polite">
+                  {messages.map((message) => (
+                    <div
+                      className={`vi-myke-message ${message.role === "user" ? "is-user" : "is-myke"}`}
+                      key={message.id}
+                    >
+                      {message.role === "myke" && (
+                        <div className="vi-myke-message-avatar" aria-hidden="true">
+                          <MykeGhost />
+                        </div>
+                      )}
+                      <div>
+                        <strong>{message.role === "myke" ? "Myke" : "Tú"}</strong>
+                        <p>{message.text}</p>
+                        {message.source && <small>{message.source}</small>}
+                        {message.action && (
+                          <button
+                            type="button"
+                            className="vi-myke-doc-link"
+                            onClick={() => openAction(message.action)}
+                          >
+                            {message.action.label} →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {typing && (
+                    <div className="vi-myke-message is-myke vi-myke-typing">
+                      <div className="vi-myke-message-avatar" aria-hidden="true">
+                        <MykeGhost watching />
+                      </div>
+                      <div>
+                        <strong>Myke</strong>
+                        <span aria-label="Myke está escribiendo">
+                          <i />
+                          <i />
+                          <i />
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+                <div className="vi-myke-suggestions" aria-label="Preguntas rápidas">
+                  {quickQuestions.map((entry) => (
+                    <button
+                      type="button"
+                      key={entry.id}
+                      disabled={typing}
+                      onClick={() => ask(entry.question)}
+                    >
+                      {entry.question}
+                    </button>
+                  ))}
                 </div>
                 <label className="vi-myke-composer">
-                  <span>Chat con Myke</span>
+                  <span>Pregúntale a Myke</span>
                   <textarea
-                    disabled
                     rows="2"
-                    placeholder="Aquí podrás preguntar sobre el reconciliador…"
+                    value={draft}
+                    onFocus={() => setComposerFocused(true)}
+                    onBlur={() => setComposerFocused(false)}
+                    onChange={(event) => setDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        !event.shiftKey &&
+                        !event.nativeEvent.isComposing
+                      ) {
+                        event.preventDefault();
+                        ask(draft);
+                      }
+                    }}
+                    placeholder="Ej. ¿qué es SWING? o PN 12345ABC"
                   />
-                  <button type="button" disabled>
+                  <button
+                    type="button"
+                    disabled={!draft.trim() || typing}
+                    onClick={() => ask(draft)}
+                  >
                     Enviar ↗
                   </button>
                 </label>
                 <p className="vi-myke-note">
-                  Esta animación no envía mensajes ni ejecuta tareas. Mientras
-                  tanto, puedes consultar la documentación en Cómo funciona.
+                  Este chat explica y navega el reconciliador. No cambia datos,
+                  no ejecuta el bot y avisa cuando no encuentra respaldo
+                  documentado.
                 </p>
               </>
             )}
             {tab === "team" && (
               <>
                 <p className="vi-myke-intro">
-                  Mi equipo combina especialistas. Activo los puestos necesarios
-                  según el trabajo.
+                  Este es el equipo del proyecto. Myke organiza la solicitud y
+                  cada especialista conserva una responsabilidad clara.
                 </p>
                 <div className="vi-myke-manager">
                   <strong>{organization.manager?.title || "Myke"}</strong>
                   <span>
                     {organization.manager?.summary ||
-                      "Organizador de la ingeniería"}
+                      "Organizo la solicitud y reviso la entrega."}
                   </span>
                 </div>
                 <div className="vi-myke-team">
@@ -144,71 +328,60 @@ export default function MykePanel({
                   ))}
                 </div>
                 <p className="vi-myke-note">
-                  Puedo crear, fusionar o retirar puestos en el modelo de
-                  trabajo, manteniendo un responsable para cada decisión y las
-                  revisiones necesarias. Aquí se muestra la organización
-                  documentada; no son procesos activos.
+                  Los puestos describen responsabilidades del proyecto; la vista
+                  no simula procesos activos ni permisos que no existan.
                 </p>
-                <a
+                <button
+                  type="button"
                   className="vi-myke-doc-link"
-                  href={`${REPO}/tree/main/.agents`}
-                  target="_blank"
-                  rel="noreferrer"
+                  onClick={() => setTab("help")}
                 >
-                  Ver organización en .agents ↗
-                </a>
+                  Ver preguntas frecuentes →
+                </button>
               </>
             )}
             {tab === "help" && (
               <>
                 <p className="vi-myke-intro">
-                  Respuestas tomadas del README del proyecto. Elige un tema para
-                  consultar su fuente.
+                  Preguntas frecuentes del reconciliador. Cada respuesta indica
+                  su referencia y, cuando aplica, abre la evidencia dentro de la
+                  app.
                 </p>
                 <div className="vi-myke-topics">
-                  {organization.topics.map((entry) => (
+                  {MYKE_FAQ.map((entry) => (
                     <button
                       type="button"
                       key={entry.id}
                       aria-pressed={topicId === entry.id}
                       onClick={() => setTopicId(entry.id)}
                     >
-                      {entry.title}
+                      {entry.question}
                       <span>›</span>
                     </button>
                   ))}
                 </div>
-                {topic && (
-                  <section
-                    className="vi-myke-doc-excerpt"
-                    aria-label={`Documentación: ${topic.title}`}
-                  >
-                    <span>FUENTE · README / {topic.heading}</span>
-                    {topic.available ? (
-                      topic.paragraphs.map((text, index) => (
-                        <p key={index}>{text}</p>
-                      ))
-                    ) : (
-                      <p>
-                        Esta sección no está disponible en la documentación
-                        actual.
-                      </p>
-                    )}
-                    <a
-                      href={`${REPO}/blob/main/README.md`}
-                      target="_blank"
-                      rel="noreferrer"
+                <section
+                  className="vi-myke-doc-excerpt"
+                  aria-label={`Respuesta: ${topic.question}`}
+                >
+                  <span>{topic.source}</span>
+                  <p>{topic.answer}</p>
+                  {topic.action && (
+                    <button
+                      type="button"
+                      className="vi-myke-doc-link"
+                      onClick={() => openAction(topic.action)}
                     >
-                      Abrir documentación completa ↗
-                    </a>
-                  </section>
-                )}
+                      {topic.action.label} →
+                    </button>
+                  )}
+                </section>
                 <div className="vi-myke-shortcuts">
                   <button
                     type="button"
                     onClick={() => {
                       onClose();
-                      onOpenEngineGuide();
+                      onOpenEngineGuide?.();
                     }}
                   >
                     Abrir guía del motor →
@@ -217,7 +390,7 @@ export default function MykePanel({
                     type="button"
                     onClick={() => {
                       onClose();
-                      onOpenTracer();
+                      onOpenTracer?.();
                     }}
                   >
                     Abrir trazador de pieza →

@@ -1,0 +1,278 @@
+/* Myke completion layer. Keeps the dashboard scroll/rubber-band untouched. */
+body.vi-myke-mascot-off .vi-myke-launcher {
+  display: none !important;
+}
+
+.vi-myke-launcher {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  border-color: #f5821f66;
+  background: linear-gradient(145deg, #173e51f7, #092736f7);
+  box-shadow:
+    inset 0 1px 0 #ffffff1c,
+    0 10px 30px #0007,
+    0 0 0 1px #f5821f12;
+  transition:
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+.vi-myke-launcher:hover {
+  box-shadow:
+    inset 0 1px 0 #ffffff24,
+    0 12px 34px #0008,
+    0 0 0 1px #f5821f38;
+}
+.vi-myke-launcher.is-dragging {
+  cursor: grabbing;
+  transform: scale(0.97);
+  transition: none;
+}
+.vi-myke-launcher[data-side="right"] {
+  text-align: right;
+}
+.vi-myke-launcher[data-side="right"] > span {
+  order: -1;
+}
+
+.vi-myke-ghost.is-watching .vi-myke-pupils {
+  transform: translate(2px, 1px);
+}
+.vi-myke-pupils {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 160ms ease;
+}
+
+.vi-myke-panel {
+  width: min(520px, 100%);
+}
+.vi-myke-head {
+  background: linear-gradient(135deg, #173f53, #0e3447);
+  box-shadow: inset 4px 0 0 #f5821f;
+}
+.vi-myke-tabs button[aria-pressed="true"] {
+  border-color: #f5821f55;
+  background: #f5821f16;
+}
+.vi-myke-chat-state i {
+  background: #f5821f;
+  box-shadow: 0 0 0 4px #f5821f18;
+}
+
+.vi-myke-conversation {
+  display: grid;
+  gap: 11px;
+}
+.vi-myke-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: min(92%, 430px);
+}
+.vi-myke-message.is-myke {
+  justify-self: start;
+}
+.vi-myke-message.is-user {
+  justify-self: end;
+  border-radius: 16px 16px 4px 16px;
+  border-color: #f5821f30;
+  background: #f5821f12;
+}
+.vi-myke-message.is-user > div {
+  width: 100%;
+}
+.vi-myke-message-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 36px;
+  margin-top: -4px;
+}
+.vi-myke-message-avatar .vi-myke-ghost {
+  width: 34px;
+  height: 38px;
+}
+.vi-myke-message > div:last-child {
+  min-width: 0;
+}
+.vi-myke-message small {
+  display: block;
+  margin-top: 8px;
+  color: #8fb5c6;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.vi-myke-message .vi-myke-doc-link {
+  margin-top: 10px;
+}
+
+.vi-myke-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.vi-myke-suggestions button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #f5821f32;
+  border-radius: 999px;
+  background: #f5821f0d;
+  color: #f5e4d2;
+  font-size: 12px;
+  text-align: left;
+}
+.vi-myke-suggestions button:hover:not(:disabled) {
+  border-color: #f5821f78;
+  background: #f5821f18;
+}
+.vi-myke-suggestions button:disabled {
+  opacity: 0.55;
+}
+
+.vi-myke-composer textarea:not(:disabled) {
+  color: #edf7fb;
+  border-color: #ffffff28;
+  background: #061d2ad9;
+}
+.vi-myke-composer textarea:not(:disabled):focus {
+  border-color: #f5821f88;
+  box-shadow: 0 0 0 3px #f5821f14;
+}
+.vi-myke-composer button:not(:disabled) {
+  cursor: pointer;
+  border-color: #f5821f75;
+  background: #f5821f;
+  color: #092536;
+  font-weight: 800;
+}
+.vi-myke-composer button:disabled {
+  opacity: 0.55;
+}
+
+.vi-myke-typing {
+  min-height: 58px;
+}
+.vi-myke-typing > div:last-child > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 20px;
+}
+.vi-myke-typing > div:last-child > span i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f5821f;
+  animation: vi-myke-typing-dot 900ms ease-in-out infinite;
+}
+.vi-myke-typing > div:last-child > span i:nth-child(2) {
+  animation-delay: 120ms;
+}
+.vi-myke-typing > div:last-child > span i:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+.vi-myke-doc-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 36px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #ffb879;
+  font-size: 13px;
+  font-weight: 750;
+  text-align: left;
+}
+button.vi-myke-doc-link {
+  cursor: pointer;
+}
+button.vi-myke-doc-link:hover {
+  color: #ffd0a7;
+}
+
+.vi-myke-manager {
+  padding: 15px;
+  border: 1px solid #f5821f38;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f5821f12, #ffffff05);
+}
+.vi-myke-team {
+  gap: 8px;
+}
+.vi-myke-team article {
+  padding: 13px;
+  border: 1px solid #ffffff10;
+  border-radius: 14px;
+  background: #ffffff04;
+}
+.vi-myke-team article > span {
+  border: 1px solid #f5821f34;
+  background: #f5821f0d;
+  color: #ffb879;
+}
+
+.vi-myke-topics {
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: #f5821f88 transparent;
+}
+.vi-myke-topics button:hover {
+  border-color: #ffffff2d;
+  background: #ffffff09;
+}
+.vi-myke-doc-excerpt {
+  padding: 16px;
+  border: 1px solid #ffffff14;
+  border-radius: 16px;
+  background: #061d2a7a;
+}
+.vi-myke-shortcuts button:hover {
+  border-color: #f5821f66;
+}
+
+@keyframes vi-myke-typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+body.vi-performance-motion-off .vi-myke-pupils,
+body.vi-performance-motion-off .vi-myke-typing > div:last-child > span i {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vi-myke-pupils,
+  .vi-myke-typing > div:last-child > span i {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 640px) {
+  .vi-myke-launcher > span {
+    font-size: 14px;
+  }
+  .vi-myke-conversation {
+    gap: 9px;
+  }
+  .vi-myke-message {
+    width: 96%;
+  }
+  .vi-myke-topics {
+    max-height: 320px;
+  }
+}
