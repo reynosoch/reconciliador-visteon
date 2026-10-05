@@ -5,8 +5,13 @@ import { mergeBomLibrary } from "../src/domain/bomLibrary.js";
 import {
   buildPartLearningTrace,
   sourceOrigin,
+  getPartEntryOrigins,
+  getTracerSourceInventory,
 } from "../src/domain/partLearningTrace.js";
-import { buildSourcePreview } from "../src/domain/sourceEvidence.js";
+import {
+  buildSourcePreview,
+  buildEvidenceExcerpt,
+} from "../src/domain/sourceEvidence.js";
 import { buildInventoryEngine } from "../src/domain/inventoryEngine.js";
 const file = (name, text) => ({
   name,
@@ -89,6 +94,27 @@ const makeTrace = (item = component, extra = {}) =>
   });
 const trace = makeTrace();
 assert.equal(trace.complete, true);
+assert.match(
+  getTracerSourceInventory({}, true, { snapshotId: "published-123" })[0]
+    .identity,
+  /Supabase.*published-123/,
+);
+assert.match(
+  getTracerSourceInventory({}, true)[0].identity,
+  /ID no disponible/,
+);
+assert.equal(getTracerSourceInventory(sources, true)[0].identity, "4wSc.csv"); // manual source wins
+assert.equal(getTracerSourceInventory({}, false)[0].loaded, false);
+assert.deepEqual(
+  getPartEntryOrigins(component, engine.sources).map((r) => r.type),
+  ["scans", "qad", "bom"],
+);
+assert.deepEqual(
+  trace.origin.routes.map((r) => r.type),
+  ["scans", "qad", "bom"],
+);
+assert.equal(trace.origin.descriptionReference.type, "cost");
+assert.equal(trace.origin.descriptionReference.evidence.length, 0); // no Description column in this real fixture
 assert.equal(trace.steps.length, 10);
 assert.equal(trace.status, "Sobrante obsoleto");
 assert.match(trace.formulas.netPieces.substitution, /26 − 20 = 6/);
@@ -143,6 +169,106 @@ assert.equal(preview.entries.filter((row) => row.evidence).length, 1);
 assert.equal(preview.entries[0].origin.rowNumber, 2);
 assert.ok(preview.usedColumns.has("Quantity On Hand"));
 assert.ok(!preview.columns.includes("__provenance"));
+const excerpt = buildEvidenceExcerpt(ref);
+assert.equal(excerpt.entries.length, 1);
+assert.equal(excerpt.entries[0].row["Quantity On Hand"], "20");
+assert.equal(excerpt.entries[0].origin.rowNumber, 2);
+assert.equal(
+  buildEvidenceExcerpt({ ...ref, source: { rows: [] } }).entries.length,
+  0,
+);
+assert.equal(buildEvidenceExcerpt(trace.steps[0].refs[0], 1).entries.length, 1);
+// Accepted zero balances still belong to the universe; reference-only catalogs do not.
+const originEngine = buildInventoryEngine({
+  scanRows: [
+    { "Número Parte QAD": "ZERO-SCAN", Quantity: 0, AreaName: "A" },
+    { "Número Parte QAD": "P", Quantity: 2, AreaName: "A" },
+  ],
+  areaRows: sources.areas.rows,
+  qadRows: [
+    {
+      "Item Number": "ZERO-QAD",
+      Site: "179A",
+      "Item Type": "PP",
+      Location: "ZWHSE",
+      "Quantity On Hand": 0,
+    },
+  ],
+  ispbbRows: [
+    ...sources.ispbb.rows,
+    { "Item Number": "REFERENCE-ONLY", Site: "179A", Phantom: "NO" },
+  ],
+  bomRows: lib.rows,
+  costRows: [
+    { "Item Number": "REFERENCE-ONLY", "Cost Total": 1, Status: "ACTIVE" },
+  ],
+});
+assert.ok(
+  !originEngine.reconciliation.some((r) => r.partNumber === "REFERENCE-ONLY"),
+);
+assert.deepEqual(
+  getPartEntryOrigins(
+    originEngine.reconciliation.find((r) => r.partNumber === "ZERO-SCAN"),
+    originEngine.sources,
+  ).map((r) => r.type),
+  ["scans"],
+);
+assert.deepEqual(
+  getPartEntryOrigins(
+    originEngine.reconciliation.find((r) => r.partNumber === "ZERO-QAD"),
+    originEngine.sources,
+  ).map((r) => r.type),
+  ["qad"],
+);
+const derived = originEngine.reconciliation.find((r) => r.partNumber === "C");
+assert.deepEqual(
+  getPartEntryOrigins(derived, originEngine.sources).map((r) => r.type),
+  ["bom"],
+);
+const descriptionEngine = buildInventoryEngine({
+  scanRows: sources.scans.rows,
+  areaRows: sources.areas.rows,
+  ispbbRows: [
+    {
+      "Item Number": "C",
+      Site: "179A",
+      Phantom: "NO",
+      Description: "Planning description",
+    },
+  ],
+  costRows: [
+    {
+      "Item Number": "C",
+      "Cost Total": 4.2,
+      Status: "ACTIVE",
+      Description: "",
+    },
+  ],
+});
+const descriptionItem = descriptionEngine.reconciliation.find(
+  (r) => r.partNumber === "C",
+);
+const descriptionTrace = buildPartLearningTrace({
+  item: descriptionItem,
+  engineSources: descriptionEngine.sources,
+  sources: {
+    cost: {
+      rows: [
+        {
+          "Item Number": "C",
+          "Cost Total": 4.2,
+          Status: "ACTIVE",
+          Description: "",
+        },
+      ],
+    },
+  },
+});
+assert.equal(descriptionTrace.description, ""); // exact empty Cost precedence retained
+assert.equal(
+  descriptionTrace.origin.descriptionReference.evidence[0].cells[0].original,
+  "",
+);
 assert.equal(
   buildSourcePreview({
     source: { rows: [] },

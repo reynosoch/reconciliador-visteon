@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import { buildSourcePreview } from "../../domain/sourceEvidence.js";
-import { columnLetter } from "../../domain/partLearningTrace.js";
+import SourceEvidenceSheet from "./SourceEvidenceSheet.jsx";
 
 const cleanFileName = (value) =>
   String(value || "fuente").replace(/\.[^.]+$/, "");
@@ -256,85 +256,19 @@ export default function SourcePreviewModal({ selection, onClose }) {
               {error}
             </p>
           )}
-          <div className="vi-source-preview-table-wrap">
-            <table className="vi-source-preview-table">
-              <thead>
-                <tr>
-                  <th>Fila / registro</th>
-                  {columns.map((column, index) => (
-                    <th
-                      className={model.usedColumns.has(column) ? "is-used" : ""}
-                      key={column}
-                    >
-                      <small>
-                        {columnLetter(
-                          index + (visible[0]?.origin.firstColumn || 0),
-                        )}
-                      </small>
-                      {column}
-                      {model.usedColumns.has(column) && <b> USADO</b>}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((entry) => (
-                  <tr
-                    className={entry.evidence ? "is-evidence" : ""}
-                    key={entry.sourceIndex}
-                  >
-                    <th
-                      title={
-                        entry.origin.rowNumber
-                          ? "Fila original del archivo"
-                          : "Posición de la colección; fila original no disponible"
-                      }
-                    >
-                      {entry.origin.rowNumber ??
-                        `Registro ${entry.sourceIndex + 1}`}
-                      <small>
-                        {entry.origin.fileName}
-                        <br />
-                        {entry.origin.sheetName || "Sin hoja registrada"}
-                      </small>
-                    </th>
-                    {columns.map((column) => {
-                      const evidence = entry.evidence?.cells.find(
-                        (cell) => cell.column === column,
-                      );
-                      return (
-                        <td key={column} className={evidence ? "is-used" : ""}>
-                          {evidence ? (
-                            <button
-                              type="button"
-                              title={evidence.reason}
-                              onClick={() =>
-                                setActiveCell({
-                                  ...evidence,
-                                  reason: `${entry.evidence.note}. ${evidence.reason}`,
-                                })
-                              }
-                            >
-                              {textValue(entry.row[column]) || "—"}
-                            </button>
-                          ) : (
-                            textValue(entry.row[column]) || "—"
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!filtered.length && (
-              <div className="vi-source-preview-empty">
-                {model.entries.length
-                  ? "No hay filas para este filtro. Desactiva «Solo filas del cálculo» para consultar la fuente disponible."
-                  : "Archivo o filas originales no disponibles en este corte. Vuelve a cargar la fuente para consultar su evidencia."}
-              </div>
-            )}
-          </div>
+          <SourceEvidenceSheet
+            entries={visible}
+            columns={columns}
+            usedColumns={model.usedColumns || new Set()}
+            onCell={setActiveCell}
+          />
+          {!filtered.length && (
+            <div className="vi-source-preview-empty">
+              {model.entries.length
+                ? "No hay filas para este filtro. Desactiva «Solo filas del cálculo» para consultar la fuente disponible."
+                : "Archivo o filas originales no disponibles en este corte. Vuelve a cargar la fuente para consultar su evidencia."}
+            </div>
+          )}
           <nav
             className="vi-evidence-pagination"
             aria-label="Páginas de la fuente"

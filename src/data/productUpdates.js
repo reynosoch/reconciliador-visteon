@@ -1,5 +1,16 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-tracer-origins-scroll",
+    date: "05 OCT 2026",
+    title: "Entiende de dónde viene cada PN",
+    summary: "El Trazador explica la lista inicial, abre cada caso desde arriba y muestra los datos originales en pequeñas hojas tipo Excel.",
+    items: [
+      "PN sugeridos con origen 4Wall / QAD / BOM y archivos o snapshot activos; descripción con su propia evidencia.",
+      "Tablas originales dentro de los pasos: toca una celda para ver original, normalizado y regla; Ver en fuente abre el mismo visor paginado.",
+      "El borde inferior lee la altura real durante el gesto, incluso cuando cambia el encabezado después de recargar. Misma física arriba y abajo.",
+    ],
+  },
+  {
     id: "2026-10-05-learning-tracer-bot",
     date: "05 OCT 2026",
     title: "Estudia una pieza, desde su fuente hasta el resultado",

@@ -1,8 +1,14 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "./OverlayPortal.jsx";
 import SourcePreviewModal from "./SourcePreviewModal.jsx";
-import { buildPartLearningTrace } from "../../domain/partLearningTrace.js";
+import {
+  buildPartLearningTrace,
+  getPartEntryOrigins,
+  getTracerSourceInventory,
+} from "../../domain/partLearningTrace.js";
+import { buildEvidenceExcerpt } from "../../domain/sourceEvidence.js";
+import SourceEvidenceSheet from "./SourceEvidenceSheet.jsx";
 
 const clean = (value) =>
   String(value ?? "")
@@ -56,43 +62,72 @@ function PageRows({ rows, columns, label }) {
     </div>
   );
 }
-function Evidence({ reference, onOpen }) {
+function Evidence({ reference, onOpen, visual = false }) {
+  const [cell, setCell] = useState(null);
+  const excerpt = useMemo(
+    () => (visual ? buildEvidenceExcerpt(reference) : null),
+    [reference, visual],
+  );
   const origins = [
     ...new Set(reference.evidence.map((row) => row.origin.fileName)),
   ];
   return (
-    <div className="vi-study-reference">
-      <div>
-        <span>FUENTE · {reference.label}</span>
-        <strong>
-          {origins.join(" · ") ||
-            reference.source.fileName ||
-            "Sin archivo original disponible"}
-        </strong>
-        <small>
-          {reference.evidence
-            .slice(0, 4)
-            .map(
-              (row) =>
-                `${row.origin.sheetName ? row.origin.sheetName + " · " : ""}${row.origin.rowNumber ? "Fila " + row.origin.rowNumber : "Registro " + (row.sourceIndex + 1) + " (sin fila original)"}`,
-            )
-            .join(" / ")}
-          {reference.evidence.length > 4 ? " / …" : ""}
-        </small>
-        <small>
-          {reference.evidence.length} filas identificadas ·{" "}
-          {[
-            ...new Set(
-              reference.evidence.flatMap((row) =>
-                row.cells.map((c) => c.column),
+    <div className="vi-study-evidence">
+      <div className="vi-study-reference">
+        <div>
+          <span>FUENTE · {reference.label}</span>
+          <strong>
+            {origins.join(" · ") ||
+              reference.source.fileName ||
+              "Sin archivo original disponible"}
+          </strong>
+          <small>
+            {reference.evidence
+              .slice(0, 4)
+              .map(
+                (row) =>
+                  `${row.origin.sheetName ? row.origin.sheetName + " · " : ""}${row.origin.rowNumber ? "Fila " + row.origin.rowNumber : "Registro " + (row.sourceIndex + 1) + " (sin fila original)"}`,
+              )
+              .join(" / ")}
+            {reference.evidence.length > 4 ? " / …" : ""}
+          </small>
+          <small>
+            {reference.evidence.length} filas identificadas ·{" "}
+            {[
+              ...new Set(
+                reference.evidence.flatMap((row) =>
+                  row.cells.map((c) => c.column),
+                ),
               ),
-            ),
-          ].join(" / ") || "Sin columnas localizadas"}
-        </small>
+            ].join(" / ") || "Sin columnas localizadas"}
+          </small>
+        </div>
+        <button type="button" onClick={() => onOpen(reference)}>
+          Ver en fuente ↗
+        </button>
       </div>
-      <button type="button" onClick={() => onOpen(reference)}>
-        Ver en fuente ↗
-      </button>
+      {excerpt?.entries.length > 0 && (
+        <figure className="vi-study-sheet">
+          <figcaption>
+            Dato original · {excerpt.entries.length} de{" "}
+            {reference.evidence.length} filas del paso. Toca una celda para
+            entenderla.
+          </figcaption>
+          <SourceEvidenceSheet {...excerpt} compact onCell={setCell} />
+          {cell && (
+            <div className="vi-study-cell" role="status">
+              <strong>
+                {cell.column} · {cell.letter || "Sin coordenada"}
+              </strong>
+              <span>
+                Original: {String(cell.original ?? "Vacío")} → Normalizado:{" "}
+                {String(cell.normalized ?? "Vacío")}
+              </span>
+              <p>{cell.reason}</p>
+            </div>
+          )}
+        </figure>
+      )}
     </div>
   );
 }
@@ -165,8 +200,23 @@ function StudyStep({ step, index, trace, item, onOpen }) {
           </div>
         )}
         <div className="vi-study-references">
-          {step.refs.map((ref) => (
-            <Evidence key={ref.type} reference={ref} onOpen={onOpen} />
+          {step.refs.map((ref, refIndex) => (
+            <Evidence
+              key={ref.type}
+              reference={ref}
+              onOpen={onOpen}
+              visual={
+                refIndex === 0 &&
+                [
+                  "physical",
+                  "mapping",
+                  "phantom",
+                  "bom",
+                  "qad",
+                  "cost",
+                ].includes(step.id)
+              }
+            />
           ))}
         </div>
         <button
@@ -294,11 +344,23 @@ export default function PartLogicTracer({
   engineSources = {},
   scanRows = [],
   scanReady = false,
+  snapshotMeta = null,
   findings = [],
 }) {
   const [query, setQuery] = useState("");
   const [selectedPn, setSelectedPn] = useState("");
   const [preview, setPreview] = useState(null);
+  const viewportRef = useRef(null);
+  const resultRef = useRef(null);
+  const inputSources = useMemo(
+    () => getTracerSourceInventory(sources, scanReady, snapshotMeta),
+    [sources, scanReady, snapshotMeta],
+  );
+  useLayoutEffect(() => {
+    if (!open) return;
+    if (selectedPn) resultRef.current?.focus({ preventScroll: true });
+    viewportRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [open, selectedPn]);
   const suggestions = useMemo(() => {
     const match = clean(query),
       rows = [];
@@ -352,6 +414,7 @@ export default function PartLogicTracer({
         }}
       >
         <RubberDrawer
+          viewportRef={viewportRef}
           className="vi-logic-tracer vi-drawer-panel"
           role="dialog"
           aria-modal="true"
@@ -362,10 +425,12 @@ export default function PartLogicTracer({
               <p className="vi-eyebrow">
                 TRAZADOR DE PIEZA · APRENDE CON UN CASO
               </p>
-              <h2>Del escaneo al resultado</h2>
-              <p>
-                Sigue los datos, las reglas y la evidencia real de una pieza.
-              </p>
+              <h2>{item ? "Estudia el caso" : "Del escaneo al resultado"}</h2>
+              {!item && (
+                <p>
+                  Sigue los datos, las reglas y la evidencia real de una pieza.
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -409,6 +474,42 @@ export default function PartLogicTracer({
               )}
             </div>
             {!item && (
+              <div className="vi-study-catalog">
+                <strong>¿De dónde salen estos PN?</strong>
+                <p>
+                  Del corte actual: 4Wall escaneado + QAD aceptado + componentes
+                  generados por BOM. Cost Part e ISPBB enriquecen estos PN; sus
+                  catálogos solos no agregan piezas a esta lista.
+                </p>
+                <small>
+                  {reconciliation.length.toLocaleString("es-MX")} PN
+                  reconciliados · primeros 12 resultados, en orden de impacto
+                  NET absoluto del motor. El importe a la derecha es NET USD, no
+                  el costo.
+                </small>
+                <details>
+                  <summary>Ver los archivos y el snapshot activos</summary>
+                  <dl>
+                    {inputSources.map((source) => (
+                      <div key={source.type}>
+                        <dt>{source.label}</dt>
+                        <dd>
+                          {source.loaded
+                            ? source.identity
+                            : "Sin fuente cargada"}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <small>
+                    Son las fuentes activas del corte, incluidas las que la app
+                    recupera al iniciar. Selecciona un PN para localizar
+                    exactamente las filas aceptadas.
+                  </small>
+                </details>
+              </div>
+            )}
+            {!item && (
               <div className="vi-logic-suggestions">
                 {suggestions.map((row) => (
                   <button
@@ -418,6 +519,11 @@ export default function PartLogicTracer({
                   >
                     <strong>{row.partNumber}</strong>
                     <span>{row.master.description || "Sin descripción"}</span>
+                    <small>
+                      {getPartEntryOrigins(row, engineSources)
+                        .map((origin) => origin.label)
+                        .join(" + ") || "Origen no disponible"}
+                    </small>
                     <em>
                       {row.master.hasCost
                         ? money(row.financial.netUsd)
@@ -453,7 +559,12 @@ export default function PartLogicTracer({
                   identificar qué falta.
                 </p>
               )}
-              <section className="vi-logic-result">
+              <section
+                className="vi-logic-result"
+                ref={resultRef}
+                tabIndex={-1}
+                aria-label={`Resumen de PN ${trace.pn}`}
+              >
                 <div>
                   <span>PART NUMBER</span>
                   <h3>{trace.pn}</h3>
@@ -478,6 +589,45 @@ export default function PartLogicTracer({
                   </div>
                 ))}
               </dl>
+              <section
+                className="vi-study-origin"
+                aria-label="Origen del part number"
+              >
+                <h3>¿Por qué aparece {trace.pn} en esta lista?</h3>
+                <div
+                  className="vi-study-origin-map"
+                  aria-label="Fuentes que incorporaron este PN al corte"
+                >
+                  {trace.origin.routes.map((route) => (
+                    <div key={route.type}>
+                      <span>{route.label}</span>
+                      <b aria-hidden="true">↓</b>
+                    </div>
+                  ))}
+                  <strong>PN {trace.pn} · corte reconciliado</strong>
+                </div>
+                {trace.origin.routes.map((route) => (
+                  <div key={route.type}>
+                    <p>{route.explanation}</p>
+                    <Evidence reference={route.reference} onOpen={showSource} />
+                  </div>
+                ))}
+                <details>
+                  <summary>¿De dónde viene la descripción?</summary>
+                  <p>{trace.origin.descriptionReference.rule}</p>
+                  <Evidence
+                    reference={trace.origin.descriptionReference}
+                    onOpen={showSource}
+                    visual
+                  />
+                </details>
+                <p className="vi-study-reading">
+                  Cómo estudiar: lee el resultado de cada paso → mira la tabla
+                  original → toca las celdas naranjas → abre «Ver en fuente»
+                  para ver el archivo completo. Los detalles avanzados están en
+                  «Ver reglas y desglose».
+                </p>
+              </section>
               <nav className="vi-study-navigation" aria-label="Pasos del caso">
                 {trace.steps.map((step, index) => (
                   <a href={`#study-${step.id}`} key={step.id}>

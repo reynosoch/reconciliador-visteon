@@ -1,5 +1,29 @@
 import { scanEvidenceObject } from "./scanView.js";
 
+// Bounded, direct evidence lookup for inline study sheets. No full-file scan.
+export function buildEvidenceExcerpt(reference, limit = 3) {
+  const entries = (reference.evidence || [])
+    .slice(0, limit)
+    .flatMap((evidence) => {
+      const raw = reference.source?.rows?.[evidence.sourceIndex];
+      if (!raw) return [];
+      return [
+        {
+          row: reference.type === "scans" ? scanEvidenceObject(raw) : raw,
+          sourceIndex: evidence.sourceIndex,
+          origin: evidence.origin,
+          evidence,
+        },
+      ];
+    });
+  const columns = [
+    ...new Set(
+      entries.flatMap(({ evidence }) => evidence.cells.map((c) => c.column)),
+    ),
+  ];
+  return { entries, columns, usedColumns: new Set(columns) };
+}
+
 // One model for the existing source viewer, with or without tracer highlights.
 export function buildSourcePreview(selection) {
   if (!selection) return { entries: [], columns: [], sheets: [] };

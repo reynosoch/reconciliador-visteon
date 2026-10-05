@@ -551,6 +551,7 @@ export default function App() {
         reconciliation={inventory.reconciliation}
         sources={references.sources}
         scanReady={Boolean(inventory.lastUpdated && inventory.snapshotMeta?.complete)}
+        snapshotMeta={inventory.snapshotMeta}
         scanRows={inventory.scanRows}
         engineSources={inventory.engine.sources}
         findings={findings}

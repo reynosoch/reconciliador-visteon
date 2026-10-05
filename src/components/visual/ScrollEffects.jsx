@@ -156,6 +156,15 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       scheduleThumb();
     };
 
+    const currentExtent = () => {
+      // Header/ribbon and restored sources can change the native scroll range
+      // without resizing the observed content or viewport. Read the real range
+      // at input/handoff, so both edges work before the next observer callback.
+      const extent = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+      if (extent !== metricsRef.current.extent || height !== viewport.clientHeight) measure();
+      return extent;
+    };
+
     const jumpToRest = () => {
       clearTimeout(timer);
       timer = 0;
@@ -200,7 +209,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     };
 
     const atEdge = (delta) => {
-      const extent = metricsRef.current.extent;
+      const extent = currentExtent();
       return (
         extent > 1 &&
         ((delta > 0 && viewport.scrollTop <= 1) ||
@@ -323,7 +332,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
 
     const scroll = (event) => {
       if (event.target !== viewport) return;
-      const { extent, pull } = metricsRef.current;
+      const extent = currentExtent();
+      const { pull } = metricsRef.current;
       const now = performance.now();
       const reachedEdge =
         extent > 1 &&
@@ -370,6 +380,8 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
       reset();
       rail.focus({ preventScroll: true });
 
+      currentExtent();
+
       const { extent, track, thumbSize } = metricsRef.current;
       const rect = rail.getBoundingClientRect();
       if (event.target !== thumb) {
@@ -397,6 +409,7 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
     };
 
     const key = (event) => {
+      currentExtent();
       const moves = {
         ArrowDown: 48,
         ArrowUp: -48,
@@ -489,8 +502,9 @@ export default function ScrollEffects({ viewportRef, contentRef }) {
   );
 }
 
-export function RubberDrawer({ children, className = "", ...props }) {
-  const viewportRef = useRef(null);
+export function RubberDrawer({ children, className = "", viewportRef: suppliedViewportRef, ...props }) {
+  const internalViewportRef = useRef(null);
+  const viewportRef = suppliedViewportRef || internalViewportRef;
   const contentRef = useRef(null);
 
   return (

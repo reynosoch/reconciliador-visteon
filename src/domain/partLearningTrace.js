@@ -89,6 +89,57 @@ const entry = (sourceIndex, cells, note = "Usada por el motor") => ({
   note,
 });
 
+// Mirrors the engine's PN universe by reading its accepted maps, including
+// zero-quantity entries. Reference catalogs alone never create a candidate.
+export function getPartEntryOrigins(item, engineSources = {}) {
+  const pn = item.partNumber;
+  return [
+    [
+      "scans",
+      "4Wall",
+      engineSources.physical?.byPart?.has(pn) ?? item.flags.physicalPresent,
+    ],
+    ["qad", "QAD", engineSources.qad?.byPart?.has(pn) ?? item.flags.qadPresent],
+    [
+      "bom",
+      "BOM de Phantom",
+      engineSources.phantomAdjustments?.byPart?.has(pn) ??
+        item.flags.hasBomAdjustment,
+    ],
+  ]
+    .filter(([, , present]) => present)
+    .map(([type, label]) => ({ type, label }));
+}
+
+export function getTracerSourceInventory(
+  sources = {},
+  scanReady = false,
+  snapshotMeta = null,
+) {
+  return [
+    ["scans", "4Wall"],
+    ["qad", "QAD"],
+    ["bom", "BOM"],
+    ["areas", "Áreas"],
+    ["ispbb", "ISPBB"],
+    ["cost", "Cost Part"],
+  ].map(([type, label]) => {
+    const source = sources[type];
+    const remote = type === "scans" && !source?.loaded && scanReady;
+    const files = source?.files?.map((file) => file.fileName).filter(Boolean);
+    return {
+      type,
+      label,
+      loaded: Boolean(source?.loaded || remote),
+      identity: remote
+        ? `Snapshot 4Wall de Supabase${snapshotMeta?.snapshotId ? " · " + snapshotMeta.snapshotId : " · ID no disponible"}`
+        : files?.length
+          ? [...new Set(files)].join(" · ")
+          : source?.fileName || "Archivo no disponible",
+    };
+  });
+}
+
 // Called only for the selected PN. Reads normalized parser decisions and engine results;
 // it does not recompute NET, SWING, explosions or the financial classification.
 export function buildPartLearningTrace({
@@ -321,6 +372,36 @@ export function buildPartLearningTrace({
     costEntries,
     "Duplicados contradictorios invalidan el costo. Costo cero se conserva y se advierte.",
     "Cost Part",
+  );
+  // Description follows the same nullish precedence as reconcileInventory:
+  // an existing empty Cost Part description does not fall back to ISPBB.
+  const descriptionSource = s.costs?.byPart.has(pn) ? "cost" : "ispbb";
+  const descriptionIndex =
+    descriptionSource === "cost"
+      ? s.costs.byPart.get(pn).sourceIndices?.[0]
+      : s.planning?.byPart.get(pn)?.sourceIndex;
+  const descriptionRef = reference(
+    descriptionSource,
+    sources[descriptionSource],
+    descriptionIndex != null &&
+      Object.hasOwn(
+        sources[descriptionSource]?.rows?.[descriptionIndex] || {},
+        "Description",
+      )
+      ? [
+          entry(descriptionIndex, [
+            cell(
+              "Description",
+              m.description,
+              "Descripción seleccionada por el motor: Cost Part primero; ISPBB solo si no existe Cost Part",
+            ),
+          ]),
+        ]
+      : [],
+    "La descripción viene de Cost Part; ISPBB solo si no existe registro Cost Part. Una descripción vacía se conserva.",
+    descriptionSource === "cost"
+      ? "Descripción · Cost Part"
+      : "Descripción · ISPBB",
   );
   const readiness = [
     ["scans", "4Wall", Boolean(scannedSource.loaded)],
@@ -560,6 +641,19 @@ export function buildPartLearningTrace({
   return {
     pn,
     description: m.description,
+    origin: {
+      routes: getPartEntryOrigins(item, s).map((origin) => ({
+        ...origin,
+        reference: { scans, qad, bom }[origin.type],
+        explanation:
+          origin.type === "scans"
+            ? "Este PN tiene un escaneo aceptado en 4Wall, incluso si la cantidad es cero. ISPBB decide después si ese físico se reconoce directamente."
+            : origin.type === "qad"
+              ? "Este PN aparece en QAD aceptado por Site 179A y tipo PP / MP / FP, incluso si todavía no hay escaneo."
+              : `Este PN fue generado como componente por BOM de ${parentParts.join(", ") || "un padre Phantom"}. No implica que se haya escaneado directamente.`,
+      })),
+      descriptionReference: descriptionRef,
+    },
     readiness,
     complete,
     status,
