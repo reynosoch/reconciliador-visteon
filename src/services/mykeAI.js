@@ -1,3 +1,5 @@
+import { isMykePublicQuestion } from "../../supabase/functions/myke-chat/public-question.mjs";
+
 // No provider key in this module. The private access code stays in component memory.
 export function getMykeAIConfig(env = import.meta.env || {}) {
   const url =
@@ -20,50 +22,9 @@ export function getMykeAIConfig(env = import.meta.env || {}) {
     return null;
   }
 }
-export function summarizeMykePiece(piece) {
-  if (!piece) return null;
-  const string = (value) => (value == null ? "" : String(value).slice(0, 160));
-  return {
-    pn: piece.pn,
-    found: piece.found,
-    description: piece.description,
-    status: piece.status,
-    complete: piece.complete,
-    explanation: piece.explanation,
-    metrics: (piece.metrics || []).map((metric) => ({
-      label: metric.label,
-      value: metric.value,
-      explanation: metric.explanation,
-      sources: metric.refs.slice(0, 3).map((ref) => ({
-        file: ref.source?.fileName || ref.label,
-        rule: ref.rule,
-        rows: ref.evidence.slice(0, 3).map((row) => ({
-          file: row.origin?.fileName || ref.source?.fileName || "",
-          row: row.origin?.rowNumber ?? null,
-          sheet: row.origin?.sheetName || "",
-          cells: (row.cells || []).slice(0, 6).map((cell) => ({
-            column: cell.column,
-            original: string(cell.original),
-            normalized: string(cell.normalized),
-          })),
-        })),
-      })),
-    })),
-    warnings: (piece.warnings || []).map(({ title, detail }) => ({
-      title,
-      detail,
-    })),
-    actions: (piece.actions || []).map(({ title, detail }) => ({
-      title,
-      detail,
-    })),
-  };
-}
 export async function requestMykeAI({
   question,
   history = [],
-  piece = null,
-  sourceSummary = [],
   accessCode,
   signal,
   config = getMykeAIConfig(),
@@ -72,6 +33,10 @@ export async function requestMykeAI({
   if (!config || !accessCode)
     throw new Error(
       "La IA no está conectada. Puedes seguir con la guía local.",
+    );
+  if (!isMykePublicQuestion(question))
+    throw new Error(
+      "Las consultas de piezas se resuelven con el motor local; no se envían a Gemini.",
     );
   let response;
   try {
@@ -93,18 +58,12 @@ export async function requestMykeAI({
       ]),
       body: JSON.stringify({
         question: question.slice(0, 1000),
-        history: history.slice(-6).map((message) => ({
-          role: message.role,
-          content: message.content.slice(0, 800),
-        })),
-        piece,
-        sourceSummary: sourceSummary
-          .slice(0, 6)
-          .map(({ type, label, loaded, identity }) => ({
-            type,
-            label,
-            loaded,
-            identity: String(identity || "").slice(0, 240),
+        history: history
+          .filter((message) => isMykePublicQuestion(message.content))
+          .slice(-6)
+          .map((message) => ({
+            role: message.role,
+            content: message.content.slice(0, 800),
           })),
       }),
     });
@@ -120,7 +79,8 @@ export async function requestMykeAI({
     const errors = {
       401: "El código de acceso no fue aceptado.",
       403: "Este sitio no tiene permiso para usar el servicio IA.",
-      429: "La IA está ocupada; vuelve a intentar en un momento.",
+      429: "Gemini alcanzó su cuota o está ocupado. La guía local sigue disponible; intenta más tarde.",
+      422: "Esta consulta se mantiene local para proteger los datos de las piezas.",
       503: "El servicio IA todavía no está configurado.",
     };
     throw new Error(

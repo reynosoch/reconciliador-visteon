@@ -1,0 +1,80 @@
+name: Activate Myke with Gemini
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/myke-chat/**'
+      - 'supabase/config.toml'
+      - 'scripts/activate-myke.mjs'
+      - '.github/workflows/deploy-myke.yml'
+  workflow_dispatch:
+    inputs:
+      free_tier_confirmed:
+        description: 'Confirmé en AI Studio que la clave pertenece a un proyecto sin facturación activa'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: myke-gemini-production
+  cancel-in-progress: false
+
+jobs:
+  prerequisites:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Revisar configuración sin revelar secretos ni llamar a Gemini
+        id: check
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          MYKE_GEMINI_API_KEY: ${{ secrets.MYKE_GEMINI_API_KEY || secrets.GEMINI_API_KEY }}
+          MYKE_ACCESS_CODE: ${{ secrets.MYKE_ACCESS_CODE }}
+          FREE_TIER_CONFIRMED: ${{ github.event_name == 'workflow_dispatch' && inputs.free_tier_confirmed || github.event_name == 'push' && vars.MYKE_GEMINI_FREE_TIER_CONFIRMED == 'true' }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs';
+          const missing = ['SUPABASE_ACCESS_TOKEN', 'MYKE_GEMINI_API_KEY', 'MYKE_ACCESS_CODE']
+            .filter((name) => !process.env[name]);
+          if (process.env.MYKE_ACCESS_CODE && (process.env.MYKE_ACCESS_CODE.length < 24 || process.env.MYKE_ACCESS_CODE.length > 256))
+            missing.push('MYKE_ACCESS_CODE de 24–256 caracteres');
+          if (process.env.FREE_TIER_CONFIRMED !== 'true') missing.push('confirmación de proyecto Google sin facturación');
+          const ready = missing.length === 0;
+          appendFileSync(process.env.GITHUB_OUTPUT, `ready=${ready}\n`);
+          console.log(ready ? 'Requisitos presentes; continúa build/despliegue.' : `Myke no se activó. Falta: ${missing.join(', ')}. No se llamó al proveedor.`);
+          if (!ready && process.env.GITHUB_EVENT_NAME === 'workflow_dispatch') process.exitCode = 1;
+          JS
+  activate:
+    needs: prerequisites
+    if: needs.prerequisites.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependencias y verificar la entrega completa
+        run: |
+          npm ci
+          npm run build
+      - name: Recuperar configuración pública de la app
+        run: node scripts/extract-public-pages-env.mjs
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Configurar y desplegar solo Myke; probar una pregunta pública
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          MYKE_GEMINI_API_KEY: ${{ secrets.MYKE_GEMINI_API_KEY || secrets.GEMINI_API_KEY }}
+          MYKE_ACCESS_CODE: ${{ secrets.MYKE_ACCESS_CODE }}
+          MYKE_GEMINI_FREE_TIER_CONFIRMED: 'true'
+        run: node scripts/activate-myke.mjs

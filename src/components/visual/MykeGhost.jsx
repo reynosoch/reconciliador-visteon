@@ -52,12 +52,6 @@ export default function MykeGhost({
           strokeWidth="1.5"
         />
         <path
-          d="M15 57c-7 0-10 5-9 9M81 55c6-1 9-6 8-10"
-          stroke={color}
-          strokeWidth="7"
-          strokeLinecap="round"
-        />
-        <path
           d="M25 33c3-7 9-12 16-14"
           stroke="white"
           strokeOpacity=".5"
@@ -65,31 +59,15 @@ export default function MykeGhost({
           strokeLinecap="round"
         />
         <g>
-          <path
-            d="M15 72l9-7 14 4 10 5 10-5 14-4 9 7-5 11-8-4v9H28v-9l-8 4-5-11Z"
-            fill="#124258"
-            stroke="#73a4b5"
-            strokeWidth="1.2"
+          <rect x="20" y="72" width="56" height="18" rx="7" fill="#123b50" />
+          <image
+            href={`${import.meta.env.BASE_URL}brand/visteon-logo-white.png`}
+            x="24"
+            y="74"
+            width="48"
+            height="14"
+            preserveAspectRatio="xMidYMid meet"
           />
-          <path
-            d="M37 69l11 5-6 6-8-9M59 69l-11 5 6 6 8-9"
-            fill="#1e5b72"
-            stroke="#a5c9d3"
-            strokeWidth="1"
-          />
-          <path d="M48 75v11" stroke="#75a5b7" strokeWidth="1" />
-          <circle cx="48" cy="79" r="1" fill="#e7f4f7" />
-          <text
-            x="64"
-            y="80"
-            textAnchor="middle"
-            fill="#fff8ef"
-            fontSize="5.5"
-            fontFamily="Arial, sans-serif"
-            fontWeight="700"
-          >
-            visteon
-          </text>
         </g>
         <ellipse cx="25" cy="61" rx="7" ry="4" fill="#ed8559" opacity=".45" />
         <ellipse cx="71" cy="61" rx="7" ry="4" fill="#ed8559" opacity=".45" />

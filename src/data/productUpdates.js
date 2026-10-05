@@ -1,5 +1,17 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-myke-gemini",
+    date: "05 OCT 2026",
+    title: "Myke: Gemini y contexto del motor",
+    summary: "Consulta la lógica real del proyecto; fantasma naranja con logo Visteon y sin manos.",
+    items: [
+      "Integración Gemini con documentación y código público sincronizados; activación depende de clave y acceso al servidor.",
+      "Las piezas, cifras y archivos se consultan localmente, con sus advertencias y visor Excel de evidencia.",
+      "El nivel gratuito tiene cuotas: sin cambio automático a modelos de pago; guía local ante falta de conexión.",
+      "Logo Visteon más visible; se mantienen arrastre, escritura, cierre y tamaño ajustable del chat.",
+    ],
+  },
+  {
     id: "2026-10-05-myke-single-chat",
     date: "05 OCT 2026",
     title: "Myke: un solo chat y ayuda a mano",

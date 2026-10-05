@@ -13,7 +13,6 @@ import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
 import {
   getMykeAIConfig,
   requestMykeAI,
-  summarizeMykePiece,
 } from "../../services/mykeAI.js";
 import publicKnowledge from "../../../supabase/functions/myke-chat/knowledge.generated.json";
 
@@ -247,10 +246,11 @@ export default function MykePanel({
       messages.filter((m) => m.role === "myke").at(-1)?.answer?.topicIds || [];
     const answer = answerMyke(text, organization, previous, partNumbers);
     const id = `myke-${++messageSequence.current}`;
-    const useAI = aiEnabled && Boolean(aiConfig);
+    // Known/explicit PN and their evidence stay local with the unpaid provider.
+    const useAI = aiEnabled && Boolean(aiConfig) && answer.kind !== "piece";
     setMessages((current) => [
       ...current.slice(-22),
-      { role: "you", text },
+      { role: "you", text, publicQuestion: useAI },
       { role: "myke", id, answer, pending: useAI },
     ]);
     setDraft("");
@@ -260,33 +260,16 @@ export default function MykePanel({
     const controller = new AbortController();
     request.current = controller;
     setAIState("pending");
-    const history = messages.map((m) => ({
-      role: m.role === "you" ? "user" : "assistant",
-      content:
-        m.text ||
-        m.aiText ||
-        [
-          ...(m.answer?.paragraphs || []),
-          ...(m.answer?.topicIds || []).flatMap(
-            (topicId) =>
-              organization.topics.find((t) => t.id === topicId)?.paragraphs ||
-              [],
-          ),
-        ].join("\n"),
-    }));
+    const history = messages
+      .filter((m) => m.publicQuestion || m.aiText)
+      .map((m) => ({
+        role: m.role === "you" ? "user" : "assistant",
+        content: m.text || m.aiText,
+      }));
     try {
-      const consultedPN =
-        answer.kind === "piece"
-          ? answer.pn
-          : messages.filter((m) => m.answer?.kind === "piece").at(-1)?.answer
-              .pn;
       const aiText = await requestMykeAI({
         question: text,
         history,
-        piece: consultedPN
-          ? summarizeMykePiece(buildMykePartAnswer(consultedPN, pieceContext))
-          : null,
-        sourceSummary: inputs,
         accessCode,
         signal: controller.signal,
         config: aiConfig,
@@ -562,9 +545,11 @@ export default function MykePanel({
                           administrador.
                         </p>
                         <p>
-                          Se enviarán tu pregunta, conversación breve, estado de
-                          fuentes y resumen del PN consultado; no archivos
-                          completos. No escribas claves OpenAI aquí.
+                          Gemini responde sobre la guía y el código público del proyecto.
+                          Las piezas y sus archivos se consultan aquí con el motor,
+                          sin enviarlos a Google. El nivel gratuito tiene cuotas
+                          y Google puede usar tus preguntas para mejorar sus modelos;
+                          no escribas información confidencial, contraseñas ni claves de API.
                         </p>
                         <form
                           onSubmit={(event) => {
@@ -676,7 +661,7 @@ export default function MykePanel({
                               {message.aiText ? (
                                 <div className="vi-myke-ai-answer">
                                   <small>
-                                    Orientación con IA · corte al enviar;
+                                    Orientación con Gemini · guía y código del proyecto;
                                     confirma propuestas en las fuentes
                                   </small>
                                   <p>{message.aiText}</p>
@@ -802,9 +787,9 @@ export default function MykePanel({
                       {aiState === "pending"
                         ? "Consultando IA…"
                         : aiState === "ready"
-                          ? "IA conectada"
+                          ? "Gemini conectado · piezas locales"
                           : aiEnabled
-                            ? "IA por confirmar · guía local disponible"
+                            ? "Gemini por confirmar · guía local disponible"
                             : "Guía local · IA sin conectar"}{" "}
                       · No modifica inventario. No compartas contraseñas.
                     </p>
