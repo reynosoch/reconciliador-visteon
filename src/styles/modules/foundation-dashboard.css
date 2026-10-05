@@ -241,7 +241,7 @@ button:disabled:hover { transform: none; }
   .vi-financial-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .vi-financial-cell:nth-child(3n) { border-right: 0; }
   .vi-financial-cell:nth-child(-n+3) { border-bottom: 1px solid var(--vi-line); }
-  .vi-flow-label, .vi-source-ribbon .vi-source-state:last-child, .vi-ribbon-separator { display: none; }
+  .vi-flow-label, .vi-ribbon-separator { display: none; }
 }
 @media (max-width: 1190px) {
   .vi-workspace-grid { grid-template-columns: minmax(0, 1fr); }

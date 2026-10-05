@@ -13,8 +13,8 @@ const organization = buildMykeOrganization(
 );
 assert.equal(organization.manager.id, "ORCH");
 assert.equal(organization.employees.length, 11);
-assert.equal(organization.topics.length, 20);
-assert.equal(new Set(organization.topics.map((topic) => topic.id)).size, 20);
+assert.equal(organization.topics.length, 21);
+assert.equal(new Set(organization.topics.map((topic) => topic.id)).size, 21);
 for (const topic of organization.topics) {
   assert.ok(topic.paragraphs.length > 0);
   assert.ok(!topic.paragraphs.some((paragraph) => paragraph.includes("<!--")));
@@ -35,7 +35,8 @@ for (const [question, topic] of [
   ["¿Qué costo utiliza?", "cost"],
   ["¿Cómo puedo ver fuentes como Excel?", "preview"],
   ["¿Cómo cuidan el rendimiento?", "performance"],
-  ["¿Quiénes son los agentes?", "team"],
+  ["¿Cómo uso el tablero?", "dashboard"],
+  ["¿Qué oportunidades de mejora puedo revisar?", "opportunities"],
   ["¿Qué pruebas ejecuta el build?", "delivery"],
 ])
   assert.ok(response(question).topicIds.includes(topic), question);
@@ -70,7 +71,7 @@ assert.equal(
   "unknown",
 );
 console.log(
-  "Myke OK: actual docs/roles, 20 FAQs, topic retrieval, follow-ups, current PN results/evidence and truthful unknowns; no financial calculations.",
+  "Myke OK: actual docs/roles, 21 FAQs, topic retrieval, follow-ups, current PN results/evidence and truthful unknowns; no financial calculations.",
 );
 
 assert.equal(extractPartNumber("PN: 123456"), "123456");
@@ -238,3 +239,5 @@ assert.equal(
     .original,
   "YES",
 );
+
+assert.ok(!organization.topics.some((topic) => topic.id === "team"));

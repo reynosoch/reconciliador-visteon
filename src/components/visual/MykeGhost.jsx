@@ -5,12 +5,12 @@ const poses = {
   typing: "vi-myke-typing",
   reading: "vi-myke-reading",
   dragging: "vi-myke-dragging",
+  landing: "vi-myke-landing",
 };
 export default function MykeGhost({
   className = "",
   pose = "idle",
   gaze = 0,
-  cap = true,
   color = "#f5821f",
 }) {
   const gradient = useId();
@@ -64,33 +64,33 @@ export default function MykeGhost({
           strokeWidth="4"
           strokeLinecap="round"
         />
-        {cap && (
-          <g>
-            <path
-              d="M22 25c0-13 11-21 26-21s26 8 26 21Z"
-              fill="#124258"
-              stroke="#7eb1c2"
-              strokeWidth="1.2"
-            />
-            <path
-              d="M19 25c19-4 43-4 61 1 6 2 7 5 2 6-19 3-44 0-63-7Z"
-              fill="#082d40"
-              stroke="#ffbc75"
-              strokeWidth="1.5"
-            />
-            <text
-              x="48"
-              y="20"
-              textAnchor="middle"
-              fill="#fff8ef"
-              fontSize="8"
-              fontFamily="Arial, sans-serif"
-              fontWeight="700"
-            >
-              visteon
-            </text>
-          </g>
-        )}
+        <g>
+          <path
+            d="M15 72l9-7 14 4 10 5 10-5 14-4 9 7-5 11-8-4v9H28v-9l-8 4-5-11Z"
+            fill="#124258"
+            stroke="#73a4b5"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M37 69l11 5-6 6-8-9M59 69l-11 5 6 6 8-9"
+            fill="#1e5b72"
+            stroke="#a5c9d3"
+            strokeWidth="1"
+          />
+          <path d="M48 75v11" stroke="#75a5b7" strokeWidth="1" />
+          <circle cx="48" cy="79" r="1" fill="#e7f4f7" />
+          <text
+            x="64"
+            y="80"
+            textAnchor="middle"
+            fill="#fff8ef"
+            fontSize="5.5"
+            fontFamily="Arial, sans-serif"
+            fontWeight="700"
+          >
+            visteon
+          </text>
+        </g>
         <ellipse cx="25" cy="61" rx="7" ry="4" fill="#ed8559" opacity=".45" />
         <ellipse cx="71" cy="61" rx="7" ry="4" fill="#ed8559" opacity=".45" />
         <g className="vi-myke-eyes">

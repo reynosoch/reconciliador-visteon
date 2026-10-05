@@ -47,7 +47,6 @@ export default function CommandHeader({
   sourcesOpen = false,
   onRefresh,
   onToggleSources,
-  onOpenRules,
   onOpenNotifications,
   onOpenBot,
   onOpenMenu,
@@ -372,9 +371,6 @@ export default function CommandHeader({
           <SourceState label="QAD" state={referencesReady ? "CONGELADO" : "PENDIENTE"} detail="Planta 179A" ready={referencesReady} />
           <span className="vi-ribbon-separator" aria-hidden="true" />
           <SourceState label="REFERENCIAS" state={referencesReady ? "LISTAS" : referenceStatus?.hasErrors ? "REVISAR" : `${loaded}/${total} cargadas`} detail="ISPBB · BOM · COST" ready={referencesReady} error={referenceStatus?.hasErrors} />
-          <button type="button" onClick={onOpenRules} className="vi-ribbon-help" aria-label="Abrir ayuda y metodología">
-            <span>?</span><strong>AYUDA</strong>
-          </button>
         </div>
       </div>
     </header>

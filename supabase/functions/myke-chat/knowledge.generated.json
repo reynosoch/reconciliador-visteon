@@ -1,0 +1,552 @@
+{
+  "topics": [
+    {
+      "id": "dashboard",
+      "title": "¿Cómo uso el tablero?",
+      "paragraphs": [
+        "Empieza en Fuentes: confirma escaneos 4Wall, QAD congelado, Áreas, ISPBB y Cost Part. Agrega BOM cuando el inventario tenga Phantom. La franja debajo de la barra superior indica qué está listo y qué falta.",
+        "En el resumen, Physical es el conteo reconocido y QAD lo esperado. NET compara el total y SWING revisa diferencias por localidad; no son dos pérdidas para sumar. Usa los filtros de la tabla para localizar un PN o una situación que requiera revisión.",
+        "Toca una pieza para revisar su detalle o escribe su PN aquí. Abre el trazador para ver el recorrido completo y «Ver en fuente» para mirar las filas. Desde Explorar puedes abrir motor, archivos y advertencias. El menú conserva historial, opciones de apariencia y bot; ocultar a Myke no quita su chat."
+      ],
+      "keywords": [
+        "tablero",
+        "dashboard",
+        "usar",
+        "inicio",
+        "ayuda",
+        "comenzar",
+        "filtros",
+        "tabla",
+        "resumen",
+        "menu",
+        "navegar"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "cost"
+      ]
+    },
+    {
+      "id": "opportunities",
+      "title": "¿Qué oportunidades de mejora puedo revisar?",
+      "paragraphs": [
+        "Empieza por completar las fuentes y confirmar que pertenecen al mismo inventario. Revisa áreas sin localidad, costos ausentes o en conflicto y Phantom sin BOM utilizable: pueden impedir una valoración confiable.",
+        "Después revisa piezas sin físico registrado, material inesperado y diferencias por localidad. Escribe un PN para obtener sus advertencias y un plan basado en los datos actuales. Confirma cada hipótesis con las filas de origen antes de proponer un ajuste; una diferencia no prueba una pérdida ni un traslado.",
+        "Para mejorar la experiencia, usa filtros, el visor por páginas y Vidrio ligero cuando el dispositivo lo necesite. Las sugerencias de Myke son apoyo de revisión; no cambian reglas, inventario ni archivos."
+      ],
+      "keywords": [
+        "oportunidades",
+        "oportunidad",
+        "mejorar",
+        "sugerencias",
+        "prioridad",
+        "prioridades",
+        "optimizar",
+        "recomendaciones"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "areas",
+        "ispbb",
+        "bom",
+        "cost"
+      ]
+    },
+    {
+      "id": "capabilities",
+      "title": "¿Qué puedo hacer?",
+      "paragraphs": [
+        "Puedo explicarte cómo funciona el reconciliador, de dónde vienen los datos, qué significan NET y SWING, cómo trabaja Phantom y qué revisar ante una advertencia. Elige una pregunta sugerida o escribe la tuya.",
+        "También puedes escribir un número de parte, por ejemplo «PN: TU-NUMERO», o pegar uno que esté cargado. Verás físico, QAD, costo, NET, SWING, etiquetas, advertencias y un plan de revisión del corte actual. Toca una cifra para ver su explicación y abrir las filas reales en el visor tipo Excel; el trazador conserva el recorrido completo.",
+        "En Explorar puedes abrir el motor por dentro, seguir una pieza, revisar archivos y ver advertencias. No ejecuto ajustes ni modifico el inventario. La guía local siempre funciona; la IA solo responde cuando el servicio está configurado y conectado. Si no encuentro un PN o falta una fuente, te lo digo."
+      ],
+      "keywords": [
+        "capacidades",
+        "ayudar",
+        "ayuda",
+        "puedo",
+        "opciones",
+        "servicios",
+        "preguntas"
+      ],
+      "sources": []
+    },
+    {
+      "id": "engine",
+      "title": "¿Cómo funciona el reconciliador y su código?",
+      "paragraphs": [
+        "El reconciliador compara lo contado con lo que QAD esperaba encontrar. Primero lee los archivos, ordena sus campos y confirma dónde está cada pieza. Después reconoce el físico, aplica las reglas Phantom y compara cantidades y costos.",
+        "El recorrido del código es: archivos originales → lectores de archivos → datos ordenados → motor de reglas → conciliación → pantalla. React presenta los resultados: las fórmulas y reglas viven en el motor, para poder probarlas sin abrir la interfaz.",
+        "Abre el recorrido visual para ver cada etapa; abre el trazador para seguir una pieza real y sus filas de origen."
+      ],
+      "keywords": [
+        "motor",
+        "arquitectura",
+        "codigo",
+        "reconciliador",
+        "react",
+        "parser",
+        "normalizado"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "ispbb",
+        "bom",
+        "cost",
+        "areas"
+      ]
+    },
+    {
+      "id": "parts",
+      "title": "¿De dónde salen los números de parte de la lista?",
+      "paragraphs": [
+        "La lista reúne los PN del físico, del QAD aceptado y de componentes que recibieron un ajuste BOM. Un PN que solo aparece en Cost Part o ISPBB no entra por eso a la lista.",
+        "Los casos recomendados muestran situaciones distintas: diferencia total, diferencia por localidad, Phantom pendiente, componente BOM, conteo pendiente y costo por revisar. Son piezas del corte actual, no ejemplos inventados ni una lista exclusiva de pérdidas.",
+        "En el trazador, «Ver fuente de los PN» abre sus registros. Selecciona un PN para conocer qué filas participaron en su resultado."
+      ],
+      "keywords": [
+        "pn",
+        "numero",
+        "parte",
+        "numeros",
+        "partes",
+        "lista",
+        "recomendado",
+        "buscador",
+        "trazador",
+        "seleccion"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "bom"
+      ]
+    },
+    {
+      "id": "physical",
+      "title": "¿De dónde viene el físico: archivo manual o bot 4Wall?",
+      "paragraphs": [
+        "4Wall aporta PN, cantidad y área de escaneo. La app indica si proviene de un archivo manual cargado o de la copia publicada por el bot. Un archivo manual sustituye por completo al físico automático; no se mezclan los dos.",
+        "El área pasa por el catálogo de Áreas para obtener la localidad QAD. El físico reconocido puede incluir componentes obtenidos de un padre Phantom mediante BOM; por eso no siempre coincide con la cantidad escaneada directamente del PN.",
+        "No se inventan auditor, ticket ni hora si el archivo o la copia del bot no los contiene."
+      ],
+      "keywords": [
+        "fisico",
+        "physical",
+        "conteo",
+        "cantidad",
+        "escaneo",
+        "escaneos",
+        "manual",
+        "automatico",
+        "4wall",
+        "bot",
+        "origen"
+      ],
+      "sources": [
+        "scans",
+        "areas"
+      ]
+    },
+    {
+      "id": "snapshot",
+      "title": "¿Qué es un snapshot o corte?",
+      "paragraphs": [
+        "Es una copia de los escaneos de un momento concreto. Sirve para comparar ese conteo con el inventario congelado de QAD, como guardar una foto de los datos, no una captura de pantalla.",
+        "La hora de la última consulta de la app no prueba cuándo se extrajo 4Wall. Si falta esa fecha o un identificador real, la antigüedad del reporte no está confirmada.",
+        "Si los datos cambian mientras se leen las páginas, el corte queda incompleto. Espera una lectura estable antes de sacar conclusiones."
+      ],
+      "keywords": [
+        "snapshot",
+        "corte",
+        "congelado",
+        "copia",
+        "fecha",
+        "actualizacion",
+        "antiguedad",
+        "publicado",
+        "completo",
+        "parcial"
+      ],
+      "sources": [
+        "scans",
+        "qad"
+      ]
+    },
+    {
+      "id": "qad",
+      "title": "¿Qué representa QAD y qué filas se aceptan?",
+      "paragraphs": [
+        "QAD 3.2 es el inventario congelado: la cantidad esperada por PN y localidad. El motor acepta Site 179A y los tipos PP, MP y FP; una coincidencia de PN en una fila fuera del filtro no significa que participó en el cálculo.",
+        "Un saldo cero aceptado y un PN ausente del QAD filtrado son situaciones distintas. El trazador muestra esa diferencia y permite revisar la fila original."
+      ],
+      "keywords": [
+        "qad",
+        "congelado",
+        "esperado",
+        "saldo",
+        "localidad",
+        "planta",
+        "site",
+        "179a",
+        "pp",
+        "mp",
+        "fp",
+        "filtro"
+      ],
+      "sources": [
+        "qad"
+      ]
+    },
+    {
+      "id": "net",
+      "title": "¿Cómo sale NET y qué significa su signo?",
+      "paragraphs": [
+        "NET piezas = Físico reconocido total − QAD total.",
+        "NET USD = NET piezas × costo unitario de Cost Part. Se conserva el signo: negativo indica menos físico; positivo indica más físico. Durante un conteo en curso, no confirma por sí solo una pérdida o ganancia definitiva.",
+        "El desglose con los valores reales del PN está en el trazador. Sin costo confiable no se presenta un valor de cero dólares como válido."
+      ],
+      "keywords": [
+        "net",
+        "diferencia",
+        "total",
+        "negativo",
+        "positivo",
+        "perdida",
+        "ganancia",
+        "unidades",
+        "dolares",
+        "usd"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "cost"
+      ]
+    },
+    {
+      "id": "swing",
+      "title": "¿Qué es SWING y por qué no se divide entre dos?",
+      "paragraphs": [
+        "SWING piezas = suma de ABS(Físico de cada localidad − QAD de esa localidad). SWING USD = SWING piezas × costo unitario.",
+        "No se divide entre dos porque la regla vigente mide cada diferencia por localidad. Si sobra en una y falta en otra, ambas diferencias participan. Esto ayuda a investigar ubicación, pero no demuestra que hubo un traslado.",
+        "NET mide la diferencia total; SWING mide el desajuste por localidad. No sumes NET y SWING como dos pérdidas distintas. El alcance final de localidades para SWING sigue pendiente de confirmación con el departamento."
+      ],
+      "keywords": [
+        "swing",
+        "divide",
+        "dividir",
+        "dos",
+        "2",
+        "mitad",
+        "absoluto",
+        "ubicacion",
+        "localidades",
+        "diferencia",
+        "traslado"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "cost",
+        "areas"
+      ]
+    },
+    {
+      "id": "phantom",
+      "title": "¿Cómo se decide Phantom y cómo participa BOM?",
+      "paragraphs": [
+        "ISPBB decide Phantom con YES o NO; el prefijo del PN no lo decide. Si falta una respuesta aceptada, Phantom queda por confirmar.",
+        "Para un padre Phantom YES escaneado, BOM usa Usage positivo, Level .2 / 0.2 y Comp Phantom = NO. La regla actual no es recursiva: obtiene los componentes de ese nivel y hereda la localidad del padre.",
+        "El padre conserva su escaneo visible, pero no añade físico directo reconocido; los componentes reciben el ajuste. Encontrar un PN en BOM por sí solo no crea dinero ni físico adicional. El QAD del padre se conserva y puede generar una alerta."
+      ],
+      "keywords": [
+        "phantom",
+        "ispbb",
+        "bom",
+        "usage",
+        "parent",
+        "component",
+        "componente",
+        "padre",
+        "nivel",
+        "level",
+        "prefijo",
+        "recursivo",
+        "explosion"
+      ],
+      "sources": [
+        "ispbb",
+        "bom",
+        "scans"
+      ]
+    },
+    {
+      "id": "cost",
+      "title": "¿De dónde sale el costo y por qué puede faltar?",
+      "paragraphs": [
+        "Cost Part Browse aporta Cost Total y Status. El motor mantiene la precisión original del costo para calcular y muestra los dólares con dos decimales.",
+        "Un costo ausente, inválido o en conflicto requiere revisión; no se convierte silenciosamente en cero. Un costo realmente igual a cero sí puede ser válido."
+      ],
+      "keywords": [
+        "costo",
+        "cost",
+        "part",
+        "total",
+        "precio",
+        "valor",
+        "precision",
+        "invalido",
+        "faltante",
+        "conflicto",
+        "cero",
+        "redondeo"
+      ],
+      "sources": [
+        "cost"
+      ]
+    },
+    {
+      "id": "obsolete",
+      "title": "¿Qué significa obsoleto?",
+      "paragraphs": [
+        "Se toma de Status = OBSOLETE en Cost Part. Un sobrante obsoleto se puede aislar para revisión, pero sigue formando parte del NET del PN; no es otra ganancia que debas sumar aparte."
+      ],
+      "keywords": [
+        "obsoleto",
+        "obsolete",
+        "status",
+        "estado",
+        "sobrante"
+      ],
+      "sources": [
+        "cost"
+      ]
+    },
+    {
+      "id": "alerts",
+      "title": "¿Qué significan Unexpected, Missing BOM y sin físico registrado?",
+      "paragraphs": [
+        "Material inesperado: hay físico y QAD es cero. Revisa si el PN tenía saldo cero aceptado o si estaba ausente del QAD filtrado.",
+        "Sin físico registrado: QAD es mayor que cero y todavía no hay físico reconocido. Durante el conteo puede faltar capturar; no se trata automáticamente como pérdida confirmada.",
+        "Missing BOM indica que se requiere BOM para reconocer componentes y no existe evidencia utilizable según las reglas actuales. Revisa el padre, Usage, nivel y Comp Phantom antes de concluir."
+      ],
+      "keywords": [
+        "advertencia",
+        "alerta",
+        "unexpected",
+        "inesperado",
+        "missing",
+        "bom",
+        "faltante",
+        "sin",
+        "fisico",
+        "registrado",
+        "clasificacion"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "ispbb",
+        "bom",
+        "cost"
+      ]
+    },
+    {
+      "id": "action",
+      "title": "¿Qué reviso y qué acciones puedo tomar ante una diferencia?",
+      "paragraphs": [
+        "Primero confirma que el corte esté completo y que los archivos correspondan al mismo inventario. Verifica PN, cantidades, Site, tipo y localidad en sus fuentes.",
+        "Si hay diferencias por localidad, revisa área y mapeo; no registres un traslado solo por ver SWING. Si hay Phantom o Missing BOM, revisa ISPBB y la relación padre/componente. Si falta costo, confirma Cost Part antes de valorar.",
+        "Completa el conteo pendiente y documenta las filas que sustentan el hallazgo. El trazador propone revisiones según las alertas de la pieza; esta ayuda no modifica inventario ni confirma ajustes contables."
+      ],
+      "keywords": [
+        "accion",
+        "acciones",
+        "plan",
+        "solucion",
+        "resolver",
+        "investigar",
+        "revisar",
+        "diferencia",
+        "problema",
+        "discrepancia"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "areas",
+        "ispbb",
+        "bom",
+        "cost"
+      ]
+    },
+    {
+      "id": "preview",
+      "title": "¿Cómo veo los archivos como Excel y la evidencia?",
+      "paragraphs": [
+        "«Ver en fuente» abre el archivo disponible dentro de la app, con hojas, encabezados, filtros y páginas de hasta 60 filas. No te manda al código.",
+        "Desde un paso del trazador se marcan las filas y columnas utilizadas, con valor original, valor ordenado y regla aplicada. Desde estas preguntas se abre la fuente general: no se marca una fila como usada sin seleccionar un PN y su paso.",
+        "Si falta el archivo o no hay una coordenada real, se indica; no se inventa una fila de Excel ni una captura. La copia del bot puede mostrarse como tabla de datos aunque no exista un XLSX original disponible."
+      ],
+      "keywords": [
+        "fuente",
+        "fuentes",
+        "excel",
+        "visor",
+        "fila",
+        "filas",
+        "celda",
+        "celdas",
+        "columna",
+        "columnas",
+        "evidencia",
+        "archivo",
+        "sheet",
+        "hoja",
+        "original",
+        "normalizado"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "ispbb",
+        "bom",
+        "cost",
+        "areas"
+      ]
+    },
+    {
+      "id": "upload",
+      "title": "¿Cómo cargo o reemplazo fuentes y BOM?",
+      "paragraphs": [
+        "En Fuentes puedes cargar varios archivos TXT, CSV, XLSX y respaldos BOM JSON. La app reconoce el tipo y valida las columnas necesarias.",
+        "QAD, Áreas, ISPBB, Cost y escaneos manuales son fuentes de sesión. BOM tiene una biblioteca incremental local y un respaldo compartido cuando la conexión y permisos están disponibles. Para borrar BOM se confirma el archivo exacto y su versión.",
+        "Mientras el bot esté corriendo, detén el extractor antes de cargar escaneos manuales. Las otras referencias se pueden cargar sin mezclar físico manual y automático."
+      ],
+      "keywords": [
+        "cargar",
+        "carga",
+        "importar",
+        "reemplazar",
+        "quitar",
+        "archivo",
+        "csv",
+        "xlsx",
+        "txt",
+        "json",
+        "respaldo",
+        "biblioteca",
+        "fuentes"
+      ],
+      "sources": [
+        "scans",
+        "qad",
+        "ispbb",
+        "bom",
+        "cost",
+        "areas"
+      ]
+    },
+    {
+      "id": "bot",
+      "title": "¿Qué hace el bot y por qué puede no arrancar?",
+      "paragraphs": [
+        "El bot entra a 4Wall, exporta el reporte y publica una copia de los escaneos. La página controla el proceso mediante un servidor autorizado; GitHub Pages no ejecuta el extractor por sí solo.",
+        "Una solicitud de arranque aceptada no prueba que ya se publicó un corte. Revisa el estado, el último resultado y la disponibilidad del controlador. No escribas contraseñas ni claves en este chat."
+      ],
+      "keywords": [
+        "bot",
+        "extractor",
+        "arrancar",
+        "iniciar",
+        "detener",
+        "corriendo",
+        "error",
+        "conexion",
+        "controlador",
+        "automatico",
+        "4wall"
+      ],
+      "sources": [
+        "scans"
+      ]
+    },
+    {
+      "id": "history",
+      "title": "¿Cómo funcionan historial y comparación de cortes?",
+      "paragraphs": [
+        "El historial local se guarda en este navegador; no sincroniza automáticamente con otra computadora. Para comparar cortes completos se revisan metadatos y versión de cálculo compatibles.",
+        "Cambiar referencias o alcance puede volver injusta una comparación. Confirma la identidad y las fuentes de ambos cortes antes de interpretar el cambio."
+      ],
+      "keywords": [
+        "historial",
+        "anterior",
+        "comparar",
+        "comparacion",
+        "inventario",
+        "guardar",
+        "dispositivo",
+        "navegador",
+        "indexeddb",
+        "version"
+      ],
+      "sources": [
+        "scans",
+        "qad"
+      ]
+    },
+    {
+      "id": "performance",
+      "title": "¿Cómo se cuida rendimiento, scroll y animaciones?",
+      "paragraphs": [
+        "Las tablas grandes muestran solo las filas necesarias y el visor usa páginas. Los paneles pesados se cargan al abrirlos. El centro de la página conserva scroll nativo; el efecto elástico se aplica en los bordes.",
+        "«Vidrio ligero» reduce blur y sombras. «Quitar animaciones» pausa movimiento decorativo; es independiente del vidrio. Puedes ocultar a Myke sin perder su chat desde el menú."
+      ],
+      "keywords": [
+        "rendimiento",
+        "lento",
+        "fluido",
+        "optimizacion",
+        "scroll",
+        "congelado",
+        "ipad",
+        "animaciones",
+        "vidrio",
+        "pacman",
+        "rubber",
+        "band"
+      ],
+      "sources": []
+    },
+    {
+      "id": "delivery",
+      "title": "¿Cómo se verifica y publica el código?",
+      "paragraphs": [
+        "El build verifica lint, higiene de archivos, imports, módulos y CSS usados, reglas financieras, discrepancias, trazador, exportación y otras comprobaciones del proyecto antes de compilar.",
+        "Verify main ejecuta esos controles en GitHub Actions. La publicación de GitHub Pages sigue siendo manual. Cambiar una regla financiera necesita la decisión autorizada y actualizar la documentación antes de integrarla."
+      ],
+      "keywords": [
+        "prueba",
+        "pruebas",
+        "test",
+        "lint",
+        "build",
+        "ci",
+        "github",
+        "actions",
+        "publicar",
+        "despliegue",
+        "deploy",
+        "version",
+        "import",
+        "css",
+        "modulo"
+      ],
+      "sources": []
+    }
+  ]
+}

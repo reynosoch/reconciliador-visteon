@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MykeGhost from "./MykeGhost.jsx";
 import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
@@ -22,6 +22,10 @@ function initialDock() {
 export default function MykeMascot({ open, onOpen, onDisable }) {
   const [dock, setDock] = useState(initialDock);
   const [position, setPosition] = useState(null);
+  const [landing, setLanding] = useState(false);
+  const [lean, setLean] = useState(0);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
   const drag = useRef(null);
   const moved = useRef(false);
   const settle = (point) => {
@@ -49,6 +53,10 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
     };
     setDock(next);
     setPosition(null);
+    setLean(0);
+    setLanding(true);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setLanding(false), 450);
     safeWriteJson(KEY, next);
   };
   const style = position
@@ -70,7 +78,7 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
   return createPortal(
     <div
       className="vi-myke-dock"
-      style={style}
+      style={{ ...style, "--vi-myke-lean": `${lean}deg` }}
       data-edge={dock.edge}
       data-awake={open || Boolean(position)}
     >
@@ -95,6 +103,8 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
             x: box.left,
             y: box.top,
           };
+          clearTimeout(timer.current);
+          setLanding(false);
           moved.current = false;
           event.currentTarget.setPointerCapture(event.pointerId);
         }}
@@ -104,11 +114,13 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
           const dx = event.clientX - origin.startX,
             dy = event.clientY - origin.startY;
           if (Math.hypot(dx, dy) > 6) moved.current = true;
-          if (moved.current)
+          if (moved.current) {
+            setLean(Math.max(-14, Math.min(14, dx / 12)));
             setPosition({
               x: clamp(origin.x + dx, window.innerWidth - 122),
               y: clamp(origin.y + dy, window.innerHeight - 142),
             });
+          }
         }}
         onPointerUp={(event) => {
           const origin = drag.current;
@@ -124,6 +136,7 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
           drag.current = null;
           moved.current = true;
           setPosition(null);
+          setLean(0);
         }}
         onLostPointerCapture={() => {
           drag.current = null;
@@ -155,7 +168,10 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
           onOpen(dock.edge);
         }}
       >
-        <MykeGhost pose={position ? "dragging" : "idle"} />
+        <MykeGhost
+          pose={position ? "dragging" : landing ? "landing" : "idle"}
+          gaze={lean / 14}
+        />
       </button>
       <button
         type="button"

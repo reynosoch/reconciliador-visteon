@@ -17,7 +17,7 @@ Start a work item using [the template](templates/WORK_ITEM.md). The [tracer evid
 
 Myke coordinates product and engineering delivery. Eleven senior specialist positions cover domain/finance (DOM), ingestion/evidence (ING), data integration (DATA), automation (BOT), experience (UX), interfaces (UI), quality (QA), inventory audit (AUD), database (DBA), performance (PERF) and security (SEC). See [role profiles](ROLES.md), [single-owner boundaries](OWNERSHIP.md) and [collaboration routes](INTERACTION_MATRIX.md). UI implements UX-approved experiences; DBA owns database design while DATA owns consumers; AUD challenges evidence while QA owns the release gate. Actual staffing and independent review depend on the executing session.
 
-The website reads Spanish titles, summaries and ghost colors from this catalog. It displays positions and local documented help; it does not expose routing IDs, start agents or grant database access. Myke wears the Visteon cap; specialist avatars share the uncapped vector with catalog colors.
+The role catalog is internal repository documentation. The public website does not import it or display staffing. Myke public help uses only canonical README questions and read-only inventory evidence; AI chat activation does not start specialists or grant database access.
 
 ## Authority and scope
 

@@ -505,9 +505,6 @@ body.vi-system-footer-visible .vi-footer-underlay {
   width: 6px !important;
   height: 6px !important;
 }
-.vi-ribbon-help {
-  min-height: 30px;
-}
 
 @media (max-width: 1120px) {
   .vi-header-main {
@@ -580,3 +577,17 @@ body.vi-system-footer-visible .vi-footer-underlay {
 }
 
 
+
+/* Give all three source groups room after moving general help to Myke. */
+.vi-source-ribbon-inner { min-height: 64px !important; padding-block: 12px !important; justify-content: space-between; gap: clamp(16px, 3vw, 48px); }
+.vi-source-ribbon .vi-source-state { flex: 1; }
+.vi-source-copy strong, .vi-source-copy small { font-size: 14px !important; }
+@media (max-width: 640px) {
+  .vi-source-ribbon-inner { gap: 12px; }
+  .vi-source-ribbon .vi-source-state { flex: 1; min-width: 0; white-space: normal; }
+  .vi-source-copy strong, .vi-source-copy small { font-size: 12px !important; }
+}
+
+.vi-source-ribbon .vi-source-copy { min-width: 0; }
+.vi-source-ribbon .vi-source-copy small { white-space: normal; overflow-wrap: anywhere; }
+.vi-source-ribbon .vi-ribbon-flow { flex: 0 1 100px; min-width: 24px; }

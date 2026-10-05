@@ -42,7 +42,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
 | Trazador de pieza / aprendizaje | `src/domain/partLearningTrace.js`, `src/domain/sourceEvidence.js`; UI: `src/components/shell/PartLogicTracer.jsx` + `SourcePreviewModal.jsx`; estilos en `data-review.css` |
 | LAB · Cómo funciona el motor | `src/domain/engineGuide.js`; UI: `src/components/shell/EngineGuideDrawer.jsx`, entrada en `MainMenu.jsx`; ejemplos calculados por `inventoryEngine`, separados del inventario real |
-| Myke / organización virtual | `.agents/ROLES.md` define equipo y textos; `src/domain/mykeOrganization.js` lee documentación; UI en `MykePanel.jsx` + `visual/MykeMascot.jsx` / `MykeGhost.jsx`; chat local basado en este README y consultas PN a la evidencia del dominio, sin conexión IA |
+| Myke / organización virtual | Organización interna en `.agents`; ayuda pública solo de este README (`buildMykeKnowledge`); un chat centrado/redimensionable en `MykePanel.jsx` y mascota con camisa Visteon. IA opcional mediante `supabase/functions/myke-chat`, clave solo en servidor; consultas PN conservan evidencia del dominio |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
@@ -721,7 +721,23 @@ Puede usarse con un ejecutor, varios agentes cuando la sesión lo permita, o coo
 
 ## Preguntas frecuentes de Myke
 
-Estas respuestas son la ayuda humana que consume el chat local. Los identificadores y palabras de búsqueda enlazan preguntas con respuestas; no sustituyen el motor ni calculan inventarios. Las referencias de datos abren el visor común de archivos disponibles, nunca un enlace al código. Si falta una fuente se indica cómo cargarla. Las respuestas generales explican reglas; una consulta PN consume `buildPartLearningTrace` y aporta las referencias usadas por el motor. No se toman cifras escritas en el chat como resultados.
+Estas respuestas son la ayuda humana que consume Myke: guía local y contexto documentado para la IA opcional. Los identificadores y palabras de búsqueda enlazan preguntas con respuestas; no sustituyen el motor ni calculan inventarios. Las referencias de datos abren el visor común de archivos disponibles, nunca un enlace al código. Si falta una fuente se indica cómo cargarla. Las respuestas generales explican reglas; una consulta PN consume `buildPartLearningTrace` y aporta las referencias usadas por el motor. No se toman cifras escritas en el chat como resultados.
+
+### ¿Cómo uso el tablero?
+<!-- myke: dashboard | tablero dashboard usar inicio ayuda comenzar filtros tabla resumen menu navegar | scans qad cost -->
+Empieza en Fuentes: confirma escaneos 4Wall, QAD congelado, Áreas, ISPBB y Cost Part. Agrega BOM cuando el inventario tenga Phantom. La franja debajo de la barra superior indica qué está listo y qué falta.
+
+En el resumen, Physical es el conteo reconocido y QAD lo esperado. NET compara el total y SWING revisa diferencias por localidad; no son dos pérdidas para sumar. Usa los filtros de la tabla para localizar un PN o una situación que requiera revisión.
+
+Toca una pieza para revisar su detalle o escribe su PN aquí. Abre el trazador para ver el recorrido completo y «Ver en fuente» para mirar las filas. Desde Explorar puedes abrir motor, archivos y advertencias. El menú conserva historial, opciones de apariencia y bot; ocultar a Myke no quita su chat.
+
+### ¿Qué oportunidades de mejora puedo revisar?
+<!-- myke: opportunities | oportunidades oportunidad mejorar sugerencias prioridad prioridades optimizar recomendaciones | scans qad areas ispbb bom cost -->
+Empieza por completar las fuentes y confirmar que pertenecen al mismo inventario. Revisa áreas sin localidad, costos ausentes o en conflicto y Phantom sin BOM utilizable: pueden impedir una valoración confiable.
+
+Después revisa piezas sin físico registrado, material inesperado y diferencias por localidad. Escribe un PN para obtener sus advertencias y un plan basado en los datos actuales. Confirma cada hipótesis con las filas de origen antes de proponer un ajuste; una diferencia no prueba una pérdida ni un traslado.
+
+Para mejorar la experiencia, usa filtros, el visor por páginas y Vidrio ligero cuando el dispositivo lo necesite. Las sugerencias de Myke son apoyo de revisión; no cambian reglas, inventario ni archivos.
 
 ### ¿Qué puedo hacer?
 <!-- myke: capabilities | capacidades ayudar ayuda puedo hacer opciones servicios preguntas | -->
@@ -729,7 +745,7 @@ Puedo explicarte cómo funciona el reconciliador, de dónde vienen los datos, qu
 
 También puedes escribir un número de parte, por ejemplo «PN: TU-NUMERO», o pegar uno que esté cargado. Verás físico, QAD, costo, NET, SWING, etiquetas, advertencias y un plan de revisión del corte actual. Toca una cifra para ver su explicación y abrir las filas reales en el visor tipo Excel; el trazador conserva el recorrido completo.
 
-En Explorar puedes abrir el motor por dentro, seguir una pieza, revisar archivos y ver advertencias. Soy ayuda local: no ejecuto ajustes, no modifico el inventario ni tengo IA externa conectada. Si no encuentro un PN o falta una fuente, te lo digo.
+En Explorar puedes abrir el motor por dentro, seguir una pieza, revisar archivos y ver advertencias. No ejecuto ajustes ni modifico el inventario. La guía local siempre funciona; la IA solo responde cuando el servicio está configurado y conectado. Si no encuentro un PN o falta una fuente, te lo digo.
 
 ### ¿Cómo funciona el reconciliador y su código?
 <!-- myke: engine | motor arquitectura codigo reconciliador funciona react parser normalizado | scans qad ispbb bom cost areas -->
@@ -853,12 +869,6 @@ Las tablas grandes muestran solo las filas necesarias y el visor usa páginas. L
 
 «Vidrio ligero» reduce blur y sombras. «Quitar animaciones» pausa movimiento decorativo; es independiente del vidrio. Puedes ocultar a Myke sin perder su chat desde el menú.
 
-### ¿Quién está en el equipo de Myke?
-<!-- myke: team | myke equipo agente agentes empleados especialista puestos organizador tareas empleado | -->
-Myke organiza alcance, responsables y revisiones. El equipo tiene once puestos senior: motor y finanzas, archivos y evidencia, integración de datos, automatización, UX, interfaces UI, calidad, auditoría de inventario, base de datos, rendimiento y seguridad. Myke coordina producto y entrega.
-
-Mi equipo cubre esas áreas del proyecto. Este chat consulta ayuda local; los cambios de código se realizan dentro del trabajo autorizado. Puede adaptar puestos en el modelo operativo, conservando responsables y los permisos de decisión correspondientes.
-
 ### ¿Cómo se verifica y publica el código?
 <!-- myke: delivery | prueba pruebas test lint build ci github actions publicar despliegue deploy version import css modulo | -->
 El build verifica lint, higiene de archivos, imports, módulos y CSS usados, reglas financieras, discrepancias, trazador, exportación y otras comprobaciones del proyecto antes de compilar.
@@ -888,3 +898,14 @@ Verify main ejecuta esos controles en GitHub Actions. La publicación de GitHub 
 - `.agents/ROLES.md` incorpora UI, DBA, AUD y PERF y alimenta once retratos de fantasmas de colores sin gorra. Ownership, decisiones, contratos existentes, matriz, escalamiento y flujos delimitan responsabilidades; Myke conserva ORCH. Son puestos del modelo operativo, no empleados conectados ni ejecución autónoma desde el chat. La IA externa continúa sin conectar.
 
 - Verificación de esta actualización: Chromium a 1366/1024/768/390 px con fixtures locales comprueba X y área táctil en los cuatro bordes, arrastre/persistencia, chat pequeño y completo, consulta PN ausente, once retratos, preguntas en Chat, Explorar, fuentes faltantes, filas usadas y paginación 60/10, Escape anidado, trazador y retorno de scroll tras recarga. `verify-myke` prueba resultados del motor, SWING sin dividir, costo cero/ausente/inválido, Phantom desconocido/YES y BOM faltante. Safari/iPad físico e IA externa siguen pendientes.
+
+### Myke: un chat, ayuda visible e IA opcional — 05/10/2026
+
+- Tocar a Myke y abrirlo desde hamburguesa lleva al mismo chat grande centrado, redimensionable por su esquina (ratón, touch o flechas); el tamaño se conserva en este navegador y se limita al espacio disponible. Las preguntas frecuentes permanecen visibles, empezando por cómo usar el tablero. Explorar conserva motor, piezas, fuentes y advertencias.
+- Mascota naranja con camisa Visteon, inclinación y movimiento durante el arrastre, llegada suave al borde y X accesible. Se elimina el chat compacto y la vista pública Equipo; `.agents` sigue siendo documentación interna y no se importa al frontend. AYUDA global pasa a Myke; se conservan ayudas contextuales. Referencias ocupa más espacio bajo la barra superior.
+- IA de lectura: `src/services/mykeAI.js` → función `myke-chat` → OpenAI Responses API. El contexto de ayuda se genera de estas preguntas mediante `npm run myke:knowledge`; el build verifica que no se desactualice. Solo se envían pregunta, historial breve, identidad/estado de las fuentes y resumen de la pieza consultada (cifras/evidencia ya calculadas, no archivos completos). El modelo no ejecuta herramientas ni recalcula NET/SWING/Phantom; propuestas son hipótesis hasta verificarlas. No debe mentir sobre autoría o uso de IA.
+- Activación por administrador: desplegar `supabase/functions/myke-chat` con verificación JWT activa y configurar secretos de servidor `OPENAI_API_KEY`, `MYKE_ACCESS_CODE` (código privado de al menos 24 caracteres), `MYKE_ALLOWED_ORIGINS` (orígenes exactos separados por coma; incluir https://reynosoch.github.io) y opcional `MYKE_OPENAI_MODEL` (por defecto `gpt-4.1-mini`). El navegador usa la URL Supabase configurada; `VITE_MYKE_AI_URL` permite una ruta alternativa HTTPS del mismo servicio, nunca una clave OpenAI. En Chat → Conectar IA se introduce únicamente el código privado, en memoria y fuera del historial. La clave OpenAI se configura en los secretos del servidor, nunca en el chat ni en Git.
+- Acceso inválido, origen no permitido, cuerpo excesivo y servicio sin configurar se rechazan antes de llamar al proveedor. Límites de 1.000 caracteres/pregunta, historial acotado, timeout, concurrencia y ráfagas por instancia; estos últimos no sustituyen límites y presupuesto del proyecto OpenAI entre múltiples instancias. `store: false` evita guardar la respuesta como recurso, no promete ausencia de registros del proveedor. Confirma que el envío de este resumen sea permitido por la política de datos de la planta.
+- Sin conexión o ante error, se conserva respuesta/evidencia local y se indica el estado; la conversación no se guarda al recargar. La IA queda preparada, pero no activada en esta entrega: la conexión disponible no autoriza el proyecto Supabase `uukhwkywmnarcfruerpp` y no hay clave OpenAI configurada. No se modifica otro proyecto ni el esquema de base de datos.
+
+- Verificación de esta entrega: build completo (incluye IA/documentación sincronizada, finanzas, imports, CSS/módulos y SQL local); navegador Chromium con fixtures a 1366/1024/768/390/320 px para arrastre/X, chat único, preguntas visibles, tamaño/persistencia, PN completo/ausente, fuente ausente, visor 1/60/10 filas, Escape anidado, entrada al trazador y retorno de scroll después de F5. IA: proveedor simulado y errores de conexión, sin afirmar una prueba real. Safari/iPad físico y servicio IA en producción requieren validación posterior.

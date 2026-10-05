@@ -210,17 +210,6 @@
 .vi-refresh-icon.is-spinning{animation:vi-refresh-spin .8s linear infinite}
 @keyframes vi-refresh-spin{to{transform:rotate(360deg)}}
 .vi-bot-button{gap:7px}
-.vi-ribbon-help{
-  margin-left:auto;min-height:34px;padding:0 11px;display:inline-flex;align-items:center;gap:7px;
-  border:1px solid rgba(255,255,255,.12);border-radius:12px;
-  background:rgba(255,255,255,.045);color:#d8e7ec;font-size:12px;font-weight:800;letter-spacing:.08em;
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)
-}
-.vi-ribbon-help>span{
-  width:20px;height:20px;display:grid;place-items:center;border-radius:50%;
-  background:rgba(245,130,31,.13);color:#ffc18b;font-size:12.32px
-}
-.vi-ribbon-help:hover{border-color:rgba(245,130,31,.55);background:rgba(245,130,31,.07)}
 
 /* Drawer typography must stay readable over glass. */
 .vi-drawer-panel .vi-eyebrow,
@@ -378,8 +367,6 @@
   .vi-source-copy strong{font-size:12px}
   .vi-source-copy small{font-size:12px}
   .vi-source-detail{display:none}
-  .vi-ribbon-help{flex:none;margin-left:0;min-height:32px;padding:0 8px}
-  .vi-ribbon-help strong{display:none}
   .vi-alert-summary{grid-template-columns:1fr!important}
   .vi-drawer-panel,.vi-detail-drawer,.vi-global-drawer,.vi-menu-panel{width:100vw!important;max-width:100vw!important;border-radius:0!important}
   .vi-drawer-panel>div:first-of-type,.vi-global-drawer>div:first-child{padding-left:16px!important;padding-right:16px!important}

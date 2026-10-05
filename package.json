@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run lint && node scripts/verify-repo-clean.mjs && node scripts/verify-unused.mjs && node scripts/verify-runtime-deps.mjs && node scripts/audit-css-usage.mjs && node scripts/verify-finance.mjs && node scripts/verify-discrepancies.mjs && node scripts/verify-ui-safety.mjs && node scripts/verify-dexie.mjs && node scripts/verify-export.mjs && node scripts/verify-meeting-rules.mjs && node scripts/verify-imports.mjs && node scripts/verify-tracer.mjs && node scripts/verify-myke.mjs && node scripts/verify-supabase.mjs && vite build",
+    "build": "npm run lint && node scripts/verify-repo-clean.mjs && node scripts/verify-unused.mjs && node scripts/verify-runtime-deps.mjs && node scripts/audit-css-usage.mjs && node scripts/verify-finance.mjs && node scripts/verify-discrepancies.mjs && node scripts/verify-ui-safety.mjs && node scripts/verify-dexie.mjs && node scripts/verify-export.mjs && node scripts/verify-meeting-rules.mjs && node scripts/verify-imports.mjs && node scripts/verify-tracer.mjs && node scripts/verify-myke.mjs && node scripts/prepare-myke-knowledge.mjs --check && node scripts/verify-myke-ai.mjs && node scripts/verify-supabase.mjs && vite build",
     "lint": "eslint . --max-warnings=0",
     "preview": "vite preview",
     "audit:css": "node scripts/audit-css-usage.mjs",
     "context": "node scripts/show-agent-context.mjs",
-    "deploy": "node scripts/deploy-pages.mjs"
+    "deploy": "node scripts/deploy-pages.mjs",
+    "myke:knowledge": "node scripts/prepare-myke-knowledge.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",

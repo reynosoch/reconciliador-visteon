@@ -108,8 +108,6 @@ export default function App() {
       ).value !== false,
   );
   const [mykeTab, setMykeTab] = useState("chat");
-  const [mykeCompact, setMykeCompact] = useState(false);
-  const [mykeEdge, setMykeEdge] = useState("left");
   const [tracerRequest, setTracerRequest] = useState(null);
   useEffect(() => {
     safeWriteJson("visteon.ui.mykeEnabled.v1", mykeEnabled);
@@ -402,7 +400,6 @@ export default function App() {
         sourcesOpen={sourcesOpen}
         onRefresh={inventory.refresh}
         onToggleSources={() => setSourcesOpen((v) => !v)}
-        onOpenRules={() => setHelpTopic("overview")}
         onOpenNotifications={() => {
           setNotificationTab("OPERATIVAS");
           setNotificationsOpen(true);
@@ -631,7 +628,6 @@ export default function App() {
         onToggleMyke={() => setMykeEnabled((value) => !value)}
         onOpenMyke={(tab = "chat") => {
           setMykeTab(tab);
-          setMykeCompact(false);
           setMykeOpen(true);
         }}
         onTogglePacman={() => setPacmanEnabled((enabled) => !enabled)}
@@ -700,9 +696,6 @@ export default function App() {
             setActiveDataView("alerts");
           }}
           initialTab={mykeTab}
-          compact={mykeCompact}
-          edge={mykeEdge}
-          onExpand={() => setMykeCompact(false)}
           reconciliation={inventory.reconciliation}
           engineSources={inventory.engine.sources}
           findings={findings}
@@ -717,10 +710,8 @@ export default function App() {
       {mykeEnabled && (
         <MykeMascot
           open={mykeOpen}
-          onOpen={(edge) => {
+          onOpen={() => {
             setMykeTab("chat");
-            setMykeEdge(edge);
-            setMykeCompact(true);
             setMykeOpen(true);
           }}
           onDisable={() => {

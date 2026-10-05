@@ -60,8 +60,8 @@
   animation: vi-myke-float 5s ease-in-out infinite;
 }
 .vi-myke-dragging .vi-myke-float {
-  animation: none;
-  transform: rotate(-9deg) translateY(-3px);
+  animation: vi-myke-flight 0.55s ease-in-out infinite;
+  transform: rotate(var(--vi-myke-lean, -9deg));
 }
 .vi-myke-overlay {
   position: fixed;
@@ -248,57 +248,6 @@
 .vi-myke-note {
   font-size: 13px;
   color: #abc2ce;
-}
-.vi-myke-manager {
-  display: grid;
-  gap: 5px;
-  padding: 0 0 16px;
-  border-bottom: 1px solid #f5821f55;
-}
-.vi-myke-manager strong {
-  color: #ffb879;
-  font-size: 20px;
-}
-.vi-myke-manager span {
-  color: #c4d6e0;
-  font-size: 15px;
-}
-.vi-myke-team {
-  display: grid;
-  gap: 10px;
-}
-.vi-myke-team details {
-  padding: 14px;
-  border: 1px solid #ffffff20;
-  border-radius: 16px;
-  background: #ffffff04;
-}
-.vi-myke-team summary {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  cursor: pointer;
-  list-style: none;
-  min-height: 44px;
-}
-.vi-myke-team summary::-webkit-details-marker {
-  display: none;
-}
-.vi-myke-team summary > span {
-  display: grid;
-  gap: 3px;
-  flex: 1;
-}
-.vi-myke-team summary strong {
-  font-size: 16px;
-}
-.vi-myke-team details[open] summary b {
-  transform: rotate(45deg);
-}
-.vi-myke-team p {
-  margin: 12px 0 0;
-  color: #c4dae5;
-  font-size: 15px;
 }
 .vi-myke-faq-search {
   display: grid;
@@ -542,62 +491,8 @@
 body.vi-overlay-open .vi-myke-dock {
   visibility: hidden;
 }
-body:has(.vi-myke-quick) .vi-myke-dock {
-  visibility: visible;
-}
 body:has(.vi-source-preview-overlay) .vi-myke-dock {
   visibility: hidden;
-}
-.vi-myke-quick {
-  background: transparent;
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding: 18px 18px 100px 120px;
-}
-.vi-myke-quick[data-edge="right"] {
-  justify-content: flex-end;
-  padding: 18px 120px 100px 18px;
-}
-.vi-myke-quick[data-edge="top"] {
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 130px;
-}
-.vi-myke-quick[data-edge="bottom"] {
-  justify-content: center;
-  padding-bottom: 130px;
-}
-.vi-myke-quick-panel {
-  width: min(390px, 100%);
-  max-height: min(620px, calc(100dvh - 150px));
-  border-radius: 24px;
-  box-shadow: 0 14px 40px #0004;
-}
-.vi-myke-quick-panel .vi-myke-head {
-  padding: 12px 14px;
-}
-.vi-myke-quick-panel .vi-myke-head .vi-eyebrow {
-  font-size: 11px;
-}
-.vi-myke-quick-panel .vi-myke-head h2 {
-  font-size: 25px;
-}
-.vi-myke-quick-panel .vi-myke-body {
-  padding: 14px;
-  gap: 12px;
-}
-.vi-myke-quick-panel .vi-myke-conversation {
-  max-height: 260px;
-}
-.vi-myke-quick-panel .vi-myke-message {
-  font-size: 15px;
-}
-.vi-myke-quick-panel .vi-myke-head .vi-myke-ghost {
-  width: 48px;
-  height: 54px;
-}
-.vi-myke-quick-panel .vi-myke-note {
-  font-size: 12px;
 }
 .vi-myke-answer {
   border: 1px solid #ffffff16;
@@ -623,57 +518,7 @@ body.vi-performance-motion-off .vi-myke-pupils {
     transition: none;
   }
 }
-@media (max-width: 640px) {
-  .vi-myke-quick,
-  .vi-myke-quick[data-edge="right"],
-  .vi-myke-quick[data-edge="top"],
-  .vi-myke-quick[data-edge="bottom"] {
-    align-items: flex-end;
-    justify-content: center;
-    padding: 10px 10px 90px;
-  }
-  .vi-myke-quick-panel {
-    width: min(390px, 100%);
-    max-height: min(620px, calc(100dvh - 120px));
-  }
-  body:has(.vi-myke-quick) .vi-myke-dock {
-    visibility: hidden;
-  }
-}
-.vi-myke-overlay:not(.vi-myke-quick) {
-  justify-content: flex-end;
-}
-.vi-myke-quick-panel {
-  height: min(620px, calc(100dvh - 150px));
-  overflow: hidden;
-}
-.vi-myke-quick-panel > .vi-rubber-clip,
-.vi-myke-quick-panel > .vi-rubber-clip > .vi-rubber-content {
-  height: 100%;
-  min-height: 0;
-}
-.vi-myke-quick-panel > .vi-rubber-clip > .vi-rubber-content {
-  display: flex;
-  flex-direction: column;
-}
-.vi-myke-quick-panel .vi-myke-head {
-  flex: none;
-}
-.vi-myke-quick-panel .vi-myke-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1;
-}
-.vi-myke-quick-panel .vi-myke-body > * {
-  flex-shrink: 0;
-}
-.vi-myke-quick-panel .vi-myke-conversation {
-  flex: 1;
-  flex-shrink: 1;
-  min-height: 0;
-  max-height: none;
-}
+
 .vi-myke-answer-sources {
   padding-top: 12px;
   font-size: 14px;
@@ -684,17 +529,6 @@ body.vi-performance-motion-off .vi-myke-pupils {
   align-items: center;
   color: #ffd0a6;
   cursor: pointer;
-}
-.vi-myke-quick-panel .vi-myke-composer {
-  padding: 9px;
-  gap: 5px;
-}
-.vi-myke-quick-panel .vi-myke-composer textarea {
-  min-height: 60px;
-  padding: 9px;
-}
-.vi-myke-quick-panel .vi-myke-message {
-  padding: 12px;
 }
 
 /* Bounded local question library and real domain replies. */
@@ -792,16 +626,391 @@ body.vi-performance-motion-off .vi-myke-pupils {
   border-color: #ffb77b88;
   background: #15445ad9;
 }
-.vi-myke-team .vi-myke-ghost {
-  width: 52px;
-  height: 58px;
-}
-.vi-myke-team .vi-myke-float,
-.vi-myke-team .vi-myke-shadow {
-  animation: none;
-}
 @media (max-width: 400px) {
   .vi-myke-piece-metrics {
     grid-template-columns: 1fr;
+  }
+}
+
+/* One centered chat; resize affects this panel only, without page scroll listeners. */
+.vi-myke-overlay {
+  align-items: center;
+  justify-content: center;
+  padding: 16px 16px 76px;
+}
+.vi-myke-panel {
+  width: min(var(--vi-myke-width, 880px), calc(100vw - 32px));
+  height: min(var(--vi-myke-height, 760px), calc(100dvh - 92px));
+  max-height: none;
+  overflow: hidden;
+  background: #092b3df5;
+  box-shadow: 0 20px 70px #0007;
+}
+.vi-myke-panel > .vi-rubber-clip,
+.vi-myke-panel > .vi-rubber-clip > .vi-rubber-content {
+  height: 100%;
+  min-height: 0;
+}
+.vi-myke-panel > .vi-rubber-clip > .vi-rubber-content {
+  display: flex;
+  flex-direction: column;
+}
+.vi-myke-head {
+  position: relative;
+  flex: none;
+  padding: 12px 20px;
+}
+.vi-myke-head .vi-myke-ghost {
+  width: 76px;
+  height: 84px;
+}
+.vi-myke-tabs {
+  flex: none;
+  padding: 6px 18px;
+}
+.vi-myke-tabs button {
+  flex: initial;
+  min-width: 120px;
+  font-size: 16px;
+}
+.vi-myke-body {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 20px 20px;
+  overflow: auto;
+}
+.vi-myke-body[data-view="chat"] {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(0, 2fr);
+  gap: 20px;
+  overflow: hidden;
+}
+.vi-myke-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.vi-myke-questions > strong {
+  color: #c6dce5;
+  font-size: 15px;
+}
+.vi-myke-questions > .vi-myke-suggestions {
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.vi-myke-questions .vi-myke-suggestions button {
+  font-size: 15px;
+  padding: 11px 12px;
+}
+.vi-myke-questions button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.vi-myke-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  min-width: 0;
+}
+.vi-myke-conversation {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scroll-padding-top: 6px;
+}
+.vi-myke-conversation > * {
+  flex: none;
+}
+.vi-myke-composer {
+  flex: none;
+}
+.vi-myke-chat > .vi-myke-note {
+  padding-right: 28px;
+  font-size: 12px;
+}
+.vi-myke-connection {
+  font-size: 14px;
+  border-top: 1px solid #87b9cb24;
+  padding-top: 8px;
+}
+.vi-myke-connection summary {
+  min-height: 44px;
+  color: #a8c6d3;
+  cursor: pointer;
+}
+.vi-myke-connection p {
+  margin-bottom: 10px;
+}
+.vi-myke-connection form,
+.vi-myke-connection label {
+  display: grid;
+  gap: 8px;
+}
+.vi-myke-connection input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  background: #061d2a;
+  color: #fff;
+  border: 1px solid #ffffff30;
+  border-radius: 10px;
+  padding: 8px;
+  font-size: 16px;
+}
+.vi-myke-connection button {
+  min-height: 44px;
+  border: 1px solid #ffb87940;
+  border-radius: 10px;
+  padding: 8px;
+  background: #123c50;
+  color: #ffe0bf;
+}
+.vi-myke-ai-answer {
+  margin-top: 12px;
+  white-space: pre-line;
+}
+.vi-myke-ai-answer small {
+  color: #a6c9d7;
+  font-size: 12px;
+}
+.vi-myke-ai-answer p {
+  margin-top: 8px;
+}
+.vi-myke-ai-error {
+  color: #ffd69f;
+  padding-top: 12px;
+}
+.vi-myke-working {
+  color: #c4dae5;
+  padding-top: 10px;
+}
+.vi-myke-working span {
+  display: inline-block;
+  animation: vi-myke-type 0.8s ease-in-out infinite;
+  letter-spacing: 3px;
+}
+.vi-myke-resize {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  z-index: 4;
+  border: 0;
+  background: transparent;
+  color: #ffbe86;
+  font-size: 22px;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.vi-myke-resize:focus-visible {
+  outline: 2px solid #ffb879;
+  outline-offset: -5px;
+  border-radius: 10px;
+}
+.vi-myke-resize:hover {
+  background: #ffffff0a;
+  border-radius: 12px;
+}
+.vi-myke-landing .vi-myke-float {
+  animation: vi-myke-land 0.45s ease-out;
+}
+@keyframes vi-myke-flight {
+  0%,
+  100% {
+    transform: rotate(var(--vi-myke-lean, -9deg)) translateY(-3px)
+      scale(1.03, 0.97);
+  }
+  50% {
+    transform: rotate(var(--vi-myke-lean, -9deg)) translateY(-6px)
+      scale(0.97, 1.03);
+  }
+}
+@keyframes vi-myke-land {
+  0% {
+    transform: scale(1.08, 0.92);
+  }
+  50% {
+    transform: scale(0.96, 1.04) translateY(-3px);
+  }
+  100% {
+    transform: none;
+  }
+}
+body.vi-performance-motion-off .vi-myke-float,
+body.vi-performance-motion-off .vi-myke-eyes,
+body.vi-performance-motion-off .vi-myke-shadow,
+body.vi-performance-motion-off .vi-myke-working span,
+body.vi-performance-motion-off .vi-myke-answer {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vi-myke-float,
+  .vi-myke-eyes,
+  .vi-myke-shadow,
+  .vi-myke-working span,
+  .vi-myke-answer {
+    animation: none;
+  }
+}
+@media (max-width: 640px) {
+  .vi-myke-overlay {
+    padding: 10px 10px 66px;
+  }
+  .vi-myke-panel {
+    width: min(var(--vi-myke-width), calc(100vw - 20px));
+    height: min(var(--vi-myke-height), calc(100dvh - 76px));
+    border-radius: 22px;
+  }
+  .vi-myke-head {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .vi-myke-head .vi-myke-ghost {
+    width: 60px;
+    height: 66px;
+  }
+  .vi-myke-head .vi-eyebrow {
+    font-size: 10px;
+  }
+  .vi-myke-head h2 {
+    font-size: 26px;
+  }
+  .vi-myke-head p {
+    font-size: 13px;
+  }
+  .vi-myke-tabs {
+    padding: 4px 12px;
+  }
+  .vi-myke-body {
+    padding: 12px;
+    gap: 12px;
+  }
+  .vi-myke-body[data-view="chat"] {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+  }
+  .vi-myke-questions {
+    max-height: 146px;
+    gap: 5px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #ffffff20;
+  }
+  .vi-myke-questions > .vi-myke-suggestions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .vi-myke-questions .vi-myke-suggestions button {
+    font-size: 13px;
+    padding: 7px 9px;
+  }
+  .vi-myke-questions .vi-myke-connection {
+    margin-top: 4px;
+  }
+  .vi-myke-composer {
+    padding: 8px;
+    gap: 5px;
+  }
+  .vi-myke-composer textarea {
+    padding: 9px;
+    min-height: 52px;
+  }
+  .vi-myke-message,
+  .vi-myke-answer {
+    padding: 12px;
+  }
+}
+@media (max-height: 640px) {
+  .vi-myke-head .vi-myke-ghost {
+    width: 48px;
+    height: 52px;
+  }
+  .vi-myke-head .vi-eyebrow {
+    display: none;
+  }
+  .vi-myke-head {
+    padding-block: 6px;
+  }
+  .vi-myke-tabs button {
+    min-height: 36px;
+  }
+  .vi-myke-questions {
+    max-height: 110px;
+  }
+  .vi-myke-composer > label {
+    display: none;
+  }
+  .vi-myke-composer textarea {
+    min-height: 44px;
+    height: 52px;
+  }
+}
+
+/* Suggested help stays visible while the extra questions/options scroll. */
+.vi-myke-questions {
+  overflow: hidden;
+}
+.vi-myke-questions > strong {
+  flex: none;
+}
+.vi-myke-more {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.vi-myke-more > details {
+  margin-bottom: 8px;
+}
+.vi-myke-head > div > p:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 640px) {
+  .vi-myke-questions > .vi-myke-suggestions button:nth-child(n + 3) {
+    display: none;
+  }
+  .vi-myke-questions .vi-myke-suggestions button {
+    font-size: 14px;
+  }
+  .vi-myke-questions {
+    max-height: 142px;
+  }
+  .vi-myke-more {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .vi-myke-more > details {
+    margin: 0;
+  }
+  .vi-myke-more > .vi-myke-connection {
+    padding: 0;
+    border: 0;
+  }
+  .vi-myke-questions:has(details[open]) {
+    max-height: min(260px, 45%);
+  }
+  .vi-myke-more:has(details[open]) {
+    display: block;
+  }
+}
+@media (max-height: 640px) and (max-width: 640px) {
+  .vi-myke-questions {
+    max-height: 126px;
   }
 }

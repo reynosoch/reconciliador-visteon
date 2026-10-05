@@ -1,5 +1,17 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-myke-single-chat",
+    date: "05 OCT 2026",
+    title: "Myke: un solo chat y ayuda a mano",
+    summary: "Chat grande al centro, ajustable desde su esquina, con preguntas frecuentes siempre disponibles.",
+    items: [
+      "Empieza por cómo usar el tablero o consulta un PN; conserva cifras, advertencias y fuentes reales del motor.",
+      "Camisa Visteon, animación al arrastrar y acople a los bordes. Sin chat duplicado ni vista pública Equipo.",
+      "Ayuda general dentro de Myke y más espacio para las referencias debajo de la barra superior.",
+      "Integración IA preparada con acceso privado y clave solo en servidor; mientras no se active, sigue la guía local.",
+    ],
+  },
+  {
     id: "2026-10-05-myke-pieces-explore-team",
     date: "05 OCT 2026",
     title: "Pregúntale a Myke por una pieza",
@@ -8,21 +20,21 @@ export const PRODUCT_UPDATES = [
     items: [
       "Físico, QAD, costo, NET, SWING y advertencias del corte actual, con filas de origen en el visor Excel común.",
       "¿Qué puedo hacer? y más preguntas desde Chat; Explorar abre el motor, trazador, archivos y advertencias.",
-      "Mascota más escondida y X accesible; once puestos senior con fantasmas de colores, documentados en .agents.",
+      "Mascota más escondida y X accesible; acceso al chat desde el menú.",
       "Ayuda local sin IA externa; no modifica cifras ni ejecuta ajustes de inventario.",
     ],
   },
   {
     id: "2026-10-05-myke-chat-faq",
     date: "05 OCT 2026",
-    title: "Myke se asoma: chat pequeño, preguntas y equipo",
+    title: "Myke se asoma: conversación y preguntas",
     summary:
       "Myke más amable, sin recuadro y escondido en el borde: tócalo para conversar u ocúltalo con su X.",
     items: [
       "Chat sobre motor, código, NET, SWING, Phantom, alertas y fuentes, basado en la documentación; IA externa aún sin conectar.",
       "Preguntas frecuentes con visor Excel de archivos reales, recorrido visual y acceso al trazador.",
       "Mascota naranja que saluda y sigue tu escritura; posición y visibilidad guardadas. Ocúltala con su X o desde el menú y conserva el chat.",
-      "Equipo con siete puestos y sus funciones, sin claves internas; chat pequeño desde la mascota y panel completo desde hamburguesa.",
+      "Chat desde la mascota y desde hamburguesa, con acceso a explicaciones del reconciliador.",
     ],
   },
   {
@@ -30,9 +42,9 @@ export const PRODUCT_UPDATES = [
     date: "05 OCT 2026",
     title: "Myke, texto más claro y vidrio con menos carga",
     summary:
-      "Myke llega como fantasma organizador con equipo y ayuda desde la documentación. Reportar queda siempre disponible y los paneles se cargan al primer uso.",
+      "Myke llega como fantasma con ayuda desde la documentación. Reportar queda siempre disponible y los paneles se cargan al primer uso.",
     items: [
-      "Myke: vista previa animada de chat, siete especialistas de .agents y consultas al README; IA todavía sin conectar.",
+      "Myke: vista previa animada de chat y consultas al README; IA todavía sin conectar.",
       "Reportar permanece visible junto al footer y agrega las áreas del trazador, visor, LAB, Myke y rendimiento.",
       "Texto más grande, menús más cómodos y vidrio oscuro más denso con filtros limitados a una superficie.",
       "Vidrio ligero reduce blur y sombras sin cambiar las preferencias de animación; búsquedas y selección se conservan al cerrar los paneles.",

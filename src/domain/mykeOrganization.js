@@ -20,6 +20,20 @@ export function buildMykeOrganization(rolesMarkdown, readmeMarkdown) {
         ]
       : [];
   });
+  const { topics } = buildMykeKnowledge(readmeMarkdown);
+  return {
+    manager: roles.find((role) => role.id === "ORCH") || null,
+    employees: roles.filter((role) => role.id !== "ORCH"),
+    topics,
+  };
+}
+
+export function buildMykeKnowledge(readmeMarkdown) {
+  if (
+    typeof readmeMarkdown === "object" &&
+    Array.isArray(readmeMarkdown?.topics)
+  )
+    return { topics: readmeMarkdown.topics };
   const topics = [
     ...readmeMarkdown.matchAll(
       /^### (.+)\n<!-- myke: ([a-z]+) \| (.*?) \| (.*?)-->\n([\s\S]*?)(?=^### |^## |$(?![\s\S]))/gm,
@@ -34,9 +48,5 @@ export function buildMykeOrganization(rolesMarkdown, readmeMarkdown) {
       .split(/\n\s*\n/)
       .map((paragraph) => paragraph.replace(/\*\*|`/g, "")),
   }));
-  return {
-    manager: roles.find((role) => role.id === "ORCH") || null,
-    employees: roles.filter((role) => role.id !== "ORCH"),
-    topics,
-  };
+  return { topics };
 }
