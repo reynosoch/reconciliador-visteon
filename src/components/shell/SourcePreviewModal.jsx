@@ -52,8 +52,8 @@ export default function SourcePreviewModal({ selection, onClose }) {
   const visible = filtered.slice(currentPage * 60, currentPage * 60 + 60);
   useEffect(() => {
     setPage(0);
-    setOnlyEvidence(true);
-    setQuery("");
+    setOnlyEvidence(Boolean(selection?.evidence?.length));
+    setQuery(selection?.initialQuery || "");
     setSheet("");
     setActiveCell(null);
     setError("");
@@ -121,7 +121,7 @@ export default function SourcePreviewModal({ selection, onClose }) {
     <OverlayPortal onClose={onClose}>
       <div
         className="vi-global-overlay vi-source-preview-overlay"
-        style={selection.tracePn ? { zIndex: 1400 } : undefined}
+        style={{ zIndex: 1400 }}
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) onClose?.();
         }}
@@ -137,7 +137,11 @@ export default function SourcePreviewModal({ selection, onClose }) {
               <p className="vi-eyebrow">VISOR DE FUENTE</p>
               <h2>{displayName}</h2>
               <span>
-                {rows.length.toLocaleString("es-MX")} filas reales cargadas
+                {selection.config?.label ? selection.config.label + " · " : ""}
+                {rows.length.toLocaleString("es-MX")}{" "}
+                {selection.derived
+                  ? "PN del resultado actual"
+                  : "filas de la fuente cargada"}
               </span>
             </div>
             <button
@@ -186,7 +190,7 @@ export default function SourcePreviewModal({ selection, onClose }) {
                 placeholder="PN, localidad o valor…"
               />
             </label>
-            {selection.evidence && (
+            {selection.evidence?.length > 0 && (
               <label className="vi-evidence-toggle">
                 <input
                   type="checkbox"
@@ -223,11 +227,19 @@ export default function SourcePreviewModal({ selection, onClose }) {
             {selection.partNumber
               ? `Filtro exacto por Parent Item ${selection.partNumber}. `
               : ""}
+            {selection.derived
+              ? "Lista creada con resultados ya calculados; los archivos de origen están indicados en las columnas. "
+              : ""}
+            {selection.evidence?.length === 0 &&
+            selection.tracePn &&
+            !selection.derived
+              ? `No hay filas aceptadas de ${selection.tracePn} para este paso. Si aparecen coincidencias, no están marcadas como utilizadas: revisa planta y reglas. `
+              : ""}
             {filtered.length.toLocaleString("es-MX")} filas en esta vista;
             máximo 60 por página. La descarga conserva toda la selección
-            original. Las coordenadas originales aparecen cuando el archivo las
-            conserva; «Registro» indica una posición en la colección, no una
-            fila del Excel original.
+            {selection.derived ? "de resultados" : "original"}. Las coordenadas
+            originales aparecen cuando el archivo las conserva; «Registro»
+            indica una posición en la colección, no una fila del Excel original.
           </p>
           {selection.rule && (
             <div className="vi-evidence-rule">
@@ -246,8 +258,9 @@ export default function SourcePreviewModal({ selection, onClose }) {
               </>
             ) : (
               <span>
-                Selecciona una celda naranja para ver su valor original, valor
-                normalizado y por qué participa.
+                {selection.derived
+                  ? "Esta tabla muestra de dónde se incorporó cada PN. Abre el caso y usa Ver en fuente para consultar sus filas originales."
+                  : "Selecciona una celda naranja para ver su valor original, valor normalizado y por qué participa."}
               </span>
             )}
           </div>

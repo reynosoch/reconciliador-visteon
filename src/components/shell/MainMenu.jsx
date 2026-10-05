@@ -20,6 +20,7 @@ export default function MainMenu({
   onOpenBot,
   botRunning = false,
   onOpenLogicTracer,
+  onOpenEngineGuide,
   onOpenAnimationLab,
   snapshotMeta,
   scanCount = 0,
@@ -144,6 +145,9 @@ export default function MainMenu({
 
           <section className="vi-menu-section">
             <span className="vi-menu-section-title">LAB</span>
+            <button type="button" className="vi-menu-item vi-logic-entry" onClick={() => { onClose?.(); onOpenEngineGuide?.(); }}>
+              <span><strong>Cómo funciona el motor</strong><small>Qué aporta cada archivo, cómo se reconoce el físico y de dónde salen NET, SWING y las advertencias.</small></span><b>›</b>
+            </button>
             <button
               type="button"
               className="vi-menu-item vi-logic-entry"

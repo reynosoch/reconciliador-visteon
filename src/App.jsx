@@ -23,6 +23,7 @@ import MainMenu from "./components/shell/MainMenu";
 import DevFeedback from "./components/shell/DevFeedback";
 import SystemFooter from "./components/shell/SystemFooter.jsx";
 import PartLogicTracer from "./components/shell/PartLogicTracer.jsx";
+import EngineGuideDrawer from "./components/shell/EngineGuideDrawer.jsx";
 import { REFERENCE_SOURCE_LABELS, useReferenceFiles } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
 import { useBotRunningStatus } from "./hooks/useBotRunningStatus.js";
@@ -93,6 +94,7 @@ export default function App() {
     [confirmNew, setConfirmNew] = useState(false),
     [menuOpen, setMenuOpen] = useState(false),
     [logicTracerOpen, setLogicTracerOpen] = useState(false),
+    [engineGuideOpen, setEngineGuideOpen] = useState(false),
     [animationLabOpen, setAnimationLabOpen] = useState(false),
     [detailFromNotifications, setDetailFromNotifications] = useState(false);
   const [botRunning, setBotRunning] = useBotRunningStatus();
@@ -185,6 +187,7 @@ export default function App() {
       confirmNew ||
       menuOpen ||
       logicTracerOpen ||
+      engineGuideOpen ||
       Boolean(activeDataView);
 
     if (!overlayOpen) {
@@ -199,6 +202,7 @@ export default function App() {
     confirmNew,
     menuOpen,
     logicTracerOpen,
+    engineGuideOpen,
     activeDataView,
   ]);
   useEffect(() => {
@@ -225,6 +229,7 @@ export default function App() {
       helpTopic ||
       selectedPart ||
       menuOpen ||
+      engineGuideOpen ||
       logicTracerOpen,
   );
   useMobileMenuSwipe({ disabled: mobileMenuBlocked, setOpen: setMenuOpen });
@@ -540,6 +545,7 @@ export default function App() {
         onOpenBot={() => setBotOpen(true)}
         botRunning={botRunning}
         onOpenLogicTracer={() => setLogicTracerOpen(true)}
+        onOpenEngineGuide={() => setEngineGuideOpen(true)}
         onOpenAnimationLab={() => setAnimationLabOpen(true)}
         snapshotMeta={inventory.snapshotMeta}
         scanCount={inventory.scanCount}
@@ -555,6 +561,17 @@ export default function App() {
         scanRows={inventory.scanRows}
         engineSources={inventory.engine.sources}
         findings={findings}
+        reduceAnimations={reduceAnimations}
+      />
+      <EngineGuideDrawer
+        open={engineGuideOpen}
+        onClose={() => setEngineGuideOpen(false)}
+        onOpenTracer={() => setLogicTracerOpen(true)}
+        sources={references.sources}
+        scanRows={inventory.scanRows}
+        scanReady={Boolean(inventory.lastUpdated && inventory.snapshotMeta?.complete)}
+        snapshotMeta={inventory.snapshotMeta}
+        reduceAnimations={reduceAnimations}
       />
       <DevFeedback inventoryId={identity.id} />
     </div>

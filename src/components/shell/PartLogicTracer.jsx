@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "./OverlayPortal.jsx";
 import SourcePreviewModal from "./SourcePreviewModal.jsx";
@@ -6,6 +7,8 @@ import {
   buildPartLearningTrace,
   getPartEntryOrigins,
   getTracerSourceInventory,
+  getRecommendedPartCases,
+  buildPartCatalogSource,
 } from "../../domain/partLearningTrace.js";
 import { buildEvidenceExcerpt } from "../../domain/sourceEvidence.js";
 import SourceEvidenceSheet from "./SourceEvidenceSheet.jsx";
@@ -23,6 +26,22 @@ const money = (value) =>
         style: "currency",
         currency: "USD",
       });
+function scrollInsideDrawer(viewport, target) {
+  if (!viewport || !target) return;
+  const inset =
+    viewport.querySelector(".vi-logic-head")?.getBoundingClientRect().height ||
+    0;
+  viewport.scrollTo({
+    top:
+      viewport.scrollTop +
+      target.getBoundingClientRect().top -
+      viewport.getBoundingClientRect().top -
+      inset -
+      12,
+    behavior: "instant",
+  });
+  target.focus({ preventScroll: true });
+}
 function Formula({ formula }) {
   return (
     <div className="vi-logic-formula">
@@ -134,7 +153,7 @@ function Evidence({ reference, onOpen, visual = false }) {
 function StudyStep({ step, index, trace, item, onOpen }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <section className="vi-logic-step" id={`study-${step.id}`}>
+    <section className="vi-logic-step" id={`study-${step.id}`} tabIndex={-1}>
       <div className="vi-logic-step-index">
         {String(index + 1).padStart(2, "0")}
       </div>
@@ -178,10 +197,7 @@ function StudyStep({ step, index, trace, item, onOpen }) {
         {step.id === "swing" && (
           <>
             <Formula formula={trace.formulas.swing} />
-            <p className="vi-logic-rule">
-              SWING no se divide entre 2. Se mantiene el costo original en el
-              cálculo; la vista del costo unitario usa dos decimales.
-            </p>
+            <p className="vi-logic-rule">{trace.swingExplanation}</p>
           </>
         )}
         {step.id === "bom" && (
@@ -242,7 +258,7 @@ function StudyStep({ step, index, trace, item, onOpen }) {
                       sourceIndex: row.sourceIndex,
                     })),
                   )}
-                  label={`Provenance ${ref.label}`}
+                  label={`Origen de los datos · ${ref.label}`}
                   columns={[
                     [
                       "Fila · campo",
@@ -298,7 +314,12 @@ function StudyStep({ step, index, trace, item, onOpen }) {
                 columns={[
                   ["Localidad", (r) => r.location],
                   ["QAD", (r) => number(r.quantity)],
-                  ["Origen", () => "QAD aceptado"],
+                  [
+                    "Origen",
+                    () =>
+                      trace.inputs.find((r) => r.type === "qad")?.identity ||
+                      "Archivo QAD no disponible",
+                  ],
                 ]}
               />
             )}
@@ -346,21 +367,35 @@ export default function PartLogicTracer({
   scanReady = false,
   snapshotMeta = null,
   findings = [],
+  reduceAnimations = false,
 }) {
   const [query, setQuery] = useState("");
   const [selectedPn, setSelectedPn] = useState("");
   const [preview, setPreview] = useState(null);
+  const [activeMetric, setActiveMetric] = useState("");
+  const [activeStep, setActiveStep] = useState("");
+  const [moreCases, setMoreCases] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const viewportRef = useRef(null);
   const resultRef = useRef(null);
+  const detailRef = useRef(null);
   const inputSources = useMemo(
     () => getTracerSourceInventory(sources, scanReady, snapshotMeta),
     [sources, scanReady, snapshotMeta],
+  );
+  const recommended = useMemo(
+    () => (open ? getRecommendedPartCases(reconciliation) : []),
+    [open, reconciliation],
   );
   useLayoutEffect(() => {
     if (!open) return;
     if (selectedPn) resultRef.current?.focus({ preventScroll: true });
     viewportRef.current?.scrollTo({ top: 0, behavior: "instant" });
   }, [open, selectedPn]);
+  useLayoutEffect(() => {
+    if (activeMetric)
+      scrollInsideDrawer(viewportRef.current, detailRef.current);
+  }, [activeMetric]);
   const suggestions = useMemo(() => {
     const match = clean(query),
       rows = [];
@@ -387,14 +422,26 @@ export default function PartLogicTracer({
             scanRows,
             scanReady,
             findings,
+            snapshotMeta,
           })
         : null,
-    [open, item, engineSources, sources, scanRows, scanReady, findings],
+    [
+      open,
+      item,
+      engineSources,
+      sources,
+      scanRows,
+      scanReady,
+      findings,
+      snapshotMeta,
+    ],
   );
   const select = (pn) => {
     setSelectedPn(pn);
     setQuery(pn);
     setPreview(null);
+    setActiveMetric("");
+    setActiveStep("");
   };
   if (!open) return null;
   const showSource = (ref) =>
@@ -404,7 +451,23 @@ export default function PartLogicTracer({
       evidence: ref.evidence,
       rule: ref.rule,
       tracePn: item.partNumber,
+      initialQuery: ref.evidence.length ? "" : item.partNumber,
     });
+  const showCatalog = (rows = reconciliation) =>
+    setPreview({
+      source: buildPartCatalogSource(rows, engineSources, inputSources),
+      config: { type: "catalog", label: "PN · lista y origen" },
+      derived: true,
+      rule: "Esta lista la construye el reconciliador usando 4Wall, QAD congelado y componentes generados por BOM. No es otro archivo cargado. Los nombres de fuente indican qué archivos o lectura aportaron cada PN.",
+    });
+  const goToStep = (id) => {
+    const viewport = viewportRef.current;
+    const target = viewport?.querySelector(`#study-${id}`);
+    if (!target) return;
+    scrollInsideDrawer(viewport, target);
+    setActiveStep(id);
+  };
+  const detail = trace?.summaryDetails.find((r) => r.id === activeMetric);
   return (
     <OverlayPortal onClose={onClose}>
       <div
@@ -423,9 +486,9 @@ export default function PartLogicTracer({
           <header className="vi-logic-head">
             <div>
               <p className="vi-eyebrow">
-                TRAZADOR DE PIEZA · APRENDE CON UN CASO
+                TRAZADOR DE PIEZA · ORIGEN DE CADA DATO
               </p>
-              <h2>{item ? "Estudia el caso" : "Del escaneo al resultado"}</h2>
+              <h2>{item ? "Detalle del PN" : "Del escaneo al resultado"}</h2>
               {!item && (
                 <p>
                   Sigue los datos, las reglas y la evidencia real de una pieza.
@@ -482,10 +545,10 @@ export default function PartLogicTracer({
                   catálogos solos no agregan piezas a esta lista.
                 </p>
                 <small>
-                  {reconciliation.length.toLocaleString("es-MX")} PN
-                  reconciliados · primeros 12 resultados, en orden de impacto
-                  NET absoluto del motor. El importe a la derecha es NET USD, no
-                  el costo.
+                  {reconciliation.length.toLocaleString("es-MX")} PN de las
+                  fuentes activas. Las sugerencias cubren casos distintos; al
+                  buscar, la lista conserva el orden por diferencia NET
+                  absoluta. Los importes son NET USD.
                 </small>
                 <details>
                   <summary>Ver los archivos y el snapshot activos</summary>
@@ -507,9 +570,75 @@ export default function PartLogicTracer({
                     exactamente las filas aceptadas.
                   </small>
                 </details>
+                <p>
+                  Snapshot es una copia de los escaneos de un momento concreto,
+                  publicada por el bot. Si cargas un archivo 4Wall manual, se
+                  usa ese archivo en su lugar.
+                </p>
+                <button
+                  className="vi-study-expand"
+                  type="button"
+                  onClick={() => showCatalog()}
+                >
+                  Ver lista de PN y su origen en Excel ↗
+                </button>
               </div>
             )}
-            {!item && (
+            {!item && !clean(query) && recommended.length > 0 && (
+              <section
+                className="vi-study-cases"
+                aria-label="Casos recomendados"
+              >
+                <h3>Casos recomendados</h3>
+                <p>
+                  PN reales de tus fuentes: diferencias grandes, Phantom, conteo
+                  pendiente y casos balanceados cuando están disponibles.
+                </p>
+                <div className="vi-study-case-list">
+                  {recommended
+                    .slice(0, moreCases ? recommended.length : 6)
+                    .map(({ id, reason, item: row }) => (
+                      <div className="vi-study-case" key={id}>
+                        <button
+                          type="button"
+                          onClick={() => select(row.partNumber)}
+                        >
+                          <strong>{row.partNumber}</strong>
+                          <span>{reason}</span>
+                          <small>
+                            {row.master.description || "Sin descripción"}
+                          </small>
+                          <em>
+                            {row.master.hasCost
+                              ? money(row.financial.netUsd)
+                              : "Sin valorar"}{" "}
+                            NET
+                          </em>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => showCatalog([row])}
+                          aria-label={`Ver origen de ${row.partNumber}`}
+                        >
+                          Ver origen ↗
+                        </button>
+                      </div>
+                    ))}
+                </div>
+                {recommended.length > 6 && (
+                  <button
+                    className="vi-study-expand"
+                    type="button"
+                    onClick={() => setMoreCases((v) => !v)}
+                  >
+                    {moreCases
+                      ? "Ver menos"
+                      : `Ver ${recommended.length - 6} casos más`}
+                  </button>
+                )}
+              </section>
+            )}
+            {!item && (clean(query) || !recommended.length) && (
               <div className="vi-logic-suggestions">
                 {suggestions.map((row) => (
                   <button
@@ -521,7 +650,12 @@ export default function PartLogicTracer({
                     <span>{row.master.description || "Sin descripción"}</span>
                     <small>
                       {getPartEntryOrigins(row, engineSources)
-                        .map((origin) => origin.label)
+                        .map(
+                          (origin) =>
+                            inputSources.find(
+                              (source) => source.type === origin.type,
+                            )?.label || origin.label,
+                        )
                         .join(" + ") || "Origen no disponible"}
                     </small>
                     <em>
@@ -535,7 +669,7 @@ export default function PartLogicTracer({
                   <p>
                     {reconciliation.length
                       ? "No encontramos ese PN. Revisa el número y las fuentes del corte."
-                      : "Carga 4Wall o QAD en Fuentes para estudiar una pieza. Puedes empezar aun si faltan otras referencias."}
+                      : "Carga 4Wall o QAD en Fuentes para abrir una pieza. Puedes empezar aun si faltan otras referencias."}
                   </p>
                 )}
               </div>
@@ -572,46 +706,170 @@ export default function PartLogicTracer({
                 </div>
                 <div>
                   <span>
-                    ESTADO DEL MOTOR{!trace.complete ? " · PARCIAL" : ""}
+                    RESULTADO{!trace.complete ? " · PROVISIONAL" : ""}
                   </span>
                   <strong>{trace.status}</strong>
                   <p>
-                    {trace.alertLabels.length} advertencias · evidencia del
-                    corte actual
+                    {trace.warnings.length} puntos por revisar · datos de las
+                    fuentes activas
                   </p>
                 </div>
               </section>
               <dl className="vi-study-summary">
-                {trace.summary.map(([label, value]) => (
-                  <div key={label}>
-                    <dt>{label}</dt>
-                    <dd>{value}</dd>
+                {trace.summaryDetails.map((metric) => (
+                  <div key={metric.id}>
+                    <dt>{metric.label}</dt>
+                    <dd>{metric.value}</dd>
+                    {metric.warning && (
+                      <small className="vi-study-metric-warning">
+                        ! {metric.warning}
+                      </small>
+                    )}
+                    <button
+                      type="button"
+                      aria-expanded={activeMetric === metric.id}
+                      onClick={() =>
+                        setActiveMetric((id) =>
+                          id === metric.id ? "" : metric.id,
+                        )
+                      }
+                      aria-label={`Ver origen de ${metric.label}`}
+                    >
+                      {metric.calculation.length
+                        ? "Ver cálculo y fuentes"
+                        : "Ver fuente y regla"}
+                    </button>
                   </div>
                 ))}
               </dl>
+              {detail && (
+                <section
+                  className="vi-study-detail"
+                  aria-label={`Origen de ${detail.label}`}
+                  ref={detailRef}
+                  tabIndex={-1}
+                >
+                  <h3>
+                    {detail.label} · {detail.value}
+                  </h3>
+                  <p>{detail.explanation}</p>
+                  {detail.calculation.map((formula) => (
+                    <Formula key={formula.general} formula={formula} />
+                  ))}
+                  {detail.id === "swing" && (
+                    <>
+                      <p>{trace.swingExplanation}</p>
+                      <PageRows
+                        rows={item.trace.swingByLocation}
+                        label="Diferencias por localidad"
+                        columns={[
+                          [
+                            "Localidad · físico / QAD",
+                            (r) =>
+                              `${r.location} · ${number(r.physicalQty)} / ${number(r.qadQty)}`,
+                          ],
+                          [
+                            "Diferencia sin signo",
+                            (r) => number(r.swingPieces),
+                          ],
+                          ["USD", (r) => money(r.swingUsd)],
+                        ]}
+                      />
+                    </>
+                  )}
+                  {detail.refs.map((ref) => (
+                    <Evidence
+                      key={ref.type}
+                      reference={ref}
+                      onOpen={showSource}
+                    />
+                  ))}
+                  <button
+                    className="vi-study-expand"
+                    type="button"
+                    onClick={() => goToStep(detail.stepId)}
+                  >
+                    Ir al paso que lo explica ↓
+                  </button>
+                </section>
+              )}
+              <details className="vi-study-warnings">
+                <summary>
+                  Advertencias y puntos por revisar · {trace.warnings.length}
+                </summary>
+                {trace.warnings.length ? (
+                  trace.warnings.map((warning) => (
+                    <section key={warning.id}>
+                      <h3>{warning.title}</h3>
+                      <p>{warning.detail}</p>
+                      <div className="vi-study-source-actions">
+                        {warning.refs.map((ref) => (
+                          <button
+                            type="button"
+                            key={ref.type}
+                            onClick={() => showSource(ref)}
+                          >
+                            Ver {ref.label} ↗
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => goToStep(warning.stepId)}
+                        >
+                          Ver paso ↓
+                        </button>
+                      </div>
+                    </section>
+                  ))
+                ) : (
+                  <p>
+                    Sin advertencias en esta lectura. Confirma también el cierre
+                    del conteo.
+                  </p>
+                )}
+              </details>
               <section
                 className="vi-study-origin"
                 aria-label="Origen del part number"
               >
                 <h3>¿Por qué aparece {trace.pn} en esta lista?</h3>
+                <details>
+                  <summary>¿Qué significa snapshot o copia del bot?</summary>
+                  <p>{trace.snapshotExplanation}</p>
+                </details>
                 <div
-                  className="vi-study-origin-map"
-                  aria-label="Fuentes que incorporaron este PN al corte"
+                  className="vi-study-origin-routes"
+                  aria-label="Fuentes que incorporaron este PN"
                 >
-                  {trace.origin.routes.map((route) => (
-                    <div key={route.type}>
-                      <span>{route.label}</span>
-                      <b aria-hidden="true">↓</b>
-                    </div>
+                  {trace.origin.routes.map((route, index) => (
+                    <motion.div
+                      className="vi-study-route"
+                      key={`${trace.pn}:${route.type}`}
+                      initial={
+                        prefersReducedMotion || reduceAnimations
+                          ? false
+                          : { opacity: 0, x: 8 }
+                      }
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.16, delay: index * 0.035 }}
+                    >
+                      <span
+                        className="vi-study-route-marker"
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </span>
+                      <div>
+                        <strong>{route.label}</strong>
+                        <p>{route.explanation}</p>
+                        <Evidence
+                          reference={route.reference}
+                          onOpen={showSource}
+                        />
+                      </div>
+                    </motion.div>
                   ))}
-                  <strong>PN {trace.pn} · corte reconciliado</strong>
                 </div>
-                {trace.origin.routes.map((route) => (
-                  <div key={route.type}>
-                    <p>{route.explanation}</p>
-                    <Evidence reference={route.reference} onOpen={showSource} />
-                  </div>
-                ))}
                 <details>
                   <summary>¿De dónde viene la descripción?</summary>
                   <p>{trace.origin.descriptionReference.rule}</p>
@@ -622,17 +880,22 @@ export default function PartLogicTracer({
                   />
                 </details>
                 <p className="vi-study-reading">
-                  Cómo estudiar: lee el resultado de cada paso → mira la tabla
-                  original → toca las celdas naranjas → abre «Ver en fuente»
-                  para ver el archivo completo. Los detalles avanzados están en
-                  «Ver reglas y desglose».
+                  Sigue cada resultado → mira la tabla original → toca las
+                  celdas naranjas → abre «Ver en fuente» para ver el archivo
+                  completo. Los detalles avanzados están en «Ver reglas y
+                  desglose».
                 </p>
               </section>
               <nav className="vi-study-navigation" aria-label="Pasos del caso">
                 {trace.steps.map((step, index) => (
-                  <a href={`#study-${step.id}`} key={step.id}>
+                  <button
+                    type="button"
+                    onClick={() => goToStep(step.id)}
+                    aria-pressed={activeStep === step.id}
+                    key={step.id}
+                  >
                     {index + 1} · {step.title}
-                  </a>
+                  </button>
                 ))}
               </nav>
               {trace.steps.map((step, index) => (
@@ -650,6 +913,25 @@ export default function PartLogicTracer({
                 {trace.conclusion.map((paragraph, index) => (
                   <p key={index}>{paragraph}</p>
                 ))}
+                <h3>Plan de revisión</h3>
+                <p>
+                  Posibles acciones según este caso. Confirma la causa antes de
+                  ajustar inventario.
+                </p>
+                <ol className="vi-study-action-plan">
+                  {trace.actionPlan.map((action) => (
+                    <li key={action.id}>
+                      <h4>{action.title}</h4>
+                      <p>{action.detail}</p>
+                      <button
+                        type="button"
+                        onClick={() => goToStep(action.stepId)}
+                      >
+                        Ver paso y fuentes ↑
+                      </button>
+                    </li>
+                  ))}
+                </ol>
               </section>
             </div>
           )}

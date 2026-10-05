@@ -60,7 +60,11 @@ export function buildSourcePreview(selection) {
     const origin = ref?.origin ||
       row.__provenance ||
       files.get(fileName)?.rowOrigins?.[fileIndex] || {
-        fileName: fileName || "Snapshot 4Wall publicado",
+        fileName:
+          fileName ||
+          (isScan
+            ? "Copia 4Wall publicada por el bot"
+            : "Fuente sin nombre de archivo"),
         sheetName: source.sheetName || "",
         rowNumber: null,
         firstColumn: 0,
@@ -72,12 +76,12 @@ export function buildSourcePreview(selection) {
       evidence: ref,
     });
   }
-  const keys = new Set(
-    (source.fields || []).filter((k) => !k.startsWith("__")),
-  );
+  const visibleColumn = (key) =>
+    !key.startsWith("__") && !["raw_record", "source_columns"].includes(key);
+  const keys = new Set((source.fields || []).filter(visibleColumn));
   entries.slice(0, 250).forEach(({ row }) =>
     Object.keys(row).forEach((k) => {
-      if (!k.startsWith("__")) keys.add(k);
+      if (visibleColumn(k)) keys.add(k);
     }),
   );
   const usedColumns = new Set(

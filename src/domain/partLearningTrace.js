@@ -11,6 +11,14 @@ const usd = (value) =>
         currency: "USD",
       });
 const precision = (value) => String(value ?? 0);
+export const RECONCILIATION_FORMULAS = Object.freeze({
+  netPieces: "NET piezas = físico reconocido − QAD congelado",
+  netUsd: "NET USD = diferencia total en piezas × costo unitario",
+  swing:
+    "SWING USD = suma de diferencias absolutas por localidad × costo unitario",
+  physical:
+    "Físico reconocido = escaneos directos aceptados + componentes recibidos por BOM",
+});
 const STATUS = {
   UNVALUED: "Sin valorar",
   OBSOLETE_GAIN: "Sobrante obsoleto",
@@ -49,7 +57,9 @@ export function sourceOrigin(source, sourceIndex) {
   }
   return {
     fileName:
-      row.__sourceFile || source?.fileName || "Snapshot 4Wall publicado",
+      row.__sourceFile ||
+      source?.fileName ||
+      "Fuente cargada sin nombre de archivo",
     sheetName: source?.sheetName || "",
     rowNumber: null,
     firstColumn: 0,
@@ -74,9 +84,10 @@ function reference(type, source, entries, rule, label) {
         cells: e.cells.map((c) => ({
           ...c,
           original: raw[c.column] ?? null,
-          letter: columnLetter(
-            keys.indexOf(c.column) + (origin.firstColumn || 0),
-          ),
+          letter:
+            keys.indexOf(c.column) >= 0
+              ? columnLetter(keys.indexOf(c.column) + (origin.firstColumn || 0))
+              : "",
         })),
       };
     });
@@ -129,15 +140,132 @@ export function getTracerSourceInventory(
     const files = source?.files?.map((file) => file.fileName).filter(Boolean);
     return {
       type,
-      label,
+      label:
+        type === "scans"
+          ? source?.loaded
+            ? "4Wall · archivo manual"
+            : "4Wall · automático del bot"
+          : type === "qad"
+            ? "QAD 3.2 · inventario congelado"
+            : label,
       loaded: Boolean(source?.loaded || remote),
       identity: remote
-        ? `Snapshot 4Wall de Supabase${snapshotMeta?.snapshotId ? " · " + snapshotMeta.snapshotId : " · ID no disponible"}`
+        ? `Copia publicada del bot${snapshotMeta?.snapshotId ? " · " + snapshotMeta.snapshotId : " · identificador no disponible"}`
         : files?.length
           ? [...new Set(files)].join(" · ")
           : source?.fileName || "Archivo no disponible",
     };
   });
+}
+
+// Choose contrasting real cases, rather than a list of largest losses only.
+// Ranking reads existing engine results; it does not calculate any money.
+export function getRecommendedPartCases(reconciliation = []) {
+  const categories = [
+    [
+      "net",
+      "Mayor diferencia total",
+      (r) => r.master.hasCost && r.financial.netUsd !== 0,
+    ],
+    [
+      "swing",
+      "Mayor diferencia por localidad",
+      (r) => r.master.hasCost && r.financial.swingUsd > 0,
+    ],
+    ["planning", "Phantom por confirmar", (r) => !r.master.phantomKnown],
+    [
+      "phantom",
+      "Padre Phantom",
+      (r) => r.master.isPhantom && r.physical.scanCount > 0,
+    ],
+    ["bom", "Componente que recibe BOM", (r) => r.flags.hasBomAdjustment],
+    ["qad", "QAD con conteo pendiente", (r) => r.flags.isMissingPhysical],
+    ["unexpected", "Material inesperado", (r) => r.flags.isUnexpectedMaterial],
+    ["cost", "Costo por revisar", (r) => !r.master.hasCost],
+    [
+      "balanced",
+      "Un caso balanceado",
+      (r) =>
+        r.flags.financialStatus === "BALANCED" &&
+        r.master.hasCost &&
+        r.master.phantomKnown,
+    ],
+  ];
+  const selected = new Set(),
+    cases = [];
+  for (const [id, reason, matches] of categories) {
+    let best = null,
+      score = -1;
+    for (const item of reconciliation) {
+      if (selected.has(item.partNumber) || !matches(item)) continue;
+      const rank =
+        id === "swing"
+          ? item.financial.swingUsd
+          : item.master.hasCost
+            ? Math.abs(item.financial.netUsd)
+            : Math.abs(item.financial.netPieces);
+      if (rank > score) {
+        best = item;
+        score = rank;
+      }
+    }
+    if (best) {
+      selected.add(best.partNumber);
+      cases.push({ id, reason, item: best });
+    }
+  }
+  return cases;
+}
+
+export function buildPartCatalogSource(
+  reconciliation = [],
+  engineSources = {},
+  inputSources = [],
+) {
+  const inputs = new Map(inputSources.map((r) => [r.type, r]));
+  const rows = reconciliation.map((item) => {
+    const origins = getPartEntryOrigins(item, engineSources);
+    const source = (type) => {
+      if (!origins.some((r) => r.type === type)) return "No incorporó este PN";
+      if (type === "bom") {
+        const names = [
+          ...new Set(
+            (
+              engineSources.phantomAdjustments?.byPart?.get(item.partNumber)
+                ?.sources || []
+            )
+              .map((r) => r.sourceFile)
+              .filter(Boolean),
+          ),
+        ];
+        if (names.length) return names.join(" · ");
+        return `Biblioteca activa: ${inputs.get(type)?.identity || "Archivo no disponible"}; archivo exacto no registrado en el cálculo`;
+      }
+      return inputs.get(type)?.identity || "Archivo no disponible";
+    };
+    return {
+      PN: item.partNumber,
+      Descripción: item.master.description || "Sin descripción",
+      "Aparece por": origins
+        .map((r) => inputs.get(r.type)?.label || r.label)
+        .join(" + "),
+      "Fuente 4Wall": source("scans"),
+      "Fuente QAD congelado": source("qad"),
+      "Fuente BOM": source("bom"),
+      "Físico reconocido": item.physical.total,
+      "QAD congelado": item.qad.total,
+      "NET USD": item.master.hasCost ? item.financial.netUsd : "Sin valorar",
+      "SWING USD": item.master.hasCost
+        ? item.financial.swingUsd
+        : "Sin valorar",
+    };
+  });
+  return {
+    fileName: "Lista de PN del resultado actual",
+    rows,
+    fields: Object.keys(rows[0] || {}),
+    loaded: true,
+  };
 }
 
 // Called only for the selected PN. Reads normalized parser decisions and engine results;
@@ -148,6 +276,7 @@ export function buildPartLearningTrace({
   sources = {},
   scanRows = [],
   scanReady = false,
+  snapshotMeta = null,
   findings = [],
 } = {}) {
   if (!item) return null;
@@ -159,7 +288,12 @@ export function buildPartLearningTrace({
     q = item.qad;
   const scannedSource = sources.scans?.loaded
     ? sources.scans
-    : { rows: scanRows, fileName: "", loaded: scanReady };
+    : {
+        rows: scanRows,
+        fileName: snapshotMeta?.fileName || "Copia 4Wall publicada por el bot",
+        loaded: scanReady,
+      };
+  const inputs = getTracerSourceInventory(sources, scanReady, snapshotMeta);
   const incoming = item.trace.bomSources || [];
   const parentParts = [...new Set(incoming.map((r) => r.parentPart))];
   const scanParts = [pn, ...parentParts];
@@ -205,7 +339,7 @@ export function buildPartLearningTrace({
     "scans",
     scannedSource,
     scanEntries,
-    "El archivo manual reemplaza al snapshot; nunca se mezclan.",
+    "El archivo manual reemplaza a la copia publicada por el bot; las dos fuentes nunca se suman juntas.",
     "4Wall",
   );
   const mappings = scanParts.flatMap(
@@ -403,12 +537,17 @@ export function buildPartLearningTrace({
       ? "Descripción · Cost Part"
       : "Descripción · ISPBB",
   );
+  for (const ref of [scans, areas, ispbb, bom, qad, cost]) {
+    const input = inputs.find((r) => r.type === ref.type);
+    ref.label = input?.label || ref.label;
+    ref.identity = input?.identity || "Archivo no disponible";
+  }
   const readiness = [
-    ["scans", "4Wall", Boolean(scannedSource.loaded)],
+    ["scans", scans.label, Boolean(scannedSource.loaded)],
     ["areas", "Áreas", Boolean(sources.areas?.loaded)],
     ["ispbb", "ISPBB", Boolean(sources.ispbb?.loaded)],
     ["bom", "BOM", Boolean(sources.bom?.loaded)],
-    ["qad", "QAD", Boolean(sources.qad?.loaded)],
+    ["qad", qad.label, Boolean(sources.qad?.loaded)],
     ["cost", "Costo", Boolean(sources.cost?.loaded)],
   ];
   const requiredMissing = readiness.filter(
@@ -423,7 +562,14 @@ export function buildPartLearningTrace({
     [!m.phantomKnown, "Sin definición ISPBB"],
     [item.flags.phantomQadBalance, "Phantom con saldo QAD"],
     [item.flags.zeroCost, "Costo cero"],
-    [!m.hasCost, `Costo ${m.costState}`],
+    [
+      !m.hasCost,
+      m.costState === "CONFLICT"
+        ? "Costos contradictorios"
+        : m.costState === "INVALID"
+          ? "Costo inválido"
+          : "Costo no disponible",
+    ],
     [item.flags.hasUnmappedPhysicalLocation, "Área sin mapeo"],
     [item.flags.hasInvalidQadLocation, "QAD sin localidad"],
     [item.flags.isMissingPhysical, "Sin físico registrado; conteo pendiente"],
@@ -435,24 +581,23 @@ export function buildPartLearningTrace({
   const valued = m.hasCost;
   const formulas = {
     netPieces: {
-      general: "NET piezas = Physical Total − QAD Total",
+      general: RECONCILIATION_FORMULAS.netPieces,
       substitution: `${qty(p.total)} − ${qty(q.total)} = ${qty(f.netPieces)} piezas`,
     },
     netUsd: {
-      general: "NET USD = NET piezas × Unit Cost",
+      general: RECONCILIATION_FORMULAS.netUsd,
       substitution: valued
         ? `${qty(f.netPieces)} × $${precision(m.unitCost)} = ${usd(f.netUsd)}`
         : "Sin costo confiable: se conservan las piezas y no se valida un USD 0.",
     },
     swing: {
-      general:
-        "SWING USD = Σ ABS(Physical(localidad) − QAD(localidad)) × Unit Cost",
+      general: RECONCILIATION_FORMULAS.swing,
       substitution: valued
         ? `${qty(f.swingPieces)} × $${precision(m.unitCost)} = ${usd(f.swingUsd)}`
         : `${qty(f.swingPieces)} piezas de SWING; sin valorar.`,
     },
     physical: {
-      general: "Physical Total = directo reconocido + aportaciones BOM",
+      general: RECONCILIATION_FORMULAS.physical,
       substitution: `${qty(p.directTotal)} + ${qty(p.bomContribution)} = ${qty(p.total)} piezas`,
     },
   };
@@ -481,7 +626,7 @@ export function buildPartLearningTrace({
   const steps = [
     step(
       "physical",
-      "Físico 4Wall",
+      scans.label,
       `PN ${pn}${parentParts.length ? " y padres " + parentParts.join(", ") : ""}`,
       `${qty(p.scannedTotal)} piezas escaneadas del PN; ${p.scanCount} registros.`,
       "Un escaneo todavía no equivale a físico reconocido.",
@@ -514,7 +659,7 @@ export function buildPartLearningTrace({
       m.phantomKnown
         ? `Phantom = ${m.isPhantom ? "YES" : "NO"}.`
         : "PN sin definición ISPBB.",
-      "Es la fuente autoritativa; los prefijos no participan.",
+      "Este archivo decide si la pieza es Phantom; no se adivina por el inicio del PN.",
       m.isPhantom
         ? "El escaneo del padre aporta cero directo"
         : m.phantomKnown
@@ -535,7 +680,7 @@ export function buildPartLearningTrace({
         : item.flags.emptyBom
           ? "BOM existe sin filas aplicables"
           : contributions.length
-            ? "Aportaciones calculadas por explodeBom"
+            ? "Componentes calculados con el BOM válido"
             : "Sin aportación BOM calculada",
       "Sumar solo las aportaciones del motor al físico directo reconocido.",
       [bom, ispbb, scans],
@@ -553,7 +698,7 @@ export function buildPartLearningTrace({
     ),
     step(
       "qad",
-      "QAD congelado",
+      qad.label,
       `Item Number ${pn} · 179A · PP/MP/FP`,
       `${qty(q.total)} piezas; ${q.locations.size} localidades.`,
       "El congelado es la base esperada. Un Phantom con saldo QAD abre alerta; no se reescribe a cero.",
@@ -574,7 +719,11 @@ export function buildPartLearningTrace({
         ? item.flags.zeroCost
           ? "Costo cero: revisar"
           : "Costo válido del motor"
-        : `Costo ${m.costState}`,
+        : m.costState === "CONFLICT"
+          ? "Costos contradictorios"
+          : m.costState === "INVALID"
+            ? "Costo inválido"
+            : "Costo no disponible",
       "Usar el mismo costo en NET y cada localidad de SWING.",
       [cost],
       valued && !item.flags.zeroCost ? "ok" : "review",
@@ -582,7 +731,7 @@ export function buildPartLearningTrace({
     step(
       "net",
       "NET · diferencia total",
-      "Physical Total − QAD Total",
+      "Físico reconocido − QAD congelado",
       formulas.netPieces.substitution,
       "Conserva el signo. Durante el conteo, una diferencia no es una pérdida final confirmada.",
       valued ? usd(f.netUsd) : "Sin valorar",
@@ -606,7 +755,7 @@ export function buildPartLearningTrace({
     step(
       "final",
       "Clasificación y alertas",
-      "Estado financiero y flags del dominio",
+      "Resultado y advertencias de las reglas del reconciliador",
       `${status}. ${alertLabels.length} advertencias del motor.`,
       "Las etiquetas explican el caso; no vuelven a sumar su impacto.",
       complete ? status : "Caso parcial · " + status,
@@ -617,6 +766,331 @@ export function buildPartLearningTrace({
         : "ok",
     ),
   ];
+  const physicalRefs =
+    incoming.length || m.isPhantom ? [scans, ispbb, bom] : [scans, ispbb];
+  const financialRefs = [...physicalRefs, qad, cost];
+  const swingRefs = [...physicalRefs, areas, qad, cost];
+  const metric = (
+    id,
+    label,
+    value,
+    explanation,
+    refs,
+    stepId,
+    warning = "",
+    calculation = [],
+  ) => ({ id, label, value, explanation, refs, stepId, warning, calculation });
+  const summaryDetails = [
+    metric(
+      "physical",
+      "Físico (Physical)",
+      qty(p.total),
+      `Sale de ${scans.label}: ${qty(p.scannedTotal)} piezas escaneadas de este PN. El sistema reconoce ${qty(p.directTotal)} directamente y recibe ${qty(p.bomContribution)} mediante BOM. ISPBB decide qué escaneos aportan directo.`,
+      physicalRefs,
+      "recognized",
+      !sources.ispbb?.loaded || !m.phantomKnown
+        ? "Phantom pendiente: físico provisional"
+        : "",
+      [formulas.physical],
+    ),
+    metric(
+      "qad",
+      "QAD congelado",
+      qty(q.total),
+      `Suma de Quantity On Hand de las filas aceptadas en ${qad.identity}. Solo planta 179A y tipos PP / MP / FP. ${item.flags.qadPresent ? "El PN está en este archivo." : "No se encontró el PN en las filas aceptadas."} No es el inventario actualizado en vivo.`,
+      [qad],
+      "qad",
+      !sources.qad?.loaded ? "Falta el archivo QAD" : "",
+    ),
+    metric(
+      "cost",
+      "Costo",
+      valued ? usd(m.unitCost) : "Sin valorar",
+      valued
+        ? `Sale de Cost Total en ${cost.identity}. El motor usa $${precision(m.unitCost)} por pieza. El resumen lo redondea a dos decimales; calcular a mano con ese redondeo puede cambiar el importe final.`
+        : "Cost Part no aporta un costo confiable para este PN. No se presenta USD 0 como si la diferencia no costara nada.",
+      [cost],
+      "cost",
+      !valued ? "Revisar Cost Part" : item.flags.zeroCost ? "Costo cero" : "",
+    ),
+    metric(
+      "net",
+      "NET USD",
+      valued ? usd(f.netUsd) : "Sin valorar",
+      "Compara el físico reconocido total con el QAD congelado total y multiplica esa diferencia por el costo original de Cost Part. Conserva el signo: negativo es menor físico; positivo es mayor físico. Durante el conteo es una diferencia por revisar.",
+      financialRefs,
+      "net",
+      !complete ? "Resultado provisional" : "",
+      [formulas.netPieces, formulas.netUsd],
+    ),
+    metric(
+      "swing",
+      "SWING USD",
+      valued ? usd(f.swingUsd) : "Sin valorar",
+      "Compara físico y QAD en cada localidad, toma cada diferencia sin signo y suma sus importes usando el costo original. Mide cuánto difieren los saldos locales; no afirma cuántas piezas se trasladaron ni se suma al NET como otra pérdida.",
+      swingRefs,
+      "swing",
+      item.flags.hasUnmappedPhysicalLocation || item.flags.hasInvalidQadLocation
+        ? "Localidades por confirmar"
+        : !complete
+          ? "Resultado provisional"
+          : "",
+      [formulas.swing],
+    ),
+    metric(
+      "phantom",
+      "Phantom",
+      m.phantomKnown ? (m.isPhantom ? "Sí" : "No") : "Desconocido",
+      m.phantomKnown
+        ? "Sale del campo Phantom de ISPBB para la planta 179A. YES significa que el padre se convierte en componentes con BOM; NO permite reconocer sus escaneos directamente."
+        : "No hay una definición aceptada de este PN en ISPBB para 179A. Desconocido no significa NO: revisa el archivo y su planta antes de confirmar el físico.",
+      [ispbb],
+      "phantom",
+      !m.phantomKnown ? "Falta definición del PN" : "",
+    ),
+    metric(
+      "obsolete",
+      "Obsoleto",
+      s.costs?.byPart.has(pn) ? (m.isObsolete ? "Sí" : "No") : "Desconocido",
+      "Sale de Status en Cost Part. Solo el estado OBSOLETE activa esta etiqueta; no se deduce de ISPBB ni del número de parte.",
+      [cost],
+      "cost",
+      !s.costs?.byPart.has(pn) ? "No hay registro Cost Part" : "",
+    ),
+    metric(
+      "unexpected",
+      "Material inesperado",
+      item.flags.isUnexpectedMaterial ? "Sí" : "No",
+      "La regla del motor marca material inesperado cuando QAD total es cero y el físico reconocido es mayor que cero. Revisa ambas fuentes: un QAD faltante también puede volver provisional esta lectura.",
+      [...physicalRefs, qad],
+      "final",
+      !sources.qad?.loaded ? "QAD pendiente" : "",
+    ),
+    metric(
+      "missingBom",
+      "Falta BOM",
+      item.flags.missingBom ? "Sí" : "No",
+      item.flags.missingBom
+        ? "ISPBB define un padre escaneado como Phantom y no se encontró su BOM."
+        : item.flags.emptyBom
+          ? "Existe BOM, pero no tiene filas que cumplan Level .2 / 0.2, Comp Phantom NO y Usage válido."
+          : !m.phantomKnown
+            ? "El motor no activó esta alerta. Primero hay que confirmar Phantom en ISPBB; este No no valida que el PN tenga el BOM correcto."
+            : "El motor no detectó un padre Phantom escaneado sin BOM. Para el directo de un PN que no es Phantom, BOM no es obligatorio.",
+      [ispbb, bom, scans],
+      "bom",
+      item.flags.missingBom || item.flags.emptyBom || !m.phantomKnown
+        ? "Revisar definición y BOM"
+        : "",
+    ),
+  ];
+  const warnings = [];
+  const warn = (condition, id, title, detail, refs, stepId) => {
+    if (condition) warnings.push({ id, title, detail, refs, stepId });
+  };
+  warn(
+    !complete,
+    "sources",
+    "Faltan fuentes del caso",
+    `Falta: ${requiredMissing.map(([, label]) => label).join(", ")}. Los ceros y el resultado pueden cambiar al cargarlas.`,
+    requiredMissing.map(
+      ([key]) => ({ scans, areas, ispbb, bom, qad, cost })[key],
+    ),
+    "physical",
+  );
+  warn(
+    !m.phantomKnown,
+    "planning",
+    "Phantom desconocido",
+    "ISPBB no tiene una definición aceptada para este PN en 179A; el físico conservado requiere confirmación.",
+    [ispbb, scans],
+    "phantom",
+  );
+  warn(
+    item.flags.missingBom || item.flags.emptyBom,
+    "bom",
+    item.flags.missingBom ? "Falta BOM" : "BOM sin filas aplicables",
+    "Revisa el padre, Usage, Level .2 / 0.2 y Comp Phantom NO. No se inventan componentes faltantes.",
+    [bom, ispbb, scans],
+    "bom",
+  );
+  warn(
+    !valued || item.flags.zeroCost,
+    "cost",
+    valued ? "Costo cero" : "Costo por revisar",
+    summaryDetails.find((r) => r.id === "cost").explanation,
+    [cost],
+    "cost",
+  );
+  warn(
+    item.flags.hasUnmappedPhysicalLocation || item.flags.hasInvalidQadLocation,
+    "mapping",
+    "Área o localidad sin confirmar",
+    "Una ubicación no se pudo comparar correctamente. Revisa el área del escaneo, su equivalencia y la localidad QAD.",
+    [scans, areas, qad],
+    "mapping",
+  );
+  warn(
+    item.flags.phantomQadBalance,
+    "phantomQad",
+    "Phantom con saldo QAD",
+    "ISPBB indica Phantom YES, pero el QAD congelado tiene saldo. El reconciliador conserva ese saldo para revisarlo; no lo borra.",
+    [ispbb, qad],
+    "qad",
+  );
+  warn(
+    item.flags.isMissingPhysical,
+    "count",
+    "Conteo físico pendiente",
+    "Hay saldo QAD y no hay físico reconocido en esta lectura. Puede faltar conteo; no confirma una pérdida.",
+    [scans, qad, bom],
+    "physical",
+  );
+  warn(
+    item.flags.isUnexpectedMaterial,
+    "unexpected",
+    "Material inesperado",
+    "Hay físico reconocido y QAD total cero. Confirma PN, planta y archivo QAD antes de clasificarlo.",
+    [...physicalRefs, qad],
+    "final",
+  );
+  warn(
+    f.netPieces !== 0,
+    "net",
+    "Diferencia total",
+    `${formulas.netPieces.substitution}. ${valued ? formulas.netUsd.substitution : "Todavía sin valorar."}`,
+    financialRefs,
+    "net",
+  );
+  warn(
+    f.swingPieces > 0,
+    "swing",
+    "Diferencias por localidad",
+    `${formulas.swing.substitution}. Revisa el desglose por localidad; no demuestra un traslado.`,
+    swingRefs,
+    "swing",
+  );
+  const coveredFindingCodes = new Set([
+    "MISSING_BOM",
+    "EMPTY_BOM",
+    "PHANTOM_QAD",
+    "ZERO_COST",
+    "QTY_DIFF",
+    "NO_PHYSICAL",
+    "UNEXPECTED",
+    "LOCATION_CANDIDATE",
+    "UNVALUED",
+    "UNMAPPED_AREA",
+  ]);
+  const extraFindings = pnFindings.filter(
+    (finding) => !coveredFindingCodes.has(finding.ruleCode),
+  );
+  for (const finding of extraFindings) {
+    const refs =
+      finding.ruleCode === "BOM_REVIEW"
+        ? [bom, ispbb, scans, qad]
+        : financialRefs;
+    warnings.push({
+      id: finding.id || finding.ruleCode,
+      title: finding.tags?.[0] || "Hallazgo por revisar",
+      detail: `${finding.whatFound} ${finding.possibleExplanation ? "Posible explicación: " + finding.possibleExplanation : ""}${finding.ruleCode === "UNUSUAL_CHANGE" ? " La copia anterior no está en este visor; las fuentes de abajo son las actuales." : ""}`,
+      refs,
+      stepId: finding.ruleCode === "BOM_REVIEW" ? "bom" : "final",
+    });
+  }
+  const actionPlan = [];
+  const action = (condition, id, title, detail, refs, stepId) => {
+    if (condition) actionPlan.push({ id, title, detail, refs, stepId });
+  };
+  action(
+    !complete,
+    "sources",
+    "Completar las fuentes",
+    "Carga los archivos faltantes y confirma que el QAD congelado corresponda al inventario que estás revisando.",
+    warnings.find((r) => r.id === "sources")?.refs || [],
+    "physical",
+  );
+  action(
+    !m.phantomKnown || item.flags.phantomQadBalance,
+    "planning",
+    "Confirmar Phantom en ISPBB",
+    "Busca el PN en ISPBB de 179A. Si no existe o conserva saldo QAD siendo Phantom, confirma la definición con el responsable; no cambies el saldo para forzar un resultado.",
+    [ispbb, qad],
+    "phantom",
+  );
+  action(
+    item.flags.hasUnmappedPhysicalLocation || item.flags.hasInvalidQadLocation,
+    "mapping",
+    "Confirmar las localidades",
+    "Compara AreaName con el catálogo de áreas y su Localidad QAD. Corrige la fuente confirmada antes de interpretar SWING.",
+    [scans, areas, qad],
+    "mapping",
+  );
+  action(
+    item.flags.missingBom || item.flags.emptyBom,
+    "bom",
+    "Revisar el BOM del padre",
+    "Pide o revisa el BOM de ese PN, su Usage y las filas elegibles. Reimporta el archivo confirmado; no uses cantidades supuestas.",
+    [bom, ispbb, scans],
+    "bom",
+  );
+  action(
+    !valued || item.flags.zeroCost,
+    "cost",
+    "Confirmar el costo original",
+    "Revisa Cost Total, Status y duplicados en Cost Part. Confirma el costo con el departamento antes de valorar la diferencia.",
+    [cost],
+    "cost",
+  );
+  action(
+    f.netPieces !== 0 || item.flags.isMissingPhysical,
+    "count",
+    "Revisar el conteo del PN",
+    "Confirma si las áreas ya terminaron el conteo, revisa los tickets y cantidades originales y valida cualquier repetición antes de corregirla. El NET actual no prueba una pérdida final.",
+    [...physicalRefs, qad],
+    "recognized",
+  );
+  action(
+    f.swingPieces > 0,
+    "locations",
+    "Comparar localidad por localidad",
+    "Localiza los saldos que difieren en la tabla de SWING y confirma la ubicación con evidencia operativa. Solo ajusta un registro o movimiento cuando se haya comprobado; una compensación no demuestra un traslado.",
+    swingRefs,
+    "swing",
+  );
+  action(
+    m.isObsolete,
+    "obsolete",
+    "Confirmar el estado obsoleto",
+    "Revisa Status en Cost Part y confirma con el departamento el tratamiento del material; la etiqueta no autoriza un ajuste.",
+    [cost],
+    "cost",
+  );
+  for (const finding of extraFindings)
+    action(
+      Boolean(finding.nextAction),
+      finding.id || finding.ruleCode,
+      finding.tags?.[0] || "Revisar el hallazgo",
+      finding.nextAction,
+      finding.ruleCode === "BOM_REVIEW"
+        ? [bom, ispbb, scans, qad]
+        : financialRefs,
+      finding.ruleCode === "BOM_REVIEW" ? "bom" : "final",
+    );
+  action(
+    true,
+    "verify",
+    actionPlan.length
+      ? "Volver a comparar después de validar"
+      : "Confirmar que el caso está completo",
+    actionPlan.length
+      ? "Después de corregir las fuentes confirmadas, vuelve a calcular y verifica NET, SWING y advertencias. Esto es un plan de revisión; no ejecuta ajustes ni movimientos."
+      : "Verifica que las fuentes correspondan al mismo inventario y que el conteo haya concluido. Un balance de esta lectura no confirma por sí solo el cierre.",
+    [scans, qad, cost],
+    "final",
+  );
+  const swingExplanation =
+    "SWING no se divide entre dos porque mide la suma de las diferencias de cada localidad, no las piezas de un traslado. Si una localidad tiene sobrante y otra faltante, ambas diferencias participan. Dividir entre dos reduciría esa métrica. NET compara totales; SWING compara ubicaciones. No se suman como dos pérdidas distintas.";
   const conclusion = [
     complete
       ? "Resultado del corte actual."
@@ -625,6 +1099,11 @@ export function buildPartLearningTrace({
     valued
       ? `El NET es ${usd(f.netUsd)} y el SWING es ${usd(f.swingUsd)}, suma absoluta por localidad sin dividir entre dos.`
       : "El NET y SWING en USD no están valorados porque falta un costo confiable.",
+    valued
+      ? `NET viene de ${scans.label}${incoming.length ? " + componentes BOM" : ""}, ${qad.label} (${qad.identity}) y Cost Part (${cost.identity}): ${formulas.netUsd.substitution}. Costo original: $${precision(m.unitCost)}; el resumen lo redondea a dos decimales.`
+      : "",
+    `SWING usa esas mismas fuentes, el catálogo de áreas y las localidades detalladas: ${formulas.swing.substitution}.`,
+    swingExplanation,
     m.phantomKnown
       ? m.isPhantom
         ? `ISPBB define Phantom YES: sus ${qty(p.scannedTotal)} piezas escaneadas no aportan directo al padre; BOM genera componentes elegibles con Usage.`
@@ -644,6 +1123,7 @@ export function buildPartLearningTrace({
     origin: {
       routes: getPartEntryOrigins(item, s).map((origin) => ({
         ...origin,
+        label: { scans, qad, bom }[origin.type].label,
         reference: { scans, qad, bom }[origin.type],
         explanation:
           origin.type === "scans"
@@ -663,6 +1143,13 @@ export function buildPartLearningTrace({
     alertLabels,
     findings: pnFindings,
     conclusion,
+    summaryDetails,
+    warnings,
+    actionPlan,
+    swingExplanation,
+    inputs,
+    snapshotExplanation:
+      "Snapshot significa una copia de los escaneos guardada en un momento concreto. En el modo automático, el bot publica esa copia y la app lee sus registros. Al llegar una nueva publicación pueden cambiar los resultados. El archivo manual reemplaza esa lectura; no se suman las dos.",
     summary: [
       ["Physical", qty(p.total)],
       ["QAD", qty(q.total)],

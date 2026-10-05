@@ -992,8 +992,8 @@ body.vi-overlay-open .vi-shell {
 
 /* Learning tracer. Only this drawer is widened; native scroll physics are unchanged. */
 .vi-logic-overlay { z-index:1320 !important; justify-content:flex-end !important; }
-.vi-logic-tracer.vi-drawer-panel { width:min(940px,100vw) !important; max-width:none !important; height:100dvh !important; overflow-x:hidden !important; overflow-y:auto !important; overflow-anchor:none; }
-.vi-logic-tracer.vi-drawer-panel > .vi-rubber-clip { position:static; top:auto; width:100%; padding:0 !important; }
+.vi-logic-tracer.vi-drawer-panel, .vi-engine-guide.vi-drawer-panel { width:min(940px,100vw) !important; max-width:none !important; height:100dvh !important; overflow-x:hidden !important; overflow-y:auto !important; overflow-anchor:none; }
+.vi-logic-tracer.vi-drawer-panel > .vi-rubber-clip, .vi-engine-guide.vi-drawer-panel > .vi-rubber-clip { position:static; top:auto; width:100%; padding:0 !important; }
 .vi-logic-head { position:sticky; top:0; z-index:2; background:#0b2e40; padding:16px 24px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:1px solid #ffffff16; }
 .vi-logic-head h2 { margin:4px 0; font-size:24px; color:#f1f6f8; }
 .vi-logic-head p:last-child { margin:0; color:#aec4cd; font-size:14px; line-height:1.5; }
@@ -1026,8 +1026,8 @@ body.vi-overlay-open .vi-shell {
 .vi-study-summary dt { font-size:12px; color:#91aebb; }
 .vi-study-summary dd { margin:5px 0 0; font-size:16px; font-weight:700; color:#f1f6f8; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .vi-study-navigation { display:flex; flex-wrap:wrap; gap:6px; padding:0 0 22px; }
-.vi-study-navigation a { padding:7px 10px; border:1px solid #ffffff1c; border-radius:7px; color:#bdd3dc; font-size:12px; text-decoration:none; }
-.vi-study-navigation a:hover { border-color:#f5821f; color:#ffc08c; }
+.vi-study-navigation button { padding:7px 10px; border:1px solid #ffffff1c; border-radius:7px; color:#bdd3dc; font-size:12px; text-decoration:none; background:transparent; cursor:pointer; }
+.vi-study-navigation button:hover { border-color:#f5821f; color:#ffc08c; }
 .vi-logic-step { display:grid; grid-template-columns:38px minmax(0,1fr); gap:12px; position:relative; scroll-margin-top:120px; }
 .vi-logic-step::after { content:""; position:absolute; left:18px; top:38px; bottom:0; width:1px; background:#f5821f38; }
 .vi-logic-step-index { width:38px; height:38px; display:grid; place-items:center; border:1px solid #f5821f70; border-radius:10px; color:#ffc08f; font-size:12px; font-weight:700; background:#0e3449; }
@@ -1137,10 +1137,6 @@ body.vi-overlay-open .vi-shell {
 .vi-study-origin h3 { font-size:18px; color:#f1f6f8; margin:0 0 14px; overflow-wrap:anywhere; }
 .vi-study-origin p, .vi-study-origin summary { font-size:14px; line-height:1.55; color:#c1d6e0; }
 .vi-study-origin summary { cursor:pointer; padding:12px 0; color:#ffbc87; }
-.vi-study-origin-map { display:flex; flex-wrap:wrap; justify-content:center; gap:8px 16px; padding:16px; background:#062534; border-radius:10px; }
-.vi-study-origin-map > div { flex:1; min-width:100px; display:grid; gap:8px; text-align:center; color:#acd8c3; font-size:14px; }
-.vi-study-origin-map b { color:#f5821f; }
-.vi-study-origin-map > strong { width:100%; text-align:center; font-size:15px; color:#f4f8fa; overflow-wrap:anywhere; }
 .vi-study-reading { border-left:2px solid #f5821f; padding:8px 12px; }
 .vi-study-evidence { min-width:0; }
 .vi-study-sheet { margin:0 0 12px; overflow:hidden; border:1px solid #bcd0c4; border-radius:8px; background:#f4f8f5; }
@@ -1155,5 +1151,90 @@ body.vi-overlay-open .vi-shell {
   .vi-study-reference { flex-wrap:wrap; }
   .vi-study-reference button { min-height:44px; }
   .vi-study-sheet figcaption { font-size:12px; }
-  .vi-study-origin-map { padding:12px; }
+}
+
+/* PN cases and drill-downs: bounded surfaces, the drawer owns navigation. */
+.vi-study-cases h3 { margin:18px 0 7px; color:#eef6f9; font-size:17px; }
+.vi-study-cases > p { font-size:13px; line-height:1.5; color:#aac5d3; margin:0 0 12px; }
+.vi-study-case-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.vi-study-case { display:flex; flex-direction:column; border:1px solid #ffffff1e; border-radius:9px; overflow:hidden; background:#082a3b; }
+.vi-study-case > button:first-child { display:grid; gap:6px; border:0; padding:13px; background:transparent; color:#eff7fa; text-align:left; cursor:pointer; }
+.vi-study-case strong { font-size:15px; overflow-wrap:anywhere; }
+.vi-study-case span { color:#ffb77f; font-size:13px; }
+.vi-study-case small { color:#96b4c4; font-size:12px; }
+.vi-study-case em { color:#d9e9ef; font-style:normal; font-size:13px; font-variant-numeric:tabular-nums; }
+.vi-study-case > button:last-child { padding:10px 13px; border:0; border-top:1px solid #ffffff12; background:#ffffff03; color:#aacbdc; text-align:left; min-height:42px; cursor:pointer; }
+.vi-study-case button:hover { background:#ffffff06; }
+.vi-study-summary button { display:block; padding:6px 0; min-height:38px; border:0; background:transparent; color:#ffbc87; font-size:12px; text-align:left; cursor:pointer; }
+.vi-study-metric-warning { display:block; font-size:11px; color:#ebcc84; line-height:1.4; margin-top:6px; }
+.vi-study-detail { padding:16px; margin:0 0 18px; border-left:3px solid #f5821f; border-radius:0 10px 10px 0; background:#052635; }
+.vi-study-detail h3 { margin:0 0 10px; font-size:18px; color:#edf6fa; }
+.vi-study-detail > p { font-size:14px; color:#c6dce7; line-height:1.6; }
+.vi-study-warnings { border-block:1px solid #ffffff1e; padding:12px 0; margin-bottom:12px; }
+.vi-study-warnings > summary { color:#ebcc84; cursor:pointer; font-size:14px; padding:6px 0; }
+.vi-study-warnings section { padding:12px 0; border-top:1px solid #ffffff12; }
+.vi-study-warnings h3 { font-size:15px; color:#f1d6a0; margin:0 0 6px; }
+.vi-study-warnings p { font-size:14px; line-height:1.55; color:#c4d8e2; margin:6px 0; }
+.vi-study-source-actions { display:flex; flex-wrap:wrap; gap:7px; }
+.vi-study-source-actions button, .vi-study-action-plan button { padding:8px 10px; min-height:40px; border:1px solid #ffffff20; border-radius:7px; background:transparent; color:#a8c9da; font-size:12px; cursor:pointer; }
+.vi-study-origin-routes { display:grid; gap:10px; }
+.vi-study-route { display:grid; grid-template-columns:30px minmax(0,1fr); gap:12px; padding:12px 0; border-bottom:1px solid #ffffff15; }
+.vi-study-route-marker { display:grid; place-items:center; width:28px; height:28px; border-radius:50%; background:#84d7ad16; color:#8adab4; font-size:14px; }
+.vi-study-route > div > strong { color:#edf6fa; font-size:15px; }
+.vi-study-route p { margin:8px 0; }
+.vi-study-navigation button[aria-pressed="true"] { color:#ffc08c; border-color:#f5821f; background:#f5821f0b; }
+.vi-logic-step:focus { outline:none; }
+.vi-logic-step:focus .vi-logic-step-index { border-color:#ffb97f; background:#264758; }
+.vi-study-conclusion h3 { color:#f0f6f9; font-size:18px; margin:22px 0 8px; }
+.vi-study-action-plan { list-style:decimal; padding-left:22px; margin:12px 0; color:#ffbd88; }
+.vi-study-action-plan li { padding:10px 0; border-bottom:1px solid #ffffff12; }
+.vi-study-action-plan h4 { color:#eef5f8; font-size:15px; margin:0 0 7px; }
+.vi-study-action-plan p { font-size:14px; line-height:1.6; color:#c4d8e2; }
+@media(max-width:600px) {
+  .vi-study-case-list { grid-template-columns:1fr; }
+  .vi-study-detail { padding:12px; }
+  .vi-study-summary button, .vi-study-source-actions button, .vi-study-action-plan button { min-height:44px; }
+}
+
+/* Independent LAB guide; same native drawer and source viewer. */
+.vi-engine-intro { font-size:15px; line-height:1.65; color:#c3d8e2; margin:0 0 20px; }
+.vi-engine-pipeline { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-bottom:16px; }
+.vi-engine-pipeline button { display:flex; align-items:center; gap:10px; padding:12px; min-height:68px; border:1px solid #ffffff22; border-radius:9px; background:#062737; color:#bfd6e2; text-align:left; cursor:pointer; }
+.vi-engine-pipeline span { color:#ffbb88; font-size:12px; font-weight:700; }
+.vi-engine-pipeline strong { font-size:13px; line-height:1.45; }
+.vi-engine-pipeline button[aria-pressed="true"] { border-color:#f5821f99; background:#16384a; color:#fff2e4; }
+.vi-engine-stage { padding:18px; border:1px solid #ffffff1e; border-radius:12px; background:#092a3b; }
+.vi-engine-stage h3, .vi-engine-files h3, .vi-engine-examples h3, .vi-engine-finish h3 { margin:4px 0 16px; color:#f0f6f9; font-size:20px; }
+.vi-engine-stage ul { padding-left:20px; margin:15px 0; display:grid; gap:9px; }
+.vi-engine-stage li, .vi-engine-stage details p { font-size:14px; line-height:1.6; color:#bad2df; }
+.vi-engine-stage summary { padding:8px 0; color:#ffbd89; font-size:13px; cursor:pointer; }
+.vi-engine-stage code { font-size:12px; overflow-wrap:anywhere; }
+.vi-engine-stage-actions { display:flex; justify-content:space-between; gap:12px; margin-top:16px; }
+.vi-engine-stage-actions button, .vi-engine-example-tabs button, .vi-engine-finish button, .vi-engine-file button { min-height:44px; padding:10px 12px; border:1px solid #ffffff24; border-radius:8px; background:#ffffff03; color:#ffbe89; font-size:13px; cursor:pointer; }
+.vi-engine-stage-actions button:disabled, .vi-engine-file button:disabled { opacity:.45; cursor:default; }
+.vi-engine-files, .vi-engine-examples, .vi-engine-finish { margin-top:28px; padding-top:22px; border-top:1px solid #ffffff20; }
+.vi-engine-files > p, .vi-engine-examples > p, .vi-engine-finish p { font-size:14px; line-height:1.6; color:#bfd6e2; }
+.vi-engine-file { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:14px 0; border-top:1px solid #ffffff12; }
+.vi-engine-file > div { min-width:0; }
+.vi-engine-file strong { color:#eef6f9; font-size:14px; }
+.vi-engine-file p { color:#aecbdc; font-size:13px; line-height:1.6; margin:7px 0; }
+.vi-engine-file small { color:#8eb69f; font-size:12px; overflow-wrap:anywhere; }
+.vi-engine-file button { flex:none; }
+.vi-engine-example-tabs { display:flex; flex-wrap:wrap; gap:8px; }
+.vi-engine-example-tabs button[aria-pressed="true"] { background:#f5821f14; border-color:#f5821f80; }
+.vi-engine-examples h4 { font-size:17px; color:#edf5f9; margin:18px 0 8px; }
+.vi-engine-examples .vi-study-summary { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.vi-engine-location-grid { border:1px solid #ffffff20; border-radius:8px; overflow:hidden; }
+.vi-engine-location-grid > div { display:grid; grid-template-columns:minmax(0,1.1fr) repeat(4,minmax(0,1fr)); }
+.vi-engine-location-grid :is(b,span) { padding:11px 8px; font-size:13px; line-height:1.4; border-right:1px solid #ffffff10; color:#d9e8ef; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.vi-engine-location-grid b { background:#082839; color:#9dbccc; font-size:12px; }
+.vi-engine-location-grid > div + div { border-top:1px solid #ffffff12; }
+.vi-study-detail:focus { outline:none; }
+@media(max-width:600px) {
+  .vi-engine-pipeline { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .vi-engine-stage { padding:13px; }
+  .vi-engine-file { flex-wrap:wrap; }
+  .vi-engine-examples .vi-study-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .vi-engine-location-grid :is(b,span) { padding:9px 5px; font-size:12px; }
+  .vi-engine-location-grid > div { grid-template-columns:minmax(0,1fr) .7fr .7fr minmax(0,1fr) minmax(0,1fr); }
 }

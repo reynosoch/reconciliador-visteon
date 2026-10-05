@@ -7,12 +7,15 @@ import {
   sourceOrigin,
   getPartEntryOrigins,
   getTracerSourceInventory,
+  getRecommendedPartCases,
+  buildPartCatalogSource,
 } from "../src/domain/partLearningTrace.js";
 import {
   buildSourcePreview,
   buildEvidenceExcerpt,
 } from "../src/domain/sourceEvidence.js";
 import { buildInventoryEngine } from "../src/domain/inventoryEngine.js";
+import { buildEngineGuide } from "../src/domain/engineGuide.js";
 const file = (name, text) => ({
   name,
   arrayBuffer: async () => new TextEncoder().encode(text).buffer,
@@ -93,15 +96,106 @@ const makeTrace = (item = component, extra = {}) =>
     ...extra,
   });
 const trace = makeTrace();
+const guide = buildEngineGuide();
+assert.deepEqual(
+  guide.stages.map((r) => r.technical),
+  ["RAW", "PARSERS", "NORMALIZED", "DOMAIN ENGINE", "RECONCILIATION", "UI"],
+);
+assert.equal(guide.sources.length, 6);
+const locationExample = guide.examples.find((r) => r.id === "location");
+assert.equal(locationExample.item.financial.netUsd, 0);
+assert.equal(locationExample.item.financial.swingUsd, 168); // 20 + 20, never /2
+assert.equal(locationExample.locations.length, 2);
+const phantomExample = guide.examples.find((r) => r.id === "phantom");
+assert.equal(phantomExample.item.physical.total, 26);
+assert.equal(phantomExample.contributions[0].contribution, 20);
+assert.equal(
+  phantomExample.formulas.netUsd.general,
+  trace.formulas.netUsd.general,
+);
+assert.equal(
+  guide.examples.find((r) => r.id === "net").item.financial.netPieces,
+  6,
+);
 assert.equal(trace.complete, true);
+assert.equal(trace.summaryDetails.length, 9);
+assert.ok(trace.summaryDetails.every((r) => r.explanation && r.refs.length));
+assert.match(
+  trace.summaryDetails.find((r) => r.id === "physical").explanation,
+  /archivo manual/,
+);
+assert.match(
+  trace.summaryDetails.find((r) => r.id === "qad").explanation,
+  /QAD.csv/,
+);
+assert.match(
+  trace.summaryDetails.find((r) => r.id === "cost").explanation,
+  /redondea.*dos decimales/,
+);
+assert.match(trace.swingExplanation, /no las piezas de un traslado/);
+assert.ok(trace.actionPlan.some((r) => r.id === "count"));
+assert.ok(trace.actionPlan.some((r) => r.id === "locations"));
+const withFinding = makeTrace(component, {
+  findings: [
+    {
+      id: "real-bom-review",
+      partNumber: "C",
+      ruleCode: "BOM_REVIEW",
+      tags: ["REVISAR PADRE"],
+      whatFound: "Referencia BOM pendiente",
+      possibleExplanation: "Confirmar escaneo del padre",
+      nextAction: "Revisar Parent Item y su escaneo",
+    },
+  ],
+});
+assert.ok(
+  withFinding.warnings.some(
+    (r) => r.id === "real-bom-review" && r.refs[0].type === "bom",
+  ),
+);
+assert.equal(
+  withFinding.actionPlan.find((r) => r.id === "real-bom-review").detail,
+  "Revisar Parent Item y su escaneo",
+);
+assert.ok(
+  trace.warnings.some(
+    (r) => r.id === "net" && r.refs.some((ref) => ref.type === "scans"),
+  ),
+);
+assert.equal(getRecommendedPartCases([]).length, 0);
+const recommended = getRecommendedPartCases(engine.reconciliation);
+assert.equal(
+  new Set(recommended.map((r) => r.item.partNumber)).size,
+  recommended.length,
+);
+assert.ok(recommended.every((r) => engine.reconciliation.includes(r.item)));
+assert.equal(recommended[0].id, "net");
+const catalog = buildPartCatalogSource(
+  engine.reconciliation,
+  engine.sources,
+  getTracerSourceInventory(sources),
+);
+assert.equal(catalog.rows.length, engine.reconciliation.length);
+assert.match(
+  catalog.rows.find((r) => r.PN === "C")["Fuente QAD congelado"],
+  /QAD.csv/,
+);
+assert.match(
+  catalog.rows.find((r) => r.PN === "C")["Aparece por"],
+  /archivo manual.*inventario congelado.*BOM/,
+);
+assert.equal(
+  catalog.rows.find((r) => r.PN === "C")["NET USD"],
+  component.financial.netUsd,
+);
 assert.match(
   getTracerSourceInventory({}, true, { snapshotId: "published-123" })[0]
     .identity,
-  /Supabase.*published-123/,
+  /Copia publicada del bot.*published-123/,
 );
 assert.match(
   getTracerSourceInventory({}, true)[0].identity,
-  /ID no disponible/,
+  /identificador no disponible/,
 );
 assert.equal(getTracerSourceInventory(sources, true)[0].identity, "4wSc.csv"); // manual source wins
 assert.equal(getTracerSourceInventory({}, false)[0].loaded, false);
@@ -225,6 +319,57 @@ assert.deepEqual(
   getPartEntryOrigins(derived, originEngine.sources).map((r) => r.type),
   ["bom"],
 );
+const unknownTrace = buildPartLearningTrace({
+  item: derived,
+  engineSources: originEngine.sources,
+  sources: { ...sources, cost: { loaded: false, rows: [] } },
+});
+assert.ok(unknownTrace.warnings.some((r) => r.id === "sources"));
+assert.ok(unknownTrace.actionPlan.some((r) => r.id === "cost"));
+const unknownPlanning = structuredClone(component);
+unknownPlanning.master.phantomKnown = false;
+const unknownDefinition = buildPartLearningTrace({
+  item: unknownPlanning,
+  engineSources: {},
+  sources: {},
+});
+assert.match(
+  unknownDefinition.summaryDetails.find((r) => r.id === "missingBom")
+    .explanation,
+  /Primero.*confirmar Phantom/,
+);
+assert.match(
+  unknownDefinition.summaryDetails.find((r) => r.id === "obsolete").value,
+  /Desconocido/,
+);
+assert.ok(unknownDefinition.actionPlan.some((r) => r.id === "planning"));
+const automatic = buildPartLearningTrace({
+  item: component,
+  engineSources: engine.sources,
+  sources: { ...sources, scans: { loaded: false, rows: [] } },
+  scanRows: sources.scans.rows,
+  scanReady: true,
+  snapshotMeta: { snapshotId: "bot-123" },
+});
+assert.match(automatic.steps[0].refs[0].label, /automático del bot/);
+assert.match(automatic.snapshotExplanation, /copia de los escaneos/);
+assert.match(automatic.inputs[0].identity, /bot-123/);
+const wrapped = buildSourcePreview({
+  config: { type: "scans" },
+  source: {
+    fields: ["numero_parte", "raw_record", "source_columns"],
+    rows: [
+      {
+        numero_parte: "C",
+        raw_record: { PN: "C", Quantity: 6 },
+        source_columns: { quantity: "Quantity" },
+      },
+    ],
+  },
+});
+assert.ok(!wrapped.columns.includes("raw_record"));
+assert.ok(!wrapped.columns.includes("source_columns"));
+assert.equal(wrapped.entries[0].row.Quantity, 6);
 const descriptionEngine = buildInventoryEngine({
   scanRows: sources.scans.rows,
   areaRows: sources.areas.rows,
@@ -322,6 +467,15 @@ sentinels.financial.netUsd = 123.45;
 sentinels.financial.swingUsd = 987.65;
 assert.match(makeTrace(sentinels).formulas.netUsd.substitution, /123.45/);
 assert.match(makeTrace(sentinels).conclusion.join(" "), /987.65/);
+assert.match(
+  makeTrace(sentinels).summaryDetails.find((r) => r.id === "net").calculation[1]
+    .substitution,
+  /123.45/,
+);
+assert.match(
+  makeTrace(sentinels).warnings.find((r) => r.id === "swing").detail,
+  /987.65/,
+);
 const book = XLSX.utils.book_new();
 const sheet = XLSX.utils.aoa_to_sheet([
   ["Título"],

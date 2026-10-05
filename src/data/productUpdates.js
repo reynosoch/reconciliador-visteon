@@ -1,5 +1,17 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-engine-guide-and-cases",
+    date: "05 OCT 2026",
+    title: "LAB: entiende el motor y el origen de cada resultado",
+    summary: "Una guía independiente explica los archivos, Phantom/BOM, NET y SWING. El trazador muestra casos recomendados y evidencia desde cada campo del resumen.",
+    items: [
+      "Cómo funciona el motor: seis etapas navegables y tres ejemplos calculados por el motor, separados de tu inventario.",
+      "Lista de PN y origen en el visor Excel; recomendaciones con casos distintos de las fuentes cargadas.",
+      "Resumen con fuente, regla y advertencias; costo con precisión original y modo 4Wall manual o bot claramente identificado.",
+      "Los diez pasos navegan dentro del drawer; conclusión con NET/SWING y plan de revisión según el PN.",
+    ],
+  },
+  {
     id: "2026-10-05-tracer-origins-scroll",
     date: "05 OCT 2026",
     title: "Entiende de dónde viene cada PN",
