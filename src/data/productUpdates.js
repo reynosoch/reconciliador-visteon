@@ -1,5 +1,18 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-learning-tracer-bot",
+    date: "05 OCT 2026",
+    title: "Estudia una pieza, desde su fuente hasta el resultado",
+    summary: "El Trazador muestra diez pasos con evidencia real, fórmulas del motor y una conclusión del caso. El Bot prioriza estado y acciones.",
+    items: [
+      "Resumen del PN y timeline: busca, encontró, por qué importa, resultado y siguiente paso.",
+      "Ver en fuente reutiliza el visor: filas del cálculo, columnas resaltadas y explicación de cada celda; 60 filas por página.",
+      "NET y SWING provienen del dominio; desglose por localidad y BOM con Usage, .2 y Comp Phantom NO.",
+      "Puedes estudiar datos incompletos: fuentes faltantes, costo no valorado y filas originales no disponibles se indican explícitamente.",
+      "Bot 4Wall con estado confirmado, última consulta/publicación, errores de conexión y controles cómodos para iPad.",
+    ],
+  },
+  {
     id: "2026-10-02-sources-workspace",
     date: "02 OCT 2026",
     title: "Fuentes universales y BOM Focus",
@@ -32,7 +45,7 @@ export const PRODUCT_UPDATES = [
     summary: "Cambios recientes del reconciliador para entender mejor la lógica y trabajar sin perder contexto.",
     items: [
       "Nuevo Trazador de pieza: explica 4Wall → localidad QAD → ISPBB/Phantom → BOM → Cost Part → NET → SWING → clasificación.",
-      "El trazador exige las fuentes necesarias antes de explicar una pieza, para no presentar conclusiones parciales como definitivas.",
+      "La versión inicial exigía todas las fuentes; desde 05/10 permite estudiar casos parciales con avisos explícitos.",
       "Fuentes permite eliminar un BOM con confirmación y flujo preparado para borrar primero en Supabase y después en la copia local.",
       "Snapshot actual visible de forma discreta en el menú y al final del dashboard.",
       "Notificaciones abre el detalle de la pieza como drawer y permite regresar sin perder el contexto.",

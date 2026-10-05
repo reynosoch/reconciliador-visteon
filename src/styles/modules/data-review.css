@@ -989,3 +989,136 @@ body.vi-overlay-open .vi-shell {
 }
 
 
+
+/* Learning tracer. Only this drawer is widened; native scroll physics are unchanged. */
+.vi-logic-overlay { z-index:1320 !important; justify-content:flex-end !important; }
+.vi-logic-tracer.vi-drawer-panel { width:min(940px,100vw) !important; max-width:none !important; height:100dvh !important; overflow-x:hidden !important; overflow-y:auto !important; }
+.vi-logic-tracer.vi-drawer-panel > .vi-rubber-clip { position:static; top:auto; width:100%; padding:0 !important; }
+.vi-logic-head { padding:20px 24px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:1px solid #ffffff16; }
+.vi-logic-head h2 { margin:4px 0; font-size:24px; color:#f1f6f8; }
+.vi-logic-head p:last-child { margin:0; color:#aec4cd; font-size:14px; line-height:1.5; }
+.vi-logic-search { padding:18px 24px; border-bottom:1px solid #ffffff14; }
+.vi-logic-search > label { display:block; margin-bottom:8px; color:#ffb77c; font-size:11px; font-weight:700; letter-spacing:.06em; }
+.vi-logic-searchbox { display:flex; align-items:center; border:1px solid #ffffff2b; border-radius:10px; background:#062434; }
+.vi-logic-searchbox:focus-within { outline:2px solid #f5821f99; outline-offset:2px; }
+.vi-logic-searchbox input { width:100%; min-width:0; height:46px; padding:0 14px; background:transparent; border:0; outline:0; color:white; font-size:16px; }
+.vi-logic-searchbox button { width:44px; height:44px; flex:none; background:none; border:0; color:#c3d5dd; font-size:24px; }
+.vi-logic-suggestions { margin-top:8px; max-height:350px; overflow:auto; border:1px solid #ffffff16; border-radius:10px; background:#0b3043; }
+.vi-logic-suggestions button { width:100%; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 12px; padding:12px; min-height:54px; border:0; border-bottom:1px solid #ffffff14; color:#eaf3f6; background:transparent; text-align:left; }
+.vi-logic-suggestions button:hover { background:#f5821f0d; }
+.vi-logic-suggestions strong { font-size:14px; overflow-wrap:anywhere; }
+.vi-logic-suggestions span { font-size:12px; color:#a2b8c3; }
+.vi-logic-suggestions em { grid-column:2; grid-row:1/3; align-self:center; font-size:13px; color:#ffc28f; font-style:normal; }
+.vi-logic-suggestions > p { padding:18px; font-size:14px; line-height:1.55; }
+.vi-logic-flow { padding:20px 24px 32px; }
+.vi-logic-required { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+.vi-logic-required > div { display:flex; gap:7px; align-items:center; padding:6px 9px; border-radius:6px; background:#ffffff06; font-size:11px; color:#f2d391; }
+.vi-logic-required > div.is-ready { color:#8cd7b6; }
+.vi-logic-required em { font-style:normal; font-size:10px; }
+.vi-study-partial { margin:12px 0; padding:12px 14px; border-left:3px solid #dfb867; background:#e2bb6a0b; font-size:14px; line-height:1.6; color:#f0dca9 !important; }
+.vi-logic-result { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.85fr); gap:20px; margin:18px 0 0; padding-bottom:16px; border-bottom:1px solid #ffffff1c; }
+.vi-logic-result span { font-size:11px; color:#9cb7c4; letter-spacing:.04em; }
+.vi-logic-result h3 { font-size:22px; color:white; margin:5px 0; overflow-wrap:anywhere; }
+.vi-logic-result strong { display:block; font-size:16px; color:#ffb87f; margin-top:5px; }
+.vi-logic-result p { font-size:13px; margin:6px 0; color:#b1c6d0; line-height:1.5; }
+.vi-study-summary { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin:0; padding:18px 0; gap:18px 14px; }
+.vi-study-summary dt { font-size:12px; color:#91aebb; }
+.vi-study-summary dd { margin:5px 0 0; font-size:16px; font-weight:700; color:#f1f6f8; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.vi-study-navigation { display:flex; flex-wrap:wrap; gap:6px; padding:0 0 22px; }
+.vi-study-navigation a { padding:7px 10px; border:1px solid #ffffff1c; border-radius:7px; color:#bdd3dc; font-size:12px; text-decoration:none; }
+.vi-study-navigation a:hover { border-color:#f5821f; color:#ffc08c; }
+.vi-logic-step { display:grid; grid-template-columns:38px minmax(0,1fr); gap:12px; position:relative; scroll-margin-top:16px; }
+.vi-logic-step::after { content:""; position:absolute; left:18px; top:38px; bottom:0; width:1px; background:#f5821f38; }
+.vi-logic-step-index { width:38px; height:38px; display:grid; place-items:center; border:1px solid #f5821f70; border-radius:10px; color:#ffc08f; font-size:12px; font-weight:700; background:#0e3449; }
+.vi-logic-step-body { min-width:0; margin-bottom:18px; padding:16px 18px; border:1px solid #ffffff19; border-radius:12px; background:#0c304240; }
+.vi-logic-step-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:14px; }
+.vi-logic-step-head span { color:#ffb577; font-size:10px; font-weight:700; letter-spacing:.06em; }
+.vi-logic-step-head h3 { font-size:18px; color:#f3f8fa; margin:4px 0 0; }
+.vi-logic-step-head > b { flex:none; font-size:11px; padding:5px 8px; border-radius:6px; color:#efd69e; background:#d2ad6110; }
+.vi-logic-step-head > b[data-tone="ok"] { color:#98dfbe; background:#68c29312; }
+.vi-study-facts { margin:0; display:grid; gap:10px; }
+.vi-study-facts > div { display:grid; grid-template-columns:110px minmax(0,1fr); gap:12px; }
+.vi-study-facts dt { color:#8fadba; font-size:12px; }
+.vi-study-facts dd { margin:0; color:#deebf0; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
+.vi-study-result { display:flex; flex-wrap:wrap; gap:6px 12px; padding:12px 0; margin:10px 0 0; border-top:1px solid #ffffff10; font-size:14px; line-height:1.5; color:#e6f0f4 !important; }
+.vi-study-result > strong { color:#ffb984; font-size:12px; }
+.vi-study-references { display:grid; margin-top:8px; }
+.vi-study-reference { display:flex; gap:12px; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid #ffffff10; }
+.vi-study-reference > div { min-width:0; display:grid; gap:4px; }
+.vi-study-reference span { font-size:10px; color:#95b0bd; }
+.vi-study-reference strong { font-size:12px; font-weight:500; color:#d4e4ec; overflow-wrap:anywhere; }
+.vi-study-reference small { font-size:11px; color:#89a6b6; line-height:1.4; }
+.vi-study-reference button, .vi-study-expand, .vi-study-table button { flex:none; min-height:40px; padding:8px 10px; border:1px solid #ffffff20; border-radius:7px; color:#ffc191; background:#f5821f06; font-size:12px; }
+.vi-study-expand { margin-top:10px; color:#aecbd8; background:transparent; }
+.vi-study-advanced { padding:12px 0 4px; }
+.vi-study-advanced > p { font-size:13px; line-height:1.6; margin:8px 0; color:#b8cdd7; }
+.vi-study-next { display:flex; gap:8px; align-items:baseline; margin:12px 0 0; border-top:1px solid #ffffff12; padding-top:12px; font-size:13px; line-height:1.5; color:#acc3cf !important; }
+.vi-study-next > span { color:#f5821f; }
+.vi-study-next > strong { font-size:11px; }
+.vi-logic-formula { display:grid; gap:9px; margin:12px 0; padding:14px; background:#052333; border-left:2px solid #f5821f70; border-radius:0 8px 8px 0; overflow-wrap:anywhere; }
+.vi-logic-formula span { color:#a5c2d0; font-size:12px; }
+.vi-logic-formula strong { color:#f4dcc2; font-size:16px; font-variant-numeric:tabular-nums; }
+.vi-logic-rule { padding:12px; font-size:13px; line-height:1.6; border-left:2px solid #cba46b; background:#cba46b08; color:#c6d8e1 !important; }
+.vi-logic-flags { display:flex; flex-wrap:wrap; gap:7px; margin:8px 0; }
+.vi-logic-flags span { padding:6px 8px; border-radius:6px; font-size:12px; color:#e5cf9e; background:#dab8690b; border:1px solid #dab86928; }
+.vi-study-table { margin:12px 0; }
+.vi-study-table [role="row"] { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.7fr); gap:10px; padding:10px 0; border-bottom:1px solid #ffffff12; }
+.vi-study-table [role="cell"] { color:#d7e8f0; font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.vi-study-table-head { font-size:11px; color:#96b5c4; }
+.vi-study-table > p { font-size:13px; }
+.vi-study-table > button { margin-top:10px; }
+.vi-study-conclusion { margin-top:12px; padding:20px; border-top:2px solid #f5821f80; background:#082737; border-radius:0 0 10px 10px; }
+.vi-study-conclusion > p:not(.vi-eyebrow) { font-size:14px; color:#d6e6ec; line-height:1.65; margin:10px 0; }
+@media(max-width:800px) {
+  .vi-study-summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:560px) {
+  .vi-logic-head, .vi-logic-search { padding:16px; }
+  .vi-logic-head h2 { font-size:21px; }
+  .vi-logic-flow { padding:16px 12px 24px; }
+  .vi-logic-result { grid-template-columns:1fr; gap:10px; }
+  .vi-study-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .vi-logic-step { grid-template-columns:28px minmax(0,1fr); gap:8px; }
+  .vi-logic-step-index { width:28px; height:32px; font-size:10px; }
+  .vi-logic-step::after { left:13px; top:32px; }
+  .vi-logic-step-body { padding:14px 12px; }
+  .vi-logic-step-head { flex-direction:column; gap:8px; }
+  .vi-study-facts > div { grid-template-columns:1fr; gap:3px; }
+  .vi-study-reference { flex-direction:column; align-items:stretch; gap:8px; }
+  .vi-study-next { flex-wrap:wrap; }
+  .vi-study-table [role="row"] { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,.7fr); gap:6px; }
+}
+
+/* Shared Excel viewer: bounded rows, coordinates and cell provenance. */
+.vi-source-preview { display:flex; flex-direction:column; border-radius:16px; }
+.vi-source-preview > header { flex:none; }
+.vi-source-preview > header h2 { overflow-wrap:anywhere; font-size:19px; }
+.vi-source-preview > header > div { min-width:0; }
+.vi-source-preview-table-wrap { flex:1; min-height:80px; }
+.vi-source-preview-note { font-size:12px !important; line-height:1.5; }
+.vi-evidence-toolbar { display:flex; flex-wrap:wrap; gap:12px; padding:12px 16px; background:#eaf0ed; color:#274939; }
+.vi-evidence-toolbar label { display:grid; gap:5px; font-size:12px; }
+.vi-evidence-toolbar input:not([type="checkbox"]), .vi-evidence-toolbar select { min-height:40px; padding:0 10px; border:1px solid #b8c8c1; background:#fff; border-radius:6px; color:#183b29; font-size:14px; max-width:100%; }
+.vi-evidence-toolbar .vi-evidence-toggle { display:flex; gap:8px; align-items:center; }
+.vi-evidence-toggle input { width:18px; height:18px; accent-color:#c97620; }
+.vi-evidence-rule { flex:none; font-size:12px; color:#2d4639; padding:8px 16px; background:#f6eddf; line-height:1.5; }
+.vi-evidence-cell-info { flex:none; display:flex; flex-wrap:wrap; gap:4px 12px; padding:10px 16px; font-size:12px; color:#234735; background:#edf4f0; border-bottom:1px solid #d0ded6; line-height:1.5; }
+.vi-evidence-cell-info > span:last-child { flex-basis:100%; }
+.vi-source-preview-table { min-width:0; width:max-content; min-width:100%; }
+.vi-source-preview-table th, .vi-source-preview-table td { font-size:12px; padding:8px 10px; }
+.vi-source-preview-table th small { display:block; font-size:10px; font-weight:400; color:#62756c; max-width:210px; overflow:hidden; text-overflow:ellipsis; }
+.vi-source-preview-table thead th.is-used { background:#f4d5a6 !important; color:#624319; }
+.vi-source-preview-table thead th b { font-size:9px; }
+.vi-source-preview-table .is-evidence td { background:#f4f9f6; }
+.vi-source-preview-table td.is-used { background:#fff1d7; box-shadow:inset 0 -2px #e4a64e; padding:0; }
+.vi-source-preview-table td.is-used button { display:block; width:100%; min-height:42px; padding:8px 10px; color:#593b13; text-align:left; border:0; background:transparent; font-size:12px; }
+.vi-source-preview-table td.is-used button:focus-visible { outline:2px solid #bc7022; outline-offset:-2px; }
+.vi-evidence-pagination { flex:none; display:flex; justify-content:space-between; align-items:center; padding:10px 16px; gap:8px; border-top:1px solid #d2dcd6; background:#edf2ef; color:#304d3e; font-size:12px; }
+.vi-evidence-pagination button { min-height:40px; padding:6px 10px; border:1px solid #bccdc3; border-radius:6px; background:white; color:#234c35; }
+.vi-evidence-pagination button:disabled { opacity:.4; }
+@media(max-width:560px) {
+  .vi-source-preview { height:100dvh; max-height:100dvh; }
+  .vi-evidence-toolbar { gap:8px; padding:8px 12px; }
+  .vi-evidence-toolbar label { width:100%; }
+  .vi-evidence-cell-info, .vi-evidence-rule { padding:7px 12px; font-size:11px; }
+}

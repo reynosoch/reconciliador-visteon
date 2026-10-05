@@ -550,7 +550,10 @@ export default function App() {
         onClose={() => setLogicTracerOpen(false)}
         reconciliation={inventory.reconciliation}
         sources={references.sources}
-        scanReady={Boolean(inventory.lastUpdated && inventory.scanRows?.length)}
+        scanReady={Boolean(inventory.lastUpdated && inventory.snapshotMeta?.complete)}
+        scanRows={inventory.scanRows}
+        engineSources={inventory.engine.sources}
+        findings={findings}
       />
       <DevFeedback inventoryId={identity.id} />
     </div>

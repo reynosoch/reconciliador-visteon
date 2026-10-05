@@ -40,6 +40,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Áreas/localidades | `src/domain/normalize.js`, `src/parsers/parse4WallAreas.js` |
 | Hallazgos/notificaciones | lógica: `src/domain/buildDiscrepancyFindings.js`, `src/domain/notificationState.js`; UI: `src/components/shell/NotificationCenter.jsx` + `src/styles/modules/notifications-drawer.css` |
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
+| Trazador de pieza / aprendizaje | `src/domain/partLearningTrace.js`, `src/domain/sourceEvidence.js`; UI: `src/components/shell/PartLogicTracer.jsx` + `SourcePreviewModal.jsx`; estilos en `data-review.css` |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
@@ -670,3 +671,13 @@ El build ejecuta:
 No versionar `node_modules/`, `dist/`, `.env.local`, `inventario.db`, descargas temporales de 4Wall ni `bot_snapshot_status.json`. `dist/` es generado por Vite y se puede borrar localmente en cualquier momento.
 
 Sí conservar aunque no aparezcan directamente en la UI: migraciones históricas, verificadores de CI, scripts del bot, `supabase/source-column-map.json`, el vendor de SheetJS y archivos claramente ligados al roadmap vigente.
+
+
+### Trazador de aprendizaje y Bot — 05/10/2026
+
+- **Trazador**: diez pasos desde escaneo hasta clasificación, con busca/dato/motivo/resultado/siguiente paso, resumen, reglas expandibles y conclusión sin IA externa. `src/domain/partLearningTrace.js` construye el caso solo para el PN seleccionado usando parsers, trace, flags y hallazgos. React no recalcula finanzas ni Phantom; `reconcileInventory` entrega SWING USD por localidad. Costo visual a dos decimales; fórmulas con precisión original.
+- **Ver en fuente** reutiliza `SourcePreviewModal` + `sourceEvidence.js`: archivo/hoja/fila, columnas usadas, valor original → normalizado y motivo de cada celda. Incluye padres que aportan BOM y filas BOM excluidas. Búsqueda, filtro de evidencia/hoja, páginas de 60 filas y exportación CSV/XLSX/TXT conservada; evidencia pesada solo al abrirla.
+- El lector conserva coordenadas XLSX con títulos/vacíos y líneas CSV/TXT multilínea. Parsers guardan índices aceptados. BOM guarda coordenadas en `files.rowOrigins`, fuera de las filas del contrato compartido; sin cambios de esquema/RPC. Fuentes antiguas o nombres BOM ambiguos muestran **Registro de colección**, sin inventar fila/hoja. Reimportar BOM ya registrado no rellena coordenadas antiguas.
+- **Datos incompletos**: el PN puede estudiarse con fuentes faltantes, señalando resultados provisionales. Sin costo: **Sin valorar**; BOM faltante y sin filas elegibles se distinguen. QAD Phantom conserva saldo. SWING no se divide entre dos; BOM usa Usage, Level .2 / 0.2 y Comp Phantom NO, sin recursión.
+- **Bot**: estado confirmado y última consulta/publicación primero; acciones y scanner conservados, errores visibles y timeout. Requiere `VITE_BOT_CONTROL_URL` y controlador accesible; el frontend no ejecuta Python. Tipografía y controles adaptados a iPad. Esc cierra solo el visor superior. `ScrollEffects`, física Motion, Pac-Man, navbar y footer intactos; solo el CSS del trazador se trasladó de `interaction-motion.css` a `data-review.css`.
+- `verify-tracer.mjs` entra al build/CI: finanzas, BOM directo/derivado, filtros, faltantes, coordenadas y compatibilidad. Revisión local con datos sintéticos a 1366, 1024, 768 y 390 px. Pages sigue manual.

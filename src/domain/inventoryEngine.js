@@ -1,29 +1,29 @@
 // src/domain/inventoryEngine.js
 import {
  parse4WallAreas,
-} from "../parsers/parse4WallAreas";
+} from "../parsers/parse4WallAreas.js";
 import {
  parse4WallScans,
-} from "../parsers/parse4WallScans";
+} from "../parsers/parse4WallScans.js";
 import {
  parseQad32,
-} from "../parsers/parseQad32";
+} from "../parsers/parseQad32.js";
 import {
  parseISPBB,
-} from "../parsers/parseISPBB";
+} from "../parsers/parseISPBB.js";
 import {
  parseBom,
-} from "../parsers/parseBom";
+} from "../parsers/parseBom.js";
 import {
  parseCostPart,
-} from "../parsers/parseCostPart";
+} from "../parsers/parseCostPart.js";
 import {
  explodeBom,
-} from "./explodeBom";
+} from "./explodeBom.js";
 import {
  reconcileInventory,
  calculateFinancialSummary,
-} from "./reconcileInventory";
+} from "./reconcileInventory.js";
 
 /**
 * MOTOR PRINCIPAL DEL INVENTARIO

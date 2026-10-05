@@ -7,7 +7,7 @@ export function parse4WallAreas(rows = []) {
  const byArea = new Map();
  const unmapped = [];
  const all = [];
- for (const row of rows) {
+ for (const [sourceIndex,row] of rows.entries()) {
    const id = row["Id"] ?? null;
    const areaName = normalizeText(
      row["Nombre"]
@@ -22,6 +22,7 @@ export function parse4WallAreas(rows = []) {
      rawQadLocation
    );
    const item = {
+     sourceIndex,
      id,
      areaName,
      description: String(

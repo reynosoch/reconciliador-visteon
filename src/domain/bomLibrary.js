@@ -14,7 +14,7 @@ const canonical = (rows) =>
     rows
       .map((row) =>
         Object.entries(row)
-          .filter(([k]) => !["Seq", "Seq  ", "__sourceFile"].includes(k))
+          .filter(([k]) => !k.startsWith("__") && !["Seq", "Seq  "].includes(k))
           .map(([k, v]) => [k.trim(), fieldValue(k.trim(), v)])
           .sort(([a], [b]) => a.localeCompare(b)),
       )
@@ -59,7 +59,7 @@ export function mergeBomLibrary(
     );
   if (!additions.length) return { ...library, addedParents: 0 };
   return {
-    rows: [...library.rows, ...additions],
+    rows: [...library.rows, ...additions.map(row => Object.fromEntries(Object.entries(row).filter(([key]) => key !== "__provenance")))],
     files: [
       ...library.files,
       {
@@ -67,6 +67,7 @@ export function mergeBomLibrary(
         fingerprint,
         loadedAt: new Date().toISOString(),
         rowCount: additions.length,
+        rowOrigins: additions.map(row => row.__provenance || null),
       },
     ],
     addedParents: [...next.keys()].filter((key) => !existing.has(key)).length,

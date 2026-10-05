@@ -20,7 +20,7 @@ export function parseBom(rows = []) {
  const relations = [];
  let ignoredRows = 0;
 
- for (const row of rows) {
+ for (const [sourceIndex,row] of rows.entries()) {
    const parentPart =
      normalizePartNumber(
        row["Parent Item"]
@@ -41,6 +41,7 @@ export function parseBom(rows = []) {
        row["Usage"]
      );
    const relation = {
+     sourceIndex,
      sequence:
        toNumber(
          row["Seq"] ??

@@ -1,308 +1,517 @@
-import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import { useMemo, useState } from "react";
+import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "./OverlayPortal.jsx";
-import { Ghost, PelletRail } from "../visual/PacmanGlyphs.jsx";
+import SourcePreviewModal from "./SourcePreviewModal.jsx";
+import { buildPartLearningTrace } from "../../domain/partLearningTrace.js";
 
+const clean = (value) =>
+  String(value ?? "")
+    .trim()
+    .toUpperCase();
+const number = (value) =>
+  Number(value ?? 0).toLocaleString("es-MX", { maximumFractionDigits: 8 });
 const money = (value) =>
-  Number(value || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
-const number = (value) => Number(value || 0).toLocaleString("es-MX");
-const clean = (value) => String(value ?? "").trim().toUpperCase();
-
-function sourceName(sources, key, fallback) {
-  if (key === "bom" && Array.isArray(sources?.bom?.files) && sources.bom.files.length) {
-    return sources.bom.files.map((file) => file.fileName).join(" + ");
-  }
-  return sources?.[key]?.fileName || fallback;
-}
-
-function verdict(item) {
-  if (!item) return null;
-  if (!item.master?.hasCost && (item.financial?.netPieces !== 0 || item.financial?.swingPieces > 0)) {
-    return ["SIN VALORAR", "Hay diferencia en piezas, pero Cost Part no aporta un costo confiable."];
-  }
-  if (item.master?.isObsolete && item.financial?.obsoleteGainUsd > 0) {
-    return ["OBSOLETO + GANANCIA", "Cost Part marca OBSOLETE y el físico total supera a QAD."];
-  }
-  if (item.flags?.isUnexpectedMaterial) {
-    return ["MATERIAL INESPERADO", "QAD total es 0 y sí existe físico reconocido."];
-  }
-  if (item.flags?.isMissingPhysical) {
-    return ["SIN FÍSICO", "QAD tiene saldo y todavía no hay físico reconocido para el PN."];
-  }
-  if (item.financial?.netUsd < 0) return ["PÉRDIDA", "Físico total − QAD total es negativo."];
-  if (item.financial?.netUsd > 0) return ["GANANCIA", "Físico total − QAD total es positivo."];
-  if (item.financial?.swingUsd > 0) return ["SWING", "NET queda en cero, pero la distribución por localidad es distinta."];
-  return ["BALANCEADO", "Físico y QAD coinciden en total y no queda diferencia por localidad."];
-}
-
-function Step({ number: step, title, source, state, children }) {
+  value == null
+    ? "Sin valorar"
+    : Number(value).toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD",
+      });
+function Formula({ formula }) {
   return (
-    <section className="vi-logic-step">
-      <div className="vi-logic-step-index">{step}</div>
+    <div className="vi-logic-formula">
+      <span>{formula.general}</span>
+      <strong>{formula.substitution}</strong>
+    </div>
+  );
+}
+function PageRows({ rows, columns, label }) {
+  const [limit, setLimit] = useState(12);
+  return (
+    <div className="vi-study-table">
+      <div role="table" aria-label={label}>
+        <div role="row" className="vi-study-table-head">
+          {columns.map(([name]) => (
+            <b role="columnheader" key={name}>
+              {name}
+            </b>
+          ))}
+        </div>
+        {rows.slice(0, limit).map((row, index) => (
+          <div role="row" key={index}>
+            {columns.map(([name, render]) => (
+              <span role="cell" key={name}>
+                {render(row)}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+      {!rows.length && <p>No hay filas calculadas para este paso.</p>}
+      {rows.length > limit && (
+        <button type="button" onClick={() => setLimit((value) => value + 12)}>
+          Ver 12 más · {rows.length - limit} pendientes
+        </button>
+      )}
+    </div>
+  );
+}
+function Evidence({ reference, onOpen }) {
+  const origins = [
+    ...new Set(reference.evidence.map((row) => row.origin.fileName)),
+  ];
+  return (
+    <div className="vi-study-reference">
+      <div>
+        <span>FUENTE · {reference.label}</span>
+        <strong>
+          {origins.join(" · ") ||
+            reference.source.fileName ||
+            "Sin archivo original disponible"}
+        </strong>
+        <small>
+          {reference.evidence
+            .slice(0, 4)
+            .map(
+              (row) =>
+                `${row.origin.sheetName ? row.origin.sheetName + " · " : ""}${row.origin.rowNumber ? "Fila " + row.origin.rowNumber : "Registro " + (row.sourceIndex + 1) + " (sin fila original)"}`,
+            )
+            .join(" / ")}
+          {reference.evidence.length > 4 ? " / …" : ""}
+        </small>
+        <small>
+          {reference.evidence.length} filas identificadas ·{" "}
+          {[
+            ...new Set(
+              reference.evidence.flatMap((row) =>
+                row.cells.map((c) => c.column),
+              ),
+            ),
+          ].join(" / ") || "Sin columnas localizadas"}
+        </small>
+      </div>
+      <button type="button" onClick={() => onOpen(reference)}>
+        Ver en fuente ↗
+      </button>
+    </div>
+  );
+}
+function StudyStep({ step, index, trace, item, onOpen }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <section className="vi-logic-step" id={`study-${step.id}`}>
+      <div className="vi-logic-step-index">
+        {String(index + 1).padStart(2, "0")}
+      </div>
       <div className="vi-logic-step-body">
         <div className="vi-logic-step-head">
           <div>
-            <span>{source}</span>
-            <h3>{title}</h3>
+            <span>PASO {index + 1}</span>
+            <h3>{step.title}</h3>
           </div>
-          {state && <b>{state}</b>}
+          <b data-tone={step.tone}>
+            {step.tone === "ok" ? "✓ Evidencia / regla" : "! Por revisar"}
+          </b>
         </div>
-        {children}
+        <dl className="vi-study-facts">
+          <div>
+            <dt>Busca</dt>
+            <dd>{step.search}</dd>
+          </div>
+          <div>
+            <dt>Encontró</dt>
+            <dd>{step.found}</dd>
+          </div>
+          <div>
+            <dt>Importa porque</dt>
+            <dd>{step.why}</dd>
+          </div>
+        </dl>
+        <p className="vi-study-result">
+          <strong>Resultado</strong>
+          {step.result}
+        </p>
+        {step.id === "recognized" && (
+          <Formula formula={trace.formulas.physical} />
+        )}
+        {step.id === "net" && (
+          <>
+            <Formula formula={trace.formulas.netPieces} />
+            <Formula formula={trace.formulas.netUsd} />
+          </>
+        )}
+        {step.id === "swing" && (
+          <>
+            <Formula formula={trace.formulas.swing} />
+            <p className="vi-logic-rule">
+              SWING no se divide entre 2. Se mantiene el costo original en el
+              cálculo; la vista del costo unitario usa dos decimales.
+            </p>
+          </>
+        )}
+        {step.id === "bom" && (
+          <p className="vi-logic-rule">
+            ISPBB decide Phantom. BOM usa Usage, Level .2 / 0.2 y Comp Phantom =
+            NO. Sin prefijos, sin Grossed up Usage, sin recursión.
+          </p>
+        )}
+        {step.id === "final" && (
+          <div className="vi-logic-flags">
+            {trace.alertLabels.length ? (
+              trace.alertLabels.map((label) => <span key={label}>{label}</span>)
+            ) : (
+              <span>Sin advertencias del motor</span>
+            )}
+          </div>
+        )}
+        <div className="vi-study-references">
+          {step.refs.map((ref) => (
+            <Evidence key={ref.type} reference={ref} onOpen={onOpen} />
+          ))}
+        </div>
+        <button
+          className="vi-study-expand"
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? "− Ocultar" : "+ Ver"} reglas y desglose
+        </button>
+        {expanded && (
+          <div className="vi-study-advanced">
+            {step.refs.map((ref) => (
+              <div key={ref.type}>
+                <p>
+                  <strong>{ref.label}:</strong> {ref.rule}
+                </p>
+                <PageRows
+                  rows={ref.evidence.flatMap((row) =>
+                    row.cells.map((cell) => ({
+                      ...cell,
+                      origin: row.origin,
+                      sourceIndex: row.sourceIndex,
+                    })),
+                  )}
+                  label={`Provenance ${ref.label}`}
+                  columns={[
+                    [
+                      "Fila · campo",
+                      (r) =>
+                        `${r.origin.sheetName || ref.label} · ${r.origin.rowNumber ? "Fila " + r.origin.rowNumber : "Registro " + (r.sourceIndex + 1)} · ${r.column}`,
+                    ],
+                    [
+                      "Original → normalizado",
+                      (r) =>
+                        `${r.original ?? "Vacío"} → ${r.normalized ?? "Vacío"}`,
+                    ],
+                    ["Regla", (r) => r.reason],
+                  ]}
+                />
+              </div>
+            ))}
+            {step.id === "mapping" && (
+              <PageRows
+                rows={item.trace.sourceRows}
+                label="Mapeo directo del PN"
+                columns={[
+                  ["Área", (r) => r.areaName || "Sin área"],
+                  ["Localidad", (r) => r.qadLocation],
+                  ["Piezas", (r) => number(r.quantity)],
+                ]}
+              />
+            )}
+            {step.id === "bom" && (
+              <PageRows
+                rows={trace.contributions}
+                label="Aportaciones reales BOM"
+                columns={[
+                  [
+                    "Origen → destino",
+                    (r) =>
+                      `${r.direction}: ${r.parentPart} → ${r.componentPart} · ${r.location}`,
+                  ],
+                  [
+                    "Cantidad × Usage",
+                    (r) => `${number(r.scannedParentQty)} × ${number(r.usage)}`,
+                  ],
+                  ["Aportación", (r) => number(r.contribution)],
+                ]}
+              />
+            )}
+            {step.id === "qad" && (
+              <PageRows
+                rows={[...item.qad.locations].map(([location, quantity]) => ({
+                  location,
+                  quantity,
+                }))}
+                label="Saldo QAD por localidad"
+                columns={[
+                  ["Localidad", (r) => r.location],
+                  ["QAD", (r) => number(r.quantity)],
+                  ["Origen", () => "QAD aceptado"],
+                ]}
+              />
+            )}
+            {step.id === "swing" && (
+              <PageRows
+                rows={item.trace.swingByLocation}
+                label="SWING completo por localidad"
+                columns={[
+                  [
+                    "Localidad · físico / QAD",
+                    (r) =>
+                      `${r.location} · ${number(r.physicalQty)} / ${number(r.qadQty)}`,
+                  ],
+                  ["ABS(Δ) piezas", (r) => number(r.swingPieces)],
+                  ["USD", (r) => money(r.swingUsd)],
+                ]}
+              />
+            )}
+            {step.id === "final" &&
+              trace.findings.map((finding) => (
+                <p key={finding.id}>
+                  <strong>{finding.ruleCode}:</strong> {finding.whatFound}{" "}
+                  <br />
+                  {finding.nextAction}
+                </p>
+              ))}
+          </div>
+        )}
+        <p className="vi-study-next">
+          <span aria-hidden="true">↓</span>
+          <strong>Después</strong>
+          {step.next}
+        </p>
       </div>
     </section>
   );
 }
-
 export default function PartLogicTracer({
   open,
   onClose,
   reconciliation = [],
   sources = {},
+  engineSources = {},
+  scanRows = [],
   scanReady = false,
+  findings = [],
 }) {
   const [query, setQuery] = useState("");
   const [selectedPn, setSelectedPn] = useState("");
-
-  const required = useMemo(() => ([
-    ["scans", "4Wall", Boolean(sources?.scans?.loaded || scanReady)],
-    ["areas", "4Wall-Area", Boolean(sources?.areas?.loaded)],
-    ["qad", "QAD 3.2", Boolean(sources?.qad?.loaded)],
-    ["ispbb", "ISPBB", Boolean(sources?.ispbb?.loaded)],
-    ["bom", "BOM", Boolean(sources?.bom?.loaded)],
-    ["cost", "Cost Part", Boolean(sources?.cost?.loaded)],
-  ]), [sources, scanReady]);
-
-  const ready = required.every(([, , loaded]) => loaded);
+  const [preview, setPreview] = useState(null);
   const suggestions = useMemo(() => {
-    const q = clean(query);
-    if (!q) return reconciliation.slice(0, 12);
-    return reconciliation
-      .filter((item) => clean(item.partNumber).includes(q))
-      .slice(0, 12);
+    const match = clean(query),
+      rows = [];
+    for (const item of reconciliation) {
+      if (!match || clean(item.partNumber).includes(match)) rows.push(item);
+      if (rows.length === 12) break;
+    }
+    return rows;
   }, [query, reconciliation]);
-
   const item = useMemo(
-    () => reconciliation.find((row) => clean(row.partNumber) === clean(selectedPn)) || null,
+    () =>
+      reconciliation.find(
+        (row) => clean(row.partNumber) === clean(selectedPn),
+      ) || null,
     [reconciliation, selectedPn],
   );
-
-  if (!open) return null;
-
-  const names = {
-    scans: sourceName(sources, "scans", "4Wall / snapshot físico"),
-    areas: sourceName(sources, "areas", "4Wall-Area"),
-    qad: sourceName(sources, "qad", "QAD 3.2"),
-    ispbb: sourceName(sources, "ispbb", "ISPBB"),
-    bom: sourceName(sources, "bom", "BOM"),
-    cost: sourceName(sources, "cost", "Cost Part"),
-  };
-
-  const result = verdict(item);
-  const finalState = result?.[0] || "";
-  const finalReason = result?.[1] || "";
-  const mappingRows = item?.trace?.sourceRows || [];
-  const swingRows = (item?.trace?.swingByLocation || []).filter(
-    (row) => Number(row.physicalQty || 0) !== 0 || Number(row.qadQty || 0) !== 0,
+  const trace = useMemo(
+    () =>
+      open && item
+        ? buildPartLearningTrace({
+            item,
+            engineSources,
+            sources,
+            scanRows,
+            scanReady,
+            findings,
+          })
+        : null,
+    [open, item, engineSources, sources, scanRows, scanReady, findings],
   );
-
+  const select = (pn) => {
+    setSelectedPn(pn);
+    setQuery(pn);
+    setPreview(null);
+  };
+  if (!open) return null;
+  const showSource = (ref) =>
+    setPreview({
+      source: ref.source,
+      config: { type: ref.type, label: ref.label },
+      evidence: ref.evidence,
+      rule: ref.rule,
+      tracePn: item.partNumber,
+    });
   return (
     <OverlayPortal onClose={onClose}>
-      <div className="vi-global-overlay vi-logic-overlay" onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose?.();
-      }}>
-        <RubberDrawer className="vi-logic-tracer vi-drawer-panel">
-          <div className="vi-logic-head">
+      <div
+        className="vi-global-overlay vi-logic-overlay"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose?.();
+        }}
+      >
+        <RubberDrawer
+          className="vi-logic-tracer vi-drawer-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Trazador de pieza"
+        >
+          <header className="vi-logic-head">
             <div>
-              <p className="vi-eyebrow">TRAZADOR DE PIEZA</p>
-              <h2>Cómo piensa el reconciliador</h2>
-              <p>Selecciona un Part Number y sigue exactamente qué fuentes y reglas lo convierten en phantom, swing, ganancia, pérdida u obsoleto.</p>
-            </div>
-            <button type="button" className="vi-icon-close" onClick={onClose} aria-label="Cerrar trazador">×</button>
-          </div>
-
-          {!ready ? (
-            <div className="vi-logic-gate">
-              <div className="vi-logic-gate-ghost" aria-hidden="true">
-                <Ghost size={52} tone="violet" />
-              </div>
-              <p className="vi-eyebrow">ANTES DE TRAZAR UNA PIEZA</p>
-              <h3>Necesitas cargar todas las fuentes</h3>
-              <p>
-                El trazador no va a inventar decisiones con información incompleta. Carga 4Wall, el diccionario de áreas, QAD, ISPBB, BOM y Cost Part.
+              <p className="vi-eyebrow">
+                TRAZADOR DE PIEZA · APRENDE CON UN CASO
               </p>
+              <h2>Del escaneo al resultado</h2>
+              <p>
+                Sigue los datos, las reglas y la evidencia real de una pieza.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="vi-icon-close"
+              onClick={onClose}
+              aria-label="Cerrar trazador"
+            >
+              ×
+            </button>
+          </header>
+          <div className="vi-logic-search">
+            <label htmlFor="vi-logic-pn">SELECCIONA UN PART NUMBER</label>
+            <div className="vi-logic-searchbox">
+              <input
+                id="vi-logic-pn"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  if (clean(event.target.value) !== clean(selectedPn))
+                    setSelectedPn("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && suggestions[0])
+                    select(
+                      suggestions.find(
+                        (row) => clean(row.partNumber) === clean(query),
+                      )?.partNumber || suggestions[0].partNumber,
+                    );
+                }}
+                placeholder="Buscar PN…"
+                autoComplete="off"
+              />
+              {query && (
+                <button
+                  type="button"
+                  aria-label="Limpiar selección"
+                  onClick={() => select("")}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {!item && (
+              <div className="vi-logic-suggestions">
+                {suggestions.map((row) => (
+                  <button
+                    type="button"
+                    key={row.partNumber}
+                    onClick={() => select(row.partNumber)}
+                  >
+                    <strong>{row.partNumber}</strong>
+                    <span>{row.master.description || "Sin descripción"}</span>
+                    <em>
+                      {row.master.hasCost
+                        ? money(row.financial.netUsd)
+                        : "Sin valorar"}
+                    </em>
+                  </button>
+                ))}
+                {!suggestions.length && (
+                  <p>
+                    {reconciliation.length
+                      ? "No encontramos ese PN. Revisa el número y las fuentes del corte."
+                      : "Carga 4Wall o QAD en Fuentes para estudiar una pieza. Puedes empezar aun si faltan otras referencias."}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          {trace && (
+            <div className="vi-logic-flow" key={trace.pn}>
               <div className="vi-logic-required">
-                {required.map(([key, label, loaded]) => (
-                  <div className={loaded ? "is-ready" : ""} key={key}>
-                    <span aria-hidden="true">{loaded ? "✓" : "○"}</span>
+                {trace.readiness.map(([key, label, loaded]) => (
+                  <div key={key} className={loaded ? "is-ready" : ""}>
+                    <span>{loaded ? "✓" : "!"}</span>
                     <strong>{label}</strong>
                     <em>{loaded ? "LISTO" : "FALTA"}</em>
                   </div>
                 ))}
               </div>
-              <PelletRail muted />
-            </div>
-          ) : (
-            <>
-              <div className="vi-logic-search">
-                <label htmlFor="vi-logic-pn">¿Qué pieza quieres entender?</label>
-                <div className="vi-logic-searchbox">
-                  <input
-                    id="vi-logic-pn"
-                    value={query}
-                    onChange={(event) => {
-                      setQuery(event.target.value);
-                      if (selectedPn && clean(event.target.value) !== clean(selectedPn)) setSelectedPn("");
-                    }}
-                    placeholder="Escribe un Part Number…"
-                    autoComplete="off"
-                  />
-                  {query && <button type="button" onClick={() => { setQuery(""); setSelectedPn(""); }}>×</button>}
-                </div>
-                {!item && (
-                  <div className="vi-logic-suggestions">
-                    {suggestions.map((row) => (
-                      <button
-                        type="button"
-                        key={row.partNumber}
-                        onClick={() => {
-                          setSelectedPn(row.partNumber);
-                          setQuery(row.partNumber);
-                        }}
-                      >
-                        <strong>{row.partNumber}</strong>
-                        <span>{row.master?.description || "Sin descripción"}</span>
-                        <em>{money(row.financial?.netUsd)}</em>
-                      </button>
-                    ))}
-                    {!suggestions.length && <p>No encontramos ese Part Number en la conciliación actual.</p>}
-                  </div>
-                )}
-              </div>
-
-              {item && (
-                <div className="vi-logic-flow">
-                  <div className="vi-logic-result">
-                    <div>
-                      <span>PART NUMBER</span>
-                      <h3>{item.partNumber}</h3>
-                      <p>{item.master?.description || "Sin descripción disponible"}</p>
-                    </div>
-                    <div>
-                      <span>RESULTADO</span>
-                      <strong>{finalState}</strong>
-                      <p>{finalReason}</p>
-                    </div>
-                  </div>
-
-                  <Step number="01" title="Traducir el físico de 4Wall" source={names.scans} state={number(item.physical?.scannedTotal) + " pzas escaneadas"}>
-                    <p>
-                      4Wall entrega un <strong>AreaName</strong>. Esa área no se compara directamente contra QAD.
-                      Primero se busca en <strong>{names.areas}</strong>.
-                    </p>
-                    <div className="vi-logic-table">
-                      <div className="vi-logic-table-head"><span>Área 4Wall</span><span>→ Localidad QAD</span><span>Pzas</span></div>
-                      {mappingRows.length ? mappingRows.slice(0, 16).map((row, index) => (
-                        <div key={(row.areaName || "") + "-" + (row.qadLocation || "") + "-" + index}>
-                          <span>{row.areaName || "SIN ÁREA"}</span>
-                          <strong>{row.qadLocation || "UNMAPPED"}</strong>
-                          <span>{number(row.quantity)}</span>
-                        </div>
-                      )) : <p>Este PN no tiene filas físicas directas en el corte actual.</p>}
-                    </div>
-                    <p className="vi-logic-rule">
-                      Regla: Área 4Wall → catálogo 4Wall-Area → Localidad QAD. Solo <b>WHSE → ZWHSE</b> se normaliza automáticamente; cualquier otra área sin catálogo queda UNMAPPED.
-                    </p>
-                  </Step>
-
-                  <Step number="02" title="Decidir si es Phantom" source={names.ispbb} state={item.master?.phantomKnown ? (item.master?.isPhantom ? "PHANTOM SÍ" : "PHANTOM NO") : "DESCONOCIDO"}>
-                    <p>
-                      La definición autoritativa sale de <strong>ISPBB</strong>. El reconciliador no usa prefijos ni adivina por el número de parte.
-                    </p>
-                    {item.master?.isPhantom ? (
-                      <p className="vi-logic-rule">
-                        Como ISPBB dice Phantom=YES, el físico directo del padre no se usa como inventario final del padre. Se busca su BOM y se distribuye el consumo a componentes según Usage.
-                      </p>
-                    ) : (
-                      <p className="vi-logic-rule">Como ISPBB no lo marca phantom, su físico directo de 4Wall permanece en el PN.</p>
-                    )}
-                  </Step>
-
-                  <Step number="03" title="Aplicar BOM cuando corresponde" source={names.bom} state={number(item.physical?.bomContribution) + " pzas aportadas"}>
-                    <p>
-                      La contribución BOM que llega a este PN es <strong>{number(item.physical?.bomContribution)}</strong> piezas.
-                      Solo las relaciones permitidas por el motor aportan cantidad mediante <strong>Usage</strong>.
-                    </p>
-                    <p className="vi-logic-rule">
-                      Si el motor recibe contribución BOM sin localidad explícita, actualmente la coloca en <b>ZWIP</b>. Las referencias BOM por sí solas son pistas de investigación y no crean físico.
-                    </p>
-                  </Step>
-
-                  <Step number="04" title="Leer lo que QAD espera" source={names.qad} state={number(item.qad?.total) + " pzas"}>
-                    <p>QAD aporta Quantity On Hand agrupado por Location. El total esperado para este PN es <strong>{number(item.qad?.total)}</strong>.</p>
-                    <div className="vi-logic-locations">
-                      {[...((item.qad?.locations instanceof Map ? item.qad.locations : new Map()).entries())].map(([location, qty]) => (
-                        <span key={location}><b>{location}</b>{number(qty)}</span>
-                      ))}
-                    </div>
-                  </Step>
-
-                  <Step number="05" title="Definir costo y obsolescencia" source={names.cost} state={item.master?.hasCost ? money(item.master?.unitCost) : "SIN COSTO"}>
-                    <p>
-                      Cost Part aporta <strong>Cost Total</strong> y <strong>Status</strong>. Status actual: <b>{item.master?.costStatus || "—"}</b>.
-                    </p>
-                    <p className="vi-logic-rule">
-                      OBSOLETE + (Físico − QAD) positivo = <b>OBSOLETO + GANANCIA</b>. En este PN: {item.master?.isObsolete ? "sí es obsoleto" : "no es obsoleto"}; ganancia obsoleta = <b>{money(item.financial?.obsoleteGainUsd)}</b>.
-                    </p>
-                  </Step>
-
-                  <Step number="06" title="Calcular NET" source="Motor financiero" state={money(item.financial?.netUsd)}>
-                    <div className="vi-logic-formula">
-                      <span>({number(item.physical?.total)} físico − {number(item.qad?.total)} QAD)</span>
-                      <b>× {money(item.master?.unitCost)} costo</b>
-                      <strong>= {money(item.financial?.netUsd)}</strong>
-                    </div>
-                    <p>
-                      Diferencia en piezas: <strong>{number(item.financial?.netPieces)}</strong>. Si es negativa es pérdida; si es positiva es ganancia. Si no hay costo confiable, las piezas se conservan pero el resultado queda SIN VALORAR.
-                    </p>
-                  </Step>
-
-                  <Step number="07" title="Calcular SWING localidad por localidad" source={names.scans + " ↔ " + names.qad} state={number(item.financial?.swingPieces) + " pzas"}>
-                    <p>SWING suma el valor absoluto de la diferencia en cada localidad. <strong>No se divide entre dos.</strong></p>
-                    <div className="vi-logic-table">
-                      <div className="vi-logic-table-head"><span>Localidad</span><span>Físico / QAD</span><span>|Δ|</span></div>
-                      {swingRows.slice(0, 18).map((row) => (
-                        <div key={row.location}>
-                          <strong>{row.location}</strong>
-                          <span>{number(row.physicalQty)} / {number(row.qadQty)}</span>
-                          <span>{number(Math.abs(Number(row.delta || 0)))}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="vi-logic-formula">
-                      <span>Σ |Físico(localidad) − QAD(localidad)|</span>
-                      <b>× {money(item.master?.unitCost)}</b>
-                      <strong>= {money(item.financial?.swingUsd)}</strong>
-                    </div>
-                  </Step>
-
-                  <Step number="08" title="Clasificar el resultado" source="Reglas de UI" state={finalState}>
-                    <p>{finalReason}</p>
-                    <div className="vi-logic-flags">
-                      {item.flags?.isPhantom && <span>PHANTOM</span>}
-                      {item.master?.isObsolete && <span>OBSOLETE</span>}
-                      {item.financial?.swingPieces > 0 && <span>SWING</span>}
-                      {item.flags?.isUnexpectedMaterial && <span>UNEXPECTED</span>}
-                      {item.flags?.isMissingPhysical && <span>SIN FÍSICO</span>}
-                      {item.flags?.hasUnmappedPhysicalLocation && <span>UNMAPPED</span>}
-                      {!item.master?.hasCost && <span>SIN COSTO</span>}
-                    </div>
-                  </Step>
-                </div>
+              {!trace.complete && (
+                <p className="vi-study-partial" role="status">
+                  Caso parcial. Los ceros y la clasificación del motor son
+                  provisionales cuando faltan fuentes. Sigue los pasos para
+                  identificar qué falta.
+                </p>
               )}
-            </>
+              <section className="vi-logic-result">
+                <div>
+                  <span>PART NUMBER</span>
+                  <h3>{trace.pn}</h3>
+                  <p>{trace.description || "Descripción no disponible"}</p>
+                </div>
+                <div>
+                  <span>
+                    ESTADO DEL MOTOR{!trace.complete ? " · PARCIAL" : ""}
+                  </span>
+                  <strong>{trace.status}</strong>
+                  <p>
+                    {trace.alertLabels.length} advertencias · evidencia del
+                    corte actual
+                  </p>
+                </div>
+              </section>
+              <dl className="vi-study-summary">
+                {trace.summary.map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <nav className="vi-study-navigation" aria-label="Pasos del caso">
+                {trace.steps.map((step, index) => (
+                  <a href={`#study-${step.id}`} key={step.id}>
+                    {index + 1} · {step.title}
+                  </a>
+                ))}
+              </nav>
+              {trace.steps.map((step, index) => (
+                <StudyStep
+                  key={step.id}
+                  step={step}
+                  index={index}
+                  trace={trace}
+                  item={item}
+                  onOpen={showSource}
+                />
+              ))}
+              <section className="vi-study-conclusion">
+                <p className="vi-eyebrow">QUÉ PASÓ CON ESTA PIEZA</p>
+                {trace.conclusion.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </section>
+            </div>
           )}
         </RubberDrawer>
       </div>
+      {preview && (
+        <SourcePreviewModal
+          key={`${preview.config.type}:${trace?.pn}`}
+          selection={preview}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </OverlayPortal>
   );
 }

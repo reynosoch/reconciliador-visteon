@@ -15,7 +15,7 @@ export function parse4WallScans(rows=[],areaCatalog){
   if(!byPart.has(partNumber))byPart.set(partNumber,{partNumber,physicalTotal:0,locations:new Map(),areas:new Set(),scanCount:0,standardCost4Wall:0,sourceRows:[]});
   const part=byPart.get(partNumber);part.physicalTotal+=quantity;part.scanCount++;part.areas.add(areaName);part.locations.set(qadLocation,(part.locations.get(qadLocation)||0)+quantity);
   const standardCost=toNumber(row["Costo Estándar"]??0);if(standardCost>0)part.standardCost4Wall=standardCost;
-  part.sourceRows.push({ticket:row["Ticket/FIFO"]??null,areaName,qadLocation,quantity,scannedBy:row["Escaneador"]??null,auditor:row["auditor"]??null,responsible:row["Responsable"]??null,date:row["Fecha agregado"]??null});
+  part.sourceRows.push({sourceIndex:index,ticket:row["Ticket/FIFO"]??null,areaName,qadLocation,quantity,scannedBy:row["Escaneador"]??null,auditor:row["auditor"]??null,responsible:row["Responsable"]??null,date:row["Fecha agregado"]??null});
   scanCount++;totalPhysicalQty+=quantity;
  });
  return {byPart,scanCount,totalPhysicalQty,unmappedAreaNames:[...unmappedAreaNames],unmappedAreaCount:unmappedAreaNames.size,invalidQuantityRows,invalidQuantityCount:invalidQuantityRows.length};

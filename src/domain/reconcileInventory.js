@@ -554,7 +554,7 @@ export function reconcileInventory({
      // ==============================
      trace: {
        swingByLocation:
-         swing.detail,
+         swing.detail.map(row => ({...row, swingUsd: hasCost ? row.swingPieces * unitCost : null})),
        bomSources:
          phantomAdjustment
            ?.sources ?? [],

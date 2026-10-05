@@ -3,7 +3,7 @@ function decode(buffer) {
   const bytes = new Uint8Array(buffer), utf8 = new TextDecoder("utf-8").decode(bytes);
   return utf8.includes("�") ? new TextDecoder("windows-1252").decode(bytes) : utf8;
 }
-function fromMatrix(matrix, fileName, delimiter, errors = [], start = 0) {
+function fromMatrix(matrix, fileName, delimiter, errors = [], start = 0, origins = [], sheetName = "", firstColumn = 0) {
   const originalFields = (matrix[start] || []).map(v => String(v ?? "").trim());
   const seen = new Map(), warnings = [], reserved = new Set(originalFields);
   const fields = originalFields.map((name, i) => {
@@ -16,10 +16,10 @@ function fromMatrix(matrix, fileName, delimiter, errors = [], start = 0) {
     if (name) warnings.push({ type: "DuplicateHeader", header: name, renamed, message: `Hay dos columnas llamadas ${name}; conservamos ambas.` });
     return renamed;
   });
-  const data = matrix.slice(start + 1).filter(row => row.some(v => String(v ?? "").trim()));
-  if (data.some(row => row.length > fields.length && row.slice(fields.length).some(v => String(v ?? "").trim())))
+  const data = matrix.slice(start + 1).map((row, i) => ({ row, origin: origins[start + 1 + i] })).filter(({row}) => row.some(v => String(v ?? "").trim()));
+  if (data.some(({row}) => row.length > fields.length && row.slice(fields.length).some(v => String(v ?? "").trim())))
     errors = [...errors, { message: "Hay filas con más columnas que el encabezado." }];
-  return { fileName, fields, originalFields, rows: data.map(row => Object.fromEntries(fields.map((key, i) => [key, row[i] ?? ""]))),
+  return { fileName, fields, originalFields, rows: data.map(({row, origin}) => ({...Object.fromEntries(fields.map((key, i) => [key, row[i] ?? ""])), __provenance: {fileName, sheetName, rowNumber: origin ?? null, firstColumn}})),
     duplicateHeaders: [...seen].filter(([, n]) => n > 1).map(([name]) => name), warnings, delimiter, errors };
 }
 export async function parseDelimitedFile(file, { requiredFields = [] } = {}) {
@@ -43,26 +43,35 @@ export async function parseDelimitedFile(file, { requiredFields = [] } = {}) {
       const idCols = matrix[start].map((v, i) => ids.has(String(v).trim()) ? i : -1).filter(i => i >= 0);
       // Matrix uses nonblank rows; walk actual sheet rows so title/blank rows do not shift identifiers.
       let outputRow = 0;
+      const origins = [];
       for (let r = range.s.r; r <= range.e.r; r++) {
         const populated = Array.from({ length: range.e.c - range.s.c + 1 }, (_, i) => sheet[XLSX.utils.encode_cell({ r, c: range.s.c + i })]).some(c => String(c?.v ?? "").trim());
         if (!populated) continue;
+        origins.push(r + 1);
         if (outputRow > start) for (const i of idCols) {
           const cell = sheet[XLSX.utils.encode_cell({ r, c: range.s.c + i })];
           if (cell?.t === "n" && cell.w) matrix[outputRow][i] = cell.w;
         }
         outputRow++;
       }
-      candidates.push({ ...fromMatrix(matrix, file.name, "xlsx", [], start), sheetName: name });
+      candidates.push({ ...fromMatrix(matrix, file.name, "xlsx", [], start, origins, name, range.s.c), sheetName: name });
     }
     if (candidates.length !== 1) throw new Error(candidates.length ? "Hay varias hojas con estas columnas. Guarda la hoja que necesitas en otro XLSX o CSV." : "No encontramos una hoja con las columnas necesarias en este Excel.");
     const source = candidates[0];
     // Convert once on import, then discard the workbook and CSV buffer.
     // All downstream parsers/storage work with lightweight CSV rows.
-    const csv = Papa.unparse({ fields: source.fields, data: source.rows }, { newline: "\n" });
+    const csv = Papa.unparse({ fields: source.fields, data: source.rows.map(row => Object.fromEntries(source.fields.map(key => [key,row[key]]))) }, { newline: "\n" });
     const normalized = Papa.parse(csv, { header: true, skipEmptyLines: true });
     if (normalized.errors.length) throw new Error("No pudimos convertir este Excel a CSV. Conservamos la fuente anterior.");
-    return { ...source, rows: normalized.data, delimiter: ",", originalFormat: "xlsx", convertedTo: "csv" };
+    return { ...source, rows: normalized.data.map((row,i) => ({...row,__provenance:source.rows[i].__provenance})), delimiter: ",", originalFormat: "xlsx", convertedTo: "csv" };
   }
-  const parsed = Papa.parse(decode(bytes), { header: false, delimiter: "", skipEmptyLines: true });
-  return fromMatrix(parsed.data || [], file.name, parsed.meta.delimiter, parsed.errors || []);
+  const text = decode(bytes), matrix = [], origins = [], errors = [];
+  let cursor = 0, line = 1, delimiter = "";
+  Papa.parse(text, { header: false, delimiter: "", skipEmptyLines: false, step(result) {
+    matrix.push(result.data); origins.push(line); errors.push(...result.errors); delimiter = result.meta.delimiter;
+    line += (text.slice(cursor,result.meta.cursor).match(/\r\n|\r|\n/g) || []).length;
+    cursor = result.meta.cursor;
+  }});
+  const start = matrix.findIndex(row => row.some(v => String(v ?? "").trim()));
+  return fromMatrix(matrix, file.name, delimiter, errors, Math.max(start,0), origins);
 }

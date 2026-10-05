@@ -5,7 +5,7 @@ import {
  normalizeText,
  toBoolean,
  toNumber,
-} from "../domain/normalize";
+} from "../domain/normalize.js";
 
 export function parseISPBB(
  rows = [],
@@ -19,7 +19,7 @@ export function parseISPBB(
  const byPart = new Map();
  let acceptedRows = 0;
  let ignoredRows = 0;
- for (const row of rows) {
+ for (const [sourceIndex,row] of rows.entries()) {
    const rowSite =
      normalizeSite(row["Site"]);
    if (
@@ -38,6 +38,7 @@ export function parseISPBB(
      continue;
    }
    const item = {
+     sourceIndex,
      partNumber,
      site: rowSite,
      location:

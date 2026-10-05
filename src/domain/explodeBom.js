@@ -61,6 +61,7 @@ export function explodeBom({ physical, bom, planning, targetParts = null }) {
         adjustment.totalContribution += contribution;
         totalContributedPieces += contribution;
         adjustment.sources.push({
+          sourceIndex: relation.sourceIndex,
           parentPart,
           componentPart,
           location,

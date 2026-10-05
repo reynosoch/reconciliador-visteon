@@ -60,7 +60,11 @@ export default function OverlayPortal({ children, onClose }) {
     };
 
     const key = (event) => {
+      // A nested evidence viewer owns keyboard navigation until it closes.
+      const top = [...document.querySelectorAll(".vi-overlay-root:not(.vi-overlay-exit)")].at(-1);
+      if (top !== root.current || event.defaultPrevented) return;
       if (event.key === "Escape") {
+        event.preventDefault();
         if (pushed && history.state?.viOverlay === marker) history.back();
         else closeRef.current?.();
         return;
