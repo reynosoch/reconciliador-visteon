@@ -17,7 +17,7 @@ The orchestrator must inspect `main`, recent commits, the README entrypoint and 
 | Requesting stakeholder | Desired outcome, priority, acceptance of visible behavior | ORCH scopes the work and proposes measurable acceptance. |
 | Inventory business owner / department | Counting interpretation, reference validity, locality/report scope, financial and BOM rule changes | DOM and ING provide evidence, alternatives and impact. |
 | Repository maintainer | Integration policy, release authorization, accepted technical risk | ORCH and QA provide exact changes and verification. |
-| Infrastructure administrator | Production access, credentials, Supabase policies, operational bot environment, approved migrations | DATA, BOT and SEC prepare a concrete plan and checks. |
+| Infrastructure administrator | Production access, credentials, Supabase policies, operational bot environment, approved migrations | DBA, DATA, BOT and SEC prepare a concrete plan and checks. |
 
 These are responsibilities to resolve during intake, not assertions that particular people hold these positions. One human may hold several roles. Record the actual decision maker only when known; unresolved authority is not agent permission to make the decision.
 
@@ -42,3 +42,7 @@ For security or data integrity incidents, the team prepares containment and reco
 ## Current production boundary
 
 The application remains the controlled PoC described in the README. The existing no-login BOM sharing model, remote snapshot limitations and local-only history are not removed by adopting this organization. “Enterprise-grade” here describes a disciplined operating model; production security and operations still require their own authorized implementation and validation.
+
+## Myke's senior team
+
+The public team view shows eleven specialist positions from [the role catalog](ROLES.md): engine, source files, data integration, automation, UX, UI, quality, inventory audit, database, performance and security. Myke coordinates product/engineering delivery. Colors and uncapped ghost portraits identify positions visually; they do not indicate online workers. The page can explain documented behavior and inspect a PN from the current reconciliation; it cannot execute engineering work or connect to external AI. Use the session/work-order contracts to perform authorized repository tasks.

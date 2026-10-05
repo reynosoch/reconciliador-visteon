@@ -703,6 +703,9 @@ export default function App() {
           compact={mykeCompact}
           edge={mykeEdge}
           onExpand={() => setMykeCompact(false)}
+          reconciliation={inventory.reconciliation}
+          engineSources={inventory.engine.sources}
+          findings={findings}
           sources={references.sources}
           scanRows={inventory.scanRows}
           scanReady={Boolean(

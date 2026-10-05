@@ -6,8 +6,8 @@ Escalate missing authority, conflicting rules, unsafe data behavior or an unreso
 
 | Level | Trigger / examples | Immediate owner and action | Final decision path |
 | --- | --- | --- | --- |
-| P0 — integrity or exposure incident | Exposed server credential; unauthorized shared-data destruction; published result known to violate financial rules | Reporter notifies ORCH immediately; SEC and affected DOM/DATA/BOT specialist assess. Pause implicated operations and preserve sanitized evidence within authority. | Authorized infrastructure/security administrator for containment/access; business owner for inventory interpretation; maintainer for corrective release |
-| P1 — release-blocking correctness | Wrong NET/SWING sign/value; source mismatch; Phantom/BOM semantics conflict; mixed manual/bot snapshots; failing required build | QA or affected specialist marks blocked release gate; ORCH assigns a reproducer and minimal correction. | DOM resolves implementation against current rule; business owner resolves rule change; maintainer decides release after correction |
+| P0 — integrity or exposure incident | Exposed server credential; unauthorized shared-data destruction; published result known to violate financial rules | Reporter notifies ORCH immediately; SEC and affected DOM/DATA/DBA/BOT specialist assess. Pause implicated operations and preserve sanitized evidence within authority. | Authorized infrastructure/security administrator for containment/access; business owner for inventory interpretation; maintainer for corrective release |
+| P1 — release-blocking correctness | Wrong NET/SWING sign/value; source mismatch; Phantom/BOM semantics conflict; mixed manual/bot snapshots; failing required build | QA/AUD or affected specialist marks blocked release gate; ORCH assigns a reproducer and minimal correction. | DOM resolves implementation against current rule; business owner resolves rule change; maintainer decides release after correction |
 | P2 — blocked scope or capability | Unknown source row/file; unresolved QAD/locality scope; unavailable environment/reviewer; changed shared interface | ORCH records dependent work and safe continuation. Distinguish truthful missing evidence from a UI defect. | Appropriate business/technical/operational decision owner in the decision table |
 | P3 — advisory improvement | Nonblocking readability issue, optional optimization or process refinement | Record finding and priority; avoid turning it into an unrequested redesign. | ORCH within scope; human sets new priority if needed |
 
@@ -47,3 +47,7 @@ Recovery requires a corrective work item, targeted regression, full candidate ch
 P0/P1 interrupts the implicated release path as soon as observed. P2 is reported at the next meaningful status update; P3 can be included in review. ORCH keeps the human informed when a material blocker changes the expected result and follows the session's communication cadence.
 
 These are operating priorities, not implemented timed alerts, paging or service-level guarantees. Do not create unattended external notifications without explicit authorization and an available supported channel.
+
+## Senior specialty routing
+
+UI/UX disagreements on usability go to UX; implementation sequencing goes to Myke. Performance findings go to PERF with reproduction and a baseline, then to the owning source specialist. SQL/RLS findings go to DBA and DATA, with SEC for changed access; only the authorized infrastructure administrator approves remote operations. AUD reports evidence/integrity findings to DOM/ING and QA; a dispute over the business rule goes through Myke to the inventory owner. QA retains the release finding until evidence resolves it. Distinct job titles do not establish independent reviewers.

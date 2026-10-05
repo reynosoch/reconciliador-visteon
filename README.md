@@ -42,7 +42,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
 | Trazador de pieza / aprendizaje | `src/domain/partLearningTrace.js`, `src/domain/sourceEvidence.js`; UI: `src/components/shell/PartLogicTracer.jsx` + `SourcePreviewModal.jsx`; estilos en `data-review.css` |
 | LAB · Cómo funciona el motor | `src/domain/engineGuide.js`; UI: `src/components/shell/EngineGuideDrawer.jsx`, entrada en `MainMenu.jsx`; ejemplos calculados por `inventoryEngine`, separados del inventario real |
-| Myke / organización virtual | `.agents/ROLES.md` define equipo y textos; `src/domain/mykeOrganization.js` lee documentación; UI en `MykePanel.jsx` + `visual/MykeMascot.jsx` / `MykeGhost.jsx`; chat local basado en preguntas de este README, sin conexión IA |
+| Myke / organización virtual | `.agents/ROLES.md` define equipo y textos; `src/domain/mykeOrganization.js` lee documentación; UI en `MykePanel.jsx` + `visual/MykeMascot.jsx` / `MykeGhost.jsx`; chat local basado en este README y consultas PN a la evidencia del dominio, sin conexión IA |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
@@ -721,7 +721,15 @@ Puede usarse con un ejecutor, varios agentes cuando la sesión lo permita, o coo
 
 ## Preguntas frecuentes de Myke
 
-Estas respuestas son la ayuda humana que consume el chat local. Los identificadores y palabras de búsqueda enlazan preguntas con respuestas; no sustituyen el motor ni calculan inventarios. Las referencias de datos abren el visor común de archivos disponibles, nunca un enlace al código. Si falta una fuente se indica cómo cargarla. Una respuesta no demuestra que una fila haya sido usada: el trazador aporta esa evidencia para cada PN.
+Estas respuestas son la ayuda humana que consume el chat local. Los identificadores y palabras de búsqueda enlazan preguntas con respuestas; no sustituyen el motor ni calculan inventarios. Las referencias de datos abren el visor común de archivos disponibles, nunca un enlace al código. Si falta una fuente se indica cómo cargarla. Las respuestas generales explican reglas; una consulta PN consume `buildPartLearningTrace` y aporta las referencias usadas por el motor. No se toman cifras escritas en el chat como resultados.
+
+### ¿Qué puedo hacer?
+<!-- myke: capabilities | capacidades ayudar ayuda puedo hacer opciones servicios preguntas | -->
+Puedo explicarte cómo funciona el reconciliador, de dónde vienen los datos, qué significan NET y SWING, cómo trabaja Phantom y qué revisar ante una advertencia. Elige una pregunta sugerida o escribe la tuya.
+
+También puedes escribir un número de parte, por ejemplo «PN: TU-NUMERO», o pegar uno que esté cargado. Verás físico, QAD, costo, NET, SWING, etiquetas, advertencias y un plan de revisión del corte actual. Toca una cifra para ver su explicación y abrir las filas reales en el visor tipo Excel; el trazador conserva el recorrido completo.
+
+En Explorar puedes abrir el motor por dentro, seguir una pieza, revisar archivos y ver advertencias. Soy ayuda local: no ejecuto ajustes, no modifico el inventario ni tengo IA externa conectada. Si no encuentro un PN o falta una fuente, te lo digo.
 
 ### ¿Cómo funciona el reconciliador y su código?
 <!-- myke: engine | motor arquitectura codigo reconciliador funciona react parser normalizado | scans qad ispbb bom cost areas -->
@@ -845,9 +853,9 @@ Las tablas grandes muestran solo las filas necesarias y el visor usa páginas. L
 
 «Vidrio ligero» reduce blur y sombras. «Quitar animaciones» pausa movimiento decorativo; es independiente del vidrio. Puedes ocultar a Myke sin perder su chat desde el menú.
 
-### ¿Quiénes son los agentes y qué puede hacer Myke?
+### ¿Quién está en el equipo de Myke?
 <!-- myke: team | myke equipo agente agentes empleados especialista puestos organizador tareas empleado | -->
-Myke organiza alcance, responsables y revisiones. El equipo tiene especialistas en motor y finanzas, fuentes y evidencia, datos, bot, experiencia y rendimiento, calidad y seguridad.
+Myke organiza alcance, responsables y revisiones. El equipo tiene once puestos senior: motor y finanzas, archivos y evidencia, integración de datos, automatización, UX, interfaces UI, calidad, auditoría de inventario, base de datos, rendimiento y seguridad. Myke coordina producto y entrega.
 
 Mi equipo cubre esas áreas del proyecto. Este chat consulta ayuda local; los cambios de código se realizan dentro del trabajo autorizado. Puede adaptar puestos en el modelo operativo, conservando responsables y los permisos de decisión correspondientes.
 
@@ -871,3 +879,12 @@ Verify main ejecuta esos controles en GitHub Actions. La publicación de GitHub 
 - IA externa sigue pendiente de la siguiente etapa; el chat actual ofrece respuestas documentadas y declara cuando no encuentra respaldo. No ejecuta tareas ni escribe inventario.
 
 - Verificación: chat/documentación y casos de falta de respuesta probados sin React; Chromium a 1366/1024/768/390 px con fixtures locales verifica arrastre, persistencia, X, chat pequeño/completo, siete puestos, fuentes faltantes, visor 60/10 filas, Escape anidado, PN enviado al trazador y retorno de scroll desde el borde inferior tras recarga. El build completo verifica finanzas, imports, CSS/módulos y datos parciales; Safari/iPad físico y bot corporativo quedan pendientes.
+
+### Myke con gorra, consultas de piezas y Explorar — 05/10/2026
+
+- Myke se asoma un poco menos y lleva una gorra Visteon. La X conserva 44 px de área táctil y queda sobre la mascota; ocultarla no quita el chat del menú. Se mantienen arrastre, posición guardada, teclado y preferencias de movimiento. Los gestos táctiles de Myke no disparan el swipe del menú hamburguesa.
+- Chat pequeño y completo ofrecen preguntas útiles, incluida «¿Qué puedo hacer?». Todas las preguntas del README están en Chat. **Explorar** sustituye la antigua pestaña de preguntas y abre motor, trazador, fuentes y advertencias.
+- Una consulta PN lee resultados reales de `reconciliation` mediante `buildMykePartAnswer` → `buildPartLearningTrace`. No calcula dinero en JSX ni usa cifras del mensaje. Se construye evidencia solo para la pieza consultada; las cifras siguen el corte actual cuando llegan nuevos datos. Fuentes, filas, reglas, advertencias y plan de revisión usan el visor compartido de 60 filas por página. Un PN ausente y un costo desconocido no se convierten en cero.
+- `.agents/ROLES.md` incorpora UI, DBA, AUD y PERF y alimenta once retratos de fantasmas de colores sin gorra. Ownership, decisiones, contratos existentes, matriz, escalamiento y flujos delimitan responsabilidades; Myke conserva ORCH. Son puestos del modelo operativo, no empleados conectados ni ejecución autónoma desde el chat. La IA externa continúa sin conectar.
+
+- Verificación de esta actualización: Chromium a 1366/1024/768/390 px con fixtures locales comprueba X y área táctil en los cuatro bordes, arrastre/persistencia, chat pequeño y completo, consulta PN ausente, once retratos, preguntas en Chat, Explorar, fuentes faltantes, filas usadas y paginación 60/10, Escape anidado, trazador y retorno de scroll tras recarga. `verify-myke` prueba resultados del motor, SWING sin dividir, costo cero/ausente/inválido, Phantom desconocido/YES y BOM faltante. Safari/iPad físico e IA externa siguen pendientes.

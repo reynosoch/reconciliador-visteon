@@ -7,14 +7,15 @@ There is one final decision owner per decision class. Contributors provide recom
 | Requested outcome and priority | Requesting human stakeholder | ORCH | Observable acceptance criteria and scope tradeoffs |
 | Work decomposition, sequencing, specialist assignment and temporary position creation/merger/retirement | Myke (`ORCH`) | ORCH | Ownership map, dependency graph, execution capabilities and authorization; preserve accountability and required review coverage |
 | Technical design preserving existing inventory semantics | ORCH | Affected specialist | Interface acceptance by producer/consumer; risk-based QA |
-| Local design, copy, spacing and responsive behavior within scope | UX | UX | Existing visual language; source/domain review when explaining calculations |
+| Local design, copy, spacing and responsive behavior within scope | UX | UX/UI | Existing visual language; source/domain review when explaining calculations |
 | Parser implementation preserving accepted schema and filters | ING | ING | DOM review of normalized meaning; import/provenance checks |
-| Financial/BOM/QAD scope or inventory interpretation change | Inventory business owner / department | DOM with ING; ORCH coordinates | Dated decision and evidence in README; independent DOM/QA review of implementation before release |
+| Financial/BOM/QAD scope or inventory interpretation change | Inventory business owner / department | DOM with ING; ORCH coordinates | Dated decision and evidence in README; independent domain/QA review of implementation (AUD may supply qualified domain review) before release |
 | Cost reference, BOM version or counting-source validity | Inventory business owner / department | ING/DOM analyze | Actual references, fingerprints and impact; no silent substitution |
-| Persisted schema and compatibility design | DATA | DATA | DOM for comparability; SEC for access; migration/recovery verification |
-| Production migration, access policy or destructive shared-data action | Authorized infrastructure administrator | DATA/BOT prepare | Exact target, authority, impact and recovery plan; SEC review |
+| Database schema/policy design preserving authority | DBA | DBA with DATA | SEC for access; DOM for comparability; local SQL and recovery evidence |
+| Persisted application schema and compatibility design | DATA | DATA | DOM for comparability; SEC for access; migration/recovery verification |
+| Production migration, access policy or destructive shared-data action | Authorized infrastructure administrator | DBA/DATA/BOT prepare | Exact target, authority, impact and recovery plan; SEC review |
 | Live bot start/stop, extraction or snapshot publication | Authorized bot operator | BOT | Controller/environment authority and source-mode safety; code editing alone is insufficient |
-| Verification result and blocking test/review finding | QA | QA and reviewers | Reproducible evidence on identified candidate; findings can be challenged with new evidence |
+| Verification result and blocking test/review finding | QA | QA/AUD and boundary reviewers | Reproducible evidence on identified candidate; findings can be challenged with new evidence |
 | Acceptable residual non-business technical risk | Repository maintainer, or ORCH if explicitly delegated | ORCH summarizes | Impact, mitigation and follow-up owner; no waiver of mathematical integrity or secrets exposure |
 | Integration into requested Git target | Repository maintainer, or ORCH under existing authorization | ORCH / designated integrator | Full build and required reviews, exact candidate, no unrelated changes |
 | Pages deployment | Authorized release owner | DATA / ORCH | Explicit deployment authority, passing candidate and manual workflow result |

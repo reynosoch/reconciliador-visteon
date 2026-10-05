@@ -13,6 +13,23 @@ Each cell names the reason the row role initiates contact with the column role. 
 | QA | Gate/finding/release evidence | Math/invariant finding | Source/rejection finding | Persistence/compatibility finding | Process/status finding | Interaction/accessibility finding | — | Security finding |
 | SEC | Risk/authority escalation | Financial integrity exposure | Untrusted-source exposure | Permission/data exposure | Operational credential risk | Sensitive UI/log exposure | Security verification requirements | — |
 
+## Senior specialist interaction matrix
+
+These routes extend the core matrix above. Existing UX implementation requests go to UI; database design requests go to DBA. Contacts do not transfer decision ownership or reserve files automatically.
+
+| Sender | Receivers and reason | Expected contract / acceptance |
+| --- | --- | --- |
+| ORCH | UI: bounded component work; DBA: schema proposal; AUD: audit request; PERF: measured diagnosis | WorkOrder → StatusUpdate → Handoff or ReviewResult; one write owner per file |
+| UX | UI: approved flows/copy/touch criteria; PERF: observed friction | InterfaceProposal / acceptance criteria; UX accepts usability |
+| UI | UX: design acceptance; DOM/ING: view-model/evidence meaning; PERF: measured rendering concern; QA: responsive review | Handoff + identified candidate; no duplicated formulas or viewers |
+| DATA | DBA: schema/RLS/migration needs; PERF: measured sync/storage delays | Consumer shape, compatibility and authority in InterfaceProposal |
+| DBA | DATA: migration consumers/recovery; SEC: permission review; PERF: query evidence; ORCH: operational authority blocker | Migration proposal → ReviewResult → DecisionRecord; remote execution separately authorized |
+| DOM / ING | AUD: changed calculation explanations or attribution | ReviewRequest with exact rules, candidate and minimal evidence |
+| AUD | DOM: invariant finding; ING: provenance finding; QA: blocking audit finding; ORCH: rule/authority escalation | ReviewResult with reproduction and actual independence; author resolves, reviewer closes |
+| PERF | UI: rendering/interaction plan; DATA/DBA: storage/query plan; QA: baseline comparison; ORCH: scope tradeoff | Measurements + InterfaceProposal; boundary owner implements, QA verifies retained behavior |
+| QA | UI/UX: interaction finding; DBA/DATA: compatibility finding; AUD: domain audit; PERF: repeatable slowdown | ReviewRequest/ReviewResult tied to the candidate, not a role name |
+| SEC | DBA: privilege/policy finding; UI: sensitive output finding; ORCH: incident escalation | Sanitized risk evidence + required authority; no access granted by the message |
+
 ## Required exchanges
 
 | Situation | Sender / receiver | Contract sequence | Resolution owner |

@@ -4,20 +4,126 @@ import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import MykeGhost from "../visual/MykeGhost.jsx";
 import SourcePreviewModal from "./SourcePreviewModal.jsx";
 import { buildMykeOrganization } from "../../domain/mykeOrganization.js";
-import { answerMyke } from "../../domain/mykeKnowledge.js";
-import { getTracerSourceInventory } from "../../domain/partLearningTrace.js";
+import { answerMyke, buildMykePartAnswer } from "../../domain/mykeKnowledge.js";
+import {
+  getTracerSourceInventory,
+  getRecommendedPartCases,
+} from "../../domain/partLearningTrace.js";
 import rolesMarkdown from "../../../.agents/ROLES.md?raw";
 import readmeMarkdown from "../../../README.md?raw";
 
-const badges = {
-  DOM: "ƒ",
-  ING: "▤",
-  DATA: "▦",
-  BOT: "⚙",
-  UX: "✦",
-  QA: "✓",
-  SEC: "◇",
-};
+function PieceReply({ pn, context, onEvidence, onTracer, onSources }) {
+  const piece = useMemo(() => buildMykePartAnswer(pn, context), [pn, context]);
+  return (
+    <section className="vi-myke-piece" aria-label={`Consulta de ${pn}`}>
+      <h3>{piece.pn}</h3>
+      {piece.found && (
+        <>
+          <p>
+            {piece.description || "Descripción no disponible en las fuentes"}
+          </p>
+          <strong>
+            {piece.status} ·{" "}
+            {piece.complete ? "Fuentes completas" : "Datos provisionales"}
+          </strong>
+        </>
+      )}
+      {!piece.found && <p>{piece.explanation}</p>}
+      {piece.found ? (
+        <>
+          <p>Datos del corte actual. Toca una cifra para ver de dónde sale.</p>
+          <div className="vi-myke-piece-metrics">
+            {piece.metrics.map((metric) => (
+              <details key={metric.id}>
+                <summary>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                  <span aria-hidden="true">＋</span>
+                </summary>
+                <p>{metric.explanation}</p>
+                {metric.warning && <p>{metric.warning}</p>}
+                {metric.calculation.map((formula, i) => (
+                  <p key={i}>
+                    {formula.general}
+                    <br />
+                    {formula.substitution}
+                  </p>
+                ))}
+                <div className="vi-myke-source-actions">
+                  {metric.refs.map((ref, i) => (
+                    <button
+                      type="button"
+                      key={i}
+                      onClick={() => onEvidence(ref, pn)}
+                    >
+                      Ver fuente · {ref.label}
+                    </button>
+                  ))}
+                </div>
+              </details>
+            ))}
+          </div>
+          <p>{piece.explanation}</p>
+          <details className="vi-myke-answer-sources">
+            <summary>¿Por qué aparece este PN?</summary>
+            {piece.origins.map((origin) => (
+              <div key={origin.type}>
+                <p>{origin.explanation}</p>
+                <div className="vi-myke-source-actions">
+                  <button
+                    type="button"
+                    onClick={() => onEvidence(origin.reference, pn)}
+                  >
+                    Ver {origin.reference.label}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </details>
+          <details className="vi-myke-answer-sources">
+            <summary>
+              Advertencias y qué revisar · {piece.warnings.length}
+            </summary>
+            {piece.warnings.map((warning) => (
+              <div key={warning.id}>
+                <strong>{warning.title}</strong>
+                <p>{warning.detail}</p>
+                <div className="vi-myke-source-actions">
+                  {warning.refs.map((ref, i) => (
+                    <button
+                      type="button"
+                      key={i}
+                      onClick={() => onEvidence(ref, pn)}
+                    >
+                      Ver {ref.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {piece.actions.map((action) => (
+              <div key={action.id}>
+                <strong>{action.title}</strong>
+                <p>{action.detail}</p>
+              </div>
+            ))}
+          </details>
+          <div className="vi-myke-shortcuts">
+            <button type="button" onClick={() => onTracer(pn)}>
+              Revisar {pn} en el trazador →
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="vi-myke-shortcuts">
+          <button type="button" onClick={onSources}>
+            Abrir archivos de inventario →
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
 export default function MykePanel({
   open,
   onClose,
@@ -33,9 +139,11 @@ export default function MykePanel({
   scanRows = [],
   scanReady = false,
   snapshotMeta = null,
+  reconciliation = [],
+  engineSources = {},
+  findings = [],
 }) {
   const [tab, setTab] = useState(initialTab);
-  const [topicId, setTopicId] = useState("engine");
   const [draft, setDraft] = useState("");
   const [faqQuery, setFaqQuery] = useState("");
   const [messages, setMessages] = useState([]);
@@ -65,14 +173,46 @@ export default function MykePanel({
         behavior: "instant",
       });
   }, [messages, open, tab]);
+  const pieceContext = useMemo(
+    () => ({
+      reconciliation,
+      engineSources,
+      findings,
+      sources,
+      scanRows,
+      scanReady,
+      snapshotMeta,
+    }),
+    [
+      reconciliation,
+      engineSources,
+      findings,
+      sources,
+      scanRows,
+      scanReady,
+      snapshotMeta,
+    ],
+  );
+  const partNumbers = useMemo(
+    () => reconciliation.map((item) => item.partNumber),
+    [reconciliation],
+  );
+  const cases = useMemo(
+    () => (open ? getRecommendedPartCases(reconciliation).slice(0, 3) : []),
+    [open, reconciliation],
+  );
   if (!open) return null;
-  const topic = organization.topics.find((entry) => entry.id === topicId);
   const send = (question = draft) => {
     if (!question.trim()) return;
     const previous =
       messages.filter((message) => message.role === "myke").at(-1)?.answer
         ?.topicIds || [];
-    const answer = answerMyke(question.slice(0, 1000), organization, previous);
+    const answer = answerMyke(
+      question.slice(0, 1000),
+      organization,
+      previous,
+      partNumbers,
+    );
     setMessages((current) => [
       ...current.slice(-22),
       { role: "you", text: question.slice(0, 1000) },
@@ -81,6 +221,21 @@ export default function MykePanel({
     setDraft("");
     setTyping(false);
     composer.current?.focus();
+  };
+  const showEvidence = (ref, pn) => {
+    if (!inputs.find((input) => input.type === ref.type)?.loaded) {
+      onClose();
+      onOpenSources();
+      return;
+    }
+    setPreview({
+      source: ref.source,
+      config: { type: ref.type, label: ref.label },
+      evidence: ref.evidence,
+      rule: ref.rule,
+      tracePn: pn,
+      initialQuery: ref.evidence.length ? "" : pn,
+    });
   };
   const sourceButtons = (entry) => (
     <div className="vi-myke-source-actions">
@@ -128,14 +283,15 @@ export default function MykePanel({
         <p key={index}>{text}</p>
       ))}
       <span>Guía del reconciliador · respuesta documentada</span>
-      {foldSources ? (
-        <details className="vi-myke-answer-sources">
-          <summary>Ver fuentes de esta explicación</summary>
-          {sourceButtons(entry)}
-        </details>
-      ) : (
-        sourceButtons(entry)
-      )}
+      {entry.sources.length > 0 &&
+        (foldSources ? (
+          <details className="vi-myke-answer-sources">
+            <summary>Ver fuentes de esta explicación</summary>
+            {sourceButtons(entry)}
+          </details>
+        ) : (
+          sourceButtons(entry)
+        ))}
       {entry.id === "alerts" && (
         <div className="vi-myke-shortcuts">
           <button
@@ -150,17 +306,6 @@ export default function MykePanel({
         </div>
       )}
     </section>
-  );
-  const shortcut = (label, callback) => (
-    <button
-      type="button"
-      onClick={() => {
-        onClose();
-        callback();
-      }}
-    >
-      {label} →
-    </button>
   );
   return (
     <>
@@ -213,7 +358,7 @@ export default function MykePanel({
               <nav className="vi-myke-tabs" aria-label="Vistas de Myke">
                 {[
                   ["chat", "Chat"],
-                  ["help", "Preguntas frecuentes"],
+                  ["explore", "Explorar"],
                   ["team", "Equipo"],
                 ].map(([id, label]) => (
                   <button
@@ -243,24 +388,65 @@ export default function MykePanel({
                       </p>
                     </div>
                   )}
-                  {(!compact || !messages.length) && (
-                    <div className="vi-myke-suggestions">
-                      {[
-                        "¿De dónde salen los PN?",
-                        "¿Por qué SWING no se divide entre dos?",
-                        "¿Cómo funciona Phantom?",
-                      ]
-                        .slice(0, compact ? 2 : 3)
-                        .map((question) => (
-                          <button
-                            key={question}
-                            type="button"
-                            onClick={() => send(question)}
-                          >
-                            {question}
-                          </button>
-                        ))}
-                    </div>
+                  <div className="vi-myke-suggestions">
+                    {["capabilities", "parts", "swing", "snapshot"]
+                      .slice(0, compact ? 2 : 4)
+                      .map((id) =>
+                        organization.topics.find((topic) => topic.id === id),
+                      )
+                      .filter(Boolean)
+                      .map((topic) => (
+                        <button
+                          key={topic.id}
+                          type="button"
+                          onClick={() => send(topic.title)}
+                        >
+                          {topic.title}
+                        </button>
+                      ))}
+                  </div>
+                  {!compact && (
+                    <details className="vi-myke-question-library">
+                      <summary>Más preguntas que puedes hacer</summary>
+                      <label className="vi-myke-faq-search">
+                        Buscar una pregunta
+                        <input
+                          type="search"
+                          value={faqQuery}
+                          onChange={(event) => setFaqQuery(event.target.value)}
+                          placeholder="NET, Phantom, archivos…"
+                        />
+                      </label>
+                      <div className="vi-myke-topics">
+                        {organization.topics
+                          .filter((entry) =>
+                            (entry.title + " " + entry.keywords.join(" "))
+                              .normalize("NFD")
+                              .replace(/[\u0300-\u036f]/g, "")
+                              .toLowerCase()
+                              .includes(
+                                faqQuery
+                                  .normalize("NFD")
+                                  .replace(/[\u0300-\u036f]/g, "")
+                                  .toLowerCase(),
+                              ),
+                          )
+                          .map((entry) => (
+                            <button
+                              type="button"
+                              key={entry.id}
+                              onClick={(event) => {
+                                event.currentTarget.closest("details").open =
+                                  false;
+                                send(entry.title);
+                              }}
+                            >
+                              {entry.title}
+                              <span>›</span>
+                            </button>
+                          ))}
+                      </div>
+                    </details>
                   )}
                   <div
                     className="vi-myke-conversation"
@@ -298,13 +484,36 @@ export default function MykePanel({
                                 ),
                               )}
                             {message.answer.kind === "piece" && (
-                              <div className="vi-myke-shortcuts">
-                                {shortcut(
-                                  `Revisar ${message.answer.pn} en el trazador`,
-                                  () => onOpenTracer(message.answer.pn),
-                                )}
-                              </div>
+                              <PieceReply
+                                pn={message.answer.pn}
+                                context={pieceContext}
+                                onEvidence={showEvidence}
+                                onTracer={(pn) => {
+                                  onClose();
+                                  onOpenTracer(pn);
+                                }}
+                                onSources={() => {
+                                  onClose();
+                                  onOpenSources();
+                                }}
+                              />
                             )}
+                            {message.answer.topicIds.includes("capabilities") &&
+                              cases.length > 0 && (
+                                <div className="vi-myke-suggestions">
+                                  {cases.map(({ item, reason }) => (
+                                    <button
+                                      type="button"
+                                      key={item.partNumber}
+                                      onClick={() =>
+                                        send(`PN: ${item.partNumber}`)
+                                      }
+                                    >
+                                      {item.partNumber} · {reason}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                           </>
                         )}
                       </article>
@@ -325,7 +534,7 @@ export default function MykePanel({
                       value={draft}
                       maxLength={1000}
                       rows={2}
-                      placeholder="¿De dónde sale el físico?"
+                      placeholder="Escribe una pregunta o un PN"
                       onFocus={() => setTyping(true)}
                       onBlur={() => setTyping(false)}
                       onSelect={(event) =>
@@ -362,7 +571,7 @@ export default function MykePanel({
                   {compact && (
                     <div className="vi-myke-shortcuts">
                       <button type="button" onClick={onExpand}>
-                        Abrir menú de Myke · preguntas y equipo →
+                        Más preguntas, Explorar y Equipo →
                       </button>
                     </div>
                   )}
@@ -391,12 +600,11 @@ export default function MykePanel({
                     {organization.employees.map((employee) => (
                       <details key={employee.id}>
                         <summary>
-                          <span
-                            className="vi-myke-agent-icon"
-                            aria-hidden="true"
-                          >
-                            {badges[employee.id] || "✦"}
-                          </span>
+                          <MykeGhost
+                            cap={false}
+                            color={employee.color}
+                            pose="reading"
+                          />
                           <span>
                             <strong>{employee.title}</strong>
                           </span>
@@ -408,70 +616,57 @@ export default function MykePanel({
                   </div>
                 </>
               )}
-              {tab === "help" && (
+              {tab === "explore" && (
                 <>
                   <div className="vi-myke-message">
-                    <strong>Myke</strong>
+                    <strong>Vamos a ver cómo encaja todo</strong>
                     <p>
-                      Estas son algunas de las preguntas más frecuentes. Elige
-                      una y te cuento cómo funciona; cuando haga falta, vemos
-                      juntos el archivo original.
+                      Abre el motor, sigue una pieza o mira sus archivos. Para
+                      preguntar, vuelve a Chat: ahí están todas las preguntas y
+                      sus explicaciones.
                     </p>
                   </div>
-                  <label className="vi-myke-faq-search">
-                    Buscar una pregunta
-                    <input
-                      value={faqQuery}
-                      onChange={(event) => setFaqQuery(event.target.value)}
-                      placeholder="NET, Phantom, fuentes…"
-                      type="search"
-                    />
-                  </label>
-                  <div className="vi-myke-topics">
-                    {organization.topics
-                      .filter((entry) =>
-                        (entry.title + " " + entry.keywords.join(" "))
-                          .normalize("NFD")
-                          .replace(/[\u0300-\u036f]/g, "")
-                          .toLowerCase()
-                          .includes(
-                            faqQuery
-                              .normalize("NFD")
-                              .replace(/[\u0300-\u036f]/g, "")
-                              .toLowerCase(),
-                          ),
-                      )
-                      .map((entry) => (
-                        <button
-                          type="button"
-                          key={entry.id}
-                          aria-pressed={topicId === entry.id}
-                          onClick={() => setTopicId(entry.id)}
-                        >
-                          {entry.title}
-                          <span>›</span>
-                        </button>
-                      ))}
-                  </div>
-                  {topic && (
-                    <>
-                      <div className="vi-myke-user-message">
-                        <strong>Tú</strong>
-                        <p>{topic.title}</p>
-                      </div>
-                      <div className="vi-myke-answer">
-                        <strong>Myke</strong>
-                        {renderTopic(topic)}
-                      </div>
-                    </>
-                  )}
-                  <div className="vi-myke-shortcuts">
-                    {shortcut(
-                      "Ver el recorrido visual del motor",
-                      onOpenEngineGuide,
-                    )}
-                    {shortcut("Seguir una pieza y sus filas", onOpenTracer)}
-                    {shortcut("Abrir archivos de inventario", onOpenSources)}
+                  <div className="vi-myke-explore">
+                    {[
+                      [
+                        "01",
+                        "El motor por dentro",
+                        "Un recorrido visual desde los archivos hasta NET, SWING y las alertas, con ejemplos calculados.",
+                        onOpenEngineGuide,
+                      ],
+                      [
+                        "02",
+                        "Sigue una pieza",
+                        "Elige un PN, revisa su resultado y encuentra las filas que participaron.",
+                        onOpenTracer,
+                      ],
+                      [
+                        "03",
+                        "Archivos del inventario",
+                        "Mira qué fuentes están cargadas, abre la tabla como Excel o agrega las que faltan.",
+                        onOpenSources,
+                      ],
+                      [
+                        "04",
+                        "Qué necesita revisión",
+                        "Ve las advertencias actuales y lo que conviene confirmar antes de actuar.",
+                        onOpenDataAlerts,
+                      ],
+                    ].map(([number, title, description, callback]) => (
+                      <button
+                        type="button"
+                        key={number}
+                        onClick={() => {
+                          onClose();
+                          callback();
+                        }}
+                      >
+                        <span>{number}</span>
+                        <strong>{title}</strong>
+                        <p>{description}</p>
+                        <b aria-hidden="true">→</b>
+                      </button>
+                    ))}
                   </div>
                 </>
               )}

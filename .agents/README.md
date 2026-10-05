@@ -13,6 +13,12 @@ This directory defines how humans and agents deliver changes to the Inventory Re
 
 Start a work item using [the template](templates/WORK_ITEM.md). The [tracer evidence example](examples/TRACER_EVIDENCE.md) demonstrates a complete cross-domain assignment without inventing data or test results.
 
+## Senior organization
+
+Myke coordinates product and engineering delivery. Eleven senior specialist positions cover domain/finance (DOM), ingestion/evidence (ING), data integration (DATA), automation (BOT), experience (UX), interfaces (UI), quality (QA), inventory audit (AUD), database (DBA), performance (PERF) and security (SEC). See [role profiles](ROLES.md), [single-owner boundaries](OWNERSHIP.md) and [collaboration routes](INTERACTION_MATRIX.md). UI implements UX-approved experiences; DBA owns database design while DATA owns consumers; AUD challenges evidence while QA owns the release gate. Actual staffing and independent review depend on the executing session.
+
+The website reads Spanish titles, summaries and ghost colors from this catalog. It displays positions and local documented help; it does not expose routing IDs, start agents or grant database access. Myke wears the Visteon cap; specialist avatars share the uncapped vector with catalog colors.
+
 ## Authority and scope
 
 The repository [README](../README.md) remains the source of truth for inventory rules, architecture, operational agreements, security assumptions and project decisions. These files govern **how work is coordinated**, not how inventory is calculated. Link to the relevant README section instead of maintaining another financial specification here.
@@ -23,7 +29,7 @@ Inventory correctness, source fidelity and usable explanations come before decor
 
 ## What is active
 
-This is a version-controlled operating specification, version **1.0**. It can be used immediately by a human-led session, a capable orchestrating agent or a multi-agent runner. It does not install a scheduler, enforce file locks, configure branch protection, create accounts, run unattended agents or change the application at runtime.
+This is a version-controlled operating specification, version **1.1**. It can be used immediately by a human-led session, a capable orchestrating agent or a multi-agent runner. It does not install a scheduler, enforce file locks, configure branch protection, create accounts, run unattended agents or change the application at runtime.
 
 Existing automated checks come from the scripts invoked by `npm run build` and the [Verify main workflow](../.github/workflows/verify-main.yml). CI detects failures on pushed `main`; these documents do not establish a branch-protection policy. Work-item routing, contract validation, review independence and authorization checks are responsibilities of the executing orchestrator until a runner implements them. The existing [Gemini workflow](../.github/workflows/gemini-code.yml) generates and pushes a file on manual dispatch without the full build gate in that workflow; it is not this organization’s orchestrator or release gate. Do not use it to bypass this model’s review and verification path.
 

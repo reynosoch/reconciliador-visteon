@@ -7,7 +7,18 @@ export function buildMykeOrganization(rolesMarkdown, readmeMarkdown) {
     ),
   ].flatMap(([, id, responsibility, body]) => {
     const ui = body.match(/^\*\*UI:\*\* (.+?) \| (.+)$/m);
-    return ui ? [{ id, title: ui[1], summary: ui[2], responsibility }] : [];
+    return ui
+      ? [
+          {
+            id,
+            title: ui[1],
+            summary: ui[2],
+            responsibility,
+            color:
+              body.match(/^\*\*Color:\*\* (#[0-9a-f]{6})$/im)?.[1] || "#f5821f",
+          },
+        ]
+      : [];
   });
   const topics = [
     ...readmeMarkdown.matchAll(

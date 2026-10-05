@@ -13,7 +13,7 @@ Classify risk by the most sensitive changed boundary:
 | R1 — presentation/process | Documentation, behavior-preserving styling or copy | ORCH; UX when UI changes; QA gate assessment |
 | R2 — interface/data behavior | Parser evidence, viewer navigation, persistence, exports, bot status, shared UI behavior | Affected owners and consumers; QA; SEC if trust boundary changes |
 | R3 — inventory semantics | Financial formula, Phantom/BOM eligibility, QAD filter, counting interpretation or cost validity rule | Business-owner decision, DOM/ING as needed, independent domain/QA review |
-| R4 — operational privilege | Production migration, access/credentials, destructive shared data, live automation or deployment | Authorized operational owner; DATA/BOT/SEC; QA; separate execution authority |
+| R4 — operational privilege | Production migration, access/credentials, destructive shared data, live automation or deployment | Authorized operational owner; DBA/DATA/BOT/SEC; QA; separate execution authority |
 
 A cosmetic task touching a financial or privileged boundary is reassessed; the original label does not waive higher-risk gates. A documentation change proposing a new business rule is also subject to business authority before that rule is adopted.
 
@@ -26,8 +26,8 @@ For a source/evidence feature, use this sequence:
 1. ING verifies raw identity, headers, accepted/rejected rows and available provenance.
 2. DOM defines calculation participation, explanations and missing/invalid states using existing engine results.
 3. DATA checks persisted or remote compatibility only if that boundary changes.
-4. UX integrates the view model into existing components without recalculating values.
-5. QA verifies source fidelity, domain consistency and the user flow on the integrated candidate.
+4. UI integrates the UX-approved view model into existing components without recalculating values.
+5. AUD reviews changed attribution/explanations; QA verifies source fidelity, domain consistency and the user flow on the integrated candidate.
 
 Parallel implementation is allowed only after interfaces are accepted and write scopes do not conflict. Read-only investigation can begin earlier. For shared-checkout work, ORCH serializes shared files and inspects the combined diff before review.
 
@@ -88,3 +88,7 @@ The final ReleaseReport states outcome, SHA, important paths, exact checks/CI, o
 Resume from the work record, current repository state and actual agent status. Reconcile completed edits and stale evidence before starting new assignments. Do not rerun completed work merely because the conversation resumed.
 
 For corrective work, preserve the original failure and link its cause, correction and regression. Record follow-up owner and what evidence will close it. Process improvements belong in `.agents`; business/domain decisions remain in README. A persistent external tracker may hold the work record when already available and authorized; otherwise use the session's durable work record and commit/review references. Never claim a tracker or agent ledger exists when it does not.
+
+## Senior specialty handoffs
+
+For UI changes, UX specifies the journey, UI implements, PERF investigates measured regressions and QA verifies the final interaction. For database changes, DATA defines the consuming contract, DBA prepares schema/recovery, SEC reviews privileges and QA checks compatibility before any separately authorized remote execution. For financial explanations, DOM supplies calculated evidence, ING validates origins and AUD challenges attribution; QA records the gate. Myke records the actual executor and whether each review is independent. Ordinary scope does not activate every specialist or imply a runtime agent service.

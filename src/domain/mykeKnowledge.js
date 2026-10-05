@@ -1,4 +1,7 @@
-// Knowledge comes from the repository documents, not financial calculations or external AI.
+import { buildPartLearningTrace } from "./partLearningTrace.js";
+import { normalizeText } from "./normalize.js";
+
+// Knowledge comes from documents; piece replies consume the existing domain trace.
 const normalize = (value) =>
   String(value)
     .normalize("NFD")
@@ -48,12 +51,14 @@ const STOP_PART_TOKENS = new Set([
   "NUMBER",
   "LISTA",
   "NUMEROS",
+  "PN",
+  ...[...stopWords].map((word) => word.toUpperCase()),
 ]);
 
 export function extractPartNumber(message) {
   const normalized = clean(message);
   const explicit = normalized.match(
-    /\b(?:PN|PART NUMBER|NUMERO DE PARTE)\s*[:#-]?\s*([A-Z0-9][A-Z0-9._/-]{2,})\b/,
+    /\b(?:PN|PART NUMBER|NUMERO DE PARTE)\s*[:#-]?\s*([A-Z0-9][A-Z0-9._/-]*)\b/,
   );
   if (explicit?.[1] && !STOP_PART_TOKENS.has(explicit[1])) return explicit[1];
   const candidates = normalized.match(/\b[A-Z0-9][A-Z0-9._/-]{4,}\b/g) || [];
@@ -65,11 +70,18 @@ export function extractPartNumber(message) {
   );
 }
 
-export function answerMyke(question, organization, previousTopicIds = []) {
+export function answerMyke(
+  question,
+  organization,
+  previousTopicIds = [],
+  partNumbers = [],
+) {
   const input = normalize(question).trim();
   const tokens = [...new Set(mykeSearchWords(input))];
   const pn =
+    partNumbers.find((part) => part === normalizeText(question)) ||
     extractPartNumber(question) ||
+    (/^\d{3,}$/.test(input) ? input : "") ||
     String(question).match(/\b(?:pieza|parte)\s+(\d{4,})\b/i)?.[1];
   if (
     /^(hola|buenas|buenos dias|buenas tardes|hey|gracias|muchas gracias)[!.?\s]*$/.test(
@@ -84,6 +96,15 @@ export function answerMyke(question, organization, previousTopicIds = []) {
       topicIds: [],
     };
   }
+  const questionKey = (value) =>
+    normalize(value)
+      .replace(/[¿?¡!]/g, "")
+      .trim();
+  const suggested = organization.topics.find(
+    (topic) => questionKey(topic.title) === questionKey(question),
+  );
+  if (suggested)
+    return { kind: "answer", paragraphs: [], topicIds: [suggested.id] };
   const ranked = organization.topics
     .map((topic, index) => ({
       topic,
@@ -120,8 +141,7 @@ export function answerMyke(question, organization, previousTopicIds = []) {
     return {
       kind: "piece",
       paragraphs: [
-        `Para explicar ${pn.toUpperCase()} con cifras y filas reales, abre el trazador y busca ese PN. No tomaré los números escritos en el chat como resultados del inventario.`,
-        "Ahí puedes ver su físico, QAD, costo, NET, SWING y alertas con evidencia de cada paso.",
+        `Revisemos ${pn.toUpperCase()} en los datos cargados. Las cifras de abajo vienen del motor; no de los números escritos en tu pregunta.`,
       ],
       topicIds: matches.map((topic) => topic.id),
       pn: pn.toUpperCase(),
@@ -139,5 +159,36 @@ export function answerMyke(question, organization, previousTopicIds = []) {
       "Para revisar un error concreto, usa Reportar con el mensaje y el área afectada. No compartas claves ni contraseñas.",
     ],
     topicIds: [],
+  };
+}
+
+// Only builds evidence for the requested PN. No alternate calculation engine.
+export function buildMykePartAnswer(
+  pn,
+  { reconciliation = [], ...context } = {},
+) {
+  const item = reconciliation.find(
+    (row) => row.partNumber === normalizeText(pn),
+  );
+  if (!item)
+    return {
+      found: false,
+      pn: normalizeText(pn),
+      explanation: reconciliation.length
+        ? "No encontré este PN en el corte actual. Revisa el número o carga sus fuentes. Un PN que solo está en Cost Part o ISPBB no entra por sí solo a la lista."
+        : "Todavía no hay piezas reconciliadas. Carga los archivos o espera una copia completa de los escaneos del bot para consultar una pieza.",
+    };
+  const trace = buildPartLearningTrace({ item, ...context });
+  return {
+    found: true,
+    pn: trace.pn,
+    description: trace.description,
+    status: trace.status,
+    complete: trace.complete,
+    metrics: trace.summaryDetails,
+    origins: trace.origin.routes,
+    explanation: trace.conclusion.slice(0, 3).join(" "),
+    warnings: trace.warnings,
+    actions: trace.actionPlan,
   };
 }

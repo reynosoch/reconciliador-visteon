@@ -1,5 +1,18 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-05-myke-pieces-explore-team",
+    date: "05 OCT 2026",
+    title: "Pregúntale a Myke por una pieza",
+    summary:
+      "Myke con gorra Visteon, preguntas listas y datos reales de un PN en el chat.",
+    items: [
+      "Físico, QAD, costo, NET, SWING y advertencias del corte actual, con filas de origen en el visor Excel común.",
+      "¿Qué puedo hacer? y más preguntas desde Chat; Explorar abre el motor, trazador, archivos y advertencias.",
+      "Mascota más escondida y X accesible; once puestos senior con fantasmas de colores, documentados en .agents.",
+      "Ayuda local sin IA externa; no modifica cifras ni ejecuta ajustes de inventario.",
+    ],
+  },
+  {
     id: "2026-10-05-myke-chat-faq",
     date: "05 OCT 2026",
     title: "Myke se asoma: chat pequeño, preguntas y equipo",

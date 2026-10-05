@@ -23,11 +23,6 @@
   transition: none;
   cursor: grabbing;
 }
-.vi-myke-launcher > span {
-  font-size: 13px;
-  font-weight: 750;
-  margin-top: -5px;
-}
 .vi-myke-launcher:focus-visible {
   outline: 3px solid #ffb879;
   outline-offset: 3px;
@@ -289,28 +284,13 @@
 .vi-myke-team summary::-webkit-details-marker {
   display: none;
 }
-.vi-myke-team summary > span:not(.vi-myke-agent-icon) {
+.vi-myke-team summary > span {
   display: grid;
   gap: 3px;
   flex: 1;
 }
-.vi-myke-agent-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: #ff9b3c15;
-  color: #ffb879;
-  font-size: 24px;
-}
 .vi-myke-team summary strong {
   font-size: 16px;
-}
-.vi-myke-team summary small {
-  color: #a6c5d4;
-  font-size: 12px;
 }
 .vi-myke-team details[open] summary b {
   transform: rotate(45deg);
@@ -486,6 +466,7 @@
 }
 .vi-myke-dock .vi-myke-launcher {
   position: relative;
+  z-index: 1;
   inset: auto;
   width: 112px;
   height: 126px;
@@ -505,33 +486,47 @@
   filter: drop-shadow(0 3px 3px #00212d30);
 }
 .vi-myke-dock[data-edge="left"] .vi-myke-launcher {
-  transform: translateX(-40px) rotate(9deg);
+  transform: translateX(-54px) rotate(9deg);
 }
 .vi-myke-dock[data-edge="right"] .vi-myke-launcher {
-  transform: translateX(40px) rotate(-9deg);
+  transform: translateX(54px) rotate(-9deg);
 }
 .vi-myke-dock[data-edge="top"] .vi-myke-launcher {
-  transform: translateY(-40px);
+  transform: translateY(-54px);
 }
 .vi-myke-dock[data-edge="bottom"] .vi-myke-launcher {
-  transform: translateY(40px);
+  transform: translateY(54px);
 }
 .vi-myke-dock:is(:hover, :focus-within, [data-awake="true"]) .vi-myke-launcher {
   transform: none;
 }
 .vi-myke-hide {
   position: absolute;
+  z-index: 2;
+  isolation: isolate;
   top: 2px;
   right: 0;
   width: 44px;
   height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #ffdcc0;
+  font-size: 20px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.vi-myke-hide::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  z-index: -1;
   border: 1px solid #ffd0a64d;
   border-radius: 50%;
   background: #123c50f0;
-  color: #ffdcc0;
-  font-size: 24px;
-  pointer-events: auto;
-  cursor: pointer;
+}
+.vi-myke-hide:focus-visible {
+  outline: 2px solid #ffb879;
 }
 .vi-myke-dock[data-edge="right"] .vi-myke-hide {
   right: auto;
@@ -618,9 +613,6 @@ body:has(.vi-source-preview-overlay) .vi-myke-dock {
   border: 0;
   padding: 10px 0 0;
 }
-.vi-myke-team small {
-  color: #adcbd8;
-}
 body.vi-performance-motion-off .vi-myke-dock,
 body.vi-performance-motion-off .vi-myke-pupils {
   transition: none;
@@ -703,4 +695,113 @@ body.vi-performance-motion-off .vi-myke-pupils {
 }
 .vi-myke-quick-panel .vi-myke-message {
   padding: 12px;
+}
+
+/* Bounded local question library and real domain replies. */
+.vi-myke-question-library {
+  border-bottom: 1px solid #87b9cb24;
+  padding-bottom: 8px;
+}
+.vi-myke-question-library > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: #ffd4ab;
+}
+.vi-myke-question-library .vi-myke-topics {
+  max-height: 180px;
+}
+.vi-myke-piece h3 {
+  margin: 6px 0;
+  color: #ffd4ab;
+  overflow-wrap: anywhere;
+}
+.vi-myke-piece-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.vi-myke-piece-metrics details {
+  border: 1px solid #87b9cb30;
+  border-radius: 12px;
+  padding: 10px;
+  min-width: 0;
+  background: #082a3b80;
+}
+.vi-myke-piece-metrics details[open] {
+  grid-column: 1 / -1;
+}
+.vi-myke-piece-metrics summary {
+  min-height: 44px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  font-size: 14px;
+}
+.vi-myke-piece-metrics summary strong {
+  grid-row: 2;
+  color: #fff1dd;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.vi-myke-piece-metrics summary > span:last-child {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  color: #ffbe86;
+}
+.vi-myke-explore {
+  display: grid;
+  gap: 12px;
+}
+.vi-myke-explore button {
+  display: grid;
+  grid-template-columns: 36px 1fr 24px;
+  gap: 8px 12px;
+  text-align: left;
+  padding: 18px;
+  border: 1px solid #87b9cb35;
+  border-radius: 18px;
+  background: #0c3447c9;
+  color: #e5f1f5;
+  cursor: pointer;
+}
+.vi-myke-explore button > span {
+  grid-row: 1 / 3;
+  font-size: 18px;
+  color: #ffb77b;
+}
+.vi-myke-explore button > strong {
+  font-size: 18px;
+}
+.vi-myke-explore button > p {
+  grid-column: 2;
+  margin: 0;
+  color: #abc4cf;
+}
+.vi-myke-explore button > b {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: center;
+  color: #ffb77b;
+}
+.vi-myke-explore button:hover {
+  border-color: #ffb77b88;
+  background: #15445ad9;
+}
+.vi-myke-team .vi-myke-ghost {
+  width: 52px;
+  height: 58px;
+}
+.vi-myke-team .vi-myke-float,
+.vi-myke-team .vi-myke-shadow {
+  animation: none;
+}
+@media (max-width: 400px) {
+  .vi-myke-piece-metrics {
+    grid-template-columns: 1fr;
+  }
 }

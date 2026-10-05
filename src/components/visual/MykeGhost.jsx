@@ -6,7 +6,13 @@ const poses = {
   reading: "vi-myke-reading",
   dragging: "vi-myke-dragging",
 };
-export default function MykeGhost({ className = "", pose = "idle", gaze = 0 }) {
+export default function MykeGhost({
+  className = "",
+  pose = "idle",
+  gaze = 0,
+  cap = true,
+  color = "#f5821f",
+}) {
   const gradient = useId();
   return (
     <svg
@@ -24,9 +30,9 @@ export default function MykeGhost({ className = "", pose = "idle", gaze = 0 }) {
           y2="94"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#ffd7ab" />
-          <stop offset=".55" stopColor="#ffac5d" />
-          <stop offset="1" stopColor="#f5821f" />
+          <stop stopColor="#fff1de" />
+          <stop offset=".55" stopColor={color} stopOpacity=".75" />
+          <stop offset="1" stopColor={color} />
         </linearGradient>
       </defs>
       <ellipse
@@ -42,12 +48,12 @@ export default function MykeGhost({ className = "", pose = "idle", gaze = 0 }) {
         <path
           d="M14 49c0-24 14-37 34-37s34 13 34 37v29c0 8-5 13-12 8-4-3-6-3-10 1-7 7-17 7-24 0-4-4-6-4-10-1-7 5-12 0-12-8V49Z"
           fill={`url(#${gradient})`}
-          stroke="#ffdbb5"
+          stroke="#fff1de"
           strokeWidth="1.5"
         />
         <path
           d="M15 57c-7 0-10 5-9 9M81 55c6-1 9-6 8-10"
-          stroke="#ffb875"
+          stroke={color}
           strokeWidth="7"
           strokeLinecap="round"
         />
@@ -58,6 +64,33 @@ export default function MykeGhost({ className = "", pose = "idle", gaze = 0 }) {
           strokeWidth="4"
           strokeLinecap="round"
         />
+        {cap && (
+          <g>
+            <path
+              d="M22 25c0-13 11-21 26-21s26 8 26 21Z"
+              fill="#124258"
+              stroke="#7eb1c2"
+              strokeWidth="1.2"
+            />
+            <path
+              d="M19 25c19-4 43-4 61 1 6 2 7 5 2 6-19 3-44 0-63-7Z"
+              fill="#082d40"
+              stroke="#ffbc75"
+              strokeWidth="1.5"
+            />
+            <text
+              x="48"
+              y="20"
+              textAnchor="middle"
+              fill="#fff8ef"
+              fontSize="8"
+              fontFamily="Arial, sans-serif"
+              fontWeight="700"
+            >
+              visteon
+            </text>
+          </g>
+        )}
         <ellipse cx="25" cy="61" rx="7" ry="4" fill="#ed8559" opacity=".45" />
         <ellipse cx="71" cy="61" rx="7" ry="4" fill="#ed8559" opacity=".45" />
         <g className="vi-myke-eyes">

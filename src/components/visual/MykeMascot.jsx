@@ -81,6 +81,10 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
         title="Arrástrame a un borde o toca para conversar"
         aria-description="Arrástrame a un borde. También puedes moverme con las flechas del teclado."
         aria-expanded={open}
+        // The mascot owns this touch gesture; do not also trigger the edge menu swipe.
+        onTouchStart={(event) => event.stopPropagation()}
+        onTouchEnd={(event) => event.stopPropagation()}
+        onTouchCancel={(event) => event.stopPropagation()}
         onPointerDown={(event) => {
           if (event.button !== 0 || !event.isPrimary) return;
           const box = event.currentTarget.getBoundingClientRect();

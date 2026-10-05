@@ -153,14 +153,14 @@ export default function MainMenu({
               className="vi-menu-item vi-logic-entry"
               onClick={() => {
                 onClose?.();
-                onOpenMyke?.("help");
+                onOpenMyke?.("explore");
               }}
             >
               <span>
-                <strong>Preguntas frecuentes</strong>
+                <strong>Explorar con Myke</strong>
                 <small>
-                  Qué aporta cada archivo, cómo se reconoce el físico y de dónde
-                  salen NET, SWING y las advertencias.
+                  Motor por dentro, recorrido de una pieza, archivos y
+                  advertencias del inventario.
                 </small>
               </span>
               <b>›</b>
