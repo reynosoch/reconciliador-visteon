@@ -86,7 +86,7 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 - TanStack Virtual en la tabla grande.
 - El scroll normal es nativo. Motion usa `useSpring` únicamente para rubber band/overscroll y transiciones puntuales del shell; nunca sustituye `scrollTop`.
 - SheetJS fijado localmente en `vendor/xlsx-0.20.3.tgz`.
-- `README.md` es la única fuente de verdad documental del proyecto.
+- `README.md` es la fuente de verdad de reglas, arquitectura y decisiones del proyecto. La coordinación de la organización virtual vive en [`.agents/README.md`](.agents/README.md); los agentes leen después [`.agents/AGENTS.md`](.agents/AGENTS.md) y solo los roles/contratos necesarios para su tarea.
 
 ### Handoff UI actual — 02 OCT 2026
 
@@ -105,7 +105,7 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 <!-- AGENT_CONTEXT_END -->
 
 
-> **Fuente de verdad del proyecto:** reglas, decisiones, pendientes, seguridad, arquitectura y operación deben mantenerse en este README. Evitar documentos paralelos que repitan o contradigan esta información.
+> **Fuente de verdad del proyecto:** reglas de inventario, decisiones del dominio, pendientes, seguridad, arquitectura y operación de la aplicación deben mantenerse en este README. [`.agents`](.agents/README.md) define responsabilidades y coordinación del trabajo entre humanos/agentes, sin sustituir ni duplicar las reglas del reconciliador.
 
 Dashboard web para apoyar la conciliación del inventario físico de planta durante el día de inventario. El sistema compara el físico proveniente de **4Wall** contra el congelado de **QAD**, incorpora referencias de planeación, BOM y costos, y presenta diferencias en piezas y dólares para las juntas periódicas de Finanzas.
 
@@ -659,7 +659,7 @@ Estas preguntas se mantienen fuera del dashboard para no mezclarlas con alertas 
 
 ## Higiene del repositorio
 
-Este README es la conciencia técnica; no crear `PROJECT_CONTEXT.md`, `SECURITY_REVIEW.md`, `BOT_CONTROL_SETUP.md` u otros documentos paralelos con reglas duplicadas.
+Este README es la conciencia técnica; no crear `PROJECT_CONTEXT.md`, `SECURITY_REVIEW.md`, `BOT_CONTROL_SETUP.md` u otros documentos paralelos con reglas duplicadas. `.agents/` es el modelo operativo de coordinación solicitado: las decisiones de inventario siguen documentándose aquí.
 
 El build ejecuta:
 
@@ -672,7 +672,6 @@ El build ejecuta:
 No versionar `node_modules/`, `dist/`, `.env.local`, `inventario.db`, descargas temporales de 4Wall ni `bot_snapshot_status.json`. `dist/` es generado por Vite y se puede borrar localmente en cualquier momento.
 
 Sí conservar aunque no aparezcan directamente en la UI: migraciones históricas, verificadores de CI, scripts del bot, `supabase/source-column-map.json`, el vendor de SheetJS y archivos claramente ligados al roadmap vigente.
-
 
 ### Trazador de aprendizaje y Bot — 05/10/2026
 
@@ -697,3 +696,9 @@ Sí conservar aunque no aparezcan directamente en la UI: migraciones históricas
 - Los pasos son botones que desplazan/enfocan únicamente el drawer; no cambian hash ni historial (los enlaces de fragmento podían cerrar el overlay). Origen con filas compactas y entrada Motion breve, respetando Quitar animaciones. Snapshot se explica como copia de los escaneos de un momento concreto. Campos internos `raw_record`/`source_columns` no se exponen en el visor; PN sin fila aceptada permite buscar coincidencias originales sin marcarlas como utilizadas.
 - **LAB → Cómo funciona el motor** es una guía independiente con seis etapas RAW→PARSERS→NORMALIZED→DOMAIN ENGINE→RECONCILIATION→UI, fuentes activas consultables y tres ejemplos explícitamente didácticos. `engineGuide.js` usa el motor de producción y las mismas fórmulas descriptivas del trazador; React presenta los resultados. Caso de localidades: 20 físico / 20 QAD en ubicaciones distintas da NET $0 y SWING $168 con costo $4.20, sin dividir entre dos. No se mezclan ejemplos con inventario real.
 - Build/CI verifica candidatos, resumen/advertencias/acciones, precisión, metadatos ocultos, faltantes y ejemplos NET/SWING/Phantom. Pruebas de navegador a 1366/1024/768/390 px: diez pasos sin salir al dashboard, fuentes paginadas, guía desde LAB, Esc y transición al trazador. Sin nuevas dependencias ni cambios a scroll, Pac-Man, navbar, footer o ejecución del bot. Pages sigue manual.
+
+## Organización virtual de ingeniería
+
+El modelo operativo está en [`.agents/README.md`](.agents/README.md): guía humana, reglas para agentes, orquestador Engineering Manager/Product Owner, especialistas, ownership del dominio/código, derechos de decisión, contratos versionados, matriz de interacción, escalaciones y gates de entrega. Incluye plantilla de trabajo y un caso ilustrativo del trazador con evidencia; no son resultados ejecutados.
+
+Puede usarse con un ejecutor, varios agentes cuando la sesión lo permita, o coordinación humana. Cada revisión declara su independencia y el SHA/árbol verificado. La autoridad humana ya concedida se conserva; cambiar reglas financieras, operar datos compartidos o desplegar requiere la autoridad correspondiente. La documentación no instala un scheduler, validación automática de mensajes, autenticación empresarial ni agentes desatendidos. Los controles automáticos actuales siguen siendo `npm run build` y Verify main; Pages continúa manual.
