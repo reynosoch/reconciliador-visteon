@@ -11,10 +11,9 @@ import {
   getRecommendedPartCases,
 } from "../../domain/partLearningTrace.js";
 import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
-import { createMykeProviderAdapter } from "../../services/mykeAI.js";
+import { createMykeProviderAdapter, createMykeRemoteAdapter, getMykeAIConfig } from "../../services/mykeAI.js";
 import { submitDevelopmentFeedback } from "../../services/supabase.js";
 import { isMykeProjectQuestion } from "../../../supabase/functions/myke-chat/public-question.mjs";
-import { loadMykeCopilotGuide } from "../../services/mykeLocalContext.js";
 import publicKnowledge from "../../../supabase/functions/myke-chat/knowledge.generated.json";
 
 function extractPNFromConversation(messages) { return messages.filter((message) => message.answer?.kind === "piece").at(-1)?.answer.pn || ""; }
@@ -161,7 +160,10 @@ export default function MykePanel({
   const [typing, setTyping] = useState(false);
   const [gaze, setGaze] = useState(0);
   const [reaction, setReaction] = useState("welcome");
-  const [copilotStatus, setCopilotStatus] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const [connectedCode, setConnectedCode] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState("");
+  const remoteConfig = useMemo(() => getMykeAIConfig(), []);
   const [preview, setPreview] = useState(null);
   const [size, setSize] = useState(() => {
     const stored = safeReadJson("visteon.ui.mykeSize.v1", null).value;
@@ -181,7 +183,7 @@ export default function MykePanel({
   const reportOpen = Boolean(report);
   const reportFlight = useRef(false);
   const seenHelp = useRef(null);
-  const provider = useMemo(() => providerAdapter || createMykeProviderAdapter(), [providerAdapter]);
+  const provider = useMemo(() => providerAdapter || (connectedCode ? createMykeRemoteAdapter({accessCode:connectedCode,config:remoteConfig}) : createMykeProviderAdapter()), [providerAdapter,connectedCode,remoteConfig]);
   const composer = useRef(null),
     conversation = useRef(null),
     end = useRef(null);
@@ -259,7 +261,7 @@ export default function MykePanel({
     const answer = answerMykeInContext(text, organization, messages.slice(-8), pieceContext);
     const history = messages.filter((m) => m.publicQuestion || m.aiText).map((m) => ({role:m.role === "you" ? "user" : "assistant",content:m.text || m.aiText}));
     const inScope = isMykeProjectQuestion(text,history);
-    const useAI = provider.configured && answer.kind !== "piece" && answer.kind === "answer" && inScope;
+    const useAI = provider.configured && ["answer", "unknown"].includes(answer.kind) && inScope;
     const id = `myke-${++messageSequence.current}`;
     const controller = new AbortController(); request.current = controller;
     setMessages((current) => [...current.slice(-22),{role:"you",text,publicQuestion:inScope && answer.kind !== "piece"},{role:"myke",id,answer,pending:true}]);
@@ -272,7 +274,7 @@ export default function MykePanel({
       if (controller.signal.aborted) return;
       setMessages((current) => current.map((m) => m.id === id ? {...m,pending:false,aiText,aiProvider:useAI ? provider.name : null} : m));
       const unresolved = answer.kind === "unknown" || (answer.kind === "piece" && !reconciliation.some((item) => item.partNumber === answer.pn));
-      setReaction(unresolved ? "sad" : "reading"); setAIState("local");
+      setReaction(unresolved && !aiText ? "sad" : "reading"); setAIState("local");
     } catch (failure) {
       if (controller.signal.aborted) return;
       setMessages((current) => current.map((m) => m.id === id ? {...m,pending:false,aiError:failure.message} : m));
@@ -362,7 +364,7 @@ export default function MykePanel({
       {entry.paragraphs.map((text, index) => (
         <p key={index}>{text}</p>
       ))}
-      <span>Guía del reconciliador · respuesta documentada</span>
+      <span>Explicación del reconciliador · fuentes verificables</span>
       {entry.sources.length > 0 &&
         (foldSources ? (
           <details className="vi-myke-answer-sources">
@@ -392,7 +394,10 @@ export default function MykePanel({
       <OverlayPortal onClose={onClose}>
         <div
           className={`vi-myke-overlay ${anchor ? "vi-myke-compact" : ""}`}
-          style={anchor ? { "--vi-myke-anchor-x": `${anchor.x}px`, "--vi-myke-anchor-y": `${anchor.y}px` } : undefined}
+          style={anchor ? {
+            "--vi-myke-anchor-x": `${Math.max(8,Math.min(window.innerWidth - Math.min(430,window.innerWidth-16)-8,anchor.x < window.innerWidth/2 ? anchor.x + anchor.width + 8 : anchor.x - Math.min(430,window.innerWidth-16)-8))}px`,
+            "--vi-myke-anchor-y": `${Math.max(8,Math.min(window.innerHeight - Math.min(560,window.innerHeight-88)-80,anchor.y + anchor.height - Math.min(560,window.innerHeight-88)))}px`
+          } : undefined}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) onClose();
           }}
@@ -436,7 +441,7 @@ export default function MykePanel({
                 ×
               </button>
             </header>
-            {anchor && <button type="button" className="vi-myke-expand" onClick={() => onExpand?.()}>Ampliar chat ↗</button>}
+            {anchor && <div className="vi-myke-quick-tools"><span>Chat rápido</span><button type="button" className="vi-myke-expand" onClick={() => onExpand?.()}>Abrir chat ↗</button></div>}
             <nav className="vi-myke-tabs" aria-label="Vistas de Myke">
               {[
                 ["chat", "Chat"],
@@ -481,38 +486,29 @@ export default function MykePanel({
                         ))}
                     </div>
                     <div className="vi-myke-more">
-                      <details className="vi-myke-local-options">
-                        <summary>Usar Microsoft Copilot</summary>
-                        <p>Si tu red solo permite Copilot, aquí tienes las preguntas y la guía del proyecto. No necesitas descargar el modelo local.</p>
-                        <p>Descarga la guía, adjúntala en Copilot y pega tu pregunta. Copilot se abre en otra pestaña; su respuesta no aparece automáticamente aquí. La guía contiene documentación y código públicos, sin datos del inventario.</p>
-                        <button type="button" onClick={async () => {
-                          setCopilotStatus("Preparando guía…");
-                          try {
-                            const guide = await loadMykeCopilotGuide(import.meta.env.BASE_URL, organization.topics);
-                            const url = URL.createObjectURL(new Blob([guide], { type: "text/plain;charset=utf-8" }));
-                            const link = document.createElement("a"); link.href = url; link.download = "Myke-guia-reconciliador.txt"; link.click();
-                            setTimeout(() => URL.revokeObjectURL(url), 1000);
-                            setCopilotStatus("Guía lista. Adjúntala en Copilot; las consultas PN siguen aquí.");
-                          } catch {
-                            setCopilotStatus("No pude cargar la guía. Las preguntas frecuentes siguen disponibles aquí.");
-                          }
-                        }}>Descargar guía para Copilot</button>
-                        <button type="button" onClick={async () => {
-                          const question = draft.trim() || messages.filter((m) => m.publicQuestion).at(-1)?.text || "¿Cómo uso el tablero del reconciliador Visteon?";
-                          if (!isMykeProjectQuestion(question)) {
-                            setCopilotStatus("Para una pieza, consulta su PN aquí. Copia solo una pregunta general del proyecto a Copilot.");
-                            return;
-                          }
-                          try {
-                            await navigator.clipboard.writeText(`Usa la guía adjunta del Reconciliador Visteon. Responde con fuentes de esa guía; si falta información, dilo. Pregunta: ${question}`);
-                            setCopilotStatus("Pregunta copiada. Pégala en Copilot junto con la guía.");
-                          } catch {
-                            setCopilotStatus("El navegador no permitió copiar. Puedes escribir tu pregunta directamente en Copilot.");
-                          }
-                        }}>Copiar pregunta para Copilot</button>
-                        <a href="https://m365.cloud.microsoft/chat" target="_blank" rel="noopener noreferrer">Abrir Microsoft Copilot ↗</a>
-                        {copilotStatus && <p role="status">{copilotStatus}</p>}
-                      </details>
+                      {!anchor && <details className="vi-myke-local-options">
+                        <summary>{provider.configured ? "Conexión IA" : "Conectar IA"}</summary>
+                        <p>La conversación permanece aquí. El servicio conecta con Copilot corporativo o el proveedor autorizado en el servidor; no descarga modelos.</p>
+                        {!remoteConfig ? <p>No hay un servicio IA configurado en esta instalación.</p> : <>
+                          <label className="vi-myke-faq-search">Código privado del servicio
+                            <input type="password" autoComplete="off" value={accessCode} maxLength={256} onChange={(event) => setAccessCode(event.target.value)} />
+                          </label>
+                          <button type="button" disabled={!accessCode.trim() || aiState === "pending"} onClick={async () => {
+                            if (request.current) return;
+                            const controller = new AbortController(); request.current = controller; setAIState("pending");setReaction("thinking");setConnectionStatus("Verificando conexión…");
+                            try {
+                              const candidate=createMykeRemoteAdapter({accessCode,config:remoteConfig});
+                              const result=await candidate.generate({question:"¿Cómo uso el tablero del reconciliador Visteon?",signal:controller.signal});
+                              if(controller.signal.aborted)return;
+                              setConnectedCode(accessCode);setAccessCode("");setConnectionStatus("IA conectada: las respuestas llegan a este chat.");
+                              setMessages((current)=>[...current.slice(-22),{role:"myke",id:`connect-${++messageSequence.current}`,answer:answerMykeInContext("¿Cómo uso esta página?",organization,[],pieceContext),aiText:result,aiProvider:candidate.name}]);setReaction("reading");
+                            }catch(failure){if(!controller.signal.aborted){setConnectionStatus(failure.message);setReaction("sad");}}
+                            finally{if(request.current===controller){request.current=null;setAIState("local");}}
+                          }}>Conectar y comprobar</button>
+                          {connectedCode && <button type="button" onClick={()=>{request.current?.abort();setConnectedCode("");setAccessCode("");setConnectionStatus("IA desconectada.");}}>Desconectar IA</button>}
+                        </>}
+                        {connectionStatus && <p role="status">{connectionStatus}</p>}
+                      </details>}
                       <details className="vi-myke-question-library">
                         <summary>Más preguntas</summary>
                         <label className="vi-myke-faq-search">
@@ -572,7 +568,7 @@ export default function MykePanel({
                 gaze={gaze}
               />
               </motion.div>
-                      <div><strong>Vamos a revisarlo juntos</strong><span>{aiState === "pending" ? "Leyendo guía y evidencia disponible" : typing ? "Te escucho; sigue escribiendo" : "El motor calcula. Yo te ayudo a entenderlo."}</span></div>
+                      <div><strong>Estoy contigo</strong><span>{aiState === "pending" ? "Revisando tu pregunta y la evidencia" : typing ? "Te escucho; sigue escribiendo" : "Pregúntame por el tablero o una pieza."}</span></div>
                     </div>
                     <div
                       className="vi-myke-conversation"
@@ -629,14 +625,14 @@ export default function MykePanel({
                               {message.aiText ? (
                                 <div className="vi-myke-ai-answer">
                                   <small>
-                                    {message.aiProvider} · guía y código del proyecto;
+                                    {message.aiProvider} · contexto del proyecto;
                                     confirma propuestas en las fuentes
                                   </small>
                                   <p>{message.aiText}</p>
                                   {message.answer.kind === "answer" && (
                                     <details className="vi-myke-answer-sources">
                                       <summary>
-                                        Guía relacionada y fuentes disponibles
+                                        Explicación relacionada y fuentes disponibles
                                       </summary>
                                       {message.answer.topicIds.map((id) =>
                                         renderTopic(
@@ -775,7 +771,7 @@ export default function MykePanel({
                       </button>
                     </form>
                     <p className="vi-myke-note" role="status">
-                      {aiState === "pending" ? "Revisando la guía y el corte…" : provider.configured ? provider.name : "Guía y motor local · Copilot aún sin conectar"}{" "}
+                      {aiState === "pending" ? "Revisando la pregunta y el corte…" : provider.configured ? provider.name : "Ayuda y datos locales · IA sin conectar"}{" "}
                       · No modifica inventario. No compartas contraseñas.
                     </p>
                   </section>

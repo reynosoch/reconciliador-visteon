@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { buildInventoryEngine } from "../src/domain/inventoryEngine.js";
 import { buildMykeKnowledge } from "../src/domain/mykeOrganization.js";
 import { answerMykeInContext, buildMykeLiveAnswer, buildMykePartAnswer, buildMykeHelpAnswer, buildMykeFeedbackDraft, buildMykeFeedbackPayload } from "../src/domain/mykeKnowledge.js";
-import { buildMykeCopilotGuide } from "../src/services/mykeLocalContext.js";
 import { createMykeProviderAdapter } from "../src/services/mykeAI.js";
 import { HELP, sourceHelpInfo } from "../src/components/help/helpContent.js";
 const context = JSON.parse(readFileSync(new URL("../public/myke/project-context.generated.json",import.meta.url)));
@@ -30,6 +29,5 @@ let called=0;const provider=createMykeProviderAdapter({send:async(args)=>{called
 assert.equal(createMykeProviderAdapter().configured,false);await assert.rejects(createMykeProviderAdapter().generate({question:"Explica el motor"}),/no está conectado/);
 await assert.rejects(provider.generate({question:"PN: PRIVATE-123"}),/Reconciliador/);await assert.rejects(provider.generate({question:"Dame una receta"}),/Reconciliador/);assert.equal(called,0);
 assert.equal(await provider.generate({question:"¿Qué es QAD?",history:[{role:"user",content:"PN: PRIVATE-123"}]}),"Guía respaldada");assert.equal(called,1);
-const handoff=buildMykeCopilotGuide({...context,inventory:"PRIVATE_INVENTORY",documents:[...context.documents,{path:".agents/ROLES.md",content:"PRIVATE_ROLES"}]},knowledge.topics);assert(handoff.includes("SWING"));assert(!/PRIVATE_INVENTORY|PRIVATE_ROLES/.test(handoff));
 const pkg=JSON.parse(readFileSync(new URL("../package.json",import.meta.url)));assert(!pkg.dependencies["@huggingface/transformers"]);
 console.log("Myke contextual OK: natural intent, engine-only summary, incomplete sources, scoped help/evidence, PN follow-ups, report preview sanitization, corporate adapter isolation. Provider mocked; no live corporate access claimed.");

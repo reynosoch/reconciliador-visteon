@@ -32,11 +32,11 @@ export async function requestMykeAI({
 }) {
   if (!config || !accessCode)
     throw new Error(
-      "La IA no está conectada. Puedes seguir con la guía local.",
+      "La IA no está conectada. La ayuda del tablero sigue disponible.",
     );
   if (!isMykePublicQuestion(question))
     throw new Error(
-      "Las consultas de piezas se resuelven con el motor local; no se envían a Gemini.",
+      "Las consultas de piezas se resuelven con el motor local; no se envían a la IA.",
     );
   if (!isMykeProjectQuestion(question, history)) throw new Error(MYKE_SCOPE_REPLY);
   let response;
@@ -72,7 +72,7 @@ export async function requestMykeAI({
     if (signal?.aborted || ["AbortError", "TimeoutError"].includes(error.name))
       throw error;
     throw new Error(
-      "No pudimos conectar con la IA. La guía local sigue disponible.",
+      "No pudimos conectar con la IA. La ayuda del tablero sigue disponible.",
       { cause: error },
     );
   }
@@ -84,19 +84,19 @@ export async function requestMykeAI({
     const errors = {
       401: "El código de acceso no fue aceptado.",
       403: "Este sitio no tiene permiso para usar el servicio IA.",
-      429: "Gemini alcanzó su cuota o está ocupado. La guía local sigue disponible; intenta más tarde.",
+      429: "El servicio IA alcanzó su cuota o está ocupado. La ayuda del tablero sigue disponible; intenta más tarde.",
       422: "Esta consulta se mantiene local para proteger los datos de las piezas.",
       503: "El servicio IA todavía no está configurado.",
     };
     throw new Error(
       errors[response.status] ||
-        "No se pudo consultar la IA. La guía local sigue disponible.",
+        "No se pudo consultar la IA. La ayuda del tablero sigue disponible.",
     );
   }
   const data = await response.json();
   if (typeof data.text !== "string" || !data.text.trim())
     throw new Error(
-      "La IA no devolvió una respuesta. Conservamos la guía local.",
+      "La IA no devolvió una respuesta. La ayuda local sigue disponible.",
     );
   return data.text.slice(0, 12000);
 }
@@ -115,4 +115,12 @@ export function createMykeProviderAdapter({ send, name = "Microsoft Copilot" } =
       return text.slice(0,5000);
     },
   };
+}
+
+// Actual HTTP connection to the existing server route, checked before the UI calls it connected.
+export function createMykeRemoteAdapter({config = getMykeAIConfig(), accessCode, fetchImpl = fetch} = {}) {
+  return createMykeProviderAdapter({
+    name:"IA del reconciliador",
+    ...(config && accessCode ? {send:({question,history,signal})=>requestMykeAI({question,history,signal,config,accessCode,fetchImpl})} : {}),
+  });
 }

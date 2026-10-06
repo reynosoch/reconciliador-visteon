@@ -1,5 +1,17 @@
 export const PRODUCT_UPDATES = [
   {
+    id:"2026-10-06-myke-quick-help",
+    date:"06 OCT 2026",
+    title:"Myke: fantasma, chat rápido y ayuda lateral",
+    summary:"Toca para conversar en pequeño; amplía cuando lo necesites.",
+    items:[
+      "Fantasma blanco/lila de píxeles, sin vidrio ni disfraz; poses y X cerca.",
+      "Chat rápido con preguntas útiles y Abrir chat conservando la conversación.",
+      "Los ? abren ayuda lateral con Myke animado, fuentes y visor Excel.",
+      "Se elimina el traspaso de guías. La ruta IA recibe respuestas dentro del chat; Copilot Studio en servidor requiere activación autorizada.",
+    ],
+  },
+  {
     id: "2026-10-06-myke-contextual-copilot",
     date: "06 OCT 2026",
     title: "Myke vive en el reconciliador",

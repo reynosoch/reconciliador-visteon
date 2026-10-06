@@ -1,6 +1,10 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState, lazy, Suspense } from "react";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
+import MykeGhost from "../visual/MykeGhost.jsx";
+const SourcePreviewModal = lazy(() => import("../shell/SourcePreviewModal.jsx"));
+import { buildMykeHelpAnswer } from "../../domain/mykeKnowledge.js";
+import { getTracerSourceInventory } from "../../domain/partLearningTrace.js";
 import { HELP, sourceHelpInfo } from "./helpContent.js";
 
 const MykeHelpContext = createContext(null);
@@ -28,11 +32,23 @@ export function HelpButton({ topic, onHelp, className = "" }) {
   );
 }
 
-export default function HelpDrawer({ topic, sources, onClose }) {
+export default function HelpDrawer({ topic, sources, scanRows = [], snapshotMeta = null, onOpenChat, onOpenSources, reduceAnimations = false, onClose }) {
+  const [pose,setPose]=useState("welcome");
+  const [preview,setPreview]=useState(null);
+  useEffect(()=>{
+    if(!topic)return;
+    setPose("welcome");setPreview(null);
+    const speak=setTimeout(()=>setPose("reading"),900);
+    const rest=setTimeout(()=>setPose("idle"),5000);
+    return ()=>{clearTimeout(speak);clearTimeout(rest);};
+  },[topic]);
   if (!topic) return null;
 
   const info = sourceHelpInfo(topic, sources) || HELP[topic] || HELP.overview;
   const notes = Array.isArray(info.notes) ? info.notes : [];
+  const explanation = buildMykeHelpAnswer(info,topic);
+  const inputs = getTracerSourceInventory(sources,Boolean(snapshotMeta?.complete),snapshotMeta);
+  const openChat = (event) => onOpenChat?.(event.currentTarget.getBoundingClientRect());
 
   return (
     <OverlayPortal onClose={onClose}>
@@ -42,6 +58,10 @@ export default function HelpDrawer({ topic, sources, onClose }) {
           if (event.target === event.currentTarget) onClose?.();
         }}
       >
+        <aside className="vi-myke-help-speaker" aria-label="Myke explica esta sección">
+          <MykeGhost pose={reduceAnimations ? "idle" : pose}/>
+          <div><strong>Myke</strong><p>Te explico qué ves y de dónde sale.</p><button type="button" onClick={openChat}>Preguntarle a Myke</button></div>
+        </aside>
         <RubberDrawer className="vi-drawer-panel vi-help-drawer">
           <header className="vi-help-head">
             <div className="vi-help-head-copy">
@@ -62,6 +82,7 @@ export default function HelpDrawer({ topic, sources, onClose }) {
           </header>
 
           <div className="vi-help-body">
+            <div className="vi-myke-help-mobile"><MykeGhost pose={reduceAnimations ? "idle" : pose}/><div><strong>Myke te lo explica</strong><button type="button" onClick={openChat}>Preguntarle a Myke</button></div></div>
             <section className="vi-help-intro">
               <span className="vi-help-index">01</span>
               <div>
@@ -76,6 +97,16 @@ export default function HelpDrawer({ topic, sources, onClose }) {
                 <p className="vi-help-section-label">FUENTE</p>
               </div>
               <div className="vi-help-source-card">{info.source}</div>
+              <div className="vi-myke-help-evidence">
+                {explanation.sources.map((type)=>{
+                  const input=inputs.find((item)=>item.type===type);
+                  if(!input)return null;
+                  return <button type="button" key={type} onClick={()=>{
+                    if(!input.loaded){onOpenSources?.();return;}
+                    setPreview({config:{type,label:input.label},source:type==="scans" && !sources.scans?.loaded ? {rows:scanRows,fileName:snapshotMeta?.fileName || "Copia 4Wall publicada por el bot"} : sources[type]});
+                  }}>{input.loaded ? "Ver fuente" : "Cargar"} · {input.label}</button>;
+                })}
+              </div>
             </section>
 
             <section className="vi-help-section">
@@ -105,6 +136,7 @@ export default function HelpDrawer({ topic, sources, onClose }) {
           </div>
         </RubberDrawer>
       </div>
+      {preview && <Suspense fallback={null}><SourcePreviewModal contextClass="vi-myke-evidence" selection={preview} onClose={()=>setPreview(null)}/></Suspense>}
     </OverlayPortal>
   );
 }

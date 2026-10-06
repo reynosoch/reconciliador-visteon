@@ -111,6 +111,8 @@ export default function App() {
   const [mykeTab, setMykeTab] = useState("chat");
   const [mykeAnchor, setMykeAnchor] = useState(null);
   const [mykeHelp, setMykeHelp] = useState(null);
+  const mykeTransition = useRef(null);
+  useEffect(()=>()=>clearTimeout(mykeTransition.current),[]);
   const [tracerRequest, setTracerRequest] = useState(null);
   useEffect(() => {
     safeWriteJson("visteon.ui.mykeEnabled.v1", mykeEnabled);
@@ -391,11 +393,17 @@ export default function App() {
     );
   }
 
+  const afterHelp = (callback) => {
+    clearTimeout(mykeTransition.current);
+    setHelpTopic(null);
+    // Let the old overlay finish its history cleanup before mounting the next one.
+    mykeTransition.current=setTimeout(callback,170);
+  };
   const openMykeHelp = (topic) => {
     const info = sourceHelpInfo(topic, references.sources) || HELP[topic];
     if (!info) { setHelpTopic(topic); return; }
     setMykeHelp({ id: Date.now(), topic, info, pn: selectedPart?.partNumber || null });
-    setMykeAnchor(null); setMykeTab("chat"); setMykeOpen(true);
+    setMykeOpen(false); setHelpTopic(topic);
   };
   return (
     <MykeHelpProvider onHelp={openMykeHelp}>
@@ -584,6 +592,11 @@ export default function App() {
         <HelpDrawer
           topic={helpTopic}
           sources={references.sources}
+          scanRows={inventory.scanRows}
+          snapshotMeta={inventory.snapshotMeta}
+          reduceAnimations={reduceAnimations}
+          onOpenSources={() => afterHelp(()=>setSourcesOpen(true))}
+          onOpenChat={(rect) => afterHelp(()=>{setMykeAnchor({x:rect.x,y:rect.y,width:rect.width,height:rect.height});setMykeTab("chat");setMykeOpen(true);})}
           onClose={() => setHelpTopic(null)}
         />
       }
@@ -637,6 +650,7 @@ export default function App() {
         mykeEnabled={mykeEnabled}
         onToggleMyke={() => setMykeEnabled((value) => !value)}
         onOpenMyke={(tab = "chat") => {
+          setMykeHelp(null);
           setMykeAnchor(null);
           setMykeTab(tab);
           setMykeOpen(true);
@@ -732,8 +746,9 @@ export default function App() {
         <MykeMascot
           reduceAnimations={reduceAnimations}
           open={mykeOpen}
-          onOpen={() => {
-            setMykeAnchor(null);
+          onOpen={(rect) => {
+            setMykeHelp(null);
+            setMykeAnchor({x:rect.x,y:rect.y,width:rect.width,height:rect.height});
             setMykeTab("chat");
             setMykeOpen(true);
           }}

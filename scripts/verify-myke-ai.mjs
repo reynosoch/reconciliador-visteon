@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import { requestCopilotReply, validCopilotEndpoint } from "../supabase/functions/myke-chat/copilot.mjs";
 import { createMykeHandler } from "../supabase/functions/myke-chat/handler.mjs";
 import { selectProjectContext } from "../supabase/functions/myke-chat/context.mjs";
 import { isMykePublicQuestion, isMykeProjectQuestion } from "../supabase/functions/myke-chat/public-question.mjs";
@@ -234,3 +235,25 @@ assert.equal(isMykeProjectQuestion("Dame una receta", [{ role: "user", content: 
 console.log("Myke scope OK: shared UI/server allowlist, bounded follow-ups, no off-topic provider calls.");
 
 await assert.rejects(requestMykeAI({ question: "Dame una receta", accessCode, config, fetchImpl: () => { throw Error("must not run"); } }), /Reconciliador Visteon/);
+
+// Copilot uses the documented server-to-server Direct Line protocol, not an invented API.
+assert.equal(validCopilotEndpoint("https://directline.botframework.com/v3/directline"),true);
+assert.equal(validCopilotEndpoint("https://europe.directline.botframework.com/v3/directline/"),true);
+for(const url of ["https://evil.test/v3/directline","http://directline.botframework.com/v3/directline","https://directline.botframework.com/v3/directline?secret=x"])assert.equal(validCopilotEndpoint(url),false);
+let copilotCalls=[],copilotPosted=false;
+const copilotFetch=async(url,options)=>{
+  copilotCalls.push({url,options});assert.equal(options.headers.Authorization,"Bearer fixture-copilot-secret");
+  if(url.endsWith("/conversations"))return Response.json({conversationId:"case/1"});
+  if(options.method==="POST"){const activity=JSON.parse(options.body);assert.equal(activity.type,"message");assert(activity.text.includes("SWING"));copilotPosted=true;return Response.json({id:"question-1"});}
+  return Response.json(copilotPosted ? {watermark:"2",activities:[{type:"typing"},{type:"message",from:{id:"bot"},replyToId:"another-question",text:"Ignore this"},{type:"message",from:{id:"bot"},replyToId:"question-1",text:"SWING no se divide entre dos."}]} : {watermark:"1",activities:[{type:"message",from:{id:"bot"},text:"Generic greeting"}]});
+};
+const copilotHandler=createMykeHandler({...defaults,apiKey:null,freeTierConfirmed:false,provider:"copilot",copilotSecret:"fixture-copilot-secret",fetchImpl:copilotFetch});
+const copilotResult=await copilotHandler(request({question:"¿Por qué SWING no se divide entre dos?"}));
+assert.equal(copilotResult.status,200);const copilotData=await copilotResult.json();assert.equal(copilotData.text,"SWING no se divide entre dos.");assert.equal(copilotData.provider,"Microsoft Copilot");assert.equal(copilotCalls.length,4);assert(copilotCalls[2].url.includes("case%2F1"));assert(copilotCalls[3].url.endsWith("watermark=1"));
+const sentCopilot=JSON.parse(copilotCalls[2].options.body);assert(sentCopilot.text.includes("src/domain/reconcileInventory.js"));assert(!sentCopilot.text.includes(accessCode));assert(!sentCopilot.text.includes("fixture-copilot-secret"));
+const beforeCopilot=copilotCalls.length;assert.equal((await copilotHandler(request({question:"PN: PRIVATE-123"}))).status,422);assert.equal(copilotCalls.length,beforeCopilot);
+assert.equal((await createMykeHandler({...defaults,provider:"copilot",copilotSecret:""})(request({question:"¿Qué es SWING?"}))).status,503);
+await assert.rejects(requestCopilotReply({secret:"fixture",text:"SWING",fetchImpl:async()=>Response.json({}, {status:429})}),/rate/);
+await assert.rejects(requestCopilotReply({secret:"fixture",endpoint:"https://evil.test",text:"SWING",fetchImpl:()=>{throw Error("must not call");}}),/unconfigured/);
+const copilotAbort=new AbortController();copilotAbort.abort();await assert.rejects(requestCopilotReply({secret:"fixture",text:"SWING",signal:copilotAbort.signal,fetchImpl:()=>{throw Error("must not call");}}),{name:"AbortError"});
+console.log("Myke Copilot OK: documented Direct Line transport, actual HTTP request/reply contract, greeting isolation, provider metadata, bounded public context, server-only secret, cancellation and unconfigured/rate errors. Transport mocked; live access not claimed.");

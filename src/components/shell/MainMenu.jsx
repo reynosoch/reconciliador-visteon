@@ -142,8 +142,8 @@ export default function MainMenu({
               <span>
                 <strong>Chatear con Myke</strong>
                 <small>
-                  Pregunta sobre el reconciliador, abre sus fuentes y conoce al
-                  equipo.
+                  Pregunta sobre el tablero, consulta una pieza y revisa sus
+                  fuentes.
                 </small>
               </span>
               <b>›</b>

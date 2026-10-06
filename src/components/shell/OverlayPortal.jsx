@@ -66,7 +66,12 @@ export default function OverlayPortal({ children, onClose, className = "" }) {
     }, 0);
 
     const pop = (event) => {
-      if (pushed && event.state?.viOverlay !== marker) closeRef.current?.();
+      if (!pushed || event.state?.viOverlay === marker) return;
+      const stack=[...document.querySelectorAll(".vi-overlay-root:not(.vi-overlay-exit)")];
+      const target=stack.findIndex(node=>node.dataset.overlayMarker===event.state?.viOverlay);
+      const own=stack.indexOf(root.current);
+      // Returning from nested evidence keeps its parent drawer and Sources open.
+      if(own >= 0 && (target < 0 || own > target)) closeRef.current?.();
     };
 
     const key = (event) => {
@@ -123,7 +128,7 @@ export default function OverlayPortal({ children, onClose, className = "" }) {
   }, [marker]);
 
   return createPortal(
-    <div ref={root} className={`vi-overlay-root ${className}`}>
+    <div ref={root} data-overlay-marker={marker} className={`vi-overlay-root ${className}`}>
       {children}
     </div>,
     document.body,
