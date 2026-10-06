@@ -8,6 +8,7 @@ const poses = {
   thinking: ["vi-myke-thinking", 6, 1.4],
   sleeping: ["vi-myke-sleeping", 7, 4],
   success: ["vi-myke-success", 8, 1.2],
+  sad: ["vi-myke-sad", 9, 2],
 };
 export default function MykeGhost({ className = "", pose = "idle", gaze = 0 }) {
   const [poseClass, row, duration] = poses[pose] || poses.idle;

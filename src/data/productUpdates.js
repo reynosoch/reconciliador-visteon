@@ -1,5 +1,18 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-06-myke-direct-chat",
+    date: "06 OCT 2026",
+    title: "Myke: toca y conversa",
+    summary: "Chat compacto con preguntas listas; Myke sin gorra, atento a lo que escribes.",
+    items: [
+      "La mascota abre el chat directamente; amplía la misma conversación o entra desde el menú.",
+      "Preguntas frecuentes, consultas de piezas y sus fuentes sin necesidad de activar IA.",
+      "Diez animaciones: escritura, arrastre, alegría al encontrar respuesta y tristeza si falta información.",
+      "Guía pública descargable para Microsoft Copilot; preguntas y piezas disponibles aquí aunque la red bloquee el modelo local.",
+      "Diagnóstico al iniciar si falta instalar la dependencia de IA local; guías disponibles sin modelo.",
+    ],
+  },
+  {
     id: "2026-10-05-myke-gemini",
     date: "05 OCT 2026",
     title: "Myke: Gemini y contexto del motor",

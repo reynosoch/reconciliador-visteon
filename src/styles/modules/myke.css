@@ -39,8 +39,8 @@
   width: 100%;
   height: 100%;
   background-repeat: no-repeat;
-  background-size: 800% 900%;
-  background-position-y: calc(var(--vi-myke-row) * 100% / 8);
+  background-size: 800% 1000%;
+  background-position-y: calc(var(--vi-myke-row) * 100% / 9);
   image-rendering: pixelated;
   animation: vi-myke-frames var(--vi-myke-duration) steps(8, end) infinite;
 }
@@ -897,43 +897,37 @@ body.vi-performance-motion-off .vi-myke-answer {
   }
 }
 
-/* A pet greeting stays nonmodal. Full conversations open only from the menu. */
-.vi-myke-bubble {
-  position: fixed;
-  inset-inline: 14px;
-  bottom: 156px;
-  width: min(290px, calc(100vw - 28px));
-  max-height: min(260px, calc(100dvh - 180px));
-  overflow: auto;
-  padding: 16px 44px 16px 18px;
-  border: 1px solid #a1c8d94d;
-  border-radius: 18px;
-  color: #f5fafc;
-  background: #10384ff5;
-  box-shadow: 0 8px 28px #0004;
-  pointer-events: auto;
-  font-size: 16px;
-  line-height: 1.5;
-}
-.vi-myke-dock[data-edge="right"] .vi-myke-bubble { inset-inline-start: auto; }
-.vi-myke-dock[data-edge="top"] .vi-myke-bubble { top: 144px; bottom: auto; }
-.vi-myke-bubble p { margin: 6px 0 0; }
-.vi-myke-bubble button {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: inherit;
-  font-size: 24px;
-}
-.vi-myke-bubble button:focus-visible { outline: 2px solid #ffb879; }
-
 .vi-myke-local-options { margin-bottom: 8px; }
 .vi-myke-local-options > summary { cursor: pointer; padding: 8px 0; color: #ffd2aa; }
 .vi-myke-local-options p { font-size: 15px; line-height: 1.5; }
 .vi-myke-local-options progress { width: 100%; accent-color: #f5821f; }
 .vi-myke-local-options button { min-height: 44px; padding: 8px 12px; border: 1px solid #ffb87966; border-radius: 12px; background: #17475c; color: #fff3df; }
+
+/* The same conversation opens beside the pet; the menu retains the wide view. */
+.vi-myke-head { display: grid; grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 6px 48px 10px; gap: 0; }
+.vi-myke-head .vi-myke-ghost { width: 84px; height: 91px; }
+.vi-myke-head .vi-icon-close { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; }
+.vi-myke-head > div > p:last-child { white-space: normal; font-size: 14px; }
+.vi-myke-head .vi-eyebrow { display: none; }
+.vi-myke-head h2 { font-size: 24px; }
+.vi-myke-sad { filter: saturate(.8); }
+.vi-myke-compact { background: #00121d33; padding: 12px; }
+.vi-myke-compact .vi-myke-panel { position: absolute; width: min(410px, calc(100vw - 24px)); height: min(650px, calc(100dvh - 24px)); left: clamp(12px, var(--vi-myke-anchor-x), max(12px, calc(100vw - 422px))); top: clamp(12px, calc(var(--vi-myke-anchor-y) - 520px), max(12px, calc(100dvh - 662px))); border-radius: 24px; }
+.vi-myke-compact .vi-myke-tabs { display: none; }
+.vi-myke-expand { position: absolute; left: 12px; top: 10px; z-index: 3; border: 0; background: transparent; color: #bfdce8; font-size: 13px; min-height: 44px; padding: 4px; }
+.vi-myke-compact .vi-myke-body[data-view="chat"] { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); padding: 10px 12px 12px; gap: 8px; }
+.vi-myke-compact .vi-myke-questions { max-height: 132px; gap: 5px; }
+.vi-myke-compact .vi-myke-questions > .vi-myke-suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.vi-myke-compact .vi-myke-questions .vi-myke-suggestions button { display: block; font-size: 13px; padding: 6px 8px; min-height: 38px; }
+.vi-myke-compact .vi-myke-more { display: block; }
+.vi-myke-compact .vi-myke-questions:has(details[open]) { max-height: min(240px, 45%); }
+.vi-myke-compact .vi-myke-composer { padding: 6px; }
+.vi-myke-compact .vi-myke-composer textarea { height: 46px; min-height: 46px; }
+.vi-myke-compact .vi-myke-composer > label { display: none; }
+.vi-myke-compact .vi-myke-note { font-size: 11px; margin: 0; }
+@media (max-height: 640px) { .vi-myke-head .vi-myke-ghost { width: 58px; height: 63px; } .vi-myke-head { padding-block: 3px; } .vi-myke-compact .vi-myke-questions { max-height: 110px; } }
+
+.vi-myke-panel > .vi-rubber-clip > .vi-rubber-content { background: #092b3dfc; }
+.vi-myke-compact .vi-myke-questions .vi-myke-suggestions button:nth-child(n + 3) { display: none; }
+.vi-myke-local-options > button, .vi-myke-local-options > a { display: block; margin: 8px 0; }
+.vi-myke-local-options > a { color: #ffd2aa; padding: 8px 0; min-height: 44px; }

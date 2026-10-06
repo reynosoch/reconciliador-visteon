@@ -11,7 +11,8 @@
     "audit:css": "node scripts/audit-css-usage.mjs",
     "context": "node scripts/show-agent-context.mjs",
     "deploy": "node scripts/deploy-pages.mjs",
-    "myke:knowledge": "node scripts/prepare-myke-knowledge.mjs"
+    "myke:knowledge": "node scripts/prepare-myke-knowledge.mjs",
+    "predev": "node scripts/check-dev-dependencies.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.0",

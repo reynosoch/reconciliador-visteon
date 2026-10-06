@@ -108,6 +108,7 @@ export default function App() {
       ).value !== false,
   );
   const [mykeTab, setMykeTab] = useState("chat");
+  const [mykeAnchor, setMykeAnchor] = useState(null);
   const [tracerRequest, setTracerRequest] = useState(null);
   useEffect(() => {
     safeWriteJson("visteon.ui.mykeEnabled.v1", mykeEnabled);
@@ -627,6 +628,7 @@ export default function App() {
         mykeEnabled={mykeEnabled}
         onToggleMyke={() => setMykeEnabled((value) => !value)}
         onOpenMyke={(tab = "chat") => {
+          setMykeAnchor(null);
           setMykeTab(tab);
           setMykeOpen(true);
         }}
@@ -695,6 +697,8 @@ export default function App() {
             setDataNavigation(null);
             setActiveDataView("alerts");
           }}
+          anchor={mykeAnchor}
+          onExpand={() => setMykeAnchor(null)}
           initialTab={mykeTab}
           reconciliation={inventory.reconciliation}
           engineSources={inventory.engine.sources}
@@ -710,6 +714,11 @@ export default function App() {
       {mykeEnabled && (
         <MykeMascot
           open={mykeOpen}
+          onOpen={(box) => {
+            setMykeAnchor({ x: box.left, y: box.top });
+            setMykeTab("chat");
+            setMykeOpen(true);
+          }}
           onDisable={() => {
             setMykeEnabled(false);
             setMykeOpen(false);

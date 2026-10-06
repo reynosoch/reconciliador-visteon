@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createMykeLocalSession, MYKE_LOCAL_MODEL } from "../src/services/mykeLocalAI.js";
 import { createMykeLocalWorkerHandler } from "../src/services/mykeLocalWorkerRuntime.js";
-import { buildMykeLocalMessages, getMykeLocalSupport } from "../src/services/mykeLocalContext.js";
+import { buildMykeLocalMessages, getMykeLocalSupport, buildMykeCopilotGuide } from "../src/services/mykeLocalContext.js";
 import { isMykeProjectQuestion } from "../supabase/functions/myke-chat/public-question.mjs";
 const context = JSON.parse(readFileSync(new URL("../public/myke/project-context.generated.json", import.meta.url)));
 assert.deepEqual(context, JSON.parse(readFileSync(new URL("../supabase/functions/myke-chat/project-context.generated.json", import.meta.url))));
@@ -65,3 +65,10 @@ await assert.rejects(loading, { name: "AbortError" }); assert.equal(terminated, 
 const failing = createMykeLocalSession({ ...fixture, loadContext: async () => { throw Error("No documentation"); } });
 await assert.rejects(failing, /document/);
 console.log("Myke local OK: source parity, all FAQs, exact-block retrieval, scope/PN isolation, Chrome/Edge gate, GPU-only, progress, string/chat output, truncation refusal, cancellation and worker release. Lifecycle mocked; real inference is reported separately.");
+
+const handoff = buildMykeCopilotGuide({ ...context, inventory: "PRIVATE_INVENTORY", documents: [...context.documents, {path:".agents/ROLES.md", content:"PRIVATE_ROLES"}], modules: [...context.modules, {path:"private/scans.js", content:"PRIVATE_SCANS"}] }, topics);
+assert.ok(handoff.includes("SWING"));
+assert.ok(handoff.includes("README"));
+assert.ok(!/PRIVATE_(INVENTORY|ROLES|SCANS)/.test(handoff));
+assert.ok(handoff.includes("No tienes acceso al inventario"));
+console.log("Myke Copilot handoff OK: generated public guide only; no inventory or internal roles.");

@@ -15,7 +15,7 @@ import {
   requestMykeAI,
 } from "../../services/mykeAI.js";
 import { isMykeProjectQuestion, MYKE_SCOPE_REPLY } from "../../../supabase/functions/myke-chat/public-question.mjs";
-import { getMykeLocalSupport } from "../../services/mykeLocalContext.js";
+import { getMykeLocalSupport, loadMykeCopilotGuide } from "../../services/mykeLocalContext.js";
 import publicKnowledge from "../../../supabase/functions/myke-chat/knowledge.generated.json";
 
 function PieceReply({ pn, context, onEvidence, onTracer, onSources }) {
@@ -138,6 +138,8 @@ export default function MykePanel({
   onOpenSources,
   onOpenDataAlerts,
   initialTab = "chat",
+  anchor = null,
+  onExpand,
   sources = {},
   scanRows = [],
   scanReady = false,
@@ -152,6 +154,8 @@ export default function MykePanel({
   const [messages, setMessages] = useState([]);
   const [typing, setTyping] = useState(false);
   const [gaze, setGaze] = useState(0);
+  const [reaction, setReaction] = useState("welcome");
+  const [copilotStatus, setCopilotStatus] = useState("");
   const [preview, setPreview] = useState(null);
   const [size, setSize] = useState(() => {
     const stored = safeReadJson("visteon.ui.mykeSize.v1", null).value;
@@ -267,11 +271,13 @@ export default function MykePanel({
       localSession.current = await createMykeLocalSession({ signal: controller.signal, onProgress: setLocalProgress });
       setLocalStatus("ready");
       setAIState("ready");
+      setReaction("success");
     } catch (error) {
       if (!controller.signal.aborted) {
         setLocalStatus("error");
         setLocalError(error.message);
         setAIState("local");
+        setReaction("sad");
       }
     } finally {
       if (request.current === controller) request.current = null;
@@ -301,6 +307,9 @@ export default function MykePanel({
     setDraft("");
     setTyping(false);
     composer.current?.focus();
+    setReaction(["unknown", "restricted"].includes(answer.kind) ||
+      (answer.kind === "piece" && !partNumbers.some((pn) => pn.toUpperCase() === answer.pn))
+      ? "sad" : answer.kind === "greeting" ? "welcome" : "success");
     if (!useAI) return;
     const controller = new AbortController();
     request.current = controller;
@@ -324,6 +333,7 @@ export default function MykePanel({
         ),
       );
       setAIState("ready");
+      setReaction("success");
     } catch (error) {
       if (controller.signal.aborted) return;
       setMessages((current) =>
@@ -345,6 +355,7 @@ export default function MykePanel({
         setLocalStatus("error"); setLocalError(error.message);
       }
       setAIState("error");
+      setReaction("sad");
     } finally {
       if (request.current === controller) request.current = null;
     }
@@ -448,7 +459,8 @@ export default function MykePanel({
     <>
       <OverlayPortal onClose={onClose}>
         <div
-          className="vi-myke-overlay"
+          className={`vi-myke-overlay ${anchor ? "vi-myke-compact" : ""}`}
+          style={anchor ? { "--vi-myke-anchor-x": `${anchor.x}px`, "--vi-myke-anchor-y": `${anchor.y}px` } : undefined}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) onClose();
           }}
@@ -470,11 +482,7 @@ export default function MykePanel({
                     ? "thinking"
                     : typing
                       ? "typing"
-                    : aiState === "ready"
-                      ? "success"
-                      : messages.length
-                      ? "reading"
-                      : "welcome"
+                    : reaction
                 }
                 gaze={gaze}
               />
@@ -488,7 +496,11 @@ export default function MykePanel({
                     ? "Estoy revisando tu pregunta…"
                     : typing
                       ? "Te sigo… ¿qué quieres saber?"
-                      : "¿Qué quieres revisar?"}
+                      : reaction === "sad"
+                        ? "No encontré una respuesta segura. Probemos otra pregunta."
+                        : reaction === "success"
+                          ? "¡Listo! Esto es lo que encontré."
+                          : "Elige una pregunta o cuéntame qué necesitas."}
                 </p>
               </div>
               <button
@@ -500,6 +512,7 @@ export default function MykePanel({
                 ×
               </button>
             </header>
+            {anchor && <button type="button" className="vi-myke-expand" onClick={() => onExpand?.()}>Ampliar chat ↗</button>}
             <nav className="vi-myke-tabs" aria-label="Vistas de Myke">
               {[
                 ["chat", "Chat"],
@@ -544,6 +557,38 @@ export default function MykePanel({
                         ))}
                     </div>
                     <div className="vi-myke-more">
+                      <details className="vi-myke-local-options">
+                        <summary>Usar Microsoft Copilot</summary>
+                        <p>Si tu red solo permite Copilot, aquí tienes las preguntas y la guía del proyecto. No necesitas descargar el modelo local.</p>
+                        <p>Descarga la guía, adjúntala en Copilot y pega tu pregunta. Copilot se abre en otra pestaña; su respuesta no aparece automáticamente aquí. La guía contiene documentación y código públicos, sin datos del inventario.</p>
+                        <button type="button" onClick={async () => {
+                          setCopilotStatus("Preparando guía…");
+                          try {
+                            const guide = await loadMykeCopilotGuide(import.meta.env.BASE_URL, organization.topics);
+                            const url = URL.createObjectURL(new Blob([guide], { type: "text/plain;charset=utf-8" }));
+                            const link = document.createElement("a"); link.href = url; link.download = "Myke-guia-reconciliador.txt"; link.click();
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
+                            setCopilotStatus("Guía lista. Adjúntala en Copilot; las consultas PN siguen aquí.");
+                          } catch {
+                            setCopilotStatus("No pude cargar la guía. Las preguntas frecuentes siguen disponibles aquí.");
+                          }
+                        }}>Descargar guía para Copilot</button>
+                        <button type="button" onClick={async () => {
+                          const question = draft.trim() || messages.filter((m) => m.publicQuestion).at(-1)?.text || "¿Cómo uso el tablero del reconciliador Visteon?";
+                          if (!isMykeProjectQuestion(question)) {
+                            setCopilotStatus("Para una pieza, consulta su PN aquí. Copia solo una pregunta general del proyecto a Copilot.");
+                            return;
+                          }
+                          try {
+                            await navigator.clipboard.writeText(`Usa la guía adjunta del Reconciliador Visteon. Responde con fuentes de esa guía; si falta información, dilo. Pregunta: ${question}`);
+                            setCopilotStatus("Pregunta copiada. Pégala en Copilot junto con la guía.");
+                          } catch {
+                            setCopilotStatus("El navegador no permitió copiar. Puedes escribir tu pregunta directamente en Copilot.");
+                          }
+                        }}>Copiar pregunta para Copilot</button>
+                        <a href="https://m365.cloud.microsoft/chat" target="_blank" rel="noopener noreferrer">Abrir Microsoft Copilot ↗</a>
+                        {copilotStatus && <p role="status">{copilotStatus}</p>}
+                      </details>
                       <details className="vi-myke-local-options">
                         <summary>IA gratis en este equipo</summary>
                         <p>{localSupport.message}</p>
@@ -830,7 +875,6 @@ export default function MykePanel({
                         maxLength={1000}
                         rows={2}
                         placeholder="Escribe una pregunta o un PN"
-                        onFocus={() => setTyping(true)}
                         onBlur={() => setTyping(false)}
                         onSelect={(event) =>
                           setGaze(
@@ -844,6 +888,7 @@ export default function MykePanel({
                         onChange={(event) => {
                           setDraft(event.target.value);
                           setTyping(true);
+                          setGaze(Math.min(1, (event.target.selectionStart % 48) / 24 - 1));
                         }}
                         onKeyDown={(event) => {
                           if (
@@ -931,7 +976,7 @@ export default function MykePanel({
                 </>
               )}
             </div>
-            <button
+            {!anchor && <button
               type="button"
               className="vi-myke-resize"
               aria-label="Cambiar tamaño del chat de Myke"
@@ -993,7 +1038,7 @@ export default function MykePanel({
               }}
             >
               <span aria-hidden="true">↘</span>
-            </button>
+            </button>}
           </RubberDrawer>
         </div>
       </OverlayPortal>

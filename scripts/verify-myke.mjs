@@ -243,9 +243,11 @@ assert.equal(
 
 assert.ok(!organization.topics.some((topic) => topic.id === "team"));
 
-assert.equal(spritePoses.length, 9);
+assert.equal(spritePoses.length, 10);
 const sprite = buildMykeSprites();
 assert.equal(readFileSync(new URL("../public/myke/myke-sprites.svg", import.meta.url), "utf8"), sprite);
-assert.equal((sprite.match(/<use href="#body"/g) || []).length, 72);
+assert.equal((sprite.match(/<use href="#body"/g) || []).length, 80);
+assert.ok(!sprite.includes('href="#cap"'));
+assert.ok(spritePoses.includes("sad"));
 assert.ok(!/https?:\/\/(?!www.w3.org)/.test(sprite));
-console.log("Myke pixel sprite OK: 72 original frames, 9 poses, reproducible atlas.");
+console.log("Myke pixel sprite OK: 80 original frames, 10 poses, reproducible atlas.");
