@@ -1,0 +1,382 @@
+/* Myke visual finish: living mascot, Visteon liquid glass and local-only motion. */
+.vi-myke-panel {
+  border-color: #8fc3d466;
+  background:
+    radial-gradient(circle at 11% -8%, #f5821f1f, transparent 30%),
+    radial-gradient(circle at 94% 8%, #5cc3df14, transparent 25%),
+    linear-gradient(145deg, #0a3145de, #061f2eea 62%, #041822f2) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+  backdrop-filter: blur(22px) saturate(145%) !important;
+  box-shadow:
+    0 30px 86px #00121da6,
+    inset 0 1px #ffffff2b,
+    inset 0 -1px #6eb1c218;
+}
+
+.vi-myke-head {
+  background: linear-gradient(180deg, #ffffff0d, transparent);
+  border-bottom-color: #a3d3df24;
+}
+
+.vi-myke-tabs button[aria-pressed="true"] {
+  background: linear-gradient(135deg, #f5821f24, #2c789623);
+  box-shadow: inset 0 1px #ffffff12;
+}
+
+.vi-myke-living-space {
+  height: 128px;
+  gap: 18px;
+  padding: 4px 18px;
+  border: 1px solid #8fc3d42b;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 16% 35%, #f5821f17, transparent 32%),
+    linear-gradient(125deg, #0f405670, #0a2e4052 70%, #f5821f0a);
+  box-shadow: inset 0 1px #ffffff12, 0 10px 30px #00121d24;
+  overflow: visible;
+}
+
+.vi-myke-stage {
+  position: relative;
+  width: 158px;
+  height: 122px;
+  isolation: isolate;
+}
+
+.vi-myke-stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: 10px;
+  width: 92px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #f5821f34 0%, #0b77951f 46%, transparent 72%);
+  transform: translateX(-50%);
+  filter: blur(5px);
+  opacity: .8;
+}
+
+.vi-myke-stage .vi-myke-ghost {
+  position: relative;
+  z-index: 1;
+  width: 138px;
+  height: 150px;
+  filter: drop-shadow(0 7px 8px #00121d72) drop-shadow(0 0 14px #f5821f1f);
+}
+
+.vi-myke-stage:has(.vi-myke-thinking)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 1px dashed #f5821f78;
+  border-left-color: #8fdcf0a8;
+  border-bottom-color: transparent;
+  transform: translate(-50%, -50%);
+  animation: vi-myke-orbit 1.05s linear infinite;
+  box-shadow: 0 0 20px #f5821f10;
+}
+
+.vi-myke-stage:has(.vi-myke-typing)::after {
+  opacity: 1;
+  background: radial-gradient(ellipse, #8fdcf044 0%, #f5821f1f 44%, transparent 72%);
+}
+
+@keyframes vi-myke-orbit {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.vi-myke-dock .vi-myke-ghost {
+  width: 176px;
+  height: 190px;
+  filter: drop-shadow(0 8px 7px #00121d80) drop-shadow(0 0 12px #f5821f29);
+}
+
+.vi-myke-flight {
+  transform-origin: 50% 64%;
+  will-change: transform;
+}
+
+.vi-myke-dragging {
+  transform: scaleX(1.09) scaleY(.91) rotate(var(--vi-myke-gaze-angle, 0deg));
+}
+
+.vi-myke-dock:has(.vi-myke-dragging)::before {
+  left: -24px;
+  top: 92px;
+  width: 122px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent 0%, #57bad428 30%, #f5821f74 72%, #ffd1a275 100%);
+  filter: blur(4px);
+  opacity: .9;
+  transform-origin: 100% 50%;
+  animation: vi-myke-flight-trail .42s ease-in-out infinite alternate;
+}
+
+.vi-myke-dock:has(.vi-myke-dragging)::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 104px;
+  width: 82px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #8fdcf094, #ffad638f);
+  transform: rotate(var(--vi-myke-lean));
+  pointer-events: none;
+  opacity: .78;
+  animation: vi-myke-flight-streak .34s ease-in-out infinite alternate;
+}
+
+@keyframes vi-myke-flight-trail {
+  from { transform: rotate(var(--vi-myke-lean)) scaleX(.72); opacity: .48; }
+  to { transform: rotate(var(--vi-myke-lean)) scaleX(1.05); opacity: .92; }
+}
+
+@keyframes vi-myke-flight-streak {
+  to { transform: rotate(var(--vi-myke-lean)) translateX(-13px) scaleX(1.18); opacity: .35; }
+}
+
+.vi-myke-landing {
+  animation: vi-myke-land-alive .62s cubic-bezier(.2,.9,.2,1.18);
+  transform-origin: 50% 86%;
+}
+
+@keyframes vi-myke-land-alive {
+  0% { transform: translateY(-8px) scaleX(.9) scaleY(1.12); }
+  28% { transform: translateY(4px) scaleX(1.2) scaleY(.78); }
+  52% { transform: translateY(-7px) scaleX(.93) scaleY(1.1); }
+  76% { transform: translateY(1px) scaleX(1.05) scaleY(.96); }
+  100% { transform: none; }
+}
+
+.vi-myke-conversation {
+  border-radius: 18px;
+  padding: 8px 12px 10px 6px;
+  background: linear-gradient(180deg, #031a2508, #ffffff03);
+}
+
+.vi-myke-message,
+.vi-myke-answer,
+.vi-myke-user-message {
+  border-color: #9ecad42b;
+  box-shadow: inset 0 1px #ffffff0d;
+}
+
+.vi-myke-message,
+.vi-myke-answer {
+  background: linear-gradient(135deg, #0b30429c, #071f2c7d);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+}
+
+.vi-myke-user-message {
+  background: linear-gradient(135deg, #1b53648c, #17425782);
+}
+
+.vi-myke-composer {
+  border-color: #8fc3d450;
+  background:
+    linear-gradient(135deg, #ffffff0c, transparent 36%),
+    linear-gradient(140deg, #0a3346da, #061f2ddd);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  backdrop-filter: blur(14px) saturate(135%);
+  box-shadow: inset 0 1px #ffffff17, 0 8px 28px #00121d35;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.vi-myke-composer:focus-within {
+  border-color: #f5821f8c;
+  box-shadow: inset 0 1px #ffffff20, 0 0 0 3px #f5821f12, 0 12px 32px #00121d45;
+}
+
+.vi-myke-composer textarea::placeholder {
+  color: #9bbbc7c4;
+}
+
+.vi-myke-working {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffd0a6;
+}
+
+.vi-myke-working span {
+  display: inline-block;
+  min-width: 28px;
+  overflow: hidden;
+  color: #8fdcf0;
+  letter-spacing: .22em;
+  animation: vi-myke-thinking-dots .72s steps(3, end) infinite;
+}
+
+@keyframes vi-myke-thinking-dots {
+  0% { opacity: .35; transform: translateY(1px); }
+  55% { opacity: 1; transform: translateY(-2px); }
+  100% { opacity: .55; transform: translateY(0); }
+}
+
+.vi-myke-context-chips button,
+.vi-myke-suggestions button,
+.vi-myke-shortcuts button,
+.vi-myke-source-actions button {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px #ffffff0d;
+}
+
+/* Consistent local scrollbars: never touches the dashboard/root scroll. */
+.vi-myke-panel,
+.vi-myke-panel *,
+.vi-myke-evidence * {
+  scrollbar-width: thin;
+  scrollbar-color: #4b879c99 transparent;
+}
+
+.vi-myke-panel::-webkit-scrollbar,
+.vi-myke-panel *::-webkit-scrollbar,
+.vi-myke-evidence *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.vi-myke-panel::-webkit-scrollbar-track,
+.vi-myke-panel *::-webkit-scrollbar-track,
+.vi-myke-evidence *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vi-myke-panel::-webkit-scrollbar-thumb,
+.vi-myke-panel *::-webkit-scrollbar-thumb,
+.vi-myke-evidence *::-webkit-scrollbar-thumb {
+  min-height: 34px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #5592a8, #326a82) padding-box;
+}
+
+.vi-myke-panel::-webkit-scrollbar-thumb:hover,
+.vi-myke-panel *::-webkit-scrollbar-thumb:hover,
+.vi-myke-evidence *::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f5a75e, #cf6818) padding-box;
+}
+
+.vi-myke-compact .vi-myke-panel {
+  border-color: #8fc3d45c;
+  box-shadow: 0 22px 62px #00121d9b, inset 0 1px #ffffff26;
+}
+
+.vi-myke-compact .vi-myke-living-space {
+  height: 92px;
+  padding: 2px 10px;
+}
+
+.vi-myke-compact .vi-myke-stage {
+  width: 98px;
+  height: 86px;
+}
+
+.vi-myke-compact .vi-myke-stage .vi-myke-ghost {
+  width: 92px;
+  height: 100px;
+}
+
+.vi-myke-compact .vi-myke-stage:has(.vi-myke-thinking)::before {
+  width: 76px;
+  height: 76px;
+}
+
+.vi-myke-help-speaker .vi-myke-ghost {
+  width: 150px;
+  height: 162px;
+  filter: drop-shadow(0 7px 7px #00121d78) drop-shadow(0 0 11px #f5821f20);
+}
+
+.vi-myke-help-speaker > div {
+  border-color: #93c8d64a;
+  background:
+    linear-gradient(145deg, #ffffff0b, transparent 36%),
+    #092b3ddc;
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  backdrop-filter: blur(16px) saturate(130%);
+  box-shadow: 0 12px 38px #00121d5e, inset 0 1px #ffffff13;
+}
+
+body.vi-performance-light-glass .vi-myke-panel {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: #082b3dfb !important;
+}
+
+body.vi-performance-light-glass .vi-myke-message,
+body.vi-performance-light-glass .vi-myke-answer,
+body.vi-performance-light-glass .vi-myke-composer,
+body.vi-performance-light-glass .vi-myke-help-speaker > div {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body.vi-performance-motion-off .vi-myke-stage::before,
+body.vi-performance-motion-off .vi-myke-dock::before,
+body.vi-performance-motion-off .vi-myke-dock::after,
+body.vi-performance-motion-off .vi-myke-working span {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vi-myke-stage::before,
+  .vi-myke-dock::before,
+  .vi-myke-dock::after,
+  .vi-myke-working span {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .vi-myke-living-space,
+  .vi-myke-compact .vi-myke-living-space {
+    height: 76px;
+    gap: 7px;
+    padding: 0 8px;
+    border-radius: 16px;
+  }
+
+  .vi-myke-stage,
+  .vi-myke-compact .vi-myke-stage {
+    width: 84px;
+    height: 72px;
+  }
+
+  .vi-myke-stage .vi-myke-ghost,
+  .vi-myke-compact .vi-myke-stage .vi-myke-ghost {
+    width: 80px;
+    height: 87px;
+  }
+
+  .vi-myke-stage:has(.vi-myke-thinking)::before,
+  .vi-myke-compact .vi-myke-stage:has(.vi-myke-thinking)::before {
+    width: 66px;
+    height: 66px;
+  }
+
+  .vi-myke-help-mobile .vi-myke-ghost {
+    width: 84px;
+    height: 91px;
+  }
+}
+
+@media (max-height: 660px) {
+  .vi-myke-living-space,
+  .vi-myke-compact .vi-myke-living-space { height: 66px; }
+  .vi-myke-stage,
+  .vi-myke-compact .vi-myke-stage { width: 72px; height: 60px; }
+  .vi-myke-stage .vi-myke-ghost,
+  .vi-myke-compact .vi-myke-stage .vi-myke-ghost { width: 68px; height: 74px; }
+}
