@@ -11,7 +11,7 @@ const publicHeadings = new Set([
   "Metadatos de snapshot", "Desarrollo local", "Variables del frontend", "Despliegue",
   "Diseño", "Principios que no deben romperse", "Pendientes técnicos/funcionales",
   "UX de investigación y trazabilidad", "Acuerdos de la junta del 29 de septiembre de 2026",
-  "Preguntas de lógica para próxima revisión", "Myke con Gemini", "Myke: IA gratis en el navegador",
+  "Preguntas de lógica para próxima revisión", "Myke contextual y Copilot corporativo",
 ]);
 const hash = (content) => createHash("sha256").update(content).digest("hex");
 const documents = [...readme.matchAll(/^## (.+)\n([\s\S]*?)(?=^## |$(?![\s\S]))/gm)]

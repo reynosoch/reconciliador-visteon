@@ -174,9 +174,7 @@ export function buildMykePartAnswer(
     return {
       found: false,
       pn: normalizeText(pn),
-      explanation: reconciliation.length
-        ? "No encontré este PN en el corte actual. Revisa el número o carga sus fuentes. Un PN que solo está en Cost Part o ISPBB no entra por sí solo a la lista."
-        : "Todavía no hay piezas reconciliadas. Carga los archivos o espera una copia completa de los escaneos del bot para consultar una pieza.",
+      explanation: `No encuentro ${normalizeText(pn)} en el corte actual. Puede faltar una fuente, el PN puede no estar en 4Wall/QAD o la copia del corte estar incompleta. Un PN que solo está en Cost Part o ISPBB no entra por sí solo a la lista. Abre Fuentes para confirmar archivos y escaneos.`,
     };
   const trace = buildPartLearningTrace({ item, ...context });
   return {
@@ -191,4 +189,97 @@ export function buildMykePartAnswer(
     warnings: trace.warnings,
     actions: trace.actionPlan,
   };
+}
+
+// Intent and live evidence extend retrieval; they never re-run reconciliation.
+export function getMykeIntent(question) {
+  const text = normalize(question);
+  if (/(?:no (?:funciona|abre|deja|carga|sirve|responde)|se (?:congela|traba|cierra)|pantalla (?:blanca|negra)|bug|error de|boton.*(?:falla|roto)|sale.*error|error (?:al|cuando)|falla|failed to|descuadr|se rompe)/.test(text)) return "bug";
+  if (/(?:archivo.*(?:falta|necesito)|(?:falta|faltan).*archivo|fuente.*(?:falta|pendiente))/.test(text)) return "sources";
+  if (/(?:como vamos|resum|para la junta|estado (?:actual|del corte))/.test(text)) return "summary";
+  if (/(?:revisar(?:ias|ia)?|reviso|prioridad|primero|requieren atencion|esto esta raro|tanta diferencia|much[ao] diferencia|sale.*diferencia|por que.*diferencia)/.test(text)) return "attention";
+  if (/(?:facil|sencillo|sin tecnic|no entiendo)/.test(text)) return "simple";
+  if (/(?:despues|siguiente paso)/.test(text)) return "next";
+  return "knowledge";
+}
+const formatUSD = (value) => Number.isFinite(value) ? new Intl.NumberFormat("en-US", {style:"currency", currency:"USD"}).format(value) : "sin valorar";
+export function buildMykeLiveAnswer(intent, context = {}) {
+  const { sources = {}, scanReady = false, snapshotMeta, reconciliation = [], summary, findings = [], diagnostics, botRunning = false } = context;
+  const sourceTypes = ["scans", "qad", "areas", "ispbb", "bom", "cost"];
+  const labels = {scans:"Escaneos 4Wall",qad:"QAD congelado",areas:"Áreas 4Wall",ispbb:"ISPBB",bom:"BOM",cost:"Cost Part"};
+  const missing = sourceTypes.filter((type) => !sources[type]?.loaded && !(type === "scans" && scanReady));
+  const incomplete = missing.length > 0 || (!sources.scans?.loaded && snapshotMeta?.complete !== true) || context.loading || Boolean(context.error);
+  const warning = incomplete ? "El corte está incompleto o en actualización. Estas cifras son provisionales; no confirman una pérdida final." : "Las fuentes del corte están disponibles. El conteo todavía debe validarse con el equipo de inventario.";
+  const facts = [warning];
+  if (missing.length) facts.push(`Faltan: ${missing.map((type) => labels[type]).join(", ")}.`);
+  if (context.error) facts.push("La actualización tiene un problema. Abre el estado de datos antes de interpretar resultados.");
+  if (intent === "sources") {
+    facts.push(missing.length ? "Carga esos archivos en Fuentes; no sustituyas ISPBB ni el costo por el nombre de la pieza." : "No detecto archivos pendientes. Si una pieza falla, revisa sus filas, costos y relaciones BOM en el trazador.");
+    return {kind:"live", paragraphs:facts, topicIds:[], sources:sourceTypes, actions:[{label:"Abrir Fuentes", action:"sources"}], incomplete};
+  }
+  facts.push(`${reconciliation.length} PN reconciliados. 4Wall: ${sources.scans?.loaded ? "archivo manual" : "copia publicada del bot"}. Bot: ${botRunning ? "corriendo" : "sin ejecución confirmada"}.`);
+  if (diagnostics?.sources?.scanCount != null) facts.push(`${diagnostics.sources.scanCount} escaneos reconocidos por el motor.`);
+  if (summary && reconciliation.length) facts.push(`NET ${formatUSD(summary.netUsd)} · SWING ${formatUSD(summary.swingUsd)}. Valores ya calculados por el motor; pendientes sin costo: ${summary.unvaluedPartCount ?? summary.missingCostCount ?? "sin dato"}.`);
+  else facts.push("Todavía no hay resultados reconciliados que pueda interpretar.");
+  // Quality precedes magnitude; amounts and explanations are the existing findings.
+  const priority = {SIN_COSTO:0,COSTO_INVALIDO:0,COSTO_CONTRADICTORIO:0};
+  const candidates = [...findings].sort((a,b) => (priority[a.valuationState] ?? 1) - (priority[b.valuationState] ?? 1) || Math.abs(b.netUsd ?? 0) - Math.abs(a.netUsd ?? 0));
+  const selected = []; const seen = new Set();
+  for (const finding of candidates) {
+    if (seen.has(finding.partNumber)) continue;
+    seen.add(finding.partNumber); selected.push(finding); if (selected.length === 3) break;
+  }
+  const sections = selected.map((finding) => ({title:finding.partNumber, fact:finding.whatFound, interpretation:finding.possibleExplanation || "Requiere revisar la evidencia; no puedo confirmar una causa.", next:finding.nextAction || "Abre el trazador y confirma las fuentes.", pn:finding.partNumber}));
+  let interpretation = "NET compara el total; SWING compara cada localidad. Una diferencia puede venir de conteo pendiente, ubicación o calidad de fuentes; por sí sola no prueba pérdida.";
+  if (summary && summary.netUsd === 0 && summary.swingUsd > 0) interpretation = "El NET calculado es cero y hay SWING: los totales coinciden, pero existe diferencia por localidad. Conviene revisar el mapeo y las localidades antes de concluir faltante físico.";
+  return {kind:"live", paragraphs:facts, topicIds:[], sources:sourceTypes, incomplete,
+    sections, blocks:[{label:"INTERPRETACIÓN",text:interpretation},{label:"SIGUIENTE PASO",text:missing.length ? "Completa las fuentes antes de priorizar dólares." : selected.length ? "Empieza por los casos de abajo: calidad de costo primero y después magnitud del NET calculado. También revisa SWING y sus localidades en el trazador." : "No hay hallazgos disponibles en esta vista. Revisa calidad de fuentes y abre una pieza para confirmar su evidencia."}],
+    actions:[{label:"Ver fuentes",action:"sources"},{label:"Abrir alertas",action:"alerts"}],
+  };
+}
+export function answerMykeInContext(question, organization, history = [], context = {}) {
+  const last = history.filter((m) => m.role === "myke").at(-1)?.answer;
+  const pn = extractPartNumber(question) || (/^\d{3,}$/.test(question.trim()) ? question.trim() : "");
+  const intent = getMykeIntent(question);
+  if (/\b(recetas?|pizza|futbol|horoscopo|clima|politica|bitcoin|poema|pelicula|jailbreak)\b/.test(normalize(question))) return {kind:"unknown",paragraphs:["Puedo ayudarte con esta página y su inventario. Para ese otro tema no tengo una respuesta respaldada."],topicIds:[]};
+  if (intent === "bug") return {kind:"bug", paragraphs:["Eso suena más a un problema del sistema que a una diferencia de inventario. ¿Quieres que prepare un reporte? Te mostraré el contenido antes de enviarlo."], topicIds:[], problem:question};
+  if (pn) return {...answerMyke(question, organization, last?.topicIds, context.reconciliation?.map((item) => item.partNumber)), pn:normalizeText(pn), kind:"piece"};
+  if (last?.pn && (intent === "next" || /(?:este phantom|esta pieza|esta diferencia|por que sale|de donde sale)/.test(normalize(question)))) return {kind:"piece",pn:last.pn,paragraphs:["Revisemos esta pieza con sus fuentes y los resultados ya calculados."],topicIds:[]};
+  if (["summary","attention","sources","next"].includes(intent)) return buildMykeLiveAnswer(intent,context);
+  if (intent === "simple" && last) {
+    if (last.kind === "piece") return {kind:"piece",pn:last.pn,paragraphs:["Vamos por partes: compara físico y QAD; después revisa las localidades y las fuentes de cada cifra."],topicIds:[]};
+    if (last.kind === "live") return buildMykeLiveAnswer("attention",context);
+    if (last.kind === "help") return {...last, paragraphs:[last.paragraphs[0]], blocks:last.blocks?.filter((block) => block.label !== "MÉTODO DEL MOTOR"), simple:true};
+    const first = organization.topics.find((topic) => last.topicIds?.includes(topic.id));
+    if (first) return {kind:"simple",paragraphs:[first.paragraphs[0]],topicIds:[first.id],sources:first.sources};
+  }
+  const naturalQuestion = /como (?:uso|utilizo|se usa).*(?:pagina|aplicacion|app)/.test(normalize(question)) ? "¿Cómo uso el tablero?" : question;
+  const answer = answerMyke(naturalQuestion,organization,last?.topicIds,context.reconciliation?.map((item) => item.partNumber));
+  return answer;
+}
+export function buildMykeHelpAnswer(info, topic, context = {}) {
+  const name = String(topic).toLowerCase();
+  const types = name.startsWith("source:") ? [name.slice(7)] : /phantom|bom/.test(name) ? ["scans","ispbb","bom"] : /cost|obsolete/.test(name) ? ["cost"] : /qad/.test(name) ? ["qad"] : ["scans","areas","qad","cost"];
+  return {kind:"help",title:info.title,paragraphs:[info.description],topicIds:[],sources:types,
+    blocks:[{label:"DE DÓNDE SALE",text:info.source},{label:info.methodLabel || "MÉTODO DEL MOTOR",text:info.formula},{label:"QUÉ REVISAR",text:info.notes?.slice(0,3).join(" ")}].filter((b) => b.text),
+    pn:context.pn || null, actions:[{label:"Ver evidencia",action:"evidence"},{label:"Qué revisar después",question:"¿Qué debería revisar primero?"}],
+  };
+}
+export function buildMykeChips(context = {}, last) {
+  const live = buildMykeLiveAnswer("sources",context);
+  return [{label:"Cómo uso el tablero",question:"¿Cómo uso el tablero?"},
+    {label:live.incomplete ? "Qué archivo falta" : "Qué revisar primero",question:live.incomplete ? "¿Qué archivo me falta?" : "¿Qué revisarías tú?"},
+    {label:"Resume para la junta",question:"Resume para la junta"},
+    ...(last ? [{label:"Explícamelo fácil",question:"Explícame esto fácil"},{label:"Qué revisar después",question:"¿Qué revisar después?"}] : [])];
+}
+const redact = (value) => String(value || "").replace(/(?:bearer\s+\S+|(?:password|contrase[nñ]a|api[_ -]?key|secret|token)\s*[:=]\s*\S+)/gi,"[dato privado omitido]").slice(0,3000);
+export function buildMykeFeedbackDraft(problem, {topic="Myke",pn=""} = {}) {
+  const text = normalize(problem);
+  const area = /scroll|congela|traba/.test(text) ? "Scroll / rubber-band" : /visor|excel/.test(text) ? "Visor Excel / evidencia" : /fuente|archivo|carga/.test(text) ? "Fuentes de referencia" : /bot/.test(text) ? "Bot escaneo 4Wall" : /trazador/.test(text) ? "Trazador de pieza" : "Myke / organización virtual";
+  return {type:"Bug",area,problem:redact(problem),action:"",expected:"",topic:redact(topic),pn:redact(pn)};
+}
+export function buildMykeFeedbackPayload(report, {inventoryId=null,pathname="/",width,height} = {}) {
+  if (!report?.problem?.trim() || !report?.action?.trim() || !report?.expected?.trim()) throw new Error("Completa qué estabas haciendo y qué esperabas que ocurriera.");
+  return {report_type:"Bug",app_area:report.area,opportunity:`${redact(report.problem)}\nAcción: ${redact(report.action)}${report.pn ? `\nPN: ${redact(report.pn)}` : ""}`.slice(0,4000),expected_logic:redact(report.expected),screenshot_data_url:null,
+    page_path:String(pathname).split(/[?#]/)[0],inventory_id:inventoryId,viewport:{width,height,view:redact(report.topic)}};
 }

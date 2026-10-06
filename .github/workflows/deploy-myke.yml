@@ -1,13 +1,6 @@
 name: Activate Myke with Gemini
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'supabase/functions/myke-chat/**'
-      - 'supabase/config.toml'
-      - 'scripts/activate-myke.mjs'
-      - '.github/workflows/deploy-myke.yml'
   workflow_dispatch:
     inputs:
       free_tier_confirmed:
@@ -22,10 +15,6 @@ permissions:
 concurrency:
   group: myke-gemini-production
   cancel-in-progress: false
-
-# Inference uses browser WebGPU; native Node/CUDA providers are not required.
-env:
-  ONNXRUNTIME_NODE_INSTALL: skip
 
 jobs:
   prerequisites:

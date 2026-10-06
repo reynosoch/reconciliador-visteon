@@ -100,3 +100,19 @@ export async function requestMykeAI({
     );
   return data.text.slice(0, 12000);
 }
+
+// Transport injection keeps corporate identity/credentials outside React. No default endpoint.
+export function createMykeProviderAdapter({ send, name = "Microsoft Copilot" } = {}) {
+  return {
+    name,
+    configured: typeof send === "function",
+    async generate({ question, history = [], signal }) {
+      if (!isMykeProjectQuestion(question, history)) throw new Error(MYKE_SCOPE_REPLY);
+      if (typeof send !== "function") throw new Error("Copilot corporativo aún no está conectado. La ayuda y el motor local siguen disponibles.");
+      // A transport gets only bounded public conversation, never the live inventory object.
+      const text = await send({ question: question.slice(0,1000), history:history.filter((m) => isMykePublicQuestion(m.content)).slice(-6), signal });
+      if (typeof text !== "string" || !text.trim()) throw new Error("No llegó una respuesta respaldada del proveedor.");
+      return text.slice(0,5000);
+    },
+  };
+}

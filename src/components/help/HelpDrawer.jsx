@@ -1,18 +1,25 @@
+import { createContext, useContext } from "react";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
 import { HELP, sourceHelpInfo } from "./helpContent.js";
 
+const MykeHelpContext = createContext(null);
+export function MykeHelpProvider({ onHelp, children }) {
+  return <MykeHelpContext.Provider value={onHelp}>{children}</MykeHelpContext.Provider>;
+}
+
 export function HelpButton({ topic, onHelp, className = "" }) {
+  const contextualHelp = useContext(MykeHelpContext);
   const openHelp = (event) => {
     event.stopPropagation();
-    onHelp?.(topic);
+    (contextualHelp || onHelp)?.(topic);
   };
 
   return (
     <button
       type="button"
       onClick={openHelp}
-      title="¿De dónde sale este dato?"
+      title="Pregúntale a Myke por este dato"
       aria-label="Explicar el origen y cálculo de este dato"
       className={`vi-help-trigger ${className}`}
     >

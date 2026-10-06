@@ -1,5 +1,19 @@
 export const PRODUCT_UPDATES = [
   {
+    id: "2026-10-06-myke-contextual-copilot",
+    date: "06 OCT 2026",
+    title: "Myke vive en el reconciliador",
+    summary: "Ayuda contextual, revisión del corte real y reportes preparados contigo.",
+    items: [
+      "Los botones ? abren Myke en esa sección, con explicación y fuentes reales.",
+      "Mascota azul/naranja más expresiva; vuelo al arrastrar y respuestas con poses breves.",
+      "Resumen para la junta, archivos pendientes y casos que requieren atención, desde el motor actual.",
+      "Chat amplio, ajustable y responsive; preguntas útiles y evidencia Excel sin salir del flujo.",
+      "Prepara bugs y confirma antes de enviarlos al buzón existente; no modifica inventario.",
+      "Ayuda local sin descarga de modelos; adaptador Microsoft pendiente de acceso corporativo.",
+    ],
+  },
+  {
     id: "2026-10-06-myke-direct-chat",
     date: "06 OCT 2026",
     title: "Myke: toca y conversa",

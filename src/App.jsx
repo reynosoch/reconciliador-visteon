@@ -13,7 +13,8 @@ import CutHistoryPanel, {
 import DiscrepancyFindingsPanel from "./components/dashboard/DiscrepancyFindingsPanel";
 import InventoryWorkspace from "./components/dashboard/InventoryWorkspace";
 import PartDetailDrawer from "./components/detail/PartDetailDrawer";
-import HelpDrawer from "./components/help/HelpDrawer";
+import { HELP, sourceHelpInfo } from "./components/help/helpContent.js";
+import HelpDrawer, { MykeHelpProvider } from "./components/help/HelpDrawer";
 import NotificationCenter from "./components/shell/NotificationCenter";
 import ConfirmDialog from "./components/shell/ConfirmDialog";
 import OverlayPortal from "./components/shell/OverlayPortal.jsx";
@@ -109,6 +110,7 @@ export default function App() {
   );
   const [mykeTab, setMykeTab] = useState("chat");
   const [mykeAnchor, setMykeAnchor] = useState(null);
+  const [mykeHelp, setMykeHelp] = useState(null);
   const [tracerRequest, setTracerRequest] = useState(null);
   useEffect(() => {
     safeWriteJson("visteon.ui.mykeEnabled.v1", mykeEnabled);
@@ -389,7 +391,14 @@ export default function App() {
     );
   }
 
+  const openMykeHelp = (topic) => {
+    const info = sourceHelpInfo(topic, references.sources) || HELP[topic];
+    if (!info) { setHelpTopic(topic); return; }
+    setMykeHelp({ id: Date.now(), topic, info, pn: selectedPart?.partNumber || null });
+    setMykeAnchor(null); setMykeTab("chat"); setMykeOpen(true);
+  };
   return (
+    <MykeHelpProvider onHelp={openMykeHelp}>
     <div className="vi-shell vi-rubber-viewport" ref={shellRef}>
       <div className="vi-footer-underlay" aria-hidden="true" />
       {pacmanEnabled && !reduceAnimations && <AmbientChase />}
@@ -435,7 +444,7 @@ export default function App() {
                 referencesReady={referencesReady}
                 liveReady={Boolean(inventory.lastUpdated)}
                 scanState={inventory.connectionStatus?.state}
-                onHelp={setHelpTopic}
+                onHelp={openMykeHelp}
                 activeView={activeDataView}
                 onSelect={(view) => {
                   setDataNavigation(null);
@@ -489,7 +498,7 @@ export default function App() {
               <FinancialGrid
                 summary={inventory.summary}
                 ready={displayReady}
-                onHelp={setHelpTopic}
+                onHelp={openMykeHelp}
               />
               <MeetingPriorities
                 rows={inventory.reconciliation}
@@ -531,7 +540,7 @@ export default function App() {
                 rows={inventory.reconciliation}
                 ready={displayReady}
                 onSelectPart={setSelectedPart}
-                onHelp={setHelpTopic}
+                onHelp={openMykeHelp}
               />
             </main>
             <SystemFooter
@@ -555,14 +564,14 @@ export default function App() {
           deleteBomFile={references.deleteBomFile}
           clearFile={references.clearFile}
           botRunning={botRunning}
-          onHelp={setHelpTopic}
+          onHelp={openMykeHelp}
           onClose={() => setSourcesOpen(false)}
         />
       </DeferredPanel>
       {
         <PartDetailDrawer
           item={selectedPart}
-          onHelp={setHelpTopic}
+          onHelp={openMykeHelp}
           fromNotifications={detailFromNotifications}
           onBackToNotifications={backToNotificationsFromPart}
           onClose={() => {
@@ -697,6 +706,14 @@ export default function App() {
             setDataNavigation(null);
             setActiveDataView("alerts");
           }}
+          reduceAnimations={reduceAnimations}
+          helpRequest={mykeHelp}
+          summary={inventory.summary}
+          diagnostics={inventory.diagnostics}
+          botRunning={botRunning}
+          loading={inventory.loading || references.status.loadingCount > 0}
+          error={inventory.error}
+          inventoryId={identity.id}
           anchor={mykeAnchor}
           onExpand={() => setMykeAnchor(null)}
           initialTab={mykeTab}
@@ -713,9 +730,10 @@ export default function App() {
       </DeferredPanel>
       {mykeEnabled && (
         <MykeMascot
+          reduceAnimations={reduceAnimations}
           open={mykeOpen}
-          onOpen={(box) => {
-            setMykeAnchor({ x: box.left, y: box.top });
+          onOpen={() => {
+            setMykeAnchor(null);
             setMykeTab("chat");
             setMykeOpen(true);
           }}
@@ -732,5 +750,6 @@ export default function App() {
         onOpenChange={setFeedbackOpen}
       />
     </div>
+    </MykeHelpProvider>
   );
 }

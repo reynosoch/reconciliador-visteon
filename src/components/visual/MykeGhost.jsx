@@ -20,6 +20,7 @@ export default function MykeGhost({ className = "", pose = "idle", gaze = 0 }) {
       style={{
         "--vi-myke-row": row,
         "--vi-myke-duration": `${duration}s`,
+        "--vi-myke-gaze-angle": `${Math.max(-1, Math.min(1, gaze)) * 4}deg`,
         "--vi-myke-gaze": `${Math.max(-1, Math.min(1, gaze)) * 2}px`,
       }}
     >

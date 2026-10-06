@@ -1,22 +1,23 @@
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import OverlayPortal from "./OverlayPortal.jsx";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import MykeGhost from "../visual/MykeGhost.jsx";
 import SourcePreviewModal from "./SourcePreviewModal.jsx";
 import { buildMykeKnowledge } from "../../domain/mykeOrganization.js";
-import { answerMyke, buildMykePartAnswer } from "../../domain/mykeKnowledge.js";
+import { answerMykeInContext, buildMykePartAnswer, buildMykeHelpAnswer, buildMykeChips, buildMykeFeedbackDraft, buildMykeFeedbackPayload } from "../../domain/mykeKnowledge.js";
 import {
   getTracerSourceInventory,
   getRecommendedPartCases,
 } from "../../domain/partLearningTrace.js";
 import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
-import {
-  getMykeAIConfig,
-  requestMykeAI,
-} from "../../services/mykeAI.js";
-import { isMykeProjectQuestion, MYKE_SCOPE_REPLY } from "../../../supabase/functions/myke-chat/public-question.mjs";
-import { getMykeLocalSupport, loadMykeCopilotGuide } from "../../services/mykeLocalContext.js";
+import { createMykeProviderAdapter } from "../../services/mykeAI.js";
+import { submitDevelopmentFeedback } from "../../services/supabase.js";
+import { isMykeProjectQuestion } from "../../../supabase/functions/myke-chat/public-question.mjs";
+import { loadMykeCopilotGuide } from "../../services/mykeLocalContext.js";
 import publicKnowledge from "../../../supabase/functions/myke-chat/knowledge.generated.json";
+
+function extractPNFromConversation(messages) { return messages.filter((message) => message.answer?.kind === "piece").at(-1)?.answer.pn || ""; }
 
 function PieceReply({ pn, context, onEvidence, onTracer, onSources }) {
   const piece = useMemo(() => buildMykePartAnswer(pn, context), [pn, context]);
@@ -140,6 +141,9 @@ export default function MykePanel({
   initialTab = "chat",
   anchor = null,
   onExpand,
+  helpRequest = null,
+  summary = null, diagnostics = null, botRunning = false, loading = false, error = null, inventoryId = null, reduceAnimations = false,
+  providerAdapter = null,
   sources = {},
   scanRows = [],
   scanReady = false,
@@ -148,6 +152,8 @@ export default function MykePanel({
   engineSources = {},
   findings = [],
 }) {
+  const systemReducedMotion = useReducedMotion();
+  const quietMotion = reduceAnimations || systemReducedMotion;
   const [tab, setTab] = useState(initialTab);
   const [draft, setDraft] = useState("");
   const [faqQuery, setFaqQuery] = useState("");
@@ -166,15 +172,16 @@ export default function MykePanel({
           width: Math.max(560, Math.min(1400, stored.width)),
           height: Math.max(520, Math.min(1000, stored.height)),
         }
-      : { width: 880, height: 760 };
+      : { width: 1120, height: 820 };
   });
-  const localSession = useRef(null);
-  const [localStatus, setLocalStatus] = useState("idle");
-  const [localProgress, setLocalProgress] = useState(0);
-  const [localError, setLocalError] = useState("");
-  const [accessCode, setAccessCode] = useState("");
-  const [aiEnabled, setAIEnabled] = useState(false);
   const [aiState, setAIState] = useState("local");
+  const [report, setReport] = useState(null);
+  const [reportStatus, setReportStatus] = useState("");
+  const [reportSending, setReportSending] = useState(false);
+  const reportOpen = Boolean(report);
+  const reportFlight = useRef(false);
+  const seenHelp = useRef(null);
+  const provider = useMemo(() => providerAdapter || createMykeProviderAdapter(), [providerAdapter]);
   const composer = useRef(null),
     conversation = useRef(null),
     end = useRef(null);
@@ -182,51 +189,34 @@ export default function MykePanel({
     resize = useRef(null);
   const messageSequence = useRef(0);
   const organization = useMemo(() => buildMykeKnowledge(publicKnowledge), []);
-  const localSupport = useMemo(() => getMykeLocalSupport(), []);
-  const geminiAllowed = import.meta.env.VITE_MYKE_ENABLE_GEMINI === "true" && localSupport.supported;
-  const aiConfig = useMemo(() => getMykeAIConfig(), []);
   const inputs = useMemo(
     () => getTracerSourceInventory(sources, scanReady, snapshotMeta),
     [sources, scanReady, snapshotMeta],
   );
   useEffect(() => {
-    if (open) {
-      setTab(initialTab === "explore" ? "explore" : "chat");
-      setTyping(false);
-    } else {
-      setPreview(null);
-      localSession.current?.dispose();
-      localSession.current = null;
-      setLocalStatus("idle");
-      request.current?.abort();
-      request.current = null;
-      setMessages((current) =>
-        current.map((m) =>
-          m.pending
-            ? {
-                ...m,
-                pending: false,
-                aiError: "Consulta detenida al cerrar el chat.",
-              }
-            : m,
-        ),
-      );
-      setAIState((current) => (current === "pending" ? "local" : current));
-    }
-    return () => {
-      localSession.current?.dispose();
-      localSession.current = null;
-      request.current?.abort();
-      request.current = null;
-    };
+    if (open) { setTab(initialTab === "explore" ? "explore" : "chat"); setTyping(false); setReaction("welcome"); }
+    else { setPreview(null); request.current?.abort(); request.current = null; setAIState("local"); setMessages((current) => current.map((m) => m.pending ? {...m,pending:false,aiError:"Consulta detenida al cerrar Myke."} : m)); }
+    return () => { request.current?.abort(); request.current = null; };
   }, [open, initialTab]);
+  useEffect(() => {
+    if (!open || !["welcome", "reading", "success", "sad"].includes(reaction)) return;
+    const next = reaction === "reading" ? "success" : "idle";
+    const timer = setTimeout(() => setReaction(next), quietMotion ? 0 : reaction === "reading" ? 650 : reaction === "sad" ? 1800 : 1200);
+    return () => clearTimeout(timer);
+  }, [reaction, open, quietMotion]);
+  useEffect(() => {
+    const node = composer.current;
+    if (!node) return;
+    node.style.height = "auto";
+    node.style.height = `${Math.min(144, Math.max(48, node.scrollHeight))}px`;
+  }, [draft, open]);
   useEffect(() => {
     if (open && tab === "chat" && messages.length && conversation.current) {
       const latest = end.current?.previousElementSibling;
       // Only move the conversation, never the page or enclosing drawer.
       if (latest) conversation.current.scrollTop = latest.offsetTop;
     }
-  }, [messages, open, tab]);
+  }, [messages, open, tab, reportOpen, reportStatus]);
   const pieceContext = useMemo(
     () => ({
       reconciliation,
@@ -235,7 +225,7 @@ export default function MykePanel({
       sources,
       scanRows,
       scanReady,
-      snapshotMeta,
+      snapshotMeta, summary, diagnostics, botRunning, loading, error,
     }),
     [
       reconciliation,
@@ -244,121 +234,63 @@ export default function MykePanel({
       sources,
       scanRows,
       scanReady,
-      snapshotMeta,
+      snapshotMeta, summary, diagnostics, botRunning, loading, error,
     ],
   );
-  const partNumbers = useMemo(
-    () => reconciliation.map((item) => item.partNumber),
-    [reconciliation],
-  );
+  useEffect(() => {
+    if (!open || !helpRequest || seenHelp.current === helpRequest.id) return;
+    seenHelp.current = helpRequest.id;
+    setReportStatus("");
+    const answer = buildMykeHelpAnswer(helpRequest.info, helpRequest.topic, { pn: helpRequest.pn });
+    setMessages((current) => [...current.slice(-22), {role:"myke",id:`help-${helpRequest.id}`,answer,contextTopic:helpRequest.topic}]);
+    setTab("chat"); setReaction("welcome");
+  }, [open, helpRequest]);
+  const lastAnswer = messages.filter((m) => m.role === "myke").at(-1)?.answer;
+  const chips = useMemo(() => buildMykeChips(pieceContext, lastAnswer), [pieceContext, lastAnswer]);
   const cases = useMemo(
     () => (open ? getRecommendedPartCases(reconciliation).slice(0, 3) : []),
     [open, reconciliation],
   );
   if (!open) return null;
-  const activateLocal = async () => {
-    if (request.current) return;
-    const controller = new AbortController();
-    request.current = controller;
-    setLocalStatus("loading");
-    setLocalProgress(0);
-    setLocalError("");
-    setAIState("pending");
-    setAIEnabled(false);
-    try {
-      const { createMykeLocalSession } = await import("../../services/mykeLocalAI.js");
-      controller.signal.throwIfAborted();
-      localSession.current = await createMykeLocalSession({ signal: controller.signal, onProgress: setLocalProgress });
-      setLocalStatus("ready");
-      setAIState("ready");
-      setReaction("success");
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        setLocalStatus("error");
-        setLocalError(error.message);
-        setAIState("local");
-        setReaction("sad");
-      }
-    } finally {
-      if (request.current === controller) request.current = null;
-    }
-  };
   const send = async (question = draft) => {
     if (!question.trim() || request.current) return;
-    const text = question.slice(0, 1000);
-    const previous =
-      messages.filter((m) => m.role === "myke").at(-1)?.answer?.topicIds || [];
-    const localAnswer = answerMyke(text, organization, previous, partNumbers);
-    const history = messages
-      .filter((m) => m.publicQuestion || m.aiText)
-      .map((m) => ({ role: m.role === "you" ? "user" : "assistant", content: m.text || m.aiText }));
-    const inScope = isMykeProjectQuestion(text, history);
-    const answer = localAnswer.kind === "piece" || inScope
-      ? localAnswer
-      : { kind: "restricted", paragraphs: [MYKE_SCOPE_REPLY], topicIds: [] };
+    const text = question.slice(0,1000);
+    if (!reportOpen) setReportStatus("");
+    const answer = answerMykeInContext(text, organization, messages.slice(-8), pieceContext);
+    const history = messages.filter((m) => m.publicQuestion || m.aiText).map((m) => ({role:m.role === "you" ? "user" : "assistant",content:m.text || m.aiText}));
+    const inScope = isMykeProjectQuestion(text,history);
+    const useAI = provider.configured && answer.kind !== "piece" && answer.kind === "answer" && inScope;
     const id = `myke-${++messageSequence.current}`;
-    // Known/explicit PN and their evidence stay local with the unpaid provider.
-    const useAI = (Boolean(localSession.current) || (geminiAllowed && aiEnabled && Boolean(aiConfig))) && answer.kind !== "piece" && inScope;
-    setMessages((current) => [
-      ...current.slice(-22),
-      { role: "you", text, publicQuestion: inScope && answer.kind !== "piece" },
-      { role: "myke", id, answer, pending: useAI },
-    ]);
-    setDraft("");
-    setTyping(false);
-    composer.current?.focus();
-    setReaction(["unknown", "restricted"].includes(answer.kind) ||
-      (answer.kind === "piece" && !partNumbers.some((pn) => pn.toUpperCase() === answer.pn))
-      ? "sad" : answer.kind === "greeting" ? "welcome" : "success");
-    if (!useAI) return;
-    const controller = new AbortController();
-    request.current = controller;
-    setAIState("pending");
+    const controller = new AbortController(); request.current = controller;
+    setMessages((current) => [...current.slice(-22),{role:"you",text,publicQuestion:inScope && answer.kind !== "piece"},{role:"myke",id,answer,pending:true}]);
+    setDraft(""); setTyping(false); setAIState("pending"); setReaction("thinking");
     try {
-      const local = localSession.current;
-      const aiText = local ? await local.generate({
-        question: text, history, topics: organization.topics,
-        topicIds: answer.topicIds, signal: controller.signal,
-      }) : await requestMykeAI({
-        question: text,
-        history,
-        accessCode,
-        signal: controller.signal,
-        config: aiConfig,
-      });
+      // Brief local review phase is not presented as a connected LLM or token streaming.
+      await new Promise((resolve) => setTimeout(resolve, quietMotion ? 0 : 220));
       if (controller.signal.aborted) return;
-      setMessages((current) =>
-        current.map((m) =>
-          m.id === id ? { ...m, pending: false, aiText, aiProvider: local ? "local" : "gemini" } : m,
-        ),
-      );
-      setAIState("ready");
-      setReaction("success");
-    } catch (error) {
+      const aiText = useAI ? await provider.generate({question:text,history,signal:controller.signal}) : null;
       if (controller.signal.aborted) return;
-      setMessages((current) =>
-        current.map((m) =>
-          m.id === id
-            ? {
-                ...m,
-                pending: false,
-                aiError:
-                  error.name === "TimeoutError"
-                    ? "La IA tardó demasiado. Conservamos la guía local."
-                    : error.message,
-              }
-            : m,
-        ),
-      );
-      if (localSession.current) {
-        localSession.current.dispose(); localSession.current = null;
-        setLocalStatus("error"); setLocalError(error.message);
-      }
-      setAIState("error");
-      setReaction("sad");
-    } finally {
-      if (request.current === controller) request.current = null;
-    }
+      setMessages((current) => current.map((m) => m.id === id ? {...m,pending:false,aiText,aiProvider:useAI ? provider.name : null} : m));
+      const unresolved = answer.kind === "unknown" || (answer.kind === "piece" && !reconciliation.some((item) => item.partNumber === answer.pn));
+      setReaction(unresolved ? "sad" : "reading"); setAIState("local");
+    } catch (failure) {
+      if (controller.signal.aborted) return;
+      setMessages((current) => current.map((m) => m.id === id ? {...m,pending:false,aiError:failure.message} : m));
+      setReaction("sad"); setAIState("local");
+    } finally { if (request.current === controller) request.current = null; }
+  };
+  const submitReport = async () => {
+    if (reportFlight.current) return;
+    let payload;
+    try { payload = buildMykeFeedbackPayload(report, {inventoryId, pathname:location.pathname, width:window.innerWidth, height:window.innerHeight}); }
+    catch (failure) { setReportStatus(failure.message); return; }
+    setTyping(false);
+    reportFlight.current = true; setReportSending(true); setReportStatus(""); setReaction("thinking");
+    try {
+      await submitDevelopmentFeedback(payload);
+      setReport(null); setReportStatus("Reporte enviado. Gracias; no se modificó el inventario."); setReaction("success");
+    } catch (failure) { setReportStatus(failure.message); setReaction("sad"); }
+    finally { reportFlight.current = false; setReportSending(false); }
   };
   const boundedSize = (width, height) => ({
     width: Math.max(
@@ -476,18 +408,10 @@ export default function MykePanel({
             aria-label="Myke · ayuda del reconciliador"
           >
             <header className="vi-myke-head">
-              <MykeGhost
-                pose={
-                  aiState === "pending"
-                    ? "thinking"
-                    : typing
-                      ? "typing"
-                    : reaction
-                }
-                gaze={gaze}
-              />
+
               <div>
                 <p className="vi-eyebrow">RECONCILIADOR VISTEON</p>
+                {helpRequest && <small>Desde {helpRequest.info.title}</small>}
                 <h2>
                   Myke<span>·</span>
                 </h2>
@@ -589,33 +513,6 @@ export default function MykePanel({
                         <a href="https://m365.cloud.microsoft/chat" target="_blank" rel="noopener noreferrer">Abrir Microsoft Copilot ↗</a>
                         {copilotStatus && <p role="status">{copilotStatus}</p>}
                       </details>
-                      <details className="vi-myke-local-options">
-                        <summary>IA gratis en este equipo</summary>
-                        <p>{localSupport.message}</p>
-                        <p>Sin cuenta, clave ni cobro por mensaje. La primera vez descarga el modelo (aprox. 500 MB); el navegador guarda los archivos si hay espacio. Tus preguntas se procesan aquí, no se envían a un proveedor.</p>
-                        <p>Consulta documentación y fragmentos del código de esta página. Puede equivocarse; las cifras de tus piezas vienen siempre del motor real.</p>
-                        {localStatus === "loading" ? (
-                          <>
-                            <p role="status">Preparando Myke · {localProgress}%</p>
-                            <progress value={localProgress} max="100" aria-label="Descarga del modelo local" />
-                            <button type="button" onClick={() => {
-                              request.current?.abort(); request.current = null;
-                              setLocalStatus("idle"); setAIState("local");
-                            }}>Cancelar descarga</button>
-                          </>
-                        ) : localStatus === "ready" ? (
-                          <>
-                            <p role="status">IA local lista · sin cobro por consulta</p>
-                            <button type="button" disabled={aiState === "pending"} onClick={() => {
-                              localSession.current?.dispose(); localSession.current = null;
-                              setLocalStatus("idle"); setAIState("local");
-                            }}>Liberar memoria y usar guía</button>
-                          </>
-                        ) : (
-                          <button type="button" disabled={aiState === "pending" || !localSupport.supported} onClick={activateLocal}>Activar IA en este equipo</button>
-                        )}
-                        {localError && <p role="status">{localError}</p>}
-                      </details>
                       <details className="vi-myke-question-library">
                         <summary>Más preguntas</summary>
                         <label className="vi-myke-faq-search">
@@ -658,81 +555,25 @@ export default function MykePanel({
                             ))}
                         </div>
                       </details>
-                      {geminiAllowed && <details className="vi-myke-connection">
-                        <summary>
-                          Gemini opcional · administrador
-                        </summary>
-                        <p>
-                          La guía local funciona siempre. La IA necesita el
-                          servicio habilitado y el código privado del
-                          administrador.
-                        </p>
-                        <p>
-                          Gemini responde sobre la guía y el código público del proyecto.
-                          Las piezas y sus archivos se consultan aquí con el motor,
-                          sin enviarlos a Google. El nivel gratuito tiene cuotas
-                          y Google puede usar tus preguntas para mejorar sus modelos;
-                          no escribas información confidencial, contraseñas ni claves de API.
-                        </p>
-                        <form
-                          onSubmit={(event) => {
-                            event.preventDefault();
-                            localSession.current?.dispose();
-                            localSession.current = null;
-                            setLocalStatus("idle");
-                            setAIEnabled(true);
-                            setAIState("unconfirmed");
-                            event.currentTarget.closest("details").open = false;
-                          }}
-                        >
-                          <label>
-                            Código privado
-                            <input
-                              type="password"
-                              autoComplete="off"
-                              value={accessCode}
-                              maxLength={256}
-                              disabled={aiState === "pending"}
-                              onChange={(event) => {
-                                setAccessCode(event.target.value);
-                                setAIEnabled(false);
-                                setAIState("local");
-                              }}
-                            />
-                          </label>
-                          <button
-                            type="submit"
-                            disabled={
-                              !aiConfig ||
-                              accessCode.length < 24 ||
-                              aiState === "pending"
-                            }
-                          >
-                            Usar IA
-                          </button>
-                          {aiEnabled && (
-                            <button
-                              type="button"
-                              disabled={aiState === "pending"}
-                              onClick={(event) => {
-                                event.currentTarget.closest("details").open =
-                                  false;
-                                setAIEnabled(false);
-                                setAccessCode("");
-                                setAIState("local");
-                              }}
-                            >
-                              Volver a guía local
-                            </button>
-                          )}
-                        </form>
-                        {!aiConfig && (
-                          <p>La ruta del servicio aún no está configurada.</p>
-                        )}
-                      </details>}
+
                     </div>
                   </aside>
                   <section className="vi-myke-chat" aria-label="Chat">
+                    <div className="vi-myke-living-space">
+              <motion.div className="vi-myke-stage" animate={{x:quietMotion ? 0 : gaze * 4, y:quietMotion ? 0 : reaction === "thinking" ? -3 : 0}} transition={{type:"spring",stiffness:400,damping:30}} onPointerMove={(event) => { const box = event.currentTarget.getBoundingClientRect(); setGaze((event.clientX - box.left) / box.width * 2 - 1); }}>
+              <MykeGhost
+                pose={
+                  aiState === "pending"
+                    ? "thinking"
+                    : typing
+                      ? "typing"
+                    : reportSending ? "thinking" : reaction
+                }
+                gaze={gaze}
+              />
+              </motion.div>
+                      <div><strong>Vamos a revisarlo juntos</strong><span>{aiState === "pending" ? "Leyendo guía y evidencia disponible" : typing ? "Te escucho; sigue escribiendo" : "El motor calcula. Yo te ayudo a entenderlo."}</span></div>
+                    </div>
                     <div
                       className="vi-myke-conversation"
                       ref={conversation}
@@ -768,6 +609,7 @@ export default function MykePanel({
                             <p>{message.text}</p>
                           ) : (
                             <>
+                              {!message.pending && <>
                               {/* Live engine evidence remains authoritative even after an AI reply. */}
                               {message.answer.kind === "piece" && (
                                 <PieceReply
@@ -787,7 +629,7 @@ export default function MykePanel({
                               {message.aiText ? (
                                 <div className="vi-myke-ai-answer">
                                   <small>
-                                    {message.aiProvider === "local" ? "IA en tu equipo" : "Orientación con Gemini"} · guía y código del proyecto;
+                                    {message.aiProvider} · guía y código del proyecto;
                                     confirma propuestas en las fuentes
                                   </small>
                                   <p>{message.aiText}</p>
@@ -823,9 +665,19 @@ export default function MykePanel({
                                     )}
                                 </>
                               )}
+                              {message.answer.blocks?.map((block) => <div className="vi-myke-explanation" key={block.label}><small>{block.label}</small><p>{block.text}</p></div>)}
+                              {message.answer.sections?.map((section) => <section className="vi-myke-case" key={section.pn}><strong>{section.title}</strong><small>HECHO</small><p>{section.fact}</p><small>INTERPRETACIÓN</small><p>{section.interpretation}</p><small>SIGUIENTE PASO</small><p>{section.next}</p><button type="button" onClick={() => send(`PN: ${section.pn}`)}>Ver evidencia de {section.pn}</button><button type="button" onClick={() => {onClose();onOpenTracer(section.pn);}}>Abrir trazador</button></section>)}
+                              {message.answer.sources && <details className="vi-myke-answer-sources"><summary>Archivos y evidencia</summary>{sourceButtons(message.answer)}</details>}
+                              {message.answer.actions && <div className="vi-myke-shortcuts">{message.answer.actions.map((action) => <button type="button" key={action.label} onClick={() => {
+                                if (action.question) { send(action.question); return; }
+                                if (action.action === "evidence") { if (message.answer.pn) send(`PN: ${message.answer.pn}`); else { onClose();onOpenSources(); } return; }
+                                onClose(); if (action.action === "alerts") onOpenDataAlerts(); else onOpenSources();
+                              }}>{action.label}</button>)}{message.answer.pn && message.answer.kind !== "piece" && <button type="button" onClick={() => {onClose();onOpenTracer(message.answer.pn);}}>Abrir trazador</button>}</div>}
+                              {message.answer.kind === "bug" && <button type="button" className="vi-myke-report-prepare" onClick={() => {setReport(buildMykeFeedbackDraft(message.answer.problem,{topic:helpRequest?.info.title,pn:extractPNFromConversation(messages)}));setReportStatus("");}}>Preparar reporte</button>}
+                              </>}
                               {message.pending && (
                                 <p className="vi-myke-working" role="status">
-                                  Myke está revisando…{" "}
+                                  Revisando las fuentes disponibles…{" "}
                                   <span aria-hidden="true">•••</span>
                                 </p>
                               )}
@@ -858,7 +710,20 @@ export default function MykePanel({
                           )}
                         </article>
                       ))}
+                      {report && <section className="vi-myke-report" aria-label="Vista previa del reporte">
+                        <h3>¿Lo envío?</h3><p>Tipo: {report.type} · Área: {report.area}</p>
+                        <p>{report.problem}</p><p>Vista: {report.topic}{report.pn ? ` · PN: ${report.pn}` : ""}</p>
+                        <label>¿Qué estabas haciendo?<textarea disabled={reportSending} value={report.action} onChange={(event) => setReport({...report,action:event.target.value})} maxLength={1000}/></label>
+                        <label>¿Qué esperabas que ocurriera?<textarea disabled={reportSending} value={report.expected} onChange={(event) => setReport({...report,expected:event.target.value})} maxLength={1000}/></label>
+                        <p>Contexto técnico: vista, ruta sin parámetros y tamaño de pantalla. Sin archivos, tokens ni datos completos del inventario.</p>
+                        <button type="button" disabled={reportSending || !report.action.trim() || !report.expected.trim()} onClick={submitReport}>{reportSending ? "Enviando…" : "Sí, enviar reporte"}</button>
+                        <button type="button" disabled={reportSending} onClick={() => {setReport(null);setReportStatus("");}}>Cancelar reporte</button>
+                      </section>}
+                      {reportStatus && <p className="vi-myke-report-status" role="status">{reportStatus}</p>}
                       <div ref={end} />
+                    </div>
+                    <div className="vi-myke-context-chips" aria-label="Sugerencias del corte">
+                      {chips.map((chip) => <button type="button" key={chip.question} disabled={aiState === "pending"} onClick={() => send(chip.question)}>{chip.label}</button>)}
                     </div>
                     <form
                       className="vi-myke-composer"
@@ -910,13 +775,7 @@ export default function MykePanel({
                       </button>
                     </form>
                     <p className="vi-myke-note" role="status">
-                      {aiState === "pending"
-                        ? localStatus === "loading" ? "Preparando IA en tu equipo…" : "Consultando IA…"
-                        : aiState === "ready"
-                          ? localStatus === "ready" ? "IA en tu equipo · piezas del motor" : "Gemini conectado · piezas locales"
-                          : aiEnabled
-                            ? "Gemini por confirmar · guía local disponible"
-                            : "Guía local · IA sin conectar"}{" "}
+                      {aiState === "pending" ? "Revisando la guía y el corte…" : provider.configured ? provider.name : "Guía y motor local · Copilot aún sin conectar"}{" "}
                       · No modifica inventario. No compartas contraseñas.
                     </p>
                   </section>
@@ -1044,6 +903,7 @@ export default function MykePanel({
       </OverlayPortal>
       {preview && (
         <SourcePreviewModal
+          contextClass="vi-myke-evidence"
           selection={preview}
           onClose={() => setPreview(null)}
         />

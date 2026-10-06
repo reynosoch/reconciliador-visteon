@@ -23,7 +23,7 @@ function downloadBlob(content, name, type) {
   URL.revokeObjectURL(url);
 }
 
-export default function SourcePreviewModal({ selection, onClose }) {
+export default function SourcePreviewModal({ selection, onClose, contextClass = "" }) {
   const [busy, setBusy] = useState("");
   const [page, setPage] = useState(0);
   const [onlyEvidence, setOnlyEvidence] = useState(true);
@@ -118,7 +118,7 @@ export default function SourcePreviewModal({ selection, onClose }) {
   };
 
   return (
-    <OverlayPortal onClose={onClose}>
+    <OverlayPortal onClose={onClose} className={contextClass}>
       <div
         className="vi-global-overlay vi-source-preview-overlay"
         style={{ zIndex: 1400 }}
