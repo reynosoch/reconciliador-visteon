@@ -1,14 +1,126 @@
-/* Myke finishing layer. Layout/poses live in myke.css; no stacked blur or drag trails. */
+/* Myke finishing layer. Layout/poses live in myke.css; dashboard physics stay untouched. */
 .vi-myke-head { background:linear-gradient(180deg,#ffffff08,transparent); }
 .vi-myke-tabs button[aria-pressed="true"] { box-shadow:inset 0 1px #ffffff12; }
 .vi-myke-stage { position:relative; isolation:isolate; }
 .vi-myke-stage .vi-myke-ghost { filter:drop-shadow(0 5px 4px #0003); }
-.vi-myke-flight { transform-origin:50% 64%; }
+.vi-myke-flight { transform-origin:50% 64%; transition:opacity .65s ease,filter .65s ease; }
 .vi-myke-message,.vi-myke-answer,.vi-myke-user-message { box-shadow:inset 0 1px #ffffff08; }
 .vi-myke-composer textarea::placeholder { color:#a7bdc9; }
 .vi-myke-working { display:flex; align-items:center; gap:8px; color:#ffd0a6; }
 .vi-myke-working span { display:inline-block; color:#9ac7df; animation:vi-myke-thinking-dots 1.2s ease-in-out infinite; }
 @keyframes vi-myke-thinking-dots { 50% { opacity:.4; } }
-.vi-myke-help-speaker .vi-myke-ghost { filter:drop-shadow(0 7px 7px #00121d78); }
-body.vi-performance-motion-off .vi-myke-working span { animation:none; }
-@media(prefers-reduced-motion:reduce) { .vi-myke-working span { animation:none; } }
+
+/* Mascot: fully present on load, soft fade after 7 s, sleep at 10 s. */
+.vi-myke-launcher { width:110px; height:120px; }
+.vi-myke-dock .vi-myke-ghost { width:110px; height:120px; filter:drop-shadow(0 6px 5px #00121d66); }
+.vi-myke-dock[data-faded="false"] .vi-myke-launcher { transform:none; }
+.vi-myke-dock[data-faded="false"] .vi-myke-flight { opacity:1; filter:none; }
+.vi-myke-dock[data-faded="true"]:not(:hover):not(:focus-within) .vi-myke-flight { opacity:.42; filter:saturate(.88); }
+.vi-myke-dock[data-sleeping="true"]:not(:hover):not(:focus-within) .vi-myke-flight { opacity:.30; filter:saturate(.72); }
+.vi-myke-dock:is(:hover,:focus-within,[data-awake="true"]) .vi-myke-flight { opacity:1; filter:none; }
+.vi-myke-dock[data-edge="left"] .vi-myke-launcher { transform:translateX(-54px); }
+.vi-myke-dock[data-edge="right"] .vi-myke-launcher { margin-left:50px; transform:translateX(54px); }
+.vi-myke-dock[data-edge="top"] .vi-myke-launcher { transform:translateY(-118px); }
+.vi-myke-dock[data-edge="bottom"] .vi-myke-launcher { transform:translateY(118px); }
+.vi-myke-dock[data-faded="false"] .vi-myke-launcher,
+.vi-myke-dock:is(:hover,:focus-within,[data-awake="true"]) .vi-myke-launcher { transform:none; }
+
+/* Quick chat gets its own visible liquid-glass surface instead of relying on the base panel alone. */
+.vi-myke-compact .vi-myke-panel {
+  border:1px solid #b8d8e34f;
+  background:
+    linear-gradient(150deg,#ffffff16 0%,#ffffff06 20%,transparent 42%),
+    radial-gradient(circle at 12% 0%,#f5821f13,transparent 30%),
+    linear-gradient(145deg,#28485bd9,#0b2231ec 52%,#17384bdf) !important;
+  -webkit-backdrop-filter:blur(30px) saturate(155%) !important;
+  backdrop-filter:blur(30px) saturate(155%) !important;
+  box-shadow:
+    0 28px 80px #00121d9c,
+    0 8px 24px #00121d66,
+    0 0 0 1px #ffffff08,
+    inset 0 1px #ffffff32,
+    inset 0 -1px #78a9bd18;
+}
+.vi-myke-compact .vi-myke-head { border-bottom-color:#d4e7ee1f; box-shadow:0 1px #0002; }
+.vi-myke-compact .vi-myke-composer {
+  border:1px solid #a8cedb42;
+  background:linear-gradient(145deg,#ffffff0b,#001b2b78);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);
+  backdrop-filter:blur(18px) saturate(140%);
+  box-shadow:inset 0 1px #ffffff18,0 8px 24px #00121d35;
+}
+.vi-myke-compact .vi-myke-conversation { border-radius:16px; background:linear-gradient(180deg,#ffffff02,#00121d16); }
+
+/* Myke stays the protagonist; advice bubbles visit briefly instead of living on screen. */
+.vi-myke-speech {
+  transform-origin:18px 50%;
+  animation:vi-myke-speech-cadence 9s ease-in-out infinite;
+}
+@keyframes vi-myke-speech-cadence {
+  0%,30% { opacity:1; visibility:visible; transform:translateY(0) scale(1); }
+  38%,82% { opacity:0; visibility:hidden; transform:translateY(5px) scale(.985); }
+  90%,100% { opacity:1; visibility:visible; transform:translateY(0) scale(1); }
+}
+.vi-myke-living-space:has(.vi-myke-typing) .vi-myke-speech,
+.vi-myke-living-space:has(.vi-myke-thinking) .vi-myke-speech,
+.vi-myke-living-space:has(.vi-myke-sad) .vi-myke-speech,
+.vi-myke-help-character:is(:hover,:focus-visible) .vi-myke-speech {
+  animation-play-state:paused;
+  opacity:1;
+  visibility:visible;
+  transform:none;
+}
+
+/* Keep each bubble visually tied to the ghost that is speaking. */
+.vi-myke-quick-companion { width:100px; }
+.vi-myke-quick-companion .vi-myke-living-space { position:relative; display:block; width:100px; height:112px; }
+.vi-myke-quick-companion .vi-myke-stage { width:100px; height:108px; }
+.vi-myke-quick-companion .vi-myke-ghost { width:98px; height:106px; }
+.vi-myke-quick-companion .vi-myke-speech {
+  left:94px;
+  top:16px;
+  width:238px;
+  min-height:58px;
+  padding:10px 13px;
+  border-color:#cbe1ed46;
+  background:linear-gradient(140deg,#35596fe9,#102d40f1);
+  box-shadow:0 12px 34px #00121d52,inset 0 1px #ffffff24;
+  -webkit-backdrop-filter:blur(16px) saturate(135%);
+  backdrop-filter:blur(16px) saturate(135%);
+}
+.vi-myke-quick-companion .vi-myke-speech::before { left:-5px; top:28px; transform:rotate(45deg); }
+
+/* Help: character larger, bubble transient; hover itself clearly invites the contextual chat. */
+.vi-myke-help-speaker .vi-myke-ghost { width:132px; height:142px; filter:drop-shadow(0 7px 7px #00121d78); }
+.vi-myke-help-character { transition:transform .18s ease,filter .18s ease; }
+.vi-myke-help-character:is(:hover,:focus-visible) { transform:translateY(-3px) scale(1.035); filter:drop-shadow(0 9px 15px #00121d45); }
+.vi-myke-help-character .vi-myke-speech {
+  max-width:224px;
+  -webkit-backdrop-filter:blur(15px) saturate(135%);
+  backdrop-filter:blur(15px) saturate(135%);
+}
+
+body.vi-performance-light-glass .vi-myke-compact .vi-myke-panel,
+body.vi-performance-light-glass .vi-myke-compact .vi-myke-composer,
+body.vi-performance-light-glass .vi-myke-help-character .vi-myke-speech {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+body.vi-performance-motion-off .vi-myke-working span,
+body.vi-performance-motion-off .vi-myke-speech { animation:none; }
+
+@media(max-width:640px) {
+  .vi-myke-quick-companion { width:calc(100vw - 32px); }
+  .vi-myke-quick-companion .vi-myke-living-space { display:flex; align-items:flex-start; width:100%; height:94px; gap:8px; }
+  .vi-myke-quick-companion .vi-myke-stage { width:82px; height:88px; }
+  .vi-myke-quick-companion .vi-myke-ghost { width:80px; height:87px; }
+  .vi-myke-quick-companion .vi-myke-speech { position:relative; left:auto; top:auto; width:min(248px,calc(100vw - 116px)); min-height:64px; }
+  .vi-myke-quick-companion .vi-myke-speech::before { left:-5px; top:24px; transform:rotate(45deg); }
+  .vi-myke-help-mobile .vi-myke-ghost { width:82px; height:89px; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .vi-myke-working span,
+  .vi-myke-speech { animation:none; }
+  .vi-myke-flight,.vi-myke-help-character { transition:none; }
+}

@@ -31,6 +31,7 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
   const quiet = reduceAnimations || reduceMotion;
   const root = useRef(null);
   const [sleeping, setSleeping] = useState(false);
+  const [faded, setFaded] = useState(false);
   const [hover, setHover] = useState(false);
   const [gaze, setGaze] = useState(0);
   const [dock, setDock] = useState(initialDock);
@@ -38,12 +39,29 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
   const [landing, setLanding] = useState(false);
   const [lean, setLean] = useState(0);
   const timer = useRef(null);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const fadeTimer = useRef(null);
+  const sleepTimer = useRef(null);
+
+  useEffect(() => () => {
+    clearTimeout(timer.current);
+    clearTimeout(fadeTimer.current);
+    clearTimeout(sleepTimer.current);
+  }, []);
+
   useEffect(() => {
-    if (position || landing || open || hover) return;
-    const rest = setTimeout(() => setSleeping(true), 30000);
-    return () => clearTimeout(rest);
+    clearTimeout(fadeTimer.current);
+    clearTimeout(sleepTimer.current);
+    setFaded(false);
+    setSleeping(false);
+    if (position || landing || open || hover) return undefined;
+    fadeTimer.current = setTimeout(() => setFaded(true), 7000);
+    sleepTimer.current = setTimeout(() => setSleeping(true), 10000);
+    return () => {
+      clearTimeout(fadeTimer.current);
+      clearTimeout(sleepTimer.current);
+    };
   }, [position, landing, open, hover]);
+
   useEffect(() => {
     if (!hover) return;
     const greet = setTimeout(() => setHover(false), 950);
@@ -103,7 +121,9 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
       ref={root}
       style={{ ...style, "--vi-myke-lean": `${lean}deg` }}
       data-edge={dock.edge}
-      data-awake={Boolean(position)}
+      data-awake={Boolean(position) || hover || open || landing}
+      data-faded={faded}
+      data-sleeping={sleeping}
     >
       <button
         type="button"
@@ -113,7 +133,7 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
         aria-description="Arrástrame a un borde. También puedes moverme con las flechas del teclado."
         aria-expanded={open}
         // The mascot owns this touch gesture; do not also trigger the edge menu swipe.
-        onPointerEnter={() => { setHover(true); setSleeping(false); }}
+        onPointerEnter={() => { setHover(true); setSleeping(false); setFaded(false); }}
         onPointerLeave={() => { setHover(false); setGaze(0); }}
         onTouchStart={(event) => event.stopPropagation()}
         onTouchEnd={(event) => event.stopPropagation()}
@@ -130,6 +150,7 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
             lastX: event.clientX,
           };
           setSleeping(false);
+          setFaded(false);
           clearTimeout(timer.current);
           setLanding(false);
           moved.current = false;
@@ -178,6 +199,8 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
           if (!delta) return;
           event.preventDefault();
           const box = event.currentTarget.getBoundingClientRect();
+          setSleeping(false);
+          setFaded(false);
           setPosition(safePoint(box.left + delta[0],box.top + delta[1]));
         }}
         onKeyUp={(event) => {
@@ -189,6 +212,7 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
             return;
           }
           setSleeping(false);
+          setFaded(false);
           onOpen(root.current.getBoundingClientRect());
         }}
       >
