@@ -176,6 +176,25 @@ export default function MykePanel({
         }
       : { width: 1120, height: 820 };
   });
+  const [quickSize, setQuickSize] = useState(() => {
+    const saved = safeReadJson("visteon.ui.mykeQuickSize.v1", null).value;
+    return { width: Number.isFinite(saved?.width) ? Math.max(360, Math.min(1000, saved.width)) : 520,
+      height: Number.isFinite(saved?.height) ? Math.max(420, Math.min(1000, saved.height)) : 680 };
+  });
+  const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
+  useEffect(() => {
+    const update = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  // Keep the top-left corner stable while the user pulls the lower-right grip.
+  const quickLeft = anchor ? Math.max(8, Math.min(viewport.width - 528, anchor.x < viewport.width / 2 ? anchor.x + anchor.width + 8 : anchor.x - 528)) : 8;
+  const quickTop = anchor ? Math.max(8, Math.min(viewport.height - 760, anchor.y + anchor.height - 680)) : 8;
+  const activeSize = anchor ? quickSize : size;
+  const saveSize = (next) => {
+    (anchor ? setQuickSize : setSize)(next);
+    safeWriteJson(anchor ? "visteon.ui.mykeQuickSize.v1" : "visteon.ui.mykeSize.v1", next);
+  };
   const [aiState, setAIState] = useState("local");
   const [report, setReport] = useState(null);
   const [reportStatus, setReportStatus] = useState("");
@@ -294,16 +313,14 @@ export default function MykePanel({
     } catch (failure) { setReportStatus(failure.message); setReaction("sad"); }
     finally { reportFlight.current = false; setReportSending(false); }
   };
-  const boundedSize = (width, height) => ({
-    width: Math.max(
-      Math.min(560, window.innerWidth - 32),
-      Math.min(width, window.innerWidth - 32),
-    ),
-    height: Math.max(
-      Math.min(520, window.innerHeight - 92),
-      Math.min(height, window.innerHeight - 92),
-    ),
-  });
+  const boundedSize = (width, height) => {
+    const maxWidth = viewport.width - (anchor ? quickLeft + 8 : 36);
+    const maxHeight = viewport.height - (anchor ? quickTop + 80 : 88);
+    return {
+      width: Math.min(maxWidth, Math.max(anchor ? 360 : 560, width)),
+      height: Math.min(maxHeight, Math.max(anchor ? 420 : 520, height)),
+    };
+  };
   const showEvidence = (ref, pn) => {
     if (!inputs.find((input) => input.type === ref.type)?.loaded) {
       onClose();
@@ -395,8 +412,8 @@ export default function MykePanel({
         <div
           className={`vi-myke-overlay ${anchor ? "vi-myke-compact" : ""}`}
           style={anchor ? {
-            "--vi-myke-anchor-x": `${Math.max(8,Math.min(window.innerWidth - Math.min(430,window.innerWidth-16)-8,anchor.x < window.innerWidth/2 ? anchor.x + anchor.width + 8 : anchor.x - Math.min(430,window.innerWidth-16)-8))}px`,
-            "--vi-myke-anchor-y": `${Math.max(8,Math.min(window.innerHeight - Math.min(560,window.innerHeight-88)-80,anchor.y + anchor.height - Math.min(560,window.innerHeight-88)))}px`
+            "--vi-myke-anchor-x": `${quickLeft}px`,
+            "--vi-myke-anchor-y": `${quickTop}px`,
           } : undefined}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) onClose();
@@ -405,8 +422,8 @@ export default function MykePanel({
           <RubberDrawer
             className="vi-myke-panel"
             style={{
-              "--vi-myke-width": `${size.width}px`,
-              "--vi-myke-height": `${size.height}px`,
+              "--vi-myke-width": `${activeSize.width}px`,
+              "--vi-myke-height": `${activeSize.height}px`,
             }}
             role="dialog"
             aria-modal="true"
@@ -441,7 +458,7 @@ export default function MykePanel({
                 ×
               </button>
             </header>
-            {anchor && <div className="vi-myke-quick-tools"><span>Chat rápido</span><button type="button" className="vi-myke-expand" onClick={() => onExpand?.()}>Abrir chat ↗</button></div>}
+            {anchor && <div className="vi-myke-quick-tools"><span>Chat rápido</span><button type="button" className="vi-myke-expand" onClick={() => onExpand?.()}>Chat completo ↗</button></div>}
             <nav className="vi-myke-tabs" aria-label="Vistas de Myke">
               {[
                 ["chat", "Chat"],
@@ -568,7 +585,7 @@ export default function MykePanel({
                 gaze={gaze}
               />
               </motion.div>
-                      <div><strong>Estoy contigo</strong><span>{aiState === "pending" ? "Revisando tu pregunta y la evidencia" : typing ? "Te escucho; sigue escribiendo" : "Pregúntame por el tablero o una pieza."}</span></div>
+                      <div><strong>Vamos a entenderlo.</strong><span>{aiState === "pending" ? "Revisando tu pregunta y la evidencia" : typing ? "Te escucho; sigue escribiendo" : "Pregúntame por el tablero o una pieza."}</span></div>
                     </div>
                     <div
                       className="vi-myke-conversation"
@@ -580,7 +597,7 @@ export default function MykePanel({
                     >
                       {!messages.length && (
                         <div className="vi-myke-message">
-                          <strong>¡Hola! Soy Myke 👋</strong>
+                          <strong>Hola, soy Myke.</strong>
                           <p>
                             Te ayudo a usar el tablero, entender el código y
                             encontrar el origen de cada dato. Escribe tu
@@ -831,7 +848,7 @@ export default function MykePanel({
                 </>
               )}
             </div>
-            {!anchor && <button
+            <button
               type="button"
               className="vi-myke-resize"
               aria-label="Cambiar tamaño del chat de Myke"
@@ -855,16 +872,16 @@ export default function MykePanel({
               onPointerMove={(event) => {
                 const start = resize.current;
                 if (!start || start.id !== event.pointerId) return;
-                setSize(
+                (anchor ? setQuickSize : setSize)(
                   boundedSize(
-                    start.width + 2 * (event.clientX - start.x),
-                    start.height + 2 * (event.clientY - start.y),
+                    start.width + (anchor ? 1 : 2) * (event.clientX - start.x),
+                    start.height + (anchor ? 1 : 2) * (event.clientY - start.y),
                   ),
                 );
               }}
               onPointerUp={() => {
                 resize.current = null;
-                safeWriteJson("visteon.ui.mykeSize.v1", size);
+                saveSize(activeSize);
               }}
               onPointerCancel={() => {
                 resize.current = null;
@@ -888,12 +905,11 @@ export default function MykePanel({
                   box.width + delta[0],
                   box.height + delta[1],
                 );
-                setSize(next);
-                safeWriteJson("visteon.ui.mykeSize.v1", next);
+                saveSize(next);
               }}
             >
               <span aria-hidden="true">↘</span>
-            </button>}
+            </button>
           </RubberDrawer>
         </div>
       </OverlayPortal>

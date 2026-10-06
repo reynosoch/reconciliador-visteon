@@ -59,8 +59,7 @@ export default function HelpDrawer({ topic, sources, scanRows = [], snapshotMeta
         }}
       >
         <aside className="vi-myke-help-speaker" aria-label="Myke explica esta sección">
-          <MykeGhost pose={reduceAnimations ? "idle" : pose}/>
-          <div><strong>Myke</strong><p>Te explico qué ves y de dónde sale.</p><button type="button" onClick={openChat}>Preguntarle a Myke</button></div>
+          <button className="vi-myke-help-character" type="button" onClick={openChat} aria-label="Abrir chat con Myke sobre esta sección"><MykeGhost pose={reduceAnimations ? "idle" : pose}/><span>Te lo explico en el chat ↗</span></button>
         </aside>
         <RubberDrawer className="vi-drawer-panel vi-help-drawer">
           <header className="vi-help-head">
@@ -82,7 +81,7 @@ export default function HelpDrawer({ topic, sources, scanRows = [], snapshotMeta
           </header>
 
           <div className="vi-help-body">
-            <div className="vi-myke-help-mobile"><MykeGhost pose={reduceAnimations ? "idle" : pose}/><div><strong>Myke te lo explica</strong><button type="button" onClick={openChat}>Preguntarle a Myke</button></div></div>
+            <div className="vi-myke-help-mobile"><button className="vi-myke-help-character" type="button" onClick={openChat} aria-label="Abrir chat con Myke sobre esta sección"><MykeGhost pose={reduceAnimations ? "idle" : pose}/><span>Te lo explico en el chat ↗</span></button></div>
             <section className="vi-help-intro">
               <span className="vi-help-index">01</span>
               <div>

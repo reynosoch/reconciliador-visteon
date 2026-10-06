@@ -120,13 +120,14 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
         onTouchCancel={(event) => event.stopPropagation()}
         onPointerDown={(event) => {
           if (event.button !== 0 || !event.isPrimary) return;
-          const box = event.currentTarget.getBoundingClientRect();
+          const box = root.current.getBoundingClientRect();
           drag.current = {
             id: event.pointerId,
             startX: event.clientX,
             startY: event.clientY,
             x: box.left,
             y: box.top,
+            lastX: event.clientX,
           };
           setSleeping(false);
           clearTimeout(timer.current);
@@ -142,7 +143,8 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
             dy = event.clientY - origin.startY;
           if (Math.hypot(dx, dy) > 6) moved.current = true;
           if (moved.current) {
-            setLean(Math.max(-14, Math.min(14, dx / 12)));
+            setLean(Math.max(-10, Math.min(10, (event.clientX - origin.lastX) * .65)));
+            origin.lastX = event.clientX;
             setPosition(safePoint(origin.x + dx, origin.y + dy));
           }
         }}
@@ -190,7 +192,7 @@ export default function MykeMascot({ open, onOpen, onDisable, reduceAnimations =
           onOpen(root.current.getBoundingClientRect());
         }}
       >
-        <motion.span className="vi-myke-flight" animate={{rotate:quiet ? 0 : lean, scale:quiet ? 1 : position ? 1.08 : 1}} transition={quiet ? {duration:0} : {type:"spring", stiffness:450, damping:28}}>
+        <motion.span className="vi-myke-flight" animate={{rotate:quiet ? 0 : lean, scaleX:quiet ? 1 : position ? 1.04 : 1, scaleY:quiet ? 1 : position ? .97 : 1}} transition={quiet ? {duration:0} : {type:"spring", stiffness:450, damping:28}}>
         <MykeGhost
           pose={position ? "dragging" : landing ? "landing" : hover ? "welcome" : sleeping ? "sleeping" : "idle"}
           gaze={position ? lean / 14 : gaze}
