@@ -1,0 +1,8 @@
+/* Final opacity tuning for Myke quick chat. Keep layout and motion untouched. */
+.vi-myke-compact .vi-myke-panel {
+  background:
+    linear-gradient(155deg,#ffffff20 0%,#ffffff0b 15%,transparent 38%),
+    radial-gradient(circle at 8% 0%,#ffffff18 0%,transparent 25%),
+    radial-gradient(circle at 88% 12%,#f5821f14 0%,transparent 28%),
+    linear-gradient(145deg,#355466f0,#0c2839f8 48%,#173b4ef5) !important;
+}
