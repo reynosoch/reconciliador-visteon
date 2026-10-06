@@ -1,3 +1,4 @@
+import { buildMykeSprites, spritePoses } from "./prepare-myke-sprites.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildInventoryEngine } from "../src/domain/inventoryEngine.js";
@@ -241,3 +242,10 @@ assert.equal(
 );
 
 assert.ok(!organization.topics.some((topic) => topic.id === "team"));
+
+assert.equal(spritePoses.length, 9);
+const sprite = buildMykeSprites();
+assert.equal(readFileSync(new URL("../public/myke/myke-sprites.svg", import.meta.url), "utf8"), sprite);
+assert.equal((sprite.match(/<use href="#body"/g) || []).length, 72);
+assert.ok(!/https?:\/\/(?!www.w3.org)/.test(sprite));
+console.log("Myke pixel sprite OK: 72 original frames, 9 poses, reproducible atlas.");

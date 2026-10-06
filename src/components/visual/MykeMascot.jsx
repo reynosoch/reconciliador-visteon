@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import MykeGhost from "./MykeGhost.jsx";
 import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
@@ -19,13 +19,37 @@ function initialDock() {
     ? { edge: value.edge, ratio: Math.max(0, Math.min(1, value.ratio)) }
     : { edge: "left", ratio: 1 };
 }
-export default function MykeMascot({ open, onOpen, onDisable }) {
+export default function MykeMascot({ open, onDisable }) {
+  const bubbleId = useId();
+  const root = useRef(null);
+  const [sleeping, setSleeping] = useState(false);
+  const [greeting, setGreeting] = useState(false);
   const [dock, setDock] = useState(initialDock);
   const [position, setPosition] = useState(null);
   const [landing, setLanding] = useState(false);
   const [lean, setLean] = useState(0);
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    if (open) setGreeting(false);
+  }, [open]);
+  useEffect(() => {
+    if (!greeting) return;
+    const dismiss = (event) => {
+      if (event.key === "Escape" || (event.type === "pointerdown" && !root.current?.contains(event.target))) setGreeting(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", dismiss);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", dismiss);
+    };
+  }, [greeting]);
+  useEffect(() => {
+    if (greeting || position || landing || open) return;
+    const rest = setTimeout(() => setSleeping(true), 30000);
+    return () => clearTimeout(rest);
+  }, [greeting, position, landing, open]);
   const drag = useRef(null);
   const moved = useRef(false);
   const settle = (point) => {
@@ -78,17 +102,19 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
   return createPortal(
     <div
       className="vi-myke-dock"
+      ref={root}
       style={{ ...style, "--vi-myke-lean": `${lean}deg` }}
       data-edge={dock.edge}
-      data-awake={open || Boolean(position)}
+      data-awake={greeting || Boolean(position)}
     >
       <button
         type="button"
         className="vi-myke-launcher"
-        aria-label="Abrir Myke"
-        title="Arrástrame a un borde o toca para conversar"
+        aria-label="Saludar a Myke"
+        title="Arrástrame a un borde o toca para saludar"
         aria-description="Arrástrame a un borde. También puedes moverme con las flechas del teclado."
-        aria-expanded={open}
+        aria-expanded={greeting}
+        aria-controls={greeting ? bubbleId : undefined}
         // The mascot owns this touch gesture; do not also trigger the edge menu swipe.
         onTouchStart={(event) => event.stopPropagation()}
         onTouchEnd={(event) => event.stopPropagation()}
@@ -103,6 +129,7 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
             x: box.left,
             y: box.top,
           };
+          setSleeping(false);
           clearTimeout(timer.current);
           setLanding(false);
           moved.current = false;
@@ -165,11 +192,12 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
             moved.current = false;
             return;
           }
-          onOpen(dock.edge);
+          setSleeping(false);
+          setGreeting((value) => !value);
         }}
       >
         <MykeGhost
-          pose={position ? "dragging" : landing ? "landing" : "idle"}
+          pose={position ? "dragging" : landing ? "landing" : greeting ? "welcome" : sleeping ? "sleeping" : "idle"}
           gaze={lean / 14}
         />
       </button>
@@ -182,6 +210,19 @@ export default function MykeMascot({ open, onOpen, onDisable }) {
       >
         ×
       </button>
+      {greeting && !position && (
+        <aside className="vi-myke-bubble" style={{
+          left: `clamp(14px, calc(${style.left} + ${dock.edge === "right" ? -290 : 100}px), calc(100vw - 304px))`,
+          top: dock.edge === "top"
+            ? "144px"
+            : `clamp(14px, calc(${style.top} - 190px), calc(100dvh - 320px))`,
+          bottom: "auto",
+        }} id={bubbleId} aria-label="Saludo de Myke">
+          <strong>¡Hola! Soy Myke.</strong>
+          <p>Te ayudo con el tablero, el motor y tus piezas. Para conversar, abre ☰ → Chatear con Myke.</p>
+          <button type="button" aria-label="Cerrar saludo" onClick={() => setGreeting(false)}>×</button>
+        </aside>
+      )}
     </div>,
     document.body,
   );

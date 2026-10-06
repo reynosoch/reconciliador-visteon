@@ -710,10 +710,6 @@ export default function App() {
       {mykeEnabled && (
         <MykeMascot
           open={mykeOpen}
-          onOpen={() => {
-            setMykeTab("chat");
-            setMykeOpen(true);
-          }}
           onDisable={() => {
             setMykeEnabled(false);
             setMykeOpen(false);

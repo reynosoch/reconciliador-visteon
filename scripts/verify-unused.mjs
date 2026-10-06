@@ -31,7 +31,7 @@ function importSpecifiers(source) {
 
 function resolveRelative(fromFile, specifier, sourceFiles) {
   if (!specifier.startsWith(".")) return null;
-  const base = path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), specifier));
+  const base = path.posix.normalize(path.posix.join(path.posix.dirname(fromFile), specifier.split("?")[0]));
   const candidates = [
     base,
     ...EXTENSIONS.map((ext) => base + ext),

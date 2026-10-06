@@ -1,4 +1,4 @@
-import { isMykePublicQuestion } from "../../supabase/functions/myke-chat/public-question.mjs";
+import { isMykePublicQuestion, isMykeProjectQuestion, MYKE_SCOPE_REPLY } from "../../supabase/functions/myke-chat/public-question.mjs";
 
 // No provider key in this module. The private access code stays in component memory.
 export function getMykeAIConfig(env = import.meta.env || {}) {
@@ -38,6 +38,7 @@ export async function requestMykeAI({
     throw new Error(
       "Las consultas de piezas se resuelven con el motor local; no se envían a Gemini.",
     );
+  if (!isMykeProjectQuestion(question, history)) throw new Error(MYKE_SCOPE_REPLY);
   let response;
   try {
     response = await fetchImpl(config.url, {
@@ -76,6 +77,10 @@ export async function requestMykeAI({
     );
   }
   if (!response.ok) {
+    if (response.status === 422) {
+      const rejection = await response.json().catch(() => ({}));
+      if (rejection.code === "project_scope") throw new Error(MYKE_SCOPE_REPLY);
+    }
     const errors = {
       401: "El código de acceso no fue aceptado.",
       403: "Este sitio no tiene permiso para usar el servicio IA.",

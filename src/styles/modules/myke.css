@@ -1,4 +1,4 @@
-/* Orange vector poses: only small transform/opacity animations; no scroll listeners. */
+/* Original pixel sprite poses; no scroll listeners or JavaScript frame loop. */
 .vi-myke-launcher {
   position: fixed;
   z-index: 1500;
@@ -33,36 +33,21 @@
   flex: none;
   overflow: visible;
 }
-.vi-myke-float {
-  animation: vi-myke-float 4s ease-in-out infinite;
-  transform-origin: 48px 50px;
+/* Eight discrete frames per pose; native CSS, no animation loop in JavaScript. */
+.vi-myke-sprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: 800% 900%;
+  background-position-y: calc(var(--vi-myke-row) * 100% / 8);
+  image-rendering: pixelated;
+  animation: vi-myke-frames var(--vi-myke-duration) steps(8, end) infinite;
 }
-.vi-myke-eyes {
-  animation: vi-myke-blink 7s ease-in-out infinite;
-  transform-origin: 48px 46px;
-}
-.vi-myke-eyes > g {
-  transition: transform 0.12s ease-out;
-}
-.vi-myke-shadow {
-  animation: vi-myke-shadow 4s ease-in-out infinite;
-  transform-origin: 48px 98px;
-}
-.vi-myke-welcome .vi-myke-float {
-  animation:
-    vi-myke-greet 0.7s ease-out 1,
-    vi-myke-float 4s 0.7s ease-in-out infinite;
-}
-.vi-myke-typing .vi-myke-float {
-  animation: vi-myke-type 0.8s ease-in-out infinite;
-}
-.vi-myke-reading .vi-myke-float {
-  animation: vi-myke-float 5s ease-in-out infinite;
-}
-.vi-myke-dragging .vi-myke-float {
-  animation: vi-myke-flight 0.55s ease-in-out infinite;
-  transform: rotate(var(--vi-myke-lean, -9deg));
-}
+.vi-myke-ghost { display: inline-block; transform: translateX(var(--vi-myke-gaze, 0px)); }
+.vi-myke-landing .vi-myke-sprite { animation-iteration-count: 1; }
+.vi-myke-dragging { transform: rotate(var(--vi-myke-lean, 0deg)); }
+@keyframes vi-myke-frames { to { background-position-x: calc(100% * 8 / 7); } }
 .vi-myke-overlay {
   position: fixed;
   inset: 0;
@@ -336,58 +321,6 @@
   text-align: left;
   font-size: 15px;
 }
-@keyframes vi-myke-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-@keyframes vi-myke-shadow {
-  0%,
-  100% {
-    transform: scaleX(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scaleX(0.85);
-    opacity: 0.2;
-  }
-}
-@keyframes vi-myke-blink {
-  0%,
-  43%,
-  47%,
-  100% {
-    transform: scaleY(1);
-  }
-  45% {
-    transform: scaleY(0.1);
-  }
-}
-@keyframes vi-myke-greet {
-  0%,
-  100% {
-    transform: rotate(0);
-  }
-  30% {
-    transform: rotate(-12deg) translateY(-5px);
-  }
-  65% {
-    transform: rotate(10deg) translateY(-5px);
-  }
-}
-@keyframes vi-myke-type {
-  0%,
-  100% {
-    transform: rotate(-3deg) translateY(0);
-  }
-  50% {
-    transform: rotate(3deg) translateY(-2px);
-  }
-}
 @keyframes vi-myke-answer-in {
   from {
     opacity: 0.2;
@@ -509,28 +442,6 @@ body:has(.vi-source-preview-overlay) .vi-myke-dock {
   padding: 10px 0 0;
 }
 body.vi-performance-motion-off .vi-myke-dock,
-body.vi-performance-motion-off .vi-myke-pupils {
-  transition: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .vi-myke-dock,
-  .vi-myke-pupils {
-    transition: none;
-  }
-}
-
-.vi-myke-answer-sources {
-  padding-top: 12px;
-  font-size: 14px;
-}
-.vi-myke-answer-sources summary {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  color: #ffd0a6;
-  cursor: pointer;
-}
-
 /* Bounded local question library and real domain replies. */
 .vi-myke-question-library {
   border-bottom: 1px solid #87b9cb24;
@@ -823,42 +734,13 @@ body.vi-performance-motion-off .vi-myke-pupils {
   background: #ffffff0a;
   border-radius: 12px;
 }
-.vi-myke-landing .vi-myke-float {
-  animation: vi-myke-land 0.45s ease-out;
-}
-@keyframes vi-myke-flight {
-  0%,
-  100% {
-    transform: rotate(var(--vi-myke-lean, -9deg)) translateY(-3px)
-      scale(1.03, 0.97);
-  }
-  50% {
-    transform: rotate(var(--vi-myke-lean, -9deg)) translateY(-6px)
-      scale(0.97, 1.03);
-  }
-}
-@keyframes vi-myke-land {
-  0% {
-    transform: scale(1.08, 0.92);
-  }
-  50% {
-    transform: scale(0.96, 1.04) translateY(-3px);
-  }
-  100% {
-    transform: none;
-  }
-}
-body.vi-performance-motion-off .vi-myke-float,
-body.vi-performance-motion-off .vi-myke-eyes,
-body.vi-performance-motion-off .vi-myke-shadow,
+body.vi-performance-motion-off .vi-myke-sprite,
 body.vi-performance-motion-off .vi-myke-working span,
 body.vi-performance-motion-off .vi-myke-answer {
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .vi-myke-float,
-  .vi-myke-eyes,
-  .vi-myke-shadow,
+  .vi-myke-sprite,
   .vi-myke-working span,
   .vi-myke-answer {
     animation: none;
@@ -1014,3 +896,44 @@ body.vi-performance-motion-off .vi-myke-answer {
     max-height: 126px;
   }
 }
+
+/* A pet greeting stays nonmodal. Full conversations open only from the menu. */
+.vi-myke-bubble {
+  position: fixed;
+  inset-inline: 14px;
+  bottom: 156px;
+  width: min(290px, calc(100vw - 28px));
+  max-height: min(260px, calc(100dvh - 180px));
+  overflow: auto;
+  padding: 16px 44px 16px 18px;
+  border: 1px solid #a1c8d94d;
+  border-radius: 18px;
+  color: #f5fafc;
+  background: #10384ff5;
+  box-shadow: 0 8px 28px #0004;
+  pointer-events: auto;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.vi-myke-dock[data-edge="right"] .vi-myke-bubble { inset-inline-start: auto; }
+.vi-myke-dock[data-edge="top"] .vi-myke-bubble { top: 144px; bottom: auto; }
+.vi-myke-bubble p { margin: 6px 0 0; }
+.vi-myke-bubble button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-size: 24px;
+}
+.vi-myke-bubble button:focus-visible { outline: 2px solid #ffb879; }
+
+.vi-myke-local-options { margin-bottom: 8px; }
+.vi-myke-local-options > summary { cursor: pointer; padding: 8px 0; color: #ffd2aa; }
+.vi-myke-local-options p { font-size: 15px; line-height: 1.5; }
+.vi-myke-local-options progress { width: 100%; accent-color: #f5821f; }
+.vi-myke-local-options button { min-height: 44px; padding: 8px 12px; border: 1px solid #ffb87966; border-radius: 12px; background: #17475c; color: #fff3df; }

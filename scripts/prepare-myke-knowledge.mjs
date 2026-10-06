@@ -11,7 +11,7 @@ const publicHeadings = new Set([
   "Metadatos de snapshot", "Desarrollo local", "Variables del frontend", "Despliegue",
   "Diseño", "Principios que no deben romperse", "Pendientes técnicos/funcionales",
   "UX de investigación y trazabilidad", "Acuerdos de la junta del 29 de septiembre de 2026",
-  "Preguntas de lógica para próxima revisión", "Myke con Gemini",
+  "Preguntas de lógica para próxima revisión", "Myke con Gemini", "Myke: IA gratis en el navegador",
 ]);
 const hash = (content) => createHash("sha256").update(content).digest("hex");
 const documents = [...readme.matchAll(/^## (.+)\n([\s\S]*?)(?=^## |$(?![\s\S]))/gm)]
@@ -63,12 +63,15 @@ const generated = {
   "project-context.generated.json": { version: 1, documents, modules },
 };
 for (const [file, value] of Object.entries(generated)) {
-  const target = new URL(`supabase/functions/myke-chat/${file}`, root);
+  const targets = [new URL(`supabase/functions/myke-chat/${file}`, root)];
+  if (file === "project-context.generated.json") targets.push(new URL(`public/myke/${file}`, root));
   const content = JSON.stringify(value, null, 2) + "\n";
   if (Buffer.byteLength(content) > 350000) throw new Error(`Myke context too large: ${file}`);
-  if (process.argv.includes("--check")) {
-    if (readFileSync(target, "utf8") !== content)
-      throw new Error(`Myke context is stale: ${file}; run npm run myke:knowledge`);
-  } else writeFileSync(target, content);
+  for (const target of targets) {
+    if (process.argv.includes("--check")) {
+      if (readFileSync(target, "utf8") !== content)
+        throw new Error(`Myke context is stale: ${file}; run npm run myke:knowledge`);
+    } else writeFileSync(target, content);
+  }
 }
 console.log(`Myke public context synchronized: ${topics.length} questions, ${documents.length} README sections, ${modules.length} actual modules. Internal organization and inventory excluded.`);

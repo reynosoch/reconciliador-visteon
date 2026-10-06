@@ -23,6 +23,10 @@ concurrency:
   group: myke-gemini-production
   cancel-in-progress: false
 
+# Inference uses browser WebGPU; native Node/CUDA providers are not required.
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
+
 jobs:
   prerequisites:
     if: github.ref == 'refs/heads/main'

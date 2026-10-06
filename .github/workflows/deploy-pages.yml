@@ -12,6 +12,10 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Inference uses browser WebGPU; native Node/CUDA providers are not required.
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
+
 jobs:
   build:
     runs-on: ubuntu-latest
