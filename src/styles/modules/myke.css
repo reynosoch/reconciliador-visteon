@@ -19,23 +19,27 @@
 @keyframes vi-myke-land { 25% { transform:scaleX(1.18) scaleY(.8); } 55% { transform:scaleX(.94) scaleY(1.1) translateY(-4px); } }
 @keyframes vi-myke-sigh { 45% { transform:translateY(5px) rotate(-6deg); } }
 .vi-myke-dock { position:fixed; z-index:1500; width:160px; height:160px; pointer-events:none; transition:left .28s cubic-bezier(.22,1,.36,1),top .28s cubic-bezier(.22,1,.36,1); }
-.vi-myke-launcher { position:relative; width:160px; height:160px; display:grid; place-items:center; border:0; padding:0; background:transparent; pointer-events:auto; touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; transition:transform .2s ease-out; }
-.vi-myke-dock .vi-myke-ghost { width:154px; height:166px; filter:drop-shadow(0 4px 2px #00121d60); }
-.vi-myke-dock[data-edge="left"] .vi-myke-launcher { transform:translateX(-45px); }
-.vi-myke-dock[data-edge="right"] .vi-myke-launcher { transform:translateX(45px); }
-.vi-myke-dock[data-edge="top"] .vi-myke-launcher { transform:translateY(-42px); }
-.vi-myke-dock[data-edge="bottom"] .vi-myke-launcher { transform:translateY(40px); }
+.vi-myke-launcher { position:relative; width:96px; height:104px; display:grid; place-items:center; border:0; padding:0; background:transparent; pointer-events:auto; touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; transition:transform .2s ease-out; }
+.vi-myke-dock .vi-myke-ghost { width:96px; height:104px; filter:drop-shadow(0 4px 2px #00121d60); }
+.vi-myke-dock[data-edge="left"] .vi-myke-launcher { transform:translateX(-66px); }
+.vi-myke-dock[data-edge="right"] .vi-myke-launcher { margin-left:64px; transform:translateX(66px); }
+.vi-myke-dock[data-edge="top"] .vi-myke-launcher { transform:translateY(-132px); }
+.vi-myke-dock[data-edge="bottom"] .vi-myke-launcher { transform:translateY(132px); }
 .vi-myke-dock:is(:hover,:focus-within,[data-awake="true"]) .vi-myke-launcher { transform:none; }
 .vi-myke-dock:has(.vi-myke-dragging) { transition:none; }
 .vi-myke-dock:has(.vi-myke-dragging) .vi-myke-launcher { cursor:grabbing; }
-.vi-myke-hide { position:absolute; z-index:3; top:22px; right:18px; width:44px; height:44px; border:1px solid #79b4c34a; border-radius:50%; background:#092b3de8; color:#cfe6ee; font-size:22px; pointer-events:auto; }
-.vi-myke-dock[data-edge="right"] .vi-myke-hide { right:auto; left:18px; }
-.vi-myke-dock[data-edge="top"] .vi-myke-hide { top:auto; bottom:18px; }
+.vi-myke-hide { position:absolute; z-index:3; top:2px; left:54px; width:28px; height:28px; border:1px solid #79b4c34a; border-radius:50%; background:linear-gradient(145deg,#ffffff26,#123b4b70); backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%); box-shadow:inset 0 1px #ffffff30,0 3px 12px #00121d40; color:#cfe6ee; font-size:18px; opacity:.55; pointer-events:auto; }
+.vi-myke-dock[data-edge="right"] .vi-myke-hide { left:64px; }
+.vi-myke-dock[data-edge="top"] .vi-myke-hide { top:-58px; }
+.vi-myke-dock[data-edge="bottom"] .vi-myke-hide { top:132px; }
+.vi-myke-dock[data-edge="left"] .vi-myke-hide { left:10px; }
+.vi-myke-dock[data-edge="right"] .vi-myke-hide { left:122px; }
+.vi-myke-dock:is(:hover,:focus-within,[data-awake="true"]) .vi-myke-hide { top:2px; left:64px; }
 .vi-myke-dock:has(.vi-myke-dragging) .vi-myke-hide { visibility:hidden; }
 body.vi-overlay-open .vi-myke-dock,body:has(.vi-source-preview-overlay) .vi-myke-dock { visibility:hidden; }
 .vi-myke-launcher:focus-visible,.vi-myke-hide:focus-visible { outline:2px solid #f5821f; outline-offset:2px; }
 .vi-myke-overlay { position:fixed; inset:0; z-index:900; display:flex; align-items:center; justify-content:center; padding:12px 18px 76px; background:#00121d80; }
-.vi-myke-panel { container-type:size; position:relative; width:min(var(--vi-myke-width,1120px),calc(100vw - 36px)); height:min(var(--vi-myke-height,820px),calc(100dvh - 88px)); overflow:hidden; border:1px solid #8bc2d24d; border-radius:26px; color:#e8f4f7; background:linear-gradient(145deg,#294657f5,#0b2231fa 48%,#142b3cf7) !important; -webkit-backdrop-filter:blur(28px) saturate(135%) !important; backdrop-filter:blur(28px) saturate(135%) !important; box-shadow:0 32px 100px #0008,inset 0 1px #ffffff38,inset 0 0 0 5px #ffffff03; }
+.vi-myke-panel { container-type:size; position:relative; width:min(var(--vi-myke-width,1120px),calc(100vw - 36px)); height:min(var(--vi-myke-height,820px),calc(100dvh - 88px)); overflow:hidden; border:1px solid #8bc2d24d; border-radius:26px; color:#e8f4f7; background:linear-gradient(145deg,#314d60d9,#0b2231e6 48%,#213e50da) !important; -webkit-backdrop-filter:blur(28px) saturate(135%) !important; backdrop-filter:blur(28px) saturate(135%) !important; box-shadow:0 32px 100px #0008,inset 0 1px #ffffff38,inset 0 0 0 5px #ffffff03; }
 .vi-myke-panel > .vi-rubber-clip,.vi-myke-panel > .vi-rubber-clip > .vi-rubber-content { height:100%; min-height:0; }
 .vi-myke-panel > .vi-rubber-clip { padding:0; }
 .vi-myke-panel > .vi-rubber-clip > .vi-rubber-content { display:flex; flex-direction:column; }
@@ -71,7 +75,7 @@ body.vi-overlay-open .vi-myke-dock,body:has(.vi-source-preview-overlay) .vi-myke
 .vi-myke-topics { display:flex; flex-direction:column; gap:7px; margin-top:8px; }
 .vi-myke-topics button { display:flex; justify-content:space-between; font-size:14px; }
 .vi-myke-chat { display:flex; flex-direction:column; min-height:0; min-width:0; gap:10px; }
-.vi-myke-living-space { display:flex; align-items:center; gap:14px; height:98px; flex:none; padding:0 8px; border-bottom:1px solid #79b4c31c; }
+.vi-myke-living-space { position:relative; display:flex; align-items:center; gap:14px; min-height:82px; flex:none; padding:0 8px; }
 .vi-myke-stage { display:grid; place-items:center; width:124px; height:96px; flex:none; overflow:visible; }
 .vi-myke-stage .vi-myke-ghost { width:98px; height:106px; }
 .vi-myke-living-space strong { font-size:16px; color:#d8edf4; }
@@ -161,76 +165,85 @@ body.vi-performance-motion-off .vi-myke-dock,body.vi-performance-motion-off .vi-
 .vi-myke-evidence *::-webkit-scrollbar-track { background:#08253540; border-radius:12px; }
 .vi-myke-evidence *::-webkit-scrollbar-thumb { background:#467f96; border-radius:12px; }
 
-/* Quick chat is a small anchored conversation, expanded chat keeps the same session. */
-.vi-myke-quick-tools { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 14px; border-bottom:1px solid #79b4c328; flex:none; }
-.vi-myke-quick-tools > span { color:#b7d3df; font-size:13px; }
+/* Quick conversation: glass window and independent companion beside its composer. */
+.vi-myke-head-actions { display:flex; align-items:center; gap:8px; flex:none; }
+.vi-myke-move { display:flex; align-items:center; gap:8px; padding:8px 0; min-width:0; border:0; background:transparent; color:#e8f4f7; font-size:14px!important; font-weight:600!important; cursor:grab!important; touch-action:none; user-select:none; white-space:nowrap; }
+.vi-myke-move > span { color:#91aebd; font-size:20px; }
+.vi-myke-move:active { cursor:grabbing!important; }
 .vi-myke-compact { background:transparent; padding:0; }
-.vi-myke-compact .vi-myke-panel { --vi-drawer-enter:0px; position:absolute; left:var(--vi-myke-anchor-x,12px); top:var(--vi-myke-anchor-y,100px); width:min(var(--vi-myke-width,520px),calc(100vw - var(--vi-myke-anchor-x) - 8px)); height:min(var(--vi-myke-height,680px),calc(100dvh - var(--vi-myke-anchor-y) - 80px)); border-radius:22px; }
-.vi-myke-compact .vi-myke-head { padding:10px 14px; }
-.vi-myke-compact .vi-myke-head h2 { font-size:21px; }
-.vi-myke-compact .vi-myke-head p { font-size:12px; }
+.vi-myke-compact .vi-myke-panel { --vi-drawer-enter:0px; position:absolute; left:var(--vi-myke-anchor-x,12px); top:var(--vi-myke-anchor-y,100px); width:min(var(--vi-myke-width,400px),calc(100vw - var(--vi-myke-anchor-x) - 8px)); height:var(--vi-myke-height,480px); border-radius:24px; }
+.vi-myke-compact .vi-myke-head { padding:10px 14px; gap:4px; border-bottom-color:#ffffff12; }
+.vi-myke-head .vi-icon-close { border:1px solid #ffffff20; border-radius:50%; background:#ffffff09; }
+.vi-myke-compact .vi-myke-head .vi-icon-close { width:30px; height:30px; min-width:30px; min-height:30px; font-size:20px; }
+.vi-myke-expand { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid #ffffff20; border-radius:100px; color:#d9e9f0; background:#ffffff09; padding:7px 10px; min-height:32px; font-size:12px!important; }
+.vi-myke-expand svg { flex:none; }
 .vi-myke-compact .vi-myke-tabs { display:none; }
-.vi-myke-compact .vi-myke-body[data-view="chat"] { grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); padding:10px 12px 12px; gap:8px; }
-.vi-myke-compact .vi-myke-questions { max-height:88px; overflow:auto; gap:0; border:0; background:transparent; padding:0; }
+.vi-myke-compact .vi-myke-body[data-view="chat"] { grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); padding:12px 14px 22px; gap:10px; }
+.vi-myke-compact .vi-myke-questions { max-height:80px; overflow:auto; gap:0; border:0; background:transparent; padding:0; }
 .vi-myke-compact .vi-myke-questions > strong,.vi-myke-compact .vi-myke-more { display:none; }
 .vi-myke-compact .vi-myke-questions > .vi-myke-suggestions { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-.vi-myke-compact .vi-myke-suggestions button { font-size:12px; padding:7px 9px; }
+.vi-myke-compact .vi-myke-suggestions button { font-size:12px; line-height:1.4; padding:8px 10px; border-radius:14px; background:#ffffff08; min-height:40px; }
 .vi-myke-compact .vi-myke-suggestions button:nth-child(n+3) { display:none; }
-.vi-myke-compact .vi-myke-living-space { height:64px; gap:8px; }
-.vi-myke-compact .vi-myke-stage { width:72px; height:64px; }
-.vi-myke-compact .vi-myke-stage .vi-myke-ghost { width:64px; height:70px; }
-.vi-myke-compact .vi-myke-living-space strong { font-size:14px; }
-.vi-myke-compact .vi-myke-living-space > div > span { font-size:12px; }
-.vi-myke-compact .vi-myke-message,.vi-myke-compact .vi-myke-answer,.vi-myke-compact .vi-myke-user-message { padding:10px 12px; font-size:14px; }
-.vi-myke-compact .vi-myke-context-chips { max-height:36px; }
-.vi-myke-compact .vi-myke-context-chips button { font-size:11px; }
-.vi-myke-compact .vi-myke-composer { padding:6px; gap:4px; }
-.vi-myke-compact .vi-myke-composer textarea { font-size:14px; }
-.vi-myke-compact .vi-myke-composer > button { font-size:13px; padding:8px; }
-.vi-myke-compact .vi-myke-note { font-size:11px; line-height:1.4; padding-right:28px; }
-.vi-myke-help-speaker { position:absolute; right:calc(480px + 22px); top:100px; width:186px; display:flex; flex-direction:column; align-items:center; gap:4px; color:#e6f0f6; }
-.vi-myke-help-speaker .vi-myke-ghost { width:124px; height:134px; }
-.vi-myke-help-evidence button { border:1px solid #f5821f55; background:#113b4f; border-radius:10px; padding:8px 10px; color:#fff0e3; font-size:13px; min-height:40px; cursor:pointer; }
-.vi-myke-help-mobile { display:none; }
-.vi-myke-help-evidence { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-@media(max-width:700px) { .vi-myke-help-speaker { display:none; } .vi-myke-help-mobile { display:flex; gap:10px; align-items:center; margin-bottom:18px; } .vi-myke-help-mobile .vi-myke-ghost { width:70px; height:76px; } .vi-myke-help-mobile strong { display:block; color:#ffbf85; margin-bottom:6px; } }
-/* Character-led help: the ghost itself is the action, no invitation card. */
-.vi-myke-help-character { display:flex; flex-direction:column; align-items:center; border:0; padding:8px; background:transparent; color:#f2f6f8; cursor:pointer; font:inherit; }
-.vi-myke-help-character > span:last-child { font-size:12px; font-weight:600; text-shadow:0 2px 6px #000; border-bottom:1px solid #f5821f80; padding-bottom:5px; }
-.vi-myke-help-character:hover .vi-myke-ghost { filter:drop-shadow(0 8px 8px #0004); }
-.vi-myke-help-character:hover > span:last-child { color:#ffbc80; border-color:#ffbc80; }
-.vi-myke-help-character:focus-visible { outline:2px solid #f5821f; outline-offset:4px; border-radius:18px; }
-.vi-myke-help-mobile .vi-myke-help-character { flex-direction:row; gap:12px; }
-.vi-myke-compact .vi-myke-head { padding:16px 18px 12px; }
-.vi-myke-compact .vi-myke-head h2 { font-size:25px; }
-.vi-myke-compact .vi-myke-body[data-view="chat"] { padding:12px 16px 22px; gap:12px; }
-.vi-myke-compact .vi-myke-living-space { height:80px; }
-.vi-myke-compact .vi-myke-stage { width:86px; height:80px; }
-.vi-myke-compact .vi-myke-stage .vi-myke-ghost { width:80px; height:86px; }
-.vi-myke-compact .vi-myke-message,.vi-myke-compact .vi-myke-answer,.vi-myke-compact .vi-myke-user-message { font-size:15px; line-height:1.65; padding:14px; }
-.vi-myke-composer:focus-within { border-color:#f5821f99; box-shadow:0 0 0 3px #f5821f0a,inset 0 1px #ffffff0a; }
-.vi-myke-head .vi-icon-close { border:1px solid #ffffff18; border-radius:50%; background:#ffffff06; }
+.vi-myke-compact .vi-myke-conversation { padding:2px 4px 6px 0; }
+.vi-myke-compact .vi-myke-message,.vi-myke-compact .vi-myke-answer,.vi-myke-compact .vi-myke-user-message { font-size:14px; padding:12px; }
+.vi-myke-compact .vi-myke-context-chips { max-height:34px; }
+.vi-myke-compact .vi-myke-context-chips button { font-size:11px; padding:5px 8px; }
+.vi-myke-composer:focus-within { border-color:#f5821f88; box-shadow:0 0 0 3px #f5821f0a,inset 0 1px #ffffff0a; }
+.vi-myke-composer > button { display:grid; place-items:center; width:44px; height:44px; padding:0; border-radius:50%; flex:none; }
+.vi-myke-compact .vi-myke-composer { padding:5px; gap:4px; border-radius:18px; background:#001b2b50; }
+.vi-myke-compact .vi-myke-composer textarea { font-size:14px; padding:10px 8px; }
+.vi-myke-quick-companion { position:absolute; width:74px; pointer-events:none; color:#e8f4f7; }
+.vi-myke-quick-companion .vi-myke-living-space { display:block; padding:0; height:100px; min-height:0; }
+.vi-myke-quick-companion .vi-myke-stage { width:74px; height:90px; }
+.vi-myke-quick-companion .vi-myke-ghost { width:72px; height:78px; }
+.vi-myke-speech { position:relative; display:block; padding:12px 15px; border:1px solid #cbe1ed38; border-radius:18px; background:linear-gradient(135deg,#34566ceb,#123042f5); box-shadow:inset 0 1px #ffffff20,0 8px 24px #00121d38; color:#d9e9f0; font-size:13px; line-height:1.5; text-align:left; }
+.vi-myke-speech::before { content:""; position:absolute; left:-5px; top:22px; width:9px; height:9px; border-left:1px solid #cbe1ed38; border-bottom:1px solid #cbe1ed38; background:#29495e; transform:rotate(45deg); }
+.vi-myke-speech p { margin:0; }
+.vi-myke-quick-companion .vi-myke-speech { position:absolute; left:82px; top:100px; width:260px; min-height:62px; padding:10px 13px; }
+.vi-myke-quick-companion .vi-myke-speech::before { left:18px; top:-5px; transform:rotate(135deg); }
 .vi-myke-panel button { transition:background .15s,border-color .15s,color .15s; }
-.vi-myke-resize:hover { background:linear-gradient(135deg,transparent 30%,#f5821f30); }
 .vi-myke-note { padding-right:28px; }
-@media(max-height:660px) { .vi-myke-compact .vi-myke-living-space { height:48px; } .vi-myke-compact .vi-myke-stage,.vi-myke-compact .vi-myke-stage .vi-myke-ghost { width:48px; height:52px; } }
-@media(max-width:640px) { .vi-myke-questions { padding:8px; } .vi-myke-compact .vi-myke-head .vi-eyebrow { display:none; } .vi-myke-compact .vi-myke-body[data-view="chat"] { padding:8px 12px 20px; gap:6px; } }
-body.vi-performance-motion-off .vi-myke-panel button { transition:none; }
-@media(prefers-reduced-motion:reduce) { .vi-myke-panel button { transition:none; } }
-
-@container (max-height:620px) {
- .vi-myke-head,.vi-myke-compact .vi-myke-head { padding:10px 14px; }
- .vi-myke-head .vi-eyebrow { display:none; }
- .vi-myke-living-space,.vi-myke-compact .vi-myke-living-space { height:42px; }
- .vi-myke-stage,.vi-myke-stage .vi-myke-ghost,.vi-myke-compact .vi-myke-stage,.vi-myke-compact .vi-myke-stage .vi-myke-ghost { width:42px; height:46px; }
- .vi-myke-compact .vi-myke-body[data-view="chat"] { gap:5px; padding:6px 12px 16px; }
- .vi-myke-compact .vi-myke-suggestions button { padding:5px 8px; min-height:32px; font-size:11px; }
- .vi-myke-compact .vi-myke-questions { max-height:44px; }
- .vi-myke-chat { gap:6px; }
+.vi-myke-resize:hover { background:linear-gradient(135deg,transparent 30%,#f5821f30); }
+.vi-myke-dock:is(:hover,:focus-within,[data-awake="true"]) .vi-myke-hide { opacity:1; }
+.vi-myke-dock:not(:hover):not(:focus-within):not([data-awake="true"]) .vi-myke-flight { opacity:.6; }
+/* Modern disclosures retain native keyboard/assistive-technology semantics. */
+.vi-myke-local-options summary,.vi-myke-question-library summary,.vi-myke-answer-sources summary { display:flex; align-items:center; justify-content:space-between; gap:12px; list-style:none; padding:10px 12px; border:1px solid #ffffff16; border-radius:12px; background:#ffffff05; color:#d0e2ec; font-size:13px; }
+.vi-myke-local-options summary::-webkit-details-marker,.vi-myke-question-library summary::-webkit-details-marker,.vi-myke-answer-sources summary::-webkit-details-marker { display:none; }
+.vi-myke-local-options summary::after,.vi-myke-question-library summary::after,.vi-myke-answer-sources summary::after { content:"+"; font-size:18px; color:#abc7d5; }
+.vi-myke-local-options[open] > summary::after,.vi-myke-question-library[open] > summary::after,.vi-myke-answer-sources[open] > summary::after { content:"−"; }
+.vi-myke-questions > strong { font-size:12px; font-weight:500; color:#a4c0cd; }
+.vi-myke-questions > .vi-myke-suggestions button { background:#ffffff07; border-color:#ffffff18; font-size:13px; }
+.vi-myke-help-speaker { position:absolute; right:calc(480px + 22px); top:100px; width:238px; color:#e6f0f6; }
+.vi-myke-help-speaker .vi-myke-ghost { width:108px; height:116px; }
+.vi-myke-help-mobile { display:none; }
+.vi-myke-help-character { display:flex; flex-direction:column; align-items:center; gap:10px; border:0; padding:8px; background:transparent; color:#f2f6f8; cursor:pointer; font:inherit; }
+.vi-myke-help-character .vi-myke-speech::before { left:calc(50% - 5px); top:-5px; transform:rotate(135deg); }
+.vi-myke-help-character .vi-myke-speech small { display:block; margin-top:8px; color:#ffbc80; font-size:11px; }
+.vi-myke-help-character:hover .vi-myke-speech { border-color:#f5821f70; }
+.vi-myke-help-character:focus-visible { outline:2px solid #f5821f; outline-offset:4px; border-radius:18px; }
+.vi-myke-help-evidence { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.vi-myke-help-evidence button { border:1px solid #f5821f55; background:#113b4f; border-radius:10px; padding:8px 10px; color:#fff0e3; font-size:13px; min-height:40px; cursor:pointer; }
+@media(max-width:800px) {
+ .vi-myke-help-speaker { display:none; }
+ .vi-myke-help-mobile { display:block; margin-bottom:18px; }
+ .vi-myke-help-mobile .vi-myke-help-character { flex-direction:row; gap:12px; padding:0; }
+ .vi-myke-help-mobile .vi-myke-ghost { width:62px; height:68px; }
+ .vi-myke-help-mobile .vi-myke-speech::before { left:-5px; top:22px; transform:rotate(45deg); }
 }
-
-.vi-myke-questions > .vi-myke-suggestions button { font-size:14px; line-height:1.5; padding:12px; }
-.vi-myke-tabs button,.vi-myke-expand { font-size:14px; }
-.vi-myke-head h2 { font-weight:650; letter-spacing:-.03em; }
-.vi-myke-compact .vi-myke-suggestions button { font-size:12px; padding:8px; }
-@container (max-height:620px) { .vi-myke-compact .vi-myke-suggestions button { font-size:11px; padding:5px 8px; } }
+@media(max-width:640px) {
+ .vi-myke-compact .vi-myke-head { padding:8px 10px; }
+ .vi-myke-compact .vi-myke-body[data-view="chat"] { padding:8px 10px 20px; gap:6px; }
+ .vi-myke-compact .vi-myke-expand { padding:6px 8px; gap:5px; }
+ .vi-myke-quick-companion { width:calc(100vw - 32px); }
+ .vi-myke-quick-companion .vi-myke-living-space { display:flex; align-items:flex-start; gap:8px; }
+ .vi-myke-quick-companion .vi-myke-stage { width:64px; height:80px; }
+ .vi-myke-quick-companion .vi-myke-ghost { width:60px; height:66px; }
+ .vi-myke-quick-companion .vi-myke-speech { position:relative; left:auto; top:auto; width:min(260px,calc(100vw - 104px)); min-height:70px; }
+ .vi-myke-quick-companion .vi-myke-speech::before { left:-5px; top:22px; transform:rotate(45deg); }
+ .vi-myke-living-space { gap:6px; padding:0; }
+ .vi-myke-living-space .vi-myke-stage { width:60px; }
+}
+@container(max-height:450px) { .vi-myke-compact .vi-myke-context-chips { display:none; } }
+body.vi-performance-motion-off .vi-myke-panel button { transition:none; }
+body.vi-performance-light-glass .vi-myke-hide { backdrop-filter:none; -webkit-backdrop-filter:none; background:#123b4bf5; }
+@media(prefers-reduced-motion:reduce) { .vi-myke-panel button { transition:none; } }

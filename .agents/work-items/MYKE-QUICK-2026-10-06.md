@@ -1,0 +1,14 @@
+# MYKE-QUICK-2026-10-06
+
+- Base: `ee8f505070c99e2850d7d26ac7fcd2e796981de9`, main. Authority: current request and established direct main commit/push workflow; no PR or deployment.
+- Outcome: retain mascot artwork; discreet idle dock, compact draggable liquid-glass chat, external composer companion with 10-second advice, modern full-chat disclosures and contextual-help return.
+- Mode: single agent, Codex as ORCH/UX/UI/QA; self-review, no independent review claim. Risk R2: UI positioning/persistence and nested overlay navigation.
+- Write reservation: MykePanel.jsx, MykeMascot.jsx, HelpDrawer.jsx, App.jsx (help/chat integration only), myke.css, myke-living.css, README and derived public knowledge. Domain, parsers, providers, database, bot, ScrollEffects, navbar/footer and sprite artwork protected.
+- Interfaces: help opens the complete shared conversation above the mounted help drawer; X/Escape returns to it. Quick position and dimensions are separate from complete-chat dimensions. No new conversation or engine.
+- Acceptance: compact header/actions, external animated character, changing speech, pointer/keyboard drag with bounds and persistence, FAQ/evidence/IA retained, pending animation, help return, responsive/reduced motion/light glass.
+- Validation: explicit lint and full build passed; Chromium 1366/1024/768/390/320 verifies bounds, keyboard/mouse drag, typing/thinking, same conversation on expansion, contextual help retention, X/Escape and overlay cleanup. Extra checks pass 10-second advice rotation, reload position persistence, resize, 320×568 bounds and reduced-motion startup. Browser runs without Supabase configuration; domain/SQL/provider contracts use existing local fixtures/mocks, not live inventory/provider. Physical Safari not tested.
+- Self-review: corrected full-chat resize minimum retained at 520 px; removed repeated quick suggestions before first message; shared companion markup reused inside/outside existing panel. Sprite atlas, all domain/parser/provider modules and ScrollEffects unchanged.
+- State: BLOCKED at release, implementation/verification complete. Full final build and explicit lint pass; final five-viewport browser pass confirmed.
+- Push to main was rejected by automatic approval review: this turn was judged not to explicitly authorize a shared/default-branch mutation. No connector or other workaround attempted. User confirmation of direct main push is needed; no credential failure observed.
+- Remote inspected after rejection: main remains `ee8f505070c99e2850d7d26ac7fcd2e796981de9`; its Verify main succeeded, but that result does not validate this unpushed candidate. After authorized push, observe Verify main on the new SHA. Pages not deployed.
+- Operations: source edits and main integration authorized; Pages, database and live bot not requested.

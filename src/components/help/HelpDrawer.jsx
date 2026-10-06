@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { createContext, useContext, useEffect, useState, lazy, Suspense } from "react";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "../shell/OverlayPortal.jsx";
@@ -33,14 +34,18 @@ export function HelpButton({ topic, onHelp, className = "" }) {
 }
 
 export default function HelpDrawer({ topic, sources, scanRows = [], snapshotMeta = null, onOpenChat, onOpenSources, reduceAnimations = false, onClose }) {
+  const systemReducedMotion = useReducedMotion();
+  const quiet = reduceAnimations || systemReducedMotion;
   const [pose,setPose]=useState("welcome");
+  const [tipIndex,setTipIndex]=useState(0);
   const [preview,setPreview]=useState(null);
   useEffect(()=>{
     if(!topic)return;
-    setPose("welcome");setPreview(null);
+    setPose("welcome");setPreview(null);setTipIndex(0);
     const speak=setTimeout(()=>setPose("reading"),900);
     const rest=setTimeout(()=>setPose("idle"),5000);
-    return ()=>{clearTimeout(speak);clearTimeout(rest);};
+    const adviceTimer=setInterval(()=>{if(document.visibilityState === "visible"){setTipIndex((index)=>(index+1)%3);setPose("reading");}},10000);
+    return ()=>{clearTimeout(speak);clearTimeout(rest);clearInterval(adviceTimer);};
   },[topic]);
   if (!topic) return null;
 
@@ -48,7 +53,16 @@ export default function HelpDrawer({ topic, sources, scanRows = [], snapshotMeta
   const notes = Array.isArray(info.notes) ? info.notes : [];
   const explanation = buildMykeHelpAnswer(info,topic);
   const inputs = getTracerSourceInventory(sources,Boolean(snapshotMeta?.complete),snapshotMeta);
-  const openChat = (event) => onOpenChat?.(event.currentTarget.getBoundingClientRect());
+  const openChat = () => onOpenChat?.();
+  const tips = [
+    `Vamos con ${info.title}. Primero, mira de dónde sale el dato.`,
+    "La jugada está en la evidencia. Revisa la fuente antes de sacar conclusiones.",
+    "¿Seguimos en el chat? Al cerrarlo, vuelves justo aquí.",
+  ];
+  const character = <button className="vi-myke-help-character" type="button" onClick={openChat} aria-label="Abrir chat completo con Myke sobre esta sección">
+    <MykeGhost pose={quiet ? "idle" : pose}/>
+    <span className="vi-myke-speech"><AnimatePresence mode="wait" initial={false}><motion.span key={tipIndex} initial={{opacity:0,y:quiet ? 0 : 4}} animate={{opacity:1,y:0}} exit={{opacity:0,y:quiet ? 0 : -4}} transition={{duration:quiet ? 0 : .22}}>{tips[tipIndex]}</motion.span></AnimatePresence><small>Abrir chat completo</small></span>
+  </button>;
 
   return (
     <OverlayPortal onClose={onClose}>
@@ -59,7 +73,7 @@ export default function HelpDrawer({ topic, sources, scanRows = [], snapshotMeta
         }}
       >
         <aside className="vi-myke-help-speaker" aria-label="Myke explica esta sección">
-          <button className="vi-myke-help-character" type="button" onClick={openChat} aria-label="Abrir chat con Myke sobre esta sección"><MykeGhost pose={reduceAnimations ? "idle" : pose}/><span>Te lo explico en el chat ↗</span></button>
+          {character}
         </aside>
         <RubberDrawer className="vi-drawer-panel vi-help-drawer">
           <header className="vi-help-head">
@@ -81,7 +95,7 @@ export default function HelpDrawer({ topic, sources, scanRows = [], snapshotMeta
           </header>
 
           <div className="vi-help-body">
-            <div className="vi-myke-help-mobile"><button className="vi-myke-help-character" type="button" onClick={openChat} aria-label="Abrir chat con Myke sobre esta sección"><MykeGhost pose={reduceAnimations ? "idle" : pose}/><span>Te lo explico en el chat ↗</span></button></div>
+            <div className="vi-myke-help-mobile">{character}</div>
             <section className="vi-help-intro">
               <span className="vi-help-index">01</span>
               <div>

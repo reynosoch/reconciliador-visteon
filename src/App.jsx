@@ -596,7 +596,7 @@ export default function App() {
           snapshotMeta={inventory.snapshotMeta}
           reduceAnimations={reduceAnimations}
           onOpenSources={() => afterHelp(()=>setSourcesOpen(true))}
-          onOpenChat={(rect) => afterHelp(()=>{setMykeAnchor({x:rect.x,y:rect.y,width:rect.width,height:rect.height});setMykeTab("chat");setMykeOpen(true);})}
+          onOpenChat={() => {setMykeAnchor(null);setMykeTab("chat");setMykeOpen(true);}}
           onClose={() => setHelpTopic(null)}
         />
       }

@@ -9,6 +9,6 @@
 .vi-myke-working { display:flex; align-items:center; gap:8px; color:#ffd0a6; }
 .vi-myke-working span { display:inline-block; color:#9ac7df; animation:vi-myke-thinking-dots 1.2s ease-in-out infinite; }
 @keyframes vi-myke-thinking-dots { 50% { opacity:.4; } }
-.vi-myke-help-speaker .vi-myke-ghost { width:150px; height:162px; filter:drop-shadow(0 7px 7px #00121d78); }
+.vi-myke-help-speaker .vi-myke-ghost { filter:drop-shadow(0 7px 7px #00121d78); }
 body.vi-performance-motion-off .vi-myke-working span { animation:none; }
 @media(prefers-reduced-motion:reduce) { .vi-myke-working span { animation:none; } }
