@@ -5,15 +5,14 @@ import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import MykeGhost from "../visual/MykeGhost.jsx";
 import SourcePreviewModal from "./SourcePreviewModal.jsx";
 import { buildMykeKnowledge } from "../../domain/mykeOrganization.js";
-import { answerMykeInContext, buildMykePartAnswer, buildMykeHelpAnswer, buildMykeChips, buildMykeFeedbackDraft, buildMykeFeedbackPayload } from "../../domain/mykeKnowledge.js";
+import { buildMykePartAnswer, buildMykeHelpAnswer, buildMykeChips, buildMykeFeedbackDraft, buildMykeFeedbackPayload } from "../../domain/mykeKnowledge.js";
 import {
   getTracerSourceInventory,
   getRecommendedPartCases,
 } from "../../domain/partLearningTrace.js";
 import { safeReadJson, safeWriteJson } from "../../services/browserStorage.js";
-import { createMykeProviderAdapter, createMykeRemoteAdapter, getMykeAIConfig } from "../../services/mykeAI.js";
+import { chatMyke, createMykeRemoteAdapter } from "../../services/mykeAI.js";
 import { submitDevelopmentFeedback } from "../../services/supabase.js";
-import { isMykeProjectQuestion } from "../../../supabase/functions/myke-chat/public-question.mjs";
 import publicKnowledge from "../../../supabase/functions/myke-chat/knowledge.generated.json";
 
 const placeholders = ["Escribe una pregunta o un PN", "¿De dónde sale esta diferencia?", "Busca un PN y revisa su evidencia", "Pregunta por NET, SWING o Phantom", "¿Qué fuentes faltan en este corte?"];
@@ -158,6 +157,7 @@ export default function MykePanel({
   helpRequest = null,
   summary = null, diagnostics = null, botRunning = false, loading = false, error = null, inventoryId = null, reduceAnimations = false,
   providerAdapter = null,
+  uiContext = {},
   sources = {},
   scanRows = [],
   scanReady = false,
@@ -175,10 +175,6 @@ export default function MykePanel({
   const [typing, setTyping] = useState(false);
   const [gaze, setGaze] = useState(0);
   const [reaction, setReaction] = useState("welcome");
-  const [accessCode, setAccessCode] = useState("");
-  const [connectedCode, setConnectedCode] = useState("");
-  const [connectionStatus, setConnectionStatus] = useState("");
-  const remoteConfig = useMemo(() => getMykeAIConfig(), []);
   const [preview, setPreview] = useState(null);
   const [size, setSize] = useState(() => {
     const stored = safeReadJson("visteon.ui.mykeSize.v1", null).value;
@@ -274,7 +270,7 @@ export default function MykePanel({
   const reportOpen = Boolean(report);
   const reportFlight = useRef(false);
   const seenHelp = useRef(null);
-  const provider = useMemo(() => providerAdapter || (connectedCode ? createMykeRemoteAdapter({accessCode:connectedCode,config:remoteConfig}) : createMykeProviderAdapter()), [providerAdapter,connectedCode,remoteConfig]);
+  const provider = useMemo(() => providerAdapter || createMykeRemoteAdapter(), [providerAdapter]);
   const composer = useRef(null),
     conversation = useRef(null),
     end = useRef(null);
@@ -349,27 +345,20 @@ export default function MykePanel({
     if (!question.trim() || request.current) return;
     const text = question.slice(0,1000);
     if (!reportOpen) setReportStatus("");
-    const answer = answerMykeInContext(text, organization, messages.slice(-8), pieceContext);
-    const history = messages.filter((m) => m.publicQuestion || m.aiText).map((m) => ({role:m.role === "you" ? "user" : "assistant",content:m.text || m.aiText}));
-    const inScope = isMykeProjectQuestion(text,history);
-    const useAI = provider.configured && ["answer", "unknown"].includes(answer.kind) && inScope;
     const id = `myke-${++messageSequence.current}`;
     const controller = new AbortController(); request.current = controller;
-    setMessages((current) => [...current.slice(-22),{role:"you",text,publicQuestion:inScope && answer.kind !== "piece"},{role:"myke",id,answer,pending:true}]);
-    setDraft(""); setTyping(false); setAIState("pending"); setReaction("thinking");
+    setMessages((current) => [...current.slice(-22), {role:"you",text}, {role:"myke",id,answer:{kind:"unknown",paragraphs:[],topicIds:[]},pending:true}]);
+    setDraft(""); setTyping(false); setAIState("consulting"); setReaction("thinking");
     try {
-      // Brief local review phase is not presented as a connected LLM or token streaming.
-      await new Promise((resolve) => setTimeout(resolve, quietMotion ? 0 : 1250));
+      const result = await chatMyke({question:text,history:messages.slice(-8),context:pieceContext,uiContext:{...uiContext,selectedPartNumber:helpRequest?.pn || uiContext.selectedPartNumber},organization,signal:controller.signal,adapter:provider,onState:setAIState});
       if (controller.signal.aborted) return;
-      const aiText = useAI ? await provider.generate({question:text,history,signal:controller.signal}) : null;
-      if (controller.signal.aborted) return;
-      setMessages((current) => current.map((m) => m.id === id ? {...m,pending:false,aiText,aiProvider:useAI ? provider.name : null} : m));
-      const unresolved = answer.kind === "unknown" || (answer.kind === "piece" && !reconciliation.some((item) => item.partNumber === answer.pn));
-      setReaction(unresolved && !aiText ? "sad" : "reading"); setAIState("local");
+      setMessages((current) => current.map((m) => m.id === id ? {...m,...result,pending:false} : m));
+      setReaction(result.answer.kind === "unknown" && !result.aiText ? "sad" : "reading");
+      setAIState(result.mode === "fallback" ? "fallback" : "local");
     } catch (failure) {
       if (controller.signal.aborted) return;
       setMessages((current) => current.map((m) => m.id === id ? {...m,pending:false,aiError:failure.message} : m));
-      setReaction("sad"); setAIState("local");
+      setReaction("sad"); setAIState("fallback");
     } finally { if (request.current === controller) request.current = null; }
   };
   const submitReport = async () => {
@@ -484,7 +473,7 @@ export default function MykePanel({
         onClick={() => { setTipIndex((index) => (index + 1) % advice.length); setTipVisible(true); }}
         animate={{ x: quietMotion ? 0 : gaze * 8, y: quietMotion ? 0 : typing ? -3 : 0, rotate: quietMotion ? 0 : typing ? gaze * 4 : 0 }}
         transition={quietMotion ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 24 }}>
-        <MykeGhost pose={aiState === "pending" || reportSending ? "thinking" : typing ? "typing" : reaction} gaze={gaze}/>
+        <MykeGhost pose={["consulting", "pending", "responding"].includes(aiState) || reportSending ? "thinking" : typing ? "typing" : reaction} gaze={gaze}/>
       </motion.button>
       <AnimatePresence mode="wait" initial={false}>
         {tipVisible && <motion.div className="vi-myke-speech" aria-label="Consejo de Myke" role="status"
@@ -653,7 +642,7 @@ export default function MykePanel({
                               </>}
                               {message.pending && (
                                 <p className="vi-myke-working" role="status">
-                                  Revisando las fuentes disponibles…{" "}
+                                  {aiState === "consulting" ? "Consultando el corte…" : aiState === "responding" ? "Preparando respuesta…" : "Analizando…"}{" "}
                                   <span aria-hidden="true">•••</span>
                                 </p>
                               )}
@@ -751,7 +740,7 @@ export default function MykePanel({
                       </button>
                     </form>
                     {!anchor && <p className="vi-myke-note" role="status">
-                      {aiState === "pending" ? "Revisando la pregunta y el corte…" : provider.configured ? provider.name : "Ayuda y datos locales · IA sin conectar"}{" "}
+                      {["consulting", "pending", "responding"].includes(aiState) ? "Revisando la pregunta y el corte…" : aiState === "fallback" ? "Servicio no disponible · ayuda local" : "Consulta lista"}{" "}
                       · No modifica inventario. No compartas contraseñas.
                     </p>}
                   </section>
@@ -759,29 +748,6 @@ export default function MykePanel({
               )}
               {tab === "explore" && (
                 <>
-                      {!anchor && <details className="vi-myke-local-options">
-                        <summary>{provider.configured ? "Conexión IA" : "Conectar IA"}</summary>
-                        <p>La conversación permanece aquí. El servicio conecta con Copilot corporativo o el proveedor autorizado en el servidor; no descarga modelos.</p>
-                        {!remoteConfig ? <p>No hay un servicio IA configurado en esta instalación.</p> : <>
-                          <label className="vi-myke-faq-search">Código privado del servicio
-                            <input type="password" autoComplete="off" value={accessCode} maxLength={256} onChange={(event) => setAccessCode(event.target.value)} />
-                          </label>
-                          <button type="button" disabled={!accessCode.trim() || aiState === "pending"} onClick={async () => {
-                            if (request.current) return;
-                            const controller = new AbortController(); request.current = controller; setAIState("pending");setReaction("thinking");setConnectionStatus("Verificando conexión…");
-                            try {
-                              const candidate=createMykeRemoteAdapter({accessCode,config:remoteConfig});
-                              const result=await candidate.generate({question:"¿Cómo uso el tablero del reconciliador Visteon?",signal:controller.signal});
-                              if(controller.signal.aborted)return;
-                              setConnectedCode(accessCode);setAccessCode("");setConnectionStatus("IA conectada: las respuestas llegan a este chat.");
-                              setMessages((current)=>[...current.slice(-22),{role:"myke",id:`connect-${++messageSequence.current}`,answer:answerMykeInContext("¿Cómo uso esta página?",organization,[],pieceContext),aiText:result,aiProvider:candidate.name}]);setReaction("reading");
-                            }catch(failure){if(!controller.signal.aborted){setConnectionStatus(failure.message);setReaction("sad");}}
-                            finally{if(request.current===controller){request.current=null;setAIState("local");}}
-                          }}>Conectar y comprobar</button>
-                          {connectedCode && <button type="button" onClick={()=>{request.current?.abort();setConnectedCode("");setAccessCode("");setConnectionStatus("IA desconectada.");}}>Desconectar IA</button>}
-                        </>}
-                        {connectionStatus && <p role="status">{connectionStatus}</p>}
-                      </details>}
 
                   <div className="vi-myke-message">
                     <strong>Vamos a ver cómo encaja todo</strong>

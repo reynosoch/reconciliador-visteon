@@ -722,6 +722,7 @@ export default function App() {
           }}
           reduceAnimations={reduceAnimations}
           helpRequest={mykeHelp}
+          uiContext={{currentSection:activeDataView,selectedPartNumber:selectedPart?.partNumber}}
           summary={inventory.summary}
           diagnostics={inventory.diagnostics}
           botRunning={botRunning}

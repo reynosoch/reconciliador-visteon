@@ -15,7 +15,7 @@ const stopWords = new Set(
 export const mykeSearchWords = (value) =>
   normalize(value)
     .match(/[a-z0-9]+/g)
-    ?.filter((word) => !stopWords.has(word)) || [];
+    ?.filter((word) => !stopWords.has(word)).map(word=>({costos:"costo",costs:"cost",coste:"costo",obsoletos:"obsoleto",usos:"usage",bruta:"gross",brutas:"gross"}[word] || word)) || [];
 
 const clean = (value) =>
   String(value ?? "")

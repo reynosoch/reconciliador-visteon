@@ -207,7 +207,8 @@
       "paragraphs": [
         "NET piezas = Físico reconocido total − QAD total.",
         "NET USD = NET piezas × costo unitario de Cost Part. Se conserva el signo: negativo indica menos físico; positivo indica más físico. Durante un conteo en curso, no confirma por sí solo una pérdida o ganancia definitiva.",
-        "El desglose con los valores reales del PN está en el trazador. Sin costo confiable no se presenta un valor de cero dólares como válido."
+        "El desglose con los valores reales del PN está en el trazador. Sin costo confiable no se presenta un valor de cero dólares como válido.",
+        "Gross Loss suma los NET negativos ya calculados; Gross Gain suma los NET positivos. Myke usa los valores del motor, sin recalcularlos."
       ],
       "keywords": [
         "net",
@@ -219,7 +220,12 @@
         "ganancia",
         "unidades",
         "dolares",
-        "usd"
+        "usd",
+        "gross",
+        "loss",
+        "gain",
+        "gross",
+        "gross"
       ],
       "sources": [
         "scans",

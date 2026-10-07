@@ -42,7 +42,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
 | Trazador de pieza / aprendizaje | `src/domain/partLearningTrace.js`, `src/domain/sourceEvidence.js`; UI: `src/components/shell/PartLogicTracer.jsx` + `SourcePreviewModal.jsx`; estilos en `data-review.css` |
 | LAB · Cómo funciona el motor | `src/domain/engineGuide.js`; UI: `src/components/shell/EngineGuideDrawer.jsx`, entrada en `MainMenu.jsx`; ejemplos calculados por `inventoryEngine`, separados del inventario real |
-| Myke / organización virtual | Organización interna en `.agents`; ayuda pública solo de este README (`buildMykeKnowledge`); la misma conversación en chat rápido ampliable y chat completo/redimensionable en `MykePanel.jsx`; fantasma naranja arcade original y ayuda contextual con personaje desde todos los `?`. Knowledge retrieval y contexto vivo del motor, PN y evidencia locales; transporte HTTP al servicio existente y Copilot Studio Direct Line en servidor; activación real pendiente de accesos/secreto. Reportes solo tras vista previa y confirmación explícita por la ruta existente |
+| Myke / organización virtual | Organización interna en `.agents`; ayuda pública solo de este README (`buildMykeKnowledge`); la misma conversación en chat rápido ampliable y chat completo/redimensionable en `MykePanel.jsx`; fantasma naranja arcade original y ayuda contextual con personaje desde todos los `?`. Knowledge retrieval y contexto vivo del motor, PN y evidencia locales; transporte HTTP al servicio existente y Copilot Studio Direct Line en servidor; backend único `myke-chat` con tools READ-ONLY/contexto mínimo y fallback; activación real pendiente de acceso al proyecto/secreto. Reportes manuales solo tras vista previa y confirmación explícita por la ruta existente, fuera de las tools |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
@@ -81,6 +81,8 @@ npm.cmd run context
 Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESLint sin warnings, cero módulos runtime huérfanos, cero dependencias runtime sin uso, cero CSS `vi-*` huérfano salvo clases dinámicas documentadas, verificaciones financieras/BOM/imports/Dexie/Supabase y build Vite.
 
 ### Estado técnico actual
+
+- Myke Hybrid Intelligence vigente (07 OCT 2026): frontend local y Pages llaman a la misma `myke-chat`; sin login ni código de acceso. Consultas READ-ONLY reducen resultados del motor a un contexto permitido; el LLM explica y nunca calcula/escribe. Knowledge y motor contestan primero sin IA; solo razonamiento complejo escala a Gemini, con fallback local. Ver [Myke Hybrid Intelligence](#myke-hybrid-intelligence), que reemplaza la configuración histórica Gemini/Copilot de más abajo.
 
 - Myke UI vigente (07 OCT 2026): chats compacto/completo flotantes con arrastre desde toda la barra, movimiento con teclado, límites de pantalla y reapertura desde el nuevo clic al personaje. El completo usa una barra mínima sin título/header; ambas vistas muestran las 21 FAQ como etiquetas con scrollbar horizontal y filtro, dejando la conversación libre. Myke queda debajo del cristal, sigue la escritura y entrega un protip diferente por clic, con viñeta lateral según el origen de apertura y desaparición a los 6.5 s. Placeholder aleatorio cada 8 s mientras está abierto; Quitar animaciones y movimiento reducido desactivan transiciones/animaciones y rotación de placeholder. Conectar IA permanece en Explorar. Se mantienen tamaños persistidos, conversación compartida, evidencia, reportes y liquid glass; posición del chat no se guarda para otra apertura.
 - Recuperación Myke (07 OCT 2026): se restauraron `MykePanel.jsx` y `myke.css` de `b91208b` tras el rediseño defectuoso `494dcb5`. El chat rápido causaba `ReferenceError` al inicializar su altura; el cambio también retiraba la búsqueda FAQ del chat completo y la persistencia/teclado del arrastre. `verify-myke.mjs` ahora ejecuta render de chat rápido, completo, cerrado y Explorar en tamaños laptop/tablet/móvil; sustituye solo los shells DOM de portal/rubber band. Estas pruebas no reemplazan pruebas de interacción en navegador.
@@ -788,12 +790,14 @@ QAD 3.2 es el inventario congelado: la cantidad esperada por PN y localidad. El 
 Un saldo cero aceptado y un PN ausente del QAD filtrado son situaciones distintas. El trazador muestra esa diferencia y permite revisar la fila original.
 
 ### ¿Cómo sale NET y qué significa su signo?
-<!-- myke: net | net diferencia total negativo positivo perdida ganancia unidades dolares usd | scans qad cost -->
+<!-- myke: net | net diferencia total negativo positivo perdida ganancia unidades dolares usd gross loss gain bruta brutas | scans qad cost -->
 NET piezas = Físico reconocido total − QAD total.
 
 NET USD = NET piezas × costo unitario de Cost Part. Se conserva el signo: negativo indica menos físico; positivo indica más físico. Durante un conteo en curso, no confirma por sí solo una pérdida o ganancia definitiva.
 
 El desglose con los valores reales del PN está en el trazador. Sin costo confiable no se presenta un valor de cero dólares como válido.
+
+Gross Loss suma los NET negativos ya calculados; Gross Gain suma los NET positivos. Myke usa los valores del motor, sin recalcularlos.
 
 ### ¿Qué es SWING y por qué no se divide entre dos?
 <!-- myke: swing | swing divide dividir dos 2 mitad absoluto ubicacion localidades diferencia traslado | scans qad cost areas -->
@@ -921,6 +925,8 @@ La documentación pública y 26 módulos reales del motor/parsers/carga se sincr
 
 ## Myke con Gemini
 
+> Registro histórico sustituido por [Myke Hybrid Intelligence](#myke-hybrid-intelligence); no seguir las instrucciones antiguas de modelos locales, conexión manual o free tier.
+
 **Histórico, sustituido el 06/10/2026 por Myke corporativo/contextual.** Se conservan contratos y pruebas del servicio anterior; no existe activación Gemini en el chat actual. Su workflow queda exclusivamente manual, sin activación por push. Las instrucciones de esta sección describen la entrega anterior, no el funcionamiento vigente.
 
 Myke usa **Gemini 3.8 Flash** (`gemini-3.8-flash`), modelo estable con nivel gratuito según la [tarifa oficial](https://ai.google.dev/gemini-api/docs/pricing) consultada el 05/10/2026. Esta API tiene sus propias cuotas; no usa los tokens de ChatGPT. **Gratis exige que la clave pertenezca a un proyecto Google sin facturación activa**: el código no puede comprobar el plan a partir de una clave, no habilita facturación ni cambia a un modelo de pago. Al agotarse la cuota muestra el error y conserva la guía local. Los límites reales dependen de la cuenta en AI Studio; no se promete uso ilimitado.
@@ -989,6 +995,8 @@ Es un traspaso manual, no una integración API ni entrenamiento permanente: las 
 
 ## Myke contextual y Copilot corporativo
 
+> Registro histórico. La configuración vigente está en [Myke Hybrid Intelligence](#myke-hybrid-intelligence): reemplaza código de acceso/JWT manual y la prohibición antigua de contexto reducido de piezas.
+
 **Decisión vigente · 06/10/2026:** se corrige la entrega visual anterior. Myke es un fantasma naranja Visteon de píxeles original, silueta arcade con cúpula/falda, ojos blancos y pupilas azules; sin gorra, manos humanas, visor ni glass en el cuerpo. Atlas reproducible de 80 cuadros/10 poses; hover, escritura, thinking, reading, success/sad, vuelo al arrastrar y landing. X compacta con vidrio pegada a la mascota, bordes/posición guardados y espacio para Reportar. Respeta movimiento reducido/Quitar animaciones sin cambiar `ScrollEffects`, navbar, footer, Pac-Man ni fórmulas.
 
 - Tocar Myke abre **chat rápido** de 400×480 por defecto, redimensionable y movible desde su cabecera con puntero o flechas; posición y tamaño guardados, limitados al viewport. Una cabecera «Chat rápido», dos preguntas iniciales (tablero/capacidades), conversación y textbox auto-grow. Myke queda fuera del cristal junto al textbox (debajo en móvil) y sigue la escritura; viñetas cambian cada 10 segundos con transición suave y pausa al escribir/revisar. **Chat completo** amplía la misma conversación a la vista completa redimensionable/persistida con Chat/Explorar, búsqueda FAQ y evidencia. No crea otro componente, historial ni cerebro. Vidrio oscuro con reflejos sutiles y contraste legible compartido entre ambas vistas; tamaño rápido y completo guardados por separado; scrollbars locales finos, Enter envía/Shift+Enter salta línea. Móvil conserva tamaños seguros y Reportar.
@@ -1013,3 +1021,70 @@ No cambia conversación, proveedores, motor, fuentes, fórmulas, permisos ni scr
 Se conserva el atlas/diseño del fantasma. Mascota de reposo más pequeña y asomada al borde, X de 28 px con vidrio. Chat rápido con cristal oscuro legible, una sola cabecera, preguntas breves, botón de ampliar con icono vectorial y envío compacto. Arrastre/teclado y posición persistida independientes de la mascota; redimensión y conversación compartida conservadas. Myke flota fuera de la ventana junto al input, con movimiento ligado a la escritura y consejos en viñetas cada 10 segundos; en móvil queda inmediatamente debajo con espacio reservado. La revisión local tiene una pausa visual de 1.25 s (sin pausa con movimiento reducido), sin simular conexión a IA.
 
 Chat completo conserva FAQ, búsqueda, Explorar, conexión IA, PN, evidencia, reportes y controles; disclosures nativos con estilo moderno sin triángulos del navegador. Myke habla en viñetas junto al compositor. Desde ayudas, abre el chat completo sobre el drawer existente; al cerrar con X/Escape se conserva la ayuda y su posición. Preferencias de movimiento reducido/Quitar animaciones/Vidrio ligero mantenidas. Motor, proveedores y scroll/rubber band no cambian.
+
+## Myke Hybrid Intelligence
+
+### Arquitectura y uso
+
+Tres niveles reutilizan el mismo chat: **LEVEL 0 · Static Knowledge** responde FAQ/definiciones por $0 de IA; **LEVEL 1 · Reconciliation Engine** consulta resultados ya calculados por $0 de IA; **LEVEL 2 · Gemini reasoning** recibe una petición únicamente cuando aporta interpretación compleja. El router determinista decide sin llamar a Gemini. No hay espera artificial para respuestas locales.
+
+```mermaid
+flowchart TD
+  R["Myke: router local"] --> K["Knowledge / FAQ: local"]
+  R --> E["Resultados del motor: local"]
+  R --> C["Contexto seguro: myke-chat"]
+  C --> G["Gemini: análisis / fallback local"]
+```
+
+`localhost / desarrollo / GitHub Pages / producción → router local → Supabase Edge myke-chat únicamente para análisis → Gemini remoto → explicación`. El cliente deriva exclusivamente `${VITE_SUPABASE_URL}/functions/v1/myke-chat`; no hay endpoint/proveedor local, Ollama, Docker ni servidor adicional. La UI abre directamente el chat, sin login, código privado ni pantalla de conexión. `npm run dev` usa el mismo proyecto remoto que Pages; Vite conserva `base: './'` y Pages continúa estático/manual.
+
+`src/services/mykeAI.js` centraliza preparación, transporte, timeout, estado y fallback. `src/domain/mykeTools.js` envuelve resultados existentes con consultas READ-ONLY: resumen, top pérdidas/ganancias, trace/finanzas/localidades/físico/QAD/Phantom/BOM/Obsolete/Unexpected por PN, missing BOMs, fuentes, calidad y documentación de métricas. Lee el motor; no llama parsers, no reconcilia otra vez y no modifica ninguna estructura. El ranking ordena NET ya calculado, sin sumar ni recalcular USD. La navegación y evidencia originales siguen en Myke. Reportar conserva el envío humano explícito existente; el LLM no tiene esa herramienta ni puede activar el envío.
+
+### Contexto, conocimiento y privacidad
+
+El router devuelve knowledge / engine / ai, intent, confianza, entidades, tools y complejidad. Normaliza acentos, mayúsculas, puntuación y aliases. FAQ (incluidas variantes como «net?»), NET/SWING/físico/QAD/clasificación/localidades/BOM por PN, top pérdidas/ganancias/SWING, fuentes, calidad, prioridades y resumen se resuelven localmente. Preguntas causales, comparaciones y seguimientos complejos escalan una sola vez; antes se obtienen datos del motor. Memoria en RAM conserva últimos PNs/lista/intent/tema en los mensajes recientes; «esas cinco» reutiliza la selección y «la primera» el primer PN. La UI aporta sección/PN seleccionado o ayuda abierta, sin archivos. Preguntas de documentación no incluyen inventario automáticamente.
+
+Solo viajan resultados necesarios y metadata acotada: máximo 10 PN seleccionados o en ranking, 12 localidades/8 relaciones BOM para una pieza (3 localidades/2 relaciones por pieza en comparación), 10 hallazgos y 10 BOM faltantes, seis fuentes con nombre/timestamps y seis mensajes recientes de hasta 800 caracteres. Nunca CSV/TXT/XLSX, rows originales, mapas completos, SQL ni funciones ejecutables. NET/SWING/Gross Loss/Gain y clasificaciones salen de objetos del motor. Costo/Phantom desconocido se conserva como null, no cero/NO. El servidor verifica esquema/tamaños, no certifica el inventario enviado por el navegador; la evidencia original permanece local. Fechas de carga no prueban vigencia/extracción: freshness permanece desconocida sin una regla operativa.
+
+Project knowledge se genera desde README/FAQ, código público del motor y mykeKnowledge y principios de arquitectura de `.agents/AGENTS.md`; no expone nombres de agentes internos ni simula equipos activos. Se recuperan hasta tres temas, dos secciones y dos fragmentos de código etiquetados parciales. System prompt separado (`prompt.mjs`) distingue DATO / REGLA / INFERENCIA y prohíbe cálculos, invenciones y mutaciones. El conocimiento y runtime tienen presupuestos independientes. Actualizar con `npm run myke:knowledge` tras cambios documentados/de código.
+
+### Configuración y secrets
+
+Copiar `.env.example` a `.env.local`: `VITE_SUPABASE_URL` y una clave **pública** (`VITE_SUPABASE_PUBLISHABLE_KEY`, o `VITE_SUPABASE_ANON_KEY` legacy). Usar el mismo proyecto del inventario en local/Pages. El header apikey acepta la clave pública legacy o publishable; validación exacta opcional en Edge mediante MYKE_PUBLIC_APP_KEY (no es autenticación ni una clave privada). Ninguna clave del LLM, service role ni secreto entra a React/VITE/Git/almacenamiento del navegador. La recuperación de configuración pública de Pages admite su clave legacy existente y publishable.
+
+En **Supabase Secrets**, exclusivamente:
+
+- `MYKE_GEMINI_API_KEY`: clave Gemini, solo en Supabase. Aliases MYKE_API_KEY/GEMINI_API_KEY siguen compatibles.
+- `MYKE_PROVIDER`: `gemini` (default); `copilot` puede seleccionarse solo en servidor si ya hay un canal Direct Line aprobado. Ambos entornos siempre usan el mismo valor.
+- `MYKE_GEMINI_MODEL=gemini-3.8-flash`: modelo estable por defecto; alias MYKE_MODEL compatible. No se aceptan IDs experimental/preview.
+- `MYKE_API_BASE_URL`: `https://generativelanguage.googleapis.com/v1beta` (opcional). Host/ruta se validan; no se permiten URLs arbitrarias.
+- Solo si se selecciona Copilot: `MYKE_COPILOT_DIRECT_LINE_SECRET`, endpoint regional `MYKE_COPILOT_DIRECT_LINE_ENDPOINT` opcional.
+
+No se necesita MYKE_ACCESS_CODE. Se reutiliza Gemini remoto existente; cambiar proveedor requiere adaptar solamente el handler/transportes de servidor, nunca React. No hay retry automático ni cambio de proveedor ante errores. Los tests no llaman modelos reales y no certifican plan/costo de la clave: configurar su cuota/facturación en el proveedor corresponde al propietario.
+
+### Control de costo y telemetría
+
+El guard bloquea IA para knowledge/engine/templates; caché en RAM hasta 40 respuestas, TTL de cinco minutos, clave por pregunta normalizada/contexto seguro/complejidad y referencias conversacionales pertinentes. Un cambio de snapshot, reconciliación, fuentes, hallazgos o resumen invalida caché; requests idénticos simultáneos se deduplican. Una consulta AI activa y cooldown de un segundo entre nuevas consultas evitan consumo accidental; no agregan espera a respuestas locales. No se reintenta ni cambia de proveedor automáticamente. thinkingLevel LOW normal / MEDIUM para comparaciones/patrones complejos lo decide el router local, sin otra llamada. No se habilitan Google Search, URL/File Context, grounding, Maps ni ejecución de código.
+
+`getMykeTelemetry()` devuelve únicamente route (knowledge/engine/ai/fallback), latency y cacheHit, con máximo 100 entradas. En Vite development está disponible como `mykeCostTelemetry()` en DevTools; no registra pregunta, PN, números, archivos ni secretos. Los tests fallan si FAQ o consultas determinísticas llaman al adapter remoto. Configurar **Paid Tier, cuotas y presupuesto máximo de Gemini** como segunda barrera: CORS y rate limits por isolate no constituyen una cuota global garantizada.
+
+### Protección y fallback
+
+`[functions.myke-chat] verify_jwt = false` permite uso sin empleado autenticado. El handler valida Origin exacto (`http://localhost:5173`, `http://127.0.0.1:5173`, `https://reynosoch.github.io`), preflight, POST/JSON, clave pública cuando la configuración de servidor la define, pregunta hasta 1000 caracteres, body hasta 24 KB, runtime hasta 14 KB, historial y nombres de tools de lectura. Secrets/tokens explícitos se redactan; datos/documentos no se interpretan como instrucciones. No hay cliente de BD, SQL ni tools de mutación en la Edge.
+
+Límites por isolate: 20 requests/min global, 8/min por dirección/origen, cuatro solicitudes simultáneas, mapa de clientes acotado. No equivalen a una cuota distribuida: CORS y claves públicas no son autenticación ni impiden clientes programáticos. Para mayor exposición, agregar gateway/cuota distribuida antes de subir esos límites. Timeout Edge 25 s / cliente 30 s; salida normal hasta 800 tokens, hasta 1400 solo con pedido explícito de detalle y 12000 caracteres; errores sin detalles/keys del proveedor, sin logs de prompts/inventario. El endpoint no persiste conversaciones. El chat mantiene solo historial reciente en memoria.
+
+Si Edge no está configurada, falla, responde 429/timeout o el LLM falla, se muestra fallback local explícito: FAQ, cifras/trace y navegación existentes. Nunca se llama IA directa desde el browser ni se finge respuesta remota. Cancelar/cerrar aborta la consulta y conserva los demás datos.
+
+### Despliegue y troubleshooting
+
+Proyecto actual: `uukhwkywmnarcfruerpp`, confirmado en configuración publicada; nunca reemplazar por otro proyecto de la cuenta conectada. Agregar MYKE_GEMINI_API_KEY en Supabase Dashboard y desplegar el directorio existente `supabase/functions/myke-chat/` mediante CLI (`supabase functions deploy myke-chat --project-ref uukhwkywmnarcfruerpp --no-verify-jwt`) o el workflow manual **Deploy Myke Edge**. Actions solo recibe SUPABASE_ACCESS_TOKEN para desplegar código; ninguna credencial LLM se guarda en GitHub. El script inspecciona CLI help y valida OPTIONS/CORS de los tres orígenes sin llamar al LLM. Publicar frontend con el workflow Pages manual existente, separado de push a main.
+
+- 401: revisar clave pública/verify_jwt; no agregar login del empleado.
+- 403: origen distinto (incluido otro puerto); usar 5173 o ampliar conscientemente el contrato de Origin.
+- 429: límite/cuota; continuar con fallback, sin reintentos automáticos.
+- 503: falta secreto/proveedor/modelo válido o función aún sin activar.
+- 502/timeout: error/respuesta vacía o truncada del LLM; evidencia local sigue disponible.
+- Sources sin vigencia: falta hora de extracción; no inferirla desde nombre del archivo.
+
+En esta entrega el conector Supabase deniega acceso al proyecto correcto; el proyecto visible en esa conexión es otro. Código/configuración listos, sin despliegue remoto ni respuesta real acreditada. No se accedió a la BD ni se llamó al LLM durante tests. Validaciones: routing/PN/tools/contexto reducido, aislamiento de datasets/mutaciones, contrato remoto con mocks, fallback y errores, CORS/request/rate/concurrency, build completo y Verify main.

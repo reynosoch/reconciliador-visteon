@@ -11,7 +11,7 @@ const publicHeadings = new Set([
   "Metadatos de snapshot", "Desarrollo local", "Variables del frontend", "Despliegue",
   "Diseño", "Principios que no deben romperse", "Pendientes técnicos/funcionales",
   "UX de investigación y trazabilidad", "Acuerdos de la junta del 29 de septiembre de 2026",
-  "Preguntas de lógica para próxima revisión", "Myke contextual y Copilot corporativo",
+  "Preguntas de lógica para próxima revisión", "Myke Hybrid Intelligence",
 ]);
 const hash = (content) => createHash("sha256").update(content).digest("hex");
 const documents = [...readme.matchAll(/^## (.+)\n([\s\S]*?)(?=^## |$(?![\s\S]))/gm)]
@@ -50,7 +50,7 @@ const paths = [
       .map((file) => `${dir}/${file}`)),
   "src/hooks/useInventoryEngine.js", "src/hooks/useReferenceFiles.js",
   "src/services/sourceDetection.js", "src/services/exportInventoryWorkbook.js",
-  "src/services/browserStorage.js",
+  "src/services/browserStorage.js", "src/domain/mykeKnowledge.js",
 ].sort();
 const modules = paths.map((path) => {
   const content = readFileSync(new URL(path, root), "utf8");
@@ -60,7 +60,9 @@ const generated = {
   "knowledge.generated.json": {
     topics: topics.map(({ id, title, paragraphs, keywords, sources }) => ({ id, title, paragraphs, keywords, sources })),
   },
-  "project-context.generated.json": { version: 1, documents, modules },
+  "project-context.generated.json": { version: 1, documents, modules, operatingModel: {
+    source: ".agents/AGENTS.md", principles: readFileSync(new URL(".agents/AGENTS.md", root), "utf8").split("## Engineering boundaries\n")[1].split("## Evidence, safety")[0].trim().split(/\n\s*\n/).slice(0, 2),
+  } },
 };
 for (const [file, value] of Object.entries(generated)) {
   const targets = [new URL(`supabase/functions/myke-chat/${file}`, root)];

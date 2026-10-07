@@ -1,5 +1,5 @@
 project_id = "reconciliador-visteon"
 
 [functions.myke-chat]
-verify_jwt = true
+verify_jwt = false
 entrypoint = "./functions/myke-chat/index.ts"

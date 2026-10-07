@@ -65,9 +65,7 @@ body.vi-overlay-open .vi-myke-dock,body:has(.vi-source-preview-overlay) .vi-myke
 .vi-myke-suggestions button,.vi-myke-shortcuts button,.vi-myke-context-chips button,.vi-myke-case button,.vi-myke-report button,.vi-myke-report-prepare { border:1px solid #79b4c338; border-radius:12px; background:#ffffff06; color:#e2f0f5; padding:9px 12px; text-align:left; line-height:1.4; min-height:40px; }
 .vi-myke-panel button:hover:not(:disabled) { border-color:#f5821f88; color:#fff4e9; }
 .vi-myke-panel button:focus-visible,.vi-myke-panel textarea:focus-visible,.vi-myke-panel input:focus-visible { outline:2px solid #f5821f; outline-offset:2px; }
-.vi-myke-local-options summary,.vi-myke-answer-sources summary { cursor:pointer; color:#e6c09d; padding:8px 0; font-size:14px; }
-.vi-myke-local-options p { font-size:14px; line-height:1.6; color:#bfd9e4; }
-.vi-myke-local-options button,.vi-myke-local-options a { display:block; margin:8px 0; min-height:40px; padding:8px 10px; border:1px solid #79b4c338; border-radius:10px; background:#ffffff06; color:#d5e9f0; }
+.vi-myke-answer-sources summary { cursor:pointer; color:#e6c09d; padding:8px 0; font-size:14px; }
 .vi-myke-faq-search { display:flex; flex-direction:column; gap:6px; font-size:13px; }
 .vi-myke-faq-search input { min-width:0; width:100%; padding:9px; color:#e8f4f7; background:#062536; border:1px solid #79b4c34a; border-radius:10px; }
 .vi-myke-chat { display:flex; flex-direction:column; min-height:0; min-width:0; gap:10px; }
@@ -202,10 +200,10 @@ body.vi-performance-motion-off .vi-myke-dock,body.vi-performance-motion-off .vi-
 .vi-myke-dock:is(:hover,:focus-within,[data-awake="true"]) .vi-myke-hide { opacity:1; }
 .vi-myke-dock:not(:hover):not(:focus-within):not([data-awake="true"]) .vi-myke-flight { opacity:.6; }
 /* Modern disclosures retain native keyboard/assistive-technology semantics. */
-.vi-myke-local-options summary,.vi-myke-answer-sources summary { display:flex; align-items:center; justify-content:space-between; gap:12px; list-style:none; padding:10px 12px; border:1px solid #ffffff16; border-radius:12px; background:#ffffff05; color:#d0e2ec; font-size:13px; }
-.vi-myke-local-options summary::-webkit-details-marker,.vi-myke-answer-sources summary::-webkit-details-marker { display:none; }
-.vi-myke-local-options summary::after,.vi-myke-answer-sources summary::after { content:"+"; font-size:18px; color:#abc7d5; }
-.vi-myke-local-options[open] > summary::after,.vi-myke-answer-sources[open] > summary::after { content:"−"; }
+.vi-myke-answer-sources summary { display:flex; align-items:center; justify-content:space-between; gap:12px; list-style:none; padding:10px 12px; border:1px solid #ffffff16; border-radius:12px; background:#ffffff05; color:#d0e2ec; font-size:13px; }
+.vi-myke-answer-sources summary::-webkit-details-marker { display:none; }
+.vi-myke-answer-sources summary::after { content:"+"; font-size:18px; color:#abc7d5; }
+.vi-myke-answer-sources[open] > summary::after { content:"−"; }
 .vi-myke-questions > strong { font-size:12px; font-weight:500; color:#a4c0cd; }
 .vi-myke-questions > .vi-myke-suggestions button { background:#ffffff07; border-color:#ffffff18; font-size:13px; }
 .vi-myke-help-speaker { position:absolute; right:calc(480px + 22px); top:100px; width:238px; color:#e6f0f6; }

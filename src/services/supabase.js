@@ -1,7 +1,7 @@
 const SUPABASE_URL=import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY=import.meta.env.VITE_SUPABASE_ANON_KEY;
-function validateConfig(){if(!SUPABASE_URL)throw new Error("Falta VITE_SUPABASE_URL en .env.local");if(!SUPABASE_ANON_KEY)throw new Error("Falta VITE_SUPABASE_ANON_KEY en .env.local");}
-function authHeaders(extra={}){return {apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`,...extra};}
+const SUPABASE_ANON_KEY=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+function validateConfig(){if(!SUPABASE_URL)throw new Error("Falta VITE_SUPABASE_URL en .env.local");if(!SUPABASE_ANON_KEY)throw new Error("Falta una clave pública de Supabase en .env.local");}
+function authHeaders(extra={}){return {apikey:SUPABASE_ANON_KEY,...(/^eyJ/.test(SUPABASE_ANON_KEY) ? {Authorization:`Bearer ${SUPABASE_ANON_KEY}`} : {}),...extra};}
 async function fetchSignature(signal){
  const response=await fetch(`${SUPABASE_URL}/rest/v1/escaneos_4wall?select=id&order=id.desc&limit=1`,{headers:authHeaders({Prefer:"count=exact","Range-Unit":"items",Range:"0-0"}),signal});
  if(!response.ok)throw new Error(`Supabase signature HTTP ${response.status}`);

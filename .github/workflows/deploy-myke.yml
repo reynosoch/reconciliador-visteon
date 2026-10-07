@@ -1,59 +1,14 @@
-name: Activate Myke AI
-
+name: Deploy Myke Edge
 on:
   workflow_dispatch:
-    inputs:
-      provider:
-        description: Proveedor autorizado del servidor
-        type: choice
-        options: [copilot, gemini]
-        default: copilot
-        required: true
-      free_tier_confirmed:
-        description: 'Confirmé en AI Studio que la clave pertenece a un proyecto sin facturación activa'
-        type: boolean
-        required: true
-        default: false
-
 permissions:
   contents: read
-
 concurrency:
-  group: myke-gemini-production
+  group: myke-edge-production
   cancel-in-progress: false
-
 jobs:
-  prerequisites:
+  deploy:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    outputs:
-      ready: ${{ steps.check.outputs.ready }}
-    steps:
-      - name: Revisar configuración sin revelar secretos ni llamar a Gemini
-        id: check
-        env:
-          MYKE_PROVIDER: ${{ inputs.provider }}
-          MYKE_COPILOT_DIRECT_LINE_SECRET: ${{ secrets.MYKE_COPILOT_DIRECT_LINE_SECRET }}
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          MYKE_GEMINI_API_KEY: ${{ secrets.MYKE_GEMINI_API_KEY || secrets.GEMINI_API_KEY }}
-          MYKE_ACCESS_CODE: ${{ secrets.MYKE_ACCESS_CODE }}
-          FREE_TIER_CONFIRMED: ${{ github.event_name == 'workflow_dispatch' && inputs.free_tier_confirmed || github.event_name == 'push' && vars.MYKE_GEMINI_FREE_TIER_CONFIRMED == 'true' }}
-        run: |
-          node --input-type=module <<'JS'
-          import { appendFileSync } from 'node:fs';
-          const missing = ['SUPABASE_ACCESS_TOKEN', process.env.MYKE_PROVIDER === 'copilot' ? 'MYKE_COPILOT_DIRECT_LINE_SECRET' : 'MYKE_GEMINI_API_KEY', 'MYKE_ACCESS_CODE']
-            .filter((name) => !process.env[name]);
-          if (process.env.MYKE_ACCESS_CODE && (process.env.MYKE_ACCESS_CODE.length < 24 || process.env.MYKE_ACCESS_CODE.length > 256))
-            missing.push('MYKE_ACCESS_CODE de 24–256 caracteres');
-          if (process.env.MYKE_PROVIDER === 'gemini' && process.env.FREE_TIER_CONFIRMED !== 'true') missing.push('confirmación de proyecto Google sin facturación');
-          const ready = missing.length === 0;
-          appendFileSync(process.env.GITHUB_OUTPUT, `ready=${ready}\n`);
-          console.log(ready ? 'Requisitos presentes; continúa build/despliegue.' : `Myke no se activó. Falta: ${missing.join(', ')}. No se llamó al proveedor.`);
-          if (!ready && process.env.GITHUB_EVENT_NAME === 'workflow_dispatch') process.exitCode = 1;
-          JS
-  activate:
-    needs: prerequisites
-    if: needs.prerequisites.outputs.ready == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,21 +18,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Instalar dependencias y verificar la entrega completa
-        run: |
-          npm ci
-          npm run build
-      - name: Recuperar configuración pública de la app
+      - run: npm ci
+      - run: npm run build
+      - name: Recuperar configuración pública del proyecto existente
         run: node scripts/extract-public-pages-env.mjs
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - name: Configurar y desplegar solo Myke; probar una pregunta pública
+      - name: Desplegar Myke y validar CORS sin llamadas al LLM
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          MYKE_GEMINI_API_KEY: ${{ secrets.MYKE_GEMINI_API_KEY || secrets.GEMINI_API_KEY }}
-          MYKE_ACCESS_CODE: ${{ secrets.MYKE_ACCESS_CODE }}
-          MYKE_PROVIDER: ${{ inputs.provider }}
-          MYKE_COPILOT_DIRECT_LINE_SECRET: ${{ secrets.MYKE_COPILOT_DIRECT_LINE_SECRET }}
-          MYKE_GEMINI_FREE_TIER_CONFIRMED: 'true'
         run: node scripts/activate-myke.mjs
