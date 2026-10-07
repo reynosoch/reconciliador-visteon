@@ -16,7 +16,6 @@ import { submitDevelopmentFeedback } from "../../services/supabase.js";
 import { isMykeProjectQuestion } from "../../../supabase/functions/myke-chat/public-question.mjs";
 import publicKnowledge from "../../../supabase/functions/myke-chat/knowledge.generated.json";
 
-const quickPositionKey = "visteon.ui.mykeQuickPosition.v1";
 const advice = [
   "Vamos a entenderlo. Pregúntame por el tablero o una pieza.",
   "Pásame un PN. Seguimos su rastro hasta la fuente.",
@@ -128,14 +127,14 @@ function PieceReply({ pn, context, onEvidence, onTracer, onSources }) {
           </details>
           <div className="vi-myke-shortcuts">
             <button type="button" onClick={() => onTracer(pn)}>
-              Revisar {pn} en el trazador →
+              Revisar {pn} en el trazador <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" style={{display: "inline-block", verticalAlign: "middle"}} aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
           </div>
         </>
       ) : (
         <div className="vi-myke-shortcuts">
           <button type="button" onClick={onSources}>
-            Abrir archivos de inventario →
+            Abrir archivos de inventario <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" style={{display: "inline-block", verticalAlign: "middle"}} aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
       )}
@@ -199,10 +198,14 @@ export default function MykePanel({
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
-  const [quickPosition, setQuickPosition] = useState(() => {
-    const saved = safeReadJson(quickPositionKey, null).value;
-    return Number.isFinite(saved?.x) && Number.isFinite(saved?.y) ? saved : null;
-  });
+  const [quickPosition, setQuickPosition] = useState(null);
+  const [largePosition, setLargePosition] = useState(null);
+  const [dynamicPlaceholder, setDynamicPlaceholder] = useState("Escribe una pregunta o un PN");
+  useEffect(() => {
+    const tips = ["¿Qué significa este valor?", "Busca una pieza (ej. 12345)", "Prueba preguntarme sobre alertas", "Escribe una pregunta o un PN"];
+    const t = setInterval(() => setDynamicPlaceholder(tips[Math.floor(Math.random() * tips.length)]), 8000);
+    return () => clearInterval(t);
+  }, []);
   const dragChat = useRef(null);
   const [tipIndex, setTipIndex] = useState(0);
   useEffect(() => {
@@ -216,6 +219,18 @@ export default function MykePanel({
   const quickMinX = narrow ? 8 : 92;
   const quickReserve = narrow ? 164 : 80;
   const activeSize = anchor ? quickSize : size;
+  const largeMinX = 24, largeReserve = 80;
+  const largeWidth = Math.min(size.width, viewport.width - largeMinX * 2);
+  const largeHeight = Math.min(size.height, viewport.height - largeReserve - 24);
+  const boundLargePosition = (x, y) => ({
+    x: Math.max(largeMinX, Math.min(viewport.width - largeWidth - largeMinX, x)),
+    y: Math.max(24, Math.min(viewport.height - largeHeight - largeReserve, y)),
+  });
+  const largePoint = boundLargePosition(
+    largePosition?.x ?? (viewport.width - largeWidth) / 2,
+    largePosition?.y ?? (viewport.height - largeHeight) / 2
+  );
+      const renderedHeight = anchor ? renderedHeight : largeHeight;
   const quickWidth = Math.min(quickSize.width, viewport.width - quickMinX - 8);
   const quickHeight = Math.min(quickSize.height, viewport.height - quickReserve - 16);
   const boundPosition = (x, y) => ({
@@ -226,8 +241,8 @@ export default function MykePanel({
     quickPosition?.x ?? (anchor ? anchor.x < viewport.width / 2 ? anchor.x + anchor.width + 8 : anchor.x - quickWidth - 8 : quickMinX),
     quickPosition?.y ?? (anchor ? anchor.y + anchor.height - quickHeight : 80),
   );
-  const quickLeft = quickPoint.x, quickTop = quickPoint.y;
-  const renderedQuickHeight = Math.min(quickSize.height, viewport.height - quickTop - quickReserve);
+  const currentLeft = anchor ? quickPoint.x : largePoint.x, currentTop = anchor ? quickPoint.y : largePoint.y;
+  /* removed duplicate renderedHeight */
   const saveSize = (next) => {
     (anchor ? setQuickSize : setSize)(next);
     safeWriteJson(anchor ? "visteon.ui.mykeQuickSize.v1" : "visteon.ui.mykeSize.v1", next);
@@ -351,8 +366,8 @@ export default function MykePanel({
     finally { reportFlight.current = false; setReportSending(false); }
   };
   const boundedSize = (width, height) => {
-    const maxWidth = viewport.width - (anchor ? quickLeft + 8 : 36);
-    const maxHeight = viewport.height - (anchor ? quickTop + quickReserve : 88);
+    const maxWidth = viewport.width - (anchor ? currentLeft + 8 : 36);
+    const maxHeight = viewport.height - (anchor ? currentTop + quickReserve : 88);
     return {
       width: Math.min(maxWidth, Math.max(anchor ? 280 : 560, width)),
       height: Math.min(maxHeight, Math.max(anchor ? 320 : 520, height)),
@@ -402,7 +417,7 @@ export default function MykePanel({
               });
             }}
           >
-            <span aria-hidden="true">▤</span> {input.loaded ? "Ver" : "Cargar"}{" "}
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/></svg> {input.loaded ? "Ver" : "Cargar"}{" "}
             {input.label}
             <small>
               {input.loaded ? input.identity : "Fuente no disponible"}
@@ -437,26 +452,26 @@ export default function MykePanel({
               onOpenDataAlerts();
             }}
           >
-            Ver advertencias del inventario →
+            Ver advertencias del inventario <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" style={{display: "inline-block", verticalAlign: "middle"}} aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
       )}
     </section>
   );
   const companion = (
-    <div className="vi-myke-living-space">
-                <motion.div className="vi-myke-stage" animate={{ x: quietMotion ? 0 : gaze * 10, y: quietMotion ? 0 : typing ? -4 : reaction === "thinking" ? -3 : 0, rotate: quietMotion ? 0 : typing ? gaze * 5 : 0 }} transition={quietMotion ? {duration:0} : {type:"spring",stiffness:260,damping:24}}>
-                  <MykeGhost pose={aiState === "pending" || reportSending ? "thinking" : typing ? "typing" : reaction} gaze={gaze}/>
-                </motion.div>
-                <div className="vi-myke-speech" aria-label="Consejo de Myke">
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.p key={aiState === "pending" ? "pending" : typing ? "typing" : reaction === "sad" ? "sad" : tipIndex}
-                      initial={{opacity:0,y:quietMotion ? 0 : 5}} animate={{opacity:1,y:0}} exit={{opacity:0,y:quietMotion ? 0 : -4}} transition={{duration:quietMotion ? 0 : .22}}>
-                      {aiState === "pending" ? "Dame un momento. Estoy revisando la pregunta y las fuentes." : typing ? "Te sigo. Vamos a ver qué hay detrás de ese dato." : reaction === "sad" ? "Aquí falta evidencia. Probemos otra pregunta." : advice[tipIndex]}
-                    </motion.p>
-                  </AnimatePresence>
-                </div>
-              </div>
+    <div className="vi-myke-living-space" style={{ cursor: "pointer" }} onClick={() => setTipIndex((i) => (i + 1) % advice.length)}>
+      <motion.div className="vi-myke-stage" animate={{ x: quietMotion ? 0 : gaze * 10, y: quietMotion ? 0 : typing ? -4 : reaction === "thinking" ? -3 : 0, rotate: quietMotion ? 0 : typing ? gaze * 5 : 0 }} transition={quietMotion ? {duration:0} : {type:"spring",stiffness:260,damping:24}}>
+        <MykeGhost pose={aiState === "pending" || reportSending ? "thinking" : typing ? "typing" : reaction} gaze={gaze}/>
+      </motion.div>
+      <div className="vi-myke-speech" aria-label="Consejo de Myke">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p key={aiState === "pending" ? "pending" : typing ? "typing" : reaction === "sad" ? "sad" : tipIndex}
+            initial={{opacity:0,y:quietMotion ? 0 : 5}} animate={{opacity:1,y:0}} exit={{opacity:0,y:quietMotion ? 0 : -4}} transition={{duration:quietMotion ? 0 : .22}}>
+            {aiState === "pending" ? "Dame un momento. Estoy revisando la pregunta y las fuentes." : typing ? "Te sigo. Vamos a ver qué hay detrás de ese dato." : reaction === "sad" ? "Aquí falta evidencia. Probemos otra pregunta." : advice[tipIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+    </div>
   );
   return (
     <>
@@ -464,8 +479,8 @@ export default function MykePanel({
         <div
           className={`vi-myke-overlay ${anchor ? "vi-myke-compact" : ""}`}
           style={anchor ? {
-            "--vi-myke-anchor-x": `${quickLeft}px`,
-            "--vi-myke-anchor-y": `${quickTop}px`,
+            "--vi-myke-anchor-x": `${currentLeft}px`,
+            "--vi-myke-anchor-y": `${currentTop}px`,
           } : undefined}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) onClose();
@@ -473,49 +488,59 @@ export default function MykePanel({
         >
           <RubberDrawer
             className="vi-myke-panel"
+            
             style={{
               "--vi-myke-width": `${activeSize.width}px`,
-              "--vi-myke-height": `${anchor ? renderedQuickHeight : activeSize.height}px`,
+              "--vi-myke-height": `${anchor ? renderedHeight : activeSize.height}px`,
             }}
             role="dialog"
             aria-modal="true"
             aria-label="Myke · ayuda del reconciliador"
+          
+            onPointerDown={(event) => {
+              if (event.button !== 0 || !event.isPrimary) return;
+              if (event.target.closest("button, input, textarea, a, .vi-myke-conversation, .vi-myke-local-options, .vi-myke-questions, .vi-myke-tabs")) return;
+              dragChat.current = { id: event.pointerId, x: event.clientX, y: event.clientY, left: currentLeft, top: currentTop };
+              event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+            onPointerMove={(event) => {
+              const start = dragChat.current;
+              if (!start || start.id !== event.pointerId) return;
+              const nextX = start.left + event.clientX - start.x;
+              const nextY = start.top + event.clientY - start.y;
+              if (anchor) {
+                setQuickPosition(boundPosition(nextX, nextY));
+              } else {
+                setLargePosition(boundLargePosition(nextX, nextY));
+              }
+            }}
+            onPointerUp={(event) => {
+              const start = dragChat.current;
+              if (!start || start.id !== event.pointerId) return;
+              const nextX = start.left + event.clientX - start.x;
+              const nextY = start.top + event.clientY - start.y;
+              if (anchor) {
+                const next = boundPosition(nextX, nextY);
+                setQuickPosition(next);
+              } else {
+                const next = boundLargePosition(nextX, nextY);
+                setLargePosition(next);
+              }
+              dragChat.current = null;
+            }}
+            onPointerCancel={() => { dragChat.current = null; }}
+            onLostPointerCapture={() => { dragChat.current = null; }}
           >
-            <header className="vi-myke-head">
-              {anchor ? <button
-                type="button" className="vi-myke-move" aria-label="Mover chat rápido"
-                title="Arrastra el chat o muévelo con las flechas"
-                onPointerDown={(event) => {
-                  if (event.button !== 0 || !event.isPrimary) return;
-                  dragChat.current = { id: event.pointerId, x: event.clientX, y: event.clientY, left: quickLeft, top: quickTop };
-                  event.currentTarget.setPointerCapture(event.pointerId);
-                }}
-                onPointerMove={(event) => {
-                  const start = dragChat.current;
-                  if (!start || start.id !== event.pointerId) return;
-                  setQuickPosition(boundPosition(start.left + event.clientX - start.x, start.top + event.clientY - start.y));
-                }}
-                onPointerUp={(event) => {
-                  const start = dragChat.current;
-                  if (!start || start.id !== event.pointerId) return;
-                  const next = boundPosition(start.left + event.clientX - start.x, start.top + event.clientY - start.y);
-                  setQuickPosition(next); safeWriteJson(quickPositionKey, next); dragChat.current = null;
-                }}
-                onPointerCancel={() => { dragChat.current = null; }}
-                onLostPointerCapture={() => { dragChat.current = null; }}
-                onKeyDown={(event) => {
-                  const delta = { ArrowLeft: [-24,0], ArrowRight: [24,0], ArrowUp: [0,-24], ArrowDown: [0,24] }[event.key];
-                  if (!delta) return;
-                  event.preventDefault();
-                  const next = boundPosition(quickLeft + delta[0], quickTop + delta[1]);
-                  setQuickPosition(next); safeWriteJson(quickPositionKey, next);
-                }}
-              ><span aria-hidden="true">⠿</span>Chat rápido</button> : <div><h2>Myke<span>·</span></h2>{helpRequest && <small>Sobre {helpRequest.info.title}</small>}</div>}
+            {anchor && <header className="vi-myke-head" style={{cursor: "grab"}}>
+              <div><h2>Myke<span>·</span></h2>{helpRequest && <small>Sobre {helpRequest.info.title}</small>}</div>
               <div className="vi-myke-head-actions">
-                {anchor && <button type="button" className="vi-myke-expand" onClick={() => onExpand?.()}><span>Chat completo</span><ExpandIcon/></button>}
+                <button type="button" className="vi-myke-expand" onClick={() => onExpand?.()}><span>Chat completo</span><ExpandIcon/></button>
                 <button type="button" className="vi-icon-close" aria-label="Cerrar Myke" onClick={onClose}>×</button>
               </div>
-            </header>
+            </header>}
+            {!anchor && <div className="vi-myke-large-actions" style={{position:"absolute", top: 12, right: 12, zIndex: 10, display:"flex", gap:8}}>
+              <button type="button" className="vi-icon-close" style={{width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)", background:"rgba(0,0,0,0.5)", color:"white", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}} aria-label="Cerrar Myke" onClick={onClose}>×</button>
+            </div>}
             <nav className="vi-myke-tabs" aria-label="Vistas de Myke">
               {[
                 ["chat", "Chat"],
@@ -537,8 +562,7 @@ export default function MykePanel({
             <div className="vi-myke-body" data-view={tab}>
               {tab === "chat" && (
                 <>
-                  <aside
-                    className="vi-myke-questions"
+                  {anchor ? (<aside className="vi-myke-questions" 
                     aria-label="Preguntas frecuentes"
                   >
                     <strong>Preguntas frecuentes</strong>
@@ -620,14 +644,20 @@ export default function MykePanel({
                                 }}
                               >
                                 {entry.title}
-                                <span>›</span>
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                               </button>
                             ))}
                         </div>
                       </details>
 
                     </div>
-                  </aside>
+                  </aside>) : (
+    <div className="vi-myke-questions-horizontal" style={{display: "flex", overflowX: "auto", gap: "8px", padding: "12px", borderBottom: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap"}}>
+      {["dashboard", "capabilities", "opportunities", "parts"].map((id) => organization.topics.find((t) => t.id === id)).filter(Boolean).map((topic) => (
+        <button key={topic.id} type="button" disabled={aiState === "pending"} onClick={() => send(topic.title)} style={{padding:"6px 12px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:"16px", color:"white", cursor:"pointer"}}>{topic.title}</button>
+      ))}
+    </div>
+  )}
                   <section className="vi-myke-chat" aria-label="Chat">
                     <div
                       className="vi-myke-conversation"
@@ -733,7 +763,7 @@ export default function MykePanel({
                               {message.pending && (
                                 <p className="vi-myke-working" role="status">
                                   Revisando las fuentes disponibles…{" "}
-                                  <span aria-hidden="true">•••</span>
+                                  <span aria-hidden="true">...</span>
                                 </p>
                               )}
                               {message.aiError && (
@@ -780,7 +810,7 @@ export default function MykePanel({
                     <div className="vi-myke-context-chips" aria-label="Sugerencias del corte">
                       {(anchor ? messages.length ? chips.slice(0,2) : [] : chips).map((chip) => <button type="button" key={chip.question} disabled={aiState === "pending"} onClick={() => send(chip.question)}>{chip.label}</button>)}
                     </div>
-                    {!anchor && companion}
+                    
                     <form
                       className="vi-myke-composer"
                       onSubmit={(event) => {
@@ -795,7 +825,7 @@ export default function MykePanel({
                         value={draft}
                         maxLength={1000}
                         rows={2}
-                        placeholder="Escribe una pregunta o un PN"
+                        placeholder={dynamicPlaceholder}
                         onBlur={() => setTyping(false)}
                         onSelect={(event) =>
                           setGaze(
@@ -884,7 +914,7 @@ export default function MykePanel({
                         <span>{number}</span>
                         <strong>{title}</strong>
                         <p>{description}</p>
-                        <b aria-hidden="true">→</b>
+                        <b aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" style={{display: "inline-block", verticalAlign: "middle"}} aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg></b>
                       </button>
                     ))}
                   </div>
@@ -954,7 +984,16 @@ export default function MykePanel({
               <span aria-hidden="true">↘</span>
             </button>
           </RubberDrawer>
-          {anchor && <aside className="vi-myke-quick-companion" style={{left: narrow ? quickLeft + 8 : quickLeft - 82, top: narrow ? quickTop + renderedQuickHeight + 8 : quickTop + renderedQuickHeight - 100}} aria-label="Myke acompaña la conversación">{companion}</aside>}
+          {<aside className="vi-myke-quick-companion" style={{
+    position: "absolute",
+    left: (currentLeft > viewport.width / 2) ? currentLeft - 180 : currentLeft + 24, 
+    top: currentTop + renderedHeight + 12,
+    display: "flex",
+    flexDirection: (currentLeft > viewport.width / 2) ? "row-reverse" : "row",
+    alignItems: "center",
+    gap: "12px",
+    zIndex: 1000
+  }} aria-label="Myke acompaña la conversación">{companion}</aside>}
         </div>
       </OverlayPortal>
       {preview && (

@@ -167,9 +167,7 @@ body.vi-performance-motion-off .vi-myke-dock,body.vi-performance-motion-off .vi-
 
 /* Quick conversation: glass window and independent companion beside its composer. */
 .vi-myke-head-actions { display:flex; align-items:center; gap:8px; flex:none; }
-.vi-myke-move { display:flex; align-items:center; gap:8px; padding:8px 0; min-width:0; border:0; background:transparent; color:#e8f4f7; font-size:14px!important; font-weight:600!important; cursor:grab!important; touch-action:none; user-select:none; white-space:nowrap; }
-.vi-myke-move > span { color:#91aebd; font-size:20px; }
-.vi-myke-move:active { cursor:grabbing!important; }
+
 .vi-myke-compact { background:transparent; padding:0; }
 .vi-myke-compact .vi-myke-panel { --vi-drawer-enter:0px; position:absolute; left:var(--vi-myke-anchor-x,12px); top:var(--vi-myke-anchor-y,100px); width:min(var(--vi-myke-width,400px),calc(100vw - var(--vi-myke-anchor-x) - 8px)); height:var(--vi-myke-height,480px); border-radius:24px; }
 .vi-myke-compact .vi-myke-head { padding:10px 14px; gap:4px; border-bottom-color:#ffffff12; }
