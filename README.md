@@ -42,7 +42,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Tabla principal | `src/components/dashboard/InventoryWorkspace.jsx`; radar en `InventoryRadar.jsx`; formatos/filtros en `inventoryWorkspaceSupport.js` |
 | Trazador de pieza / aprendizaje | `src/domain/partLearningTrace.js`, `src/domain/sourceEvidence.js`; UI: `src/components/shell/PartLogicTracer.jsx` + `SourcePreviewModal.jsx`; estilos en `data-review.css` |
 | LAB · Cómo funciona el motor | `src/domain/engineGuide.js`; UI: `src/components/shell/EngineGuideDrawer.jsx`, entrada en `MainMenu.jsx`; ejemplos calculados por `inventoryEngine`, separados del inventario real |
-| Myke / organización virtual | Organización interna en `.agents`; ayuda pública solo de este README (`buildMykeKnowledge`); la misma conversación en chat rápido ampliable y chat completo/redimensionable en `MykePanel.jsx`; fantasma naranja arcade original y ayuda contextual con personaje desde todos los `?`. Knowledge retrieval y contexto vivo del motor, PN y evidencia locales; transporte HTTP al servicio existente y Copilot Studio Direct Line en servidor; backend único `myke-chat` con tools READ-ONLY/contexto mínimo y fallback; activación real pendiente de acceso al proyecto/secreto. Reportes manuales solo tras vista previa y confirmación explícita por la ruta existente, fuera de las tools |
+| Myke / organización virtual | Organización interna en `.agents`; ayuda pública solo de este README (`buildMykeKnowledge`); la misma conversación en chat rápido ampliable y chat completo/redimensionable en `MykePanel.jsx`; fantasma naranja arcade original y ayuda contextual con personaje desde todos los `?`. Knowledge retrieval y contexto vivo del motor, PN y evidencia locales; transporte HTTP a Gemini detrás del servicio existente; backend único `myke-chat` con tools READ-ONLY/contexto mínimo y fallback; activación real pendiente de acceso al proyecto/secreto. Reportes manuales solo tras vista previa y confirmación explícita por la ruta existente, fuera de las tools |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
 | 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
@@ -82,9 +82,10 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 
 ### Estado técnico actual
 
+- Myke conversación vigente (07 OCT 2026): intención CASUAL local (saludos/presencia/agradecimientos), aliases breves, referencias/ordinales y selección del trazador; no requiere IA para platicar ni consultar resultados. Memoria conserva lista y PN; fallback presenta cifras del motor y reconoce causa pendiente. Sin rediseño ni cambios financieros.
 - Myke Hybrid Intelligence vigente (07 OCT 2026): frontend local y Pages llaman a la misma `myke-chat`; sin login ni código de acceso. Consultas READ-ONLY reducen resultados del motor a un contexto permitido; el LLM explica y nunca calcula/escribe. Knowledge y motor contestan primero sin IA; solo razonamiento complejo escala a Gemini, con fallback local. Ver [Myke Hybrid Intelligence](#myke-hybrid-intelligence), que reemplaza la configuración histórica Gemini/Copilot de más abajo.
 
-- Myke UI vigente (07 OCT 2026): chats compacto/completo flotantes con arrastre desde toda la barra, movimiento con teclado, límites de pantalla y reapertura desde el nuevo clic al personaje. El completo usa una barra mínima sin título/header; ambas vistas muestran las 21 FAQ como etiquetas con scrollbar horizontal y filtro, dejando la conversación libre. Myke queda debajo del cristal, sigue la escritura y entrega un protip diferente por clic, con viñeta lateral según el origen de apertura y desaparición a los 6.5 s. Placeholder aleatorio cada 8 s mientras está abierto; Quitar animaciones y movimiento reducido desactivan transiciones/animaciones y rotación de placeholder. Conectar IA permanece en Explorar. Se mantienen tamaños persistidos, conversación compartida, evidencia, reportes y liquid glass; posición del chat no se guarda para otra apertura.
+- Myke UI vigente (07 OCT 2026): chats compacto/completo flotantes con arrastre desde toda la barra, movimiento con teclado, límites de pantalla y reapertura desde el nuevo clic al personaje. El completo usa una barra mínima sin título/header; ambas vistas muestran las 21 FAQ como etiquetas con scrollbar horizontal y filtro, dejando la conversación libre. Myke queda debajo del cristal, sigue la escritura y entrega un protip diferente por clic, con viñeta lateral según el origen de apertura y desaparición a los 6.5 s. Placeholder aleatorio cada 8 s mientras está abierto; Quitar animaciones y movimiento reducido desactivan transiciones/animaciones y rotación de placeholder. Myke responde automáticamente según la intención, sin pantalla de conexión. Se mantienen tamaños persistidos, conversación compartida, evidencia, reportes y liquid glass; posición del chat no se guarda para otra apertura.
 - Recuperación Myke (07 OCT 2026): se restauraron `MykePanel.jsx` y `myke.css` de `b91208b` tras el rediseño defectuoso `494dcb5`. El chat rápido causaba `ReferenceError` al inicializar su altura; el cambio también retiraba la búsqueda FAQ del chat completo y la persistencia/teclado del arrastre. `verify-myke.mjs` ahora ejecuta render de chat rápido, completo, cerrado y Explorar en tamaños laptop/tablet/móvil; sustituye solo los shells DOM de portal/rubber band. Estas pruebas no reemplazan pruebas de interacción en navegador.
 - React 19 + Vite 8 + Tailwind 3.
 - Supabase/PostgreSQL + Dexie/IndexedDB.
@@ -913,6 +914,13 @@ Verify main ejecuta esos controles en GitHub Actions. La publicación de GitHub 
 
 - Verificación de esta entrega: build completo (incluye IA/documentación sincronizada, finanzas, imports, CSS/módulos y SQL local); navegador Chromium con fixtures a 1366/1024/768/390/320 px para arrastre/X, chat único, preguntas visibles, tamaño/persistencia, PN completo/ausente, fuente ausente, visor 1/60/10 filas, Escape anidado, entrada al trazador y retorno de scroll después de F5. IA: proveedor simulado y errores de conexión, sin afirmar una prueba real. Safari/iPad físico y servicio IA en producción requieren validación posterior.
 
+## Archivo histórico de Myke
+
+Las configuraciones siguientes están **retiradas**. No seguir sus pasos de Conectar IA, códigos privados, modelos locales, free tier ni secretos en GitHub. La única configuración vigente está en [Myke Hybrid Intelligence](#myke-hybrid-intelligence).
+
+<details>
+<summary>Ver historial de implementaciones y decisiones anteriores (05–06 OCT 2026)</summary>
+
 ## Myke: IA gratis en el navegador
 
 **Histórico, sustituido el 06/10/2026 por Myke corporativo/contextual:** se retiró toda inferencia GPU/Hugging Face, sus workers y dependencia. No activar ni instalar modelos descargables. Ver la decisión vigente al final de esta sección.
@@ -1022,9 +1030,14 @@ Se conserva el atlas/diseño del fantasma. Mascota de reposo más pequeña y aso
 
 Chat completo conserva FAQ, búsqueda, Explorar, conexión IA, PN, evidencia, reportes y controles; disclosures nativos con estilo moderno sin triángulos del navegador. Myke habla en viñetas junto al compositor. Desde ayudas, abre el chat completo sobre el drawer existente; al cerrar con X/Escape se conserva la ayuda y su posición. Preferencias de movimiento reducido/Quitar animaciones/Vidrio ligero mantenidas. Motor, proveedores y scroll/rubber band no cambian.
 
+
+</details>
+
 ## Myke Hybrid Intelligence
 
 ### Arquitectura y uso
+
+CASUAL es una intención local antes de los tres niveles: reconoce saludos, presencia, agradecimientos y confirmaciones con respuestas breves que rotan sin IA. Normaliza abreviaciones pequeñas (q → que; pq/xq → porque; pa → para), acentos, puntuación y saludos alargados. «q rollo myke» responde directamente, sin búsqueda documental ni red. No absorbe consultas como «qué pedo con SWING».
 
 Tres niveles reutilizan el mismo chat: **LEVEL 0 · Static Knowledge** responde FAQ/definiciones por $0 de IA; **LEVEL 1 · Reconciliation Engine** consulta resultados ya calculados por $0 de IA; **LEVEL 2 · Gemini reasoning** recibe una petición únicamente cuando aporta interpretación compleja. El router determinista decide sin llamar a Gemini. No hay espera artificial para respuestas locales.
 
@@ -1042,7 +1055,9 @@ flowchart TD
 
 ### Contexto, conocimiento y privacidad
 
-El router devuelve knowledge / engine / ai, intent, confianza, entidades, tools y complejidad. Normaliza acentos, mayúsculas, puntuación y aliases. FAQ (incluidas variantes como «net?»), NET/SWING/físico/QAD/clasificación/localidades/BOM por PN, top pérdidas/ganancias/SWING, fuentes, calidad, prioridades y resumen se resuelven localmente. Preguntas causales, comparaciones y seguimientos complejos escalan una sola vez; antes se obtienen datos del motor. Memoria en RAM conserva últimos PNs/lista/intent/tema en los mensajes recientes; «esas cinco» reutiliza la selección y «la primera» el primer PN. La UI aporta sección/PN seleccionado o ayuda abierta, sin archivos. Preguntas de documentación no incluyen inventario automáticamente.
+El router diferencia casual / knowledge / engine / ai / out_of_scope; fallback es el resultado de un fallo remoto. Devuelve intent, confianza, entidades, tools y complejidad. Normaliza acentos, mayúsculas, puntuación y aliases. FAQ (incluidas variantes como «net?»), NET/SWING/físico/QAD/clasificación/localidades/BOM por PN, top pérdidas/ganancias/SWING, fuentes, calidad, prioridades y resumen se resuelven localmente. Preguntas causales, comparaciones y seguimientos complejos escalan una sola vez; antes se obtienen datos del motor. La memoria existente en RAM conserva últimos PNs, lista, PN seleccionado, intent y tema en los mensajes recientes. «esas cinco», «las anteriores» y «compáralas» usan la lista; «esa» usa el PN seleccionado; «la primera/segunda» resuelven la posición. Un saludo o agradecimiento no borra el contexto. Referencias insuficientes se aclaran localmente, sin pagar otra clasificación.
+
+La UI aporta sección, PN seleccionado del detalle/trazador, ayuda abierta o hallazgo seleccionado. PartLogicTracer notifica su PN realmente seleccionado; App lo pasa a Myke sin copiar filas ni reiniciar el trazador. «qué ves raro aquí» usa ese PN; un explícito PN en la pregunta prevalece. Los hallazgos enviados son del motor y solo de los PNs pedidos, con el límite existente. Preguntas de documentación no incluyen inventario automáticamente.
 
 Solo viajan resultados necesarios y metadata acotada: máximo 10 PN seleccionados o en ranking, 12 localidades/8 relaciones BOM para una pieza (3 localidades/2 relaciones por pieza en comparación), 10 hallazgos y 10 BOM faltantes, seis fuentes con nombre/timestamps y seis mensajes recientes de hasta 800 caracteres. Nunca CSV/TXT/XLSX, rows originales, mapas completos, SQL ni funciones ejecutables. NET/SWING/Gross Loss/Gain y clasificaciones salen de objetos del motor. Costo/Phantom desconocido se conserva como null, no cero/NO. El servidor verifica esquema/tamaños, no certifica el inventario enviado por el navegador; la evidencia original permanece local. Fechas de carga no prueban vigencia/extracción: freshness permanece desconocida sin una regla operativa.
 
@@ -1055,18 +1070,17 @@ Copiar `.env.example` a `.env.local`: `VITE_SUPABASE_URL` y una clave **pública
 En **Supabase Secrets**, exclusivamente:
 
 - `MYKE_GEMINI_API_KEY`: clave Gemini, solo en Supabase. Aliases MYKE_API_KEY/GEMINI_API_KEY siguen compatibles.
-- `MYKE_PROVIDER`: `gemini` (default); `copilot` puede seleccionarse solo en servidor si ya hay un canal Direct Line aprobado. Ambos entornos siempre usan el mismo valor.
+- `MYKE_PROVIDER=gemini` (default). Localhost y Pages usan la misma configuración del servidor.
 - `MYKE_GEMINI_MODEL=gemini-3.8-flash`: modelo estable por defecto; alias MYKE_MODEL compatible. No se aceptan IDs experimental/preview.
 - `MYKE_API_BASE_URL`: `https://generativelanguage.googleapis.com/v1beta` (opcional). Host/ruta se validan; no se permiten URLs arbitrarias.
-- Solo si se selecciona Copilot: `MYKE_COPILOT_DIRECT_LINE_SECRET`, endpoint regional `MYKE_COPILOT_DIRECT_LINE_ENDPOINT` opcional.
 
-No se necesita MYKE_ACCESS_CODE. Se reutiliza Gemini remoto existente; cambiar proveedor requiere adaptar solamente el handler/transportes de servidor, nunca React. No hay retry automático ni cambio de proveedor ante errores. Los tests no llaman modelos reales y no certifican plan/costo de la clave: configurar su cuota/facturación en el proveedor corresponde al propietario.
+El acceso público no necesita login ni código manual. Se reutiliza Gemini remoto existente; la elección técnica permanece en servidor, fuera del chat. No hay retry automático ni cambio de proveedor ante errores. Los tests no llaman modelos reales y no certifican plan/costo de la clave: configurar su cuota/facturación en el proveedor corresponde al propietario.
 
 ### Control de costo y telemetría
 
-El guard bloquea IA para knowledge/engine/templates; caché en RAM hasta 40 respuestas, TTL de cinco minutos, clave por pregunta normalizada/contexto seguro/complejidad y referencias conversacionales pertinentes. Un cambio de snapshot, reconciliación, fuentes, hallazgos o resumen invalida caché; requests idénticos simultáneos se deduplican. Una consulta AI activa y cooldown de un segundo entre nuevas consultas evitan consumo accidental; no agregan espera a respuestas locales. No se reintenta ni cambia de proveedor automáticamente. thinkingLevel LOW normal / MEDIUM para comparaciones/patrones complejos lo decide el router local, sin otra llamada. No se habilitan Google Search, URL/File Context, grounding, Maps ni ejecución de código.
+El guard bloquea IA para casual/knowledge/engine/templates; caché en RAM hasta 40 respuestas, TTL de cinco minutos, clave por pregunta normalizada/contexto seguro/complejidad y referencias conversacionales pertinentes. Un cambio de snapshot, reconciliación, fuentes, hallazgos o resumen invalida caché; requests idénticos simultáneos se deduplican. Una consulta AI activa y cooldown de un segundo entre nuevas consultas evitan consumo accidental; no agregan espera a respuestas locales. No se reintenta ni cambia de proveedor automáticamente. thinkingLevel LOW normal / MEDIUM para comparaciones/patrones complejos lo decide el router local, sin otra llamada. No se habilitan Google Search, URL/File Context, grounding, Maps ni ejecución de código.
 
-`getMykeTelemetry()` devuelve únicamente route (knowledge/engine/ai/fallback), latency y cacheHit, con máximo 100 entradas. En Vite development está disponible como `mykeCostTelemetry()` en DevTools; no registra pregunta, PN, números, archivos ni secretos. Los tests fallan si FAQ o consultas determinísticas llaman al adapter remoto. Configurar **Paid Tier, cuotas y presupuesto máximo de Gemini** como segunda barrera: CORS y rate limits por isolate no constituyen una cuota global garantizada.
+`getMykeTelemetry()` devuelve únicamente route (casual/knowledge/engine/ai/out_of_scope/fallback), latency y cacheHit, con máximo 100 entradas. En Vite development está disponible como `mykeCostTelemetry()` en DevTools; no registra pregunta, PN, números, archivos ni secretos. Los tests fallan si FAQ o consultas determinísticas llaman al adapter remoto. Configurar **Paid Tier, cuotas y presupuesto máximo de Gemini** como segunda barrera: CORS y rate limits por isolate no constituyen una cuota global garantizada.
 
 ### Protección y fallback
 
@@ -1074,7 +1088,7 @@ El guard bloquea IA para knowledge/engine/templates; caché en RAM hasta 40 resp
 
 Límites por isolate: 20 requests/min global, 8/min por dirección/origen, cuatro solicitudes simultáneas, mapa de clientes acotado. No equivalen a una cuota distribuida: CORS y claves públicas no son autenticación ni impiden clientes programáticos. Para mayor exposición, agregar gateway/cuota distribuida antes de subir esos límites. Timeout Edge 25 s / cliente 30 s; salida normal hasta 800 tokens, hasta 1400 solo con pedido explícito de detalle y 12000 caracteres; errores sin detalles/keys del proveedor, sin logs de prompts/inventario. El endpoint no persiste conversaciones. El chat mantiene solo historial reciente en memoria.
 
-Si Edge no está configurada, falla, responde 429/timeout o el LLM falla, se muestra fallback local explícito: FAQ, cifras/trace y navegación existentes. Nunca se llama IA directa desde el browser ni se finge respuesta remota. Cancelar/cerrar aborta la consulta y conserva los demás datos.
+Si Edge no está configurada, falla, responde 429/timeout o el LLM falla, el fallback muestra primero lo disponible en el contexto: Physical/QAD/NET/SWING y evidencia del PN, lista o resumen del corte. Explica que la causa no está confirmada. No abre con el antiguo «No encuentro una respuesta respaldada…». Sin datos, pide tema/PN o fuentes, sin inventar cifras. FAQ y navegación existentes continúan disponibles. Nunca se llama IA directa desde el browser ni se finge respuesta remota. Cancelar/cerrar aborta la consulta y conserva los demás datos.
 
 ### Despliegue y troubleshooting
 
@@ -1088,3 +1102,9 @@ Proyecto actual: `uukhwkywmnarcfruerpp`, confirmado en configuración publicada;
 - Sources sin vigencia: falta hora de extracción; no inferirla desde nombre del archivo.
 
 En esta entrega el conector Supabase deniega acceso al proyecto correcto; el proyecto visible en esa conexión es otro. Código/configuración listos, sin despliegue remoto ni respuesta real acreditada. No se accedió a la BD ni se llamó al LLM durante tests. Validaciones: routing/PN/tools/contexto reducido, aislamiento de datasets/mutaciones, contrato remoto con mocks, fallback y errores, CORS/request/rate/concurrency, build completo y Verify main.
+
+### Conversación y validación vigente — 07 OCT 2026
+
+La cadena probada con transporte simulado es: «q rollo myke» → casual local; «cómo va el corte» → resumen local; «top 5 pérdidas» → lista local; «de esas cuál revisarías primero y por qué» → una petición con las cinco; «y esa es phantom» → consulta local del PN mencionado; «entonces por qué sale así» → una petición con ese PN. También se prueban ordinales, aliases, simplificación de FAQ, contexto UI y fallback offline. La suite falla si casual/FAQ/engine llaman myke-chat o si vuelven al mensaje genérico de unknown. Animación thinking solo empieza al ejecutar una solicitud real; sin delay artificial para respuestas locales, caché o cooldown.
+
+Estas pruebas no acreditan Gemini vivo ni interacción en un navegador real. El acceso Supabase al proyecto uukhwkywmnarcfruerpp continúa denegado; no se pudo consultar la versión/secrets remotos ni desplegar/verificar proveedor. La configuración pública publicada sigue apuntando a ese proyecto; no se sustituyó por otro.

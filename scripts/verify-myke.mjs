@@ -47,7 +47,7 @@ for (const [question, topic] of [
 assert.deepEqual(response("NET y SWING").topicIds, ["net", "swing"]);
 assert.deepEqual(response("Y un ejemplo?", ["phantom"]).topicIds, ["phantom"]);
 assert.equal(response("¿Cómo cocino una pizza?").kind, "unknown");
-assert.equal(response("Hola!").kind, "greeting");
+assert.equal(response("Hola!").kind, "casual");
 assert.equal(response("VPTBFF-17C272-AC tiene NET -3492630?").kind, "piece");
 assert.equal(
   response("¿Por qué la pieza 123456 tiene ese resultado?").pn,

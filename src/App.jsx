@@ -114,6 +114,7 @@ export default function App() {
   const mykeTransition = useRef(null);
   useEffect(()=>()=>clearTimeout(mykeTransition.current),[]);
   const [tracerRequest, setTracerRequest] = useState(null);
+  const [tracerSelectedPartNumber, setTracerSelectedPartNumber] = useState(null);
   useEffect(() => {
     safeWriteJson("visteon.ui.mykeEnabled.v1", mykeEnabled);
   }, [mykeEnabled]);
@@ -272,6 +273,9 @@ export default function App() {
     addEventListener("beforeunload", h);
     return () => removeEventListener("beforeunload", h);
   }, [references.status.loadedCount, warning]);
+  const mykeUiPartNumber = logicTracerOpen
+    ? tracerSelectedPartNumber : selectedPart?.partNumber || tracerSelectedPartNumber;
+  const mykeUiFinding = focusFindingId ? findings.find(finding => finding.id === focusFindingId) : null;
   const mobileMenuBlocked = Boolean(
     sourcesOpen ||
     notificationsOpen ||
@@ -678,6 +682,7 @@ export default function App() {
           onClose={() => setLogicTracerOpen(false)}
           reconciliation={inventory.reconciliation}
           entryRequest={tracerRequest}
+          onSelectedPartChange={setTracerSelectedPartNumber}
           sources={references.sources}
           scanReady={Boolean(
             inventory.lastUpdated && inventory.snapshotMeta?.complete,
@@ -722,7 +727,7 @@ export default function App() {
           }}
           reduceAnimations={reduceAnimations}
           helpRequest={mykeHelp}
-          uiContext={{currentSection:activeDataView,selectedPartNumber:selectedPart?.partNumber}}
+          uiContext={{currentSection:logicTracerOpen ? 'tracer' : activeDataView,selectedPartNumber:mykeUiPartNumber,selectedFinding:mykeUiFinding ? {partNumber:mykeUiFinding.partNumber} : null}}
           summary={inventory.summary}
           diagnostics={inventory.diagnostics}
           botRunning={botRunning}

@@ -1,4 +1,5 @@
 import { normalizeText } from './normalize.js';
+import { getMykeCasualIntent, normalizeMykeLanguage, isMykeProjectQuestion } from '../../supabase/functions/myke-chat/public-question.mjs';
 import { answerMyke, buildMykeLiveAnswer, extractPartNumber } from './mykeKnowledge.js';
 import { validateMykeRuntime, cleanMykeText } from '../../supabase/functions/myke-chat/runtime.mjs';
 const normalized = v => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -30,53 +31,82 @@ export function createMykeReadTools(context = {}) {
   return Object.freeze({getReconciliationSummary,getTopLosses:n=>rank(-1,n),getTopGains:n=>rank(1,n),getTopSwing:n=>[...rows].filter(r=>r.master.hasCost && Number.isFinite(r.financial.swingUsd)).sort((a,b)=>b.financial.swingUsd-a.financial.swingUsd).slice(0,limit(n)).map(fields),getPriorityFindings:()=>buildMykeLiveAnswer('attention',context).sections.map(r=>({partNumber:r.pn,fact:cleanMykeText(r.fact,160),interpretation:cleanMykeText(r.interpretation,160),next:cleanMykeText(r.next,160)})),getPartTrace:pn=>({...getPartFinancials(pn),locations:getPartLocations(pn),bomSources:getPartBom(pn)}),getPartFinancials,getPartLocations,getPartPhysical:pn=>getPartFinancials(pn),getPartQad:pn=>getPartFinancials(pn),getPartPhantomInfo:pn=>getPartFinancials(pn),getPartBom,getPartObsoleteInfo:pn=>getPartFinancials(pn),getPartUnexpectedInfo:pn=>getPartFinancials(pn),getMissingBoms,getSourceStatus,getLoadedSources:()=>getSourceStatus().filter(s=>s.loaded),getDataQuality,explainMetric:(metric,topics=[])=>topics.find(t=>t.id===normalized(metric)) || null});
 }
 
-export const normalizeMykeQuestion = v => normalized(v).replace(/[^a-z0-9-]+/g,' ').trim().replace(/\s+/g,' ');
-const reasoning = text => /por que|porque|patron|sospechos|analiz|compar|en comun|parece|crees|raro|revisarias|revisaria|antes de la junta|mas facil|mas sencillo|lo de arriba|no lo entendi|explicame este resultado/.test(text);
+export const normalizeMykeQuestion = normalizeMykeLanguage;
+const reasoning = text => /\b(?:por que|porque|patron|sospechos\w*|analiz\w*|compar\w*|en comun|parece|crees|rar[oa]\w*|revisarias|revisaria|antes de la junta|mas facil|mas sencillo|no (?:lo )?entendi|que piensas|que opinas|explicame (?:este resultado|lo anterior)|expl[i]?camelo)\b/.test(text);
 export function routeMykeQuestion({question,conversation=[],uiContext={},inventoryContext={},organization}) {
   const text=normalizeMykeQuestion(question);
   const last=conversation.filter(m=>m.memory).at(-1)?.memory || {};
-  const known=(inventoryContext.reconciliation || []).filter(r=>text.split(/\s+/).some(t=>normalizeText(t)===r.partNumber)).map(r=>r.partNumber);
+  let parts=[];
+  const result=(route,intent,tools=[],extra={})=>({route,intent,confidence:route==='ai' ? 0.7 : 0.98,
+    entities:{partNumbers:parts,...(parts.length===1 ? {partNumber:parts[0]} : {})},tools,limit:5,
+    complexity:/compar|patron|en comun|analisis completo/.test(text) ? 'complex' : 'normal',...extra});
+  const casual=getMykeCasualIntent(question);
+  if(casual)return result('casual',casual);
+  const wireHistory=conversation.filter(m=>m.role==='you').slice(-6).map(m=>({role:'user',content:m.text}));
+  if(!isMykeProjectQuestion(question,wireHistory,uiContext.selectedPartNumber || uiContext.selectedFinding?.partNumber || last.parts?.length ? {part:{}} : null))return result('out_of_scope','scope');
+  const known=new Set((inventoryContext.reconciliation || []).map(r=>r.partNumber));
+  const candidates=question.match(/[a-z0-9._/-]+/gi) || [];
   const extracted=extractPartNumber(question);
-  const explicit=[...new Set([...known,...(extracted ? [normalizeText(extracted)] : []),...(question.match(/\b[A-Z0-9]+(?:-[A-Z0-9]+)+\b/gi) || []).map(normalizeText)])].slice(0,10);
-  const referential=Boolean(uiContext.selectedPartNumber) && reasoning(text) || /esa|ese|esta|este|anteriores|esas|esas cinco|primera|arriba|comparalas|explicamelo|entonces|por que sale/.test(text);
-  let parts=explicit.length ? explicit : referential ? last.parts || (uiContext.selectedPartNumber ? [uiContext.selectedPartNumber] : []) : [];
-  if(/la primera/.test(text))parts=parts.slice(0,1);
-  else if(!explicit.length && /(?:esa|ese)\b/.test(text) && !/esas|esos/.test(text) && last.selectedPart)parts=[last.selectedPart];
-  const limitAsked=text.match(/\b(?:top|las|los|dame)\s*(\d{1,2})\b/)?.[1];
-  const n=limitAsked ? limit(Number(limitAsked)) : /mayor|mas grande/.test(text) ? 1 : 5;
-  const result=(route,intent,tools=[],extra={})=>({route,intent,confidence:route==='ai' ? 0.7 : 0.98,entities:{partNumbers:parts,...(parts.length===1 ? {partNumber:parts[0]} : {})},tools,limit:n,complexity:/compar|patron|en comun|analisis completo/.test(text) ? 'complex' : 'normal',...extra});
-  // Explicit definitions and existing FAQ variants always stay local, including causal rule explanations.
-  const definition=!explicit.length && (/por que.*(?:level|divide|dividen|regla)/.test(text) || /^(que es|que significa|como funciona|como se calcula|explicame el|explicame swing|no entiendo phantom|que pedo con|net$|swing$)/.test(text) || /(?:net|swing) como se calcula/.test(text));
-  const engineQuery=/top|mayor|peores piezas|missing bom|bom.*falt|(?:fuentes?|archivos?).*(?:falt|carg|desactual|actualiz)|(?:falt|carg).*(?:fuentes?|archivos?)|calidad|sin costo|costo invalido|requieren revision|requieren atencion|prioridades|como vamos|como va el corte|resum|estado actual|reconciliacion actual/.test(text);
+  const explicit=[...new Set([
+    ...candidates.map(normalizeText).filter(pn=>known.has(pn)),
+    ...(extracted ? [normalizeText(extracted)] : []),
+    ...candidates.filter(pn=>/-/.test(pn) && /\d/.test(pn) && /[a-z]/i.test(pn)).map(normalizeText),
+    ...(/^\d{3,}$/.test(text) ? [text] : []),
+  ])].slice(0,10);
+  const uiPart=uiContext.selectedPartNumber || uiContext.selectedFinding?.partNumber || '';
+  const list=last.listParts?.length ? last.listParts : last.parts || [];
+  const ordinal=text.match(/\b(?:la|el) (primer[oa]?|segund[oa]|tercer[oa]?|cuart[oa]|quint[oa])\b/)?.[1];
+  const rankingRequest=/top.*(?:perdid|peores|faltant|gananc|sobrant|swing)|mayor (?:perdida|ganancia|swing)|(?:perdida|ganancia) mas grande|peores piezas/.test(text);
+  const plural=/\b(?:esas|esos|anteriores|perdidas|hallazgos|comparalas|comparalos)\b/.test(text);
+  const singular=/\b(?:esa|ese|esta|este|pieza|pn|esto|eso|aqui|anterior|arriba|entonces|explicamelo)\b/.test(text);
+  const followup=singular || plural || Boolean(ordinal) || reasoning(text) || /^(?:y )?(?:no entendi|mira esto|por que|entonces)$/.test(text);
+  if(explicit.length)parts=explicit;
+  else if(ordinal){const index={primera:0,primero:0,primer:0,segunda:1,segundo:1,tercera:2,tercero:2,cuarta:3,cuarto:3,quinta:4,quinto:4}[ordinal];parts=list[index] ? [list[index]] : [];}
+  else if(plural && !rankingRequest)parts=list;
+  else if(followup && !rankingRequest){
+    const nearby=/\b(?:aqui|esta pieza|este pn|mira esto)\b/.test(text);
+    const refersBack=/\b(?:esa|ese|eso|anterior|arriba|entonces|explicamelo)\b/.test(text);
+    const selected=uiPart && (nearby || !refersBack) ? uiPart : last.selectedPart || uiPart || (last.parts?.length===1 ? last.parts[0] : '');
+    parts=selected ? [normalizeText(selected)] : last.intent==='knowledge' ? [] : last.parts || [];
+  }
+  const documentation=/funciona.*(?:motor|reconciliador)|arquitectura|codigo/.test(text) && !explicit.length && !/\b(?:esa|ese|esta pieza|este pn)\b/.test(text);
+  if(documentation)parts=[];
+  const n=text.match(/\b(?:top|las|los|dame)\s*(\d{1,2})\b/)?.[1];
+  const requestedLimit=n ? limit(Number(n)) : /mayor|mas grande/.test(text) ? 1 : 5;
   const canonical=organization?.topics.some(t=>normalizeMykeQuestion(t.title)===text);
   const local=organization ? answerMyke(question,organization,last.topicIds || [],[]) : null;
+  const definition=!explicit.length && !/que pedo con.*corte/.test(text) && (/por que.*(?:level|divide|dividen|regla)/.test(text) || /^(?:que es|que significa|como funciona|como se calcula|explicame el|explicame swing|no entiendo phantom|que pedo con|net$|swing$)/.test(text) || /(?:net|swing) como se calcula/.test(text));
+  const engineQuery=/top|mayor|peores piezas|missing bom|bom.*falt|(?:fuentes?|archivos?).*(?:falt|carg|desactual|actualiz)|(?:falt|carg).*(?:fuentes?|archivos?)|calidad|sin costo|costo invalido|requieren revision|requieren atencion|prioridades|como vamos|como va el corte|resum|estado actual|reconciliacion actual|que pedo con.*corte/.test(text);
   if(local?.topicIds?.length && (canonical || definition || !engineQuery && !parts.length && !reasoning(text))){parts=[];return result('knowledge','knowledge',['explainMetric']);}
-  if(parts.length>1 && !reasoning(text) && /(?:esa|ese|esta|este)\b/.test(text))return result('engine','clarify',[]);
+  if(ordinal && !parts.length)return result('engine','clarify',[]);
+  if(parts.length>1 && !plural && !explicit.length && !reasoning(text))return result('engine','clarify',[]);
   if(parts.length)return result(reasoning(text) || parts.length>1 ? 'ai' : 'engine','part',['getPartTrace']);
-  if(reasoning(text)) {
-    parts=explicit.length ? explicit : referential || /esas|perdidas|hallazgos/.test(text) ? last.parts || [] : [];
-    return result('ai',parts.length ? 'parts' : last.intent==='knowledge' && referential ? 'knowledge' : 'summary',parts.length ? ['getPartTrace'] : ['getReconciliationSummary','getPriorityFindings']);
-  }
-  if(/top.*(?:perdid|peores|faltant)|mayor perdida|perdida mas grande|peores piezas/.test(text))return result('engine','losses',['getTopLosses']);
-  if(/top.*(?:gananc|sobrant)|mayor ganancia|ganancia mas grande/.test(text))return result('engine','gains',['getTopGains']);
-  if(/top.*swing|mayor swing/.test(text))return result('engine','swing',['getTopSwing']);
+  if(/top.*(?:perdid|peores|faltant)|mayor perdida|perdida mas grande|peores piezas/.test(text))return result('engine','losses',['getTopLosses'],{limit:requestedLimit});
+  if(/top.*(?:gananc|sobrant)|mayor ganancia|ganancia mas grande/.test(text))return result('engine','gains',['getTopGains'],{limit:requestedLimit});
+  if(/top.*swing|mayor swing/.test(text))return result('engine','swing',['getTopSwing'],{limit:requestedLimit});
   if(/missing bom|boms? faltantes|faltan? bom/.test(text))return result('engine','missing_boms',['getMissingBoms']);
   if(/(?:archivos?|fuentes?).*(?:falt|carg|desactual|actualiz)|(?:falt|carg).*(?:archivos?|fuentes?)/.test(text))return result('engine','sources',['getSourceStatus','getLoadedSources']);
   if(/calidad|sin costo|costo invalido/.test(text))return result('engine','quality',['getDataQuality']);
   if(/requieren revision|requieren atencion|prioridades/.test(text))return result('engine','priorities',['getPriorityFindings']);
-  if(/como vamos|como va el corte|resum|estado actual|reconciliacion actual/.test(text))return result('engine','summary',['getReconciliationSummary','getDataQuality']);
-  if(local && ['greeting','answer'].includes(local.kind))return result('knowledge','knowledge',['explainMetric']);
-  return result('ai','knowledge',['explainMetric']);
+  if(/como vamos|como va el corte|resum|estado actual|reconciliacion actual|que pedo con.*corte/.test(text))return result('engine','summary',['getReconciliationSummary','getDataQuality']);
+  if(last.intent==='knowledge' && last.topicIds?.length && /^(?:no entendi|no entiendo|y eso|entonces|explicamelo)$/.test(text))return result('knowledge','simplify',['explainMetric']);
+  if(/(?:esta|este|esa|ese) (?:pieza|pn)|^(?:y )?(?:esa|ese|mira esto|no entendi)$/.test(text))return result('engine','clarify',[]);
+  if(reasoning(text) || followup && last.intent)return result('ai',last.intent==='knowledge' || documentation ? 'knowledge' : 'summary',last.intent==='knowledge' || documentation ? ['explainMetric'] : ['getReconciliationSummary','getPriorityFindings']);
+  if(local?.kind==='answer')return result('knowledge','knowledge',['explainMetric']);
+  // A project question without an exact template falls through once, with current engine context when relevant.
+  const live=/corte|resultad|inventario|diferencia|perdida|swing|net|esto|aqui/.test(text);
+  return result('ai',live ? 'summary' : 'knowledge',live ? ['getReconciliationSummary','getPriorityFindings'] : ['explainMetric']);
 }
 export function buildMykeRuntime(question,context={},previousPart='',options={}) {
   const route=options.route || routeMykeQuestion({question,inventoryContext:context,uiContext:{selectedPartNumber:previousPart},...options});
   const tools=createMykeReadTools(context);
-  if(route.intent==='knowledge')return {route,runtime:null};
+  if(['knowledge','simplify','clarify'].includes(route.intent) || ['casual','out_of_scope'].includes(route.route))return {route,runtime:null};
   const runtime={version:1,intent:route.intent,tools:route.tools,snapshot:{complete:context.sources?.scans?.loaded ? true : context.snapshotMeta?.complete ?? null,ageKnown:context.snapshotMeta?.ageKnown ?? null,extractedAt:date(context.snapshotMeta?.extractedAt),publishedAt:date(context.snapshotMeta?.publishedAt),loading:Boolean(context.loading),hasError:Boolean(context.error)},sources:tools.getSourceStatus(),quality:tools.getDataQuality()};
   const parts=route.entities?.partNumbers || [];
   if(parts.length===1)runtime.part=tools.getPartTrace(parts[0]);
   if(parts.length>1)runtime.selectedParts=parts.slice(0,10).map(pn=>({...tools.getPartTrace(pn),locations:tools.getPartLocations(pn).slice(0,3),bomSources:tools.getPartBom(pn).slice(0,2)}));
   if(['losses','gains','swing'].includes(route.intent))runtime.topParts=route.intent==='losses' ? tools.getTopLosses(route.limit) : route.intent==='gains' ? tools.getTopGains(route.limit) : tools.getTopSwing(route.limit);
+  if(parts.length)runtime.findings=(context.findings || []).filter(f=>parts.includes(f.partNumber)).slice(0,10).map(f=>({partNumber:f.partNumber,fact:cleanMykeText(f.whatFound,160),interpretation:cleanMykeText(f.possibleExplanation,160),next:cleanMykeText(f.nextAction,160)}));
   if(route.intent==='summary')runtime.summary=tools.getReconciliationSummary();
   if(['summary','priorities'].includes(route.intent))runtime.findings=tools.getPriorityFindings();
   if(route.intent==='missing_boms'){runtime.missingBoms=tools.getMissingBoms();runtime.missingBomCount=context.engineSources?.phantomAdjustments?.missingBoms?.length ?? null;}

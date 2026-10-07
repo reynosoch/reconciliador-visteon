@@ -10,18 +10,35 @@ export function isMykePublicQuestion(question) {
   );
 }
 
-const normalized = (value) => typeof value === "string"
-  ? value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/^[¿¡]+/, "").trim()
-  : "";
+// A small shared normalizer: aliases affect language, never PN values or engine data.
+export const normalizeMykeLanguage = value => typeof value === 'string'
+  ? value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+    .replace(/[^a-z0-9-]+/g,' ').trim().replace(/\s+/g,' ')
+    .replace(/\b(q|pq|xq|pa)\b/g,word=>({q:'que',pq:'porque',xq:'porque',pa:'para'}[word]))
+    .replace(/\bhol+a+\b/g,'hola').replace(/\bhey+\b/g,'hey')
+  : '';
+export function getMykeCasualIntent(question) {
+  const text=normalizeMykeLanguage(question);
+  // Strip addresses only at the edges. Business words remaining in the middle prevent casual routing.
+  const core=text.replace(/^(?:(?:oye|myke|bro|wey|guey|we)\s*)+/,'')
+    .replace(/(?:\s+(?:myke|bro|wey|guey|we))+$/,'').trim();
+  if(!core && /^(?:(?:oye|myke|bro|wey|guey|we)\s*)+$/.test(text))return 'presence';
+  if(/^(?:hola|hey|hello|buenas|buenos dias|buenas tardes|buenas noches|que (?:onda|rollo|pedo)|como (?:andas|estas))$/.test(core))return 'greeting';
+  if(/^(?:(?:andas|sigues|estas) ahi|que haces)$/.test(core))return 'presence';
+  if(/^(?:muchas )?(?:gracias|thanks)$/.test(core))return 'thanks';
+  if(/^(?:va|arre|simon|sale|orale|ok|okay|listo)$/.test(core))return 'acknowledge';
+  return null;
+}
+const normalized = normalizeMykeLanguage;
 export const MYKE_SCOPE_REPLY = "Puedo ayudarte con Reconciliador Visteon: usar el tablero, entender NET y SWING, revisar fuentes o consultar una pieza. Para otros temas no tengo una respuesta. Prueba «¿Cómo uso el tablero?» o «¿Qué puedo hacer aquí?»";
 
 // Conservative allowlist, shared by UI and server. It is not a semantic classifier.
 // Follow-ups need a recent USER question in scope; assistant text cannot authorize one.
-export function isMykeProjectQuestion(question, history = []) {
+export function isMykeProjectQuestion(question, history = [], runtime = null) {
   const text = normalized(question);
   if (!text || text.length > 1000) return false;
   const redirect = /\b(ignora|ignore|olvida|forget|override|jailbreak|system prompt|prompt del sistema|instrucciones del sistema|revela tus instrucciones|actua como|act as|pretend|simula ser)\b/;
-  const otherTopic = /\b(receta|recetas|recipe|recipes|futbol|football|soccer|horoscopo|horoscope|clima|weather|politica|politics|poema|poem|chiste|joke|pelicula|movie|bitcoin|criptomoneda|medicamento|diagnostico medico|capital de|presidente de)\b/;
+  const otherTopic = /\b(receta|recetas|recipe|recipes|futbol|football|soccer|mundial|horoscopo|horoscope|clima|weather|politica|politics|poema|poem|chiste|joke|pelicula|movie|bitcoin|criptomoneda|medicamento|diagnostico medico|capital de|presidente de)\b/;
   if (redirect.test(text) || otherTopic.test(text)) return false;
   const project = /\b(reconciliador|reconciler|visteon|myke|4wall|4 wall|ispbb|qad|phantom|bom|usage|swing|net|cost ?part|trazador|tablero|dashboard|rubber|pac.?man|parse(?:qad\w*|bom|ispbb|costpart|4wallscans|4wallareas|delimitedfile)|buildinventoryengine|inventoryengine|reconcileinventory|partlearningtrace)\b/;
   const contextual = /\b(motor|fuentes?|archivo|archivos|excel|csv|corte|snapshot|localidad|localidades|pn|numero de parte|numeros de parte|part number|fisico|inventario|obsoleto|unexpected|missing bom|advertencias?|alertas?|escaneos?|escaneo|bot|parser|parsers|dexie|supabase|navegacion|rendimiento|reportar|reporte|ayuda|costo|costos|diferencia|historial|scroll|animaciones|oportunidades?)\b/;
@@ -29,10 +46,10 @@ export function isMykeProjectQuestion(question, history = []) {
   if (project.test(text) || contextual.test(text) || codeInProject || /\b(perdida|ganancia|physical|gross|rojo|level)\b/.test(text) || !isMykePublicQuestion(question)) return true;
   if (/^(hola|hello|buenas|gracias|thanks|que (puedo|puedes) hacer(?: aqui)?|como (uso|utilizo) (esta|la) (pagina|app|aplicacion))\s*[!?¿¡.]*$/.test(text)) return true;
   const followup = /^(?:y\s+)?(?:por que(?: no)?|como funciona|explica(?:me)?(?: mas)?|mas detalle|un ejemplo|dame un ejemplo|que sigue|que significa|de donde sale|como lo reviso|que hago|que significa eso)\s*[?¿!.]*$/;
+  if (followup.test(text) && (runtime?.part || runtime?.selectedParts?.length || runtime?.summary)) return true;
   if (!followup.test(text)) return !/\b(videojuego|videojuegos|game|juegos)\b/.test(text);
   return (Array.isArray(history) ? history : []).slice(-6).some((message) =>
     message?.role === "user" && typeof message.content === "string" &&
-    isMykePublicQuestion(message.content) &&
     !redirect.test(normalized(message.content)) && !otherTopic.test(normalized(message.content)) &&
     (project.test(normalized(message.content)) || contextual.test(normalized(message.content))),
   );

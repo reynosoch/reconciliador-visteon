@@ -94,3 +94,110 @@ assert(validCopilotEndpoint('https://directline.botframework.com/v3/directline')
 const copilot=createMykeHandler({...defaults,provider:'copilot',copilotSecret:'fixture-copilot-secret',fetchImpl:async(url,opts)=>{copilotCalls++;assert.equal(opts.headers.Authorization,'Bearer fixture-copilot-secret');if(url.endsWith('/conversations'))return Response.json({conversationId:'case/1'});if(opts.method==='POST'){posted=true;return Response.json({id:'q1'});}return Response.json({watermark:'1',activities:posted ? [{type:'message',from:{id:'bot'},replyToId:'q1',text:'Confirma SWING.'}] : []});}});assert.equal((await copilot(request())).status,200);assert.equal(copilotCalls,4);await assert.rejects(requestCopilotReply({secret:'fixture',endpoint:'https://evil.test',text:'NET',fetchImpl:()=>{throw Error('must not call');}}),/unconfigured/);
 assert.equal(JSON.stringify(engine),before);
 console.log('Myke Hybrid OK: zero-call FAQ/engine cost regression guards, PN/router/memory/UI context, authoritative read tools, bounded whitelist/retrieval, cache/TTL/invalidation/dedup/cooldown, safe telemetry, local fallback, shared localhost/Pages transport, Edge CORS/validation/quota/concurrency/timeouts, Gemini and retained Copilot contracts. All providers mocked; no paid requests.');
+
+// Conversation regressions use the real client -> Edge -> Gemini contract with only HTTP mocked.
+// Casual replies, templates and tools must make zero requests to the Edge route.
+let conversationalRequests=0,reasoningRequests=0;
+const conversationalPayloads=[];
+const conversationHandler=createMykeHandler({...defaults,fetchImpl:async(_,opts)=>{
+  reasoningRequests++;
+  const body=JSON.parse(opts.body);
+  const grounding=JSON.parse(body.systemInstruction.parts[0].text.split('CONTEXTO (DATOS):\n')[1]);
+  conversationalPayloads.push(grounding.runtime);
+  assert(!JSON.stringify(body).includes('Quantity On Hand'));
+  return Response.json(generated('Revisaría DEF-456 primero; la causa requiere confirmar las localidades y su evidencia.'));
+}});
+const conversationAdapter=createMykeRemoteAdapter({config,fetchImpl:async(url,opts)=>{
+  conversationalRequests++;
+  return conversationHandler(new Request(url,{...opts,headers:{...opts.headers,origin}}));
+}});
+const casualExamples=['hola','holaa','hey','buenas','qué onda','que onda','q onda','qué rollo','q rollo','qué rollo myke','qué pedo myke','q pedo','andas ahí?','sigues ahí?','qué haces','cómo andas','bro','wey','myke','oye myke','gracias','va','arre','simón','sale','órale','  HOLAAAA, MYKE!!  '];
+const localStates=[];
+const casualResponses=[];
+for(const question of casualExamples){
+  const r=await ask(question,{adapter:conversationAdapter,onState:state=>localStates.push(state)});
+  assert.equal(r.route.route,'casual',question);
+  assert.equal(r.answer.kind,'casual',question);
+  assert.equal(r.mode,'local');
+  assert.doesNotMatch(r.answer.paragraphs.join(' '),/No encuentro una respuesta respaldada|Estimado usuario/);
+  assert.doesNotMatch(r.answer.paragraphs.join(' '),/\p{Extended_Pictographic}/u);
+  casualResponses.push(r.answer.paragraphs[0]);
+}
+assert(new Set(casualResponses).size>3,'casual replies vary locally');
+assert.equal(conversationalRequests,0);assert(!localStates.includes('pending'),'no simulated thinking on instant local replies');
+const casualRegression=await ask('q rollo myke',{adapter:conversationAdapter});
+assert.equal(casualRegression.route.route,'casual');
+assert(!casualRegression.answer.paragraphs.includes('No encuentro una respuesta respaldada para esa pregunta en mi ayuda local.'));
+for(const question of ['qué pedo con swing','qué pedo con este swing','q es net','hola myke, top 5 pérdidas','top 10 swing','Physical de ABC-123','QAD de ABC-123']){
+  const r=await ask(question,{adapter:conversationAdapter});
+  assert(['knowledge','engine'].includes(r.route.route),question);
+}
+assert.equal(conversationalRequests,0);
+const thread=[];
+const threadGuard=createMykeCostGuard({cooldown:0});
+const say=async(question,extra={})=>{
+  const r=await chatMyke({question,history:thread.slice(-8),context,organization,adapter:conversationAdapter,costGuard:threadGuard,...extra});
+  thread.push({role:'you',text:question},{role:'myke',...r});return r;
+};
+assert.equal((await say('q rollo myke')).route.route,'casual');
+assert.equal((await say('como va el corte?')).route.route,'engine');
+assert.equal((await ask('qué pedo con este corte',{adapter:conversationAdapter})).route.route,'engine');
+const threadTop=await say('dame top 5 pérdidas');
+const actualTop=tools.getTopLosses(5).map(p=>p.partNumber);
+assert.deepEqual(threadTop.memory.parts,actualTop);assert.equal(conversationalRequests,0);
+const threadAnalysis=await say('de esas cuál revisarías primero y por qué?');
+assert.equal(threadAnalysis.route.route,'ai');assert.equal(threadAnalysis.mode,'remote');
+assert.equal(conversationalRequests,1);assert.equal(reasoningRequests,1);
+assert.deepEqual(conversationalPayloads[0].selectedParts.map(p=>p.partNumber),actualTop);
+assert.equal(threadAnalysis.memory.selectedPart,'DEF-456');
+const threadPhantom=await say('y esa es phantom?');
+assert.equal(threadPhantom.route.route,'engine');assert.equal(threadPhantom.answer.pn,'DEF-456');
+assert.equal(conversationalRequests,1);assert.equal(threadPhantom.memory.selectedPart,'DEF-456');
+const threadCause=await say('entonces por qué sale así?');
+assert.equal(threadCause.mode,'remote');assert.equal(conversationalRequests,2);assert.equal(reasoningRequests,2);
+assert.equal(conversationalPayloads[1].part.partNumber,'DEF-456');
+assert.equal(conversationalPayloads[1].part.net,tools.getPartFinancials('DEF-456').net);
+await say('va');assert.equal(conversationalRequests,2);
+assert.equal((await say('y la segunda es obsolete?')).answer.pn,actualTop[1]);assert.equal(conversationalRequests,2);
+assert.equal((await say('compáralas')).mode,'remote');assert.equal(conversationalRequests,3);
+assert.deepEqual(conversationalPayloads.at(-1).selectedParts.map(p=>p.partNumber),actualTop);
+await say('por qué');assert.equal(conversationalRequests,4);assert.equal(conversationalPayloads.at(-1).part.partNumber,'DEF-456');
+const outside=await say('quién ganó el mundial?');
+assert.equal(outside.route.route,'out_of_scope');assert.equal(outside.answer.kind,'scope');assert.equal(conversationalRequests,4);
+assert.equal((await say('qué ves raro aquí?',{uiContext:{selectedPartNumber:'GHI-789',currentSection:'tracer'}})).mode,'remote');
+assert.equal(conversationalRequests,5);assert.equal(conversationalPayloads.at(-1).part.partNumber,'GHI-789');
+assert.equal((await say('pq está tan fea esta pieza',{uiContext:{selectedPartNumber:'ABC-123'}})).mode,'remote');
+assert.equal(conversationalRequests,6);assert.equal(conversationalPayloads.at(-1).part.partNumber,'ABC-123');
+assert.equal((await ask('por qué sale tan fea?',{uiContext:{selectedFinding:{partNumber:'ABC-123'}},adapter:conversationAdapter})).mode,'remote');
+assert.equal(conversationalRequests,7);assert.equal(conversationalPayloads.at(-1).part.partNumber,'ABC-123');
+for(const question of ['esa','y esa?','mira esto','no entendí']){
+  const r=await ask(question,{context:{},adapter:conversationAdapter});assert.equal(r.route.intent,'clarify');assert.equal(r.answer.kind,'clarify');
+}
+assert.equal(conversationalRequests,7,'underspecified references are clarified locally');
+const knowledgeReply=await ask('qué es NET');
+const simplified=await ask('no entendí',{history:[{role:'you',text:'qué es NET'},{role:'myke',...knowledgeReply}],adapter:conversationAdapter});
+assert.equal(simplified.route.route,'knowledge');assert.equal(simplified.answer.kind,'simple');assert.equal(conversationalRequests,7);
+const fallbackStates=[];
+const offline=await ask('xq está tan mal esta pieza',{uiContext:{selectedPartNumber:'ABC-123'},adapter:createMykeRemoteAdapter({config:null}),onState:s=>fallbackStates.push(s)});
+assert.equal(offline.mode,'fallback');assert.equal(offline.answer.pn,'ABC-123');
+assert.match(offline.answer.paragraphs.join(' '),/Physical.*QAD.*NET.*SWING/);
+assert.doesNotMatch(offline.answer.paragraphs.join(' '),/No encuentro una respuesta respaldada/);
+assert(!fallbackStates.includes('pending'),'unconfigured adapter does not simulate an active request');
+const noFacts=await ask('qué opinas del reconciliador?',{context:{},adapter:createMykeRemoteAdapter({config:null})});
+assert.equal(noFacts.mode,'fallback');assert.doesNotMatch(noFacts.answer.paragraphs.join(' '),/No encuentro una respuesta respaldada/);
+assert.equal(extractPartNumber('Qué hace parseQad32.js?'),'','source files must not become invented PNs');
+const beforeContextChecks=conversationalRequests;
+for(const question of ['top 5 pérdidas','top 10 swing']){
+  const r=await ask(question,{history:thread.slice(-8),adapter:conversationAdapter});
+  assert.equal(r.route.route,'engine','a new ranking must not reuse the previous selected PN');
+}
+assert.equal(conversationalRequests,beforeContextChecks);
+const updatedSelection=await ask('por qué sale tan fea?',{history:[{role:'myke',memory:{parts:['DEF-456'],selectedPart:'DEF-456'}}],uiContext:{selectedPartNumber:'ABC-123'},adapter:conversationAdapter});
+assert.equal(updatedSelection.mode,'remote');assert.equal(conversationalRequests,beforeContextChecks+1);
+assert.equal(conversationalPayloads.at(-1).part.partNumber,'ABC-123','current UI selection wins over an older PN for a new question');
+const backwardReference=await ask('y esa es phantom?',{history:[{role:'myke',memory:{parts:['DEF-456'],selectedPart:'DEF-456'}}],uiContext:{selectedPartNumber:'ABC-123'},adapter:conversationAdapter});
+assert.equal(backwardReference.answer.pn,'DEF-456','explicit anaphora keeps the conversational PN');
+assert.equal((await ask('y el segundo es phantom?',{history:[{role:'myke',memory:{parts:actualTop,listParts:actualTop}}],adapter:conversationAdapter})).answer.pn,actualTop[1]);
+assert.equal(conversationalRequests,beforeContextChecks+1);
+assert.equal(JSON.stringify(engine),before,'full conversation cannot mutate the engine');
+console.log('Myke conversation OK: informal casual regression with zero Edge calls, full greeting/summary/top-list/reasoning/Phantom/causal chain, selected PN and preserved list/ordinals, UI tracer/finding context, local clarification/simplification, scoped external rejection and contextual offline fallback. Real client/Edge handlers; provider HTTP mocked.');

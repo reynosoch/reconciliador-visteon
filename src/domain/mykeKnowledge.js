@@ -1,12 +1,9 @@
 import { buildPartLearningTrace } from "./partLearningTrace.js";
+import { getMykeCasualIntent, normalizeMykeLanguage } from "../../supabase/functions/myke-chat/public-question.mjs";
 import { normalizeText } from "./normalize.js";
 
 // Knowledge comes from documents; piece replies consume the existing domain trace.
-const normalize = (value) =>
-  String(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+const normalize = normalizeMykeLanguage;
 const stopWords = new Set(
   "que como cual cuales donde viene vienen sale salen por para los las del una uno con hay ese esa esto esta este quiero saber dime puede puedes tiene tengo porque significa explica explicame funciona sobre todo todos cuando hace hacer un el la de en y o es se me mi al a si no".split(
     " ",
@@ -65,9 +62,23 @@ export function extractPartNumber(message) {
   return (
     candidates.find(
       (token) =>
-        /\d/.test(token) && /[A-Z]/.test(token) && !STOP_PART_TOKENS.has(token),
+        /\d/.test(token) && /[A-Z]/.test(token) && !/\.(?:M?JS|JSX|TSX?)$/.test(token) && !STOP_PART_TOKENS.has(token),
     ) || ""
   );
+}
+
+const casualReplies = {
+  greeting:["Qué rollo. Aquí ando. Pásame un PN, una diferencia o dime qué parte del corte quieres revisar.","Qué onda. Podemos revisar las pérdidas, SWING, Phantom o lo que te esté brincando del corte.","Aquí ando. ¿Revisamos una pieza o cómo va el corte?"],
+  presence:["Aquí sigo. Dime qué estás viendo y lo revisamos.","Presente. Pásame un PN o dime qué te brinca del corte."],
+  thanks:["Va. Si algo más te brinca, seguimos por ahí.","Sale. Aquí sigo para la siguiente pieza."],
+  acknowledge:["Arre. Seguimos cuando quieras.","Va. Pásame lo siguiente que quieras revisar."],
+};
+const casualCursor = new Map();
+export function buildMykeCasualAnswer(intent) {
+  const pool=casualReplies[intent] || casualReplies.presence;
+  const cursor=casualCursor.get(intent) || 0;
+  casualCursor.set(intent,(cursor+1)%pool.length);
+  return {kind:'casual',intent,paragraphs:[pool[cursor]],topicIds:[]};
 }
 
 export function answerMyke(
@@ -83,19 +94,8 @@ export function answerMyke(
     extractPartNumber(question) ||
     (/^\d{3,}$/.test(input) ? input : "") ||
     String(question).match(/\b(?:pieza|parte)\s+(\d{4,})\b/i)?.[1];
-  if (
-    /^(hola|buenas|buenos dias|buenas tardes|hey|gracias|muchas gracias)[!.?\s]*$/.test(
-      input,
-    )
-  ) {
-    return {
-      kind: "greeting",
-      paragraphs: [
-        "¡Hola! Soy Myke. Puedo explicarte cómo funciona el reconciliador y su código, de dónde salen sus datos y qué revisar ante una diferencia. Pregúntame o elige una pregunta frecuente.",
-      ],
-      topicIds: [],
-    };
-  }
+  const casual=getMykeCasualIntent(question);
+  if(casual)return buildMykeCasualAnswer(casual);
   const questionKey = (value) =>
     normalize(value)
       .replace(/[¿?¡!]/g, "")
@@ -198,7 +198,7 @@ export function getMykeIntent(question) {
   if (/(?:archivo.*(?:falta|necesito)|(?:falta|faltan).*archivo|fuente.*(?:falta|pendiente))/.test(text)) return "sources";
   if (/(?:como vamos|resum|para la junta|estado (?:actual|del corte))/.test(text)) return "summary";
   if (/(?:revisar(?:ias|ia)?|reviso|prioridad|primero|requieren atencion|esto esta raro|tanta diferencia|much[ao] diferencia|sale.*diferencia|por que.*diferencia)/.test(text)) return "attention";
-  if (/(?:facil|sencillo|sin tecnic|no entiendo)/.test(text)) return "simple";
+  if (/(?:facil|sencillo|sin tecnic|no entiendo|no entendi)/.test(text)) return "simple";
   if (/(?:despues|siguiente paso)/.test(text)) return "next";
   return "knowledge";
 }

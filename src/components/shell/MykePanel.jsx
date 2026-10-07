@@ -348,9 +348,9 @@ export default function MykePanel({
     const id = `myke-${++messageSequence.current}`;
     const controller = new AbortController(); request.current = controller;
     setMessages((current) => [...current.slice(-22), {role:"you",text}, {role:"myke",id,answer:{kind:"unknown",paragraphs:[],topicIds:[]},pending:true}]);
-    setDraft(""); setTyping(false); setAIState("consulting"); setReaction("thinking");
+    setDraft(""); setTyping(false); setAIState("local"); setReaction("reading");
     try {
-      const result = await chatMyke({question:text,history:messages.slice(-8),context:pieceContext,uiContext:{...uiContext,selectedPartNumber:helpRequest?.pn || uiContext.selectedPartNumber},organization,signal:controller.signal,adapter:provider,onState:setAIState});
+      const result = await chatMyke({question:text,history:messages.slice(-8),context:pieceContext,uiContext:{...uiContext,selectedPartNumber:uiContext.selectedPartNumber || helpRequest?.pn},organization,signal:controller.signal,adapter:provider,onState:setAIState});
       if (controller.signal.aborted) return;
       setMessages((current) => current.map((m) => m.id === id ? {...m,...result,pending:false} : m));
       setReaction(result.answer.kind === "unknown" && !result.aiText ? "sad" : "reading");
@@ -473,7 +473,7 @@ export default function MykePanel({
         onClick={() => { setTipIndex((index) => (index + 1) % advice.length); setTipVisible(true); }}
         animate={{ x: quietMotion ? 0 : gaze * 8, y: quietMotion ? 0 : typing ? -3 : 0, rotate: quietMotion ? 0 : typing ? gaze * 4 : 0 }}
         transition={quietMotion ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 24 }}>
-        <MykeGhost pose={["consulting", "pending", "responding"].includes(aiState) || reportSending ? "thinking" : typing ? "typing" : reaction} gaze={gaze}/>
+        <MykeGhost pose={aiState === "pending" || reportSending ? "thinking" : typing ? "typing" : reaction} gaze={gaze}/>
       </motion.button>
       <AnimatePresence mode="wait" initial={false}>
         {tipVisible && <motion.div className="vi-myke-speech" aria-label="Consejo de Myke" role="status"
@@ -740,7 +740,7 @@ export default function MykePanel({
                       </button>
                     </form>
                     {!anchor && <p className="vi-myke-note" role="status">
-                      {["consulting", "pending", "responding"].includes(aiState) ? "Revisando la pregunta y el corte…" : aiState === "fallback" ? "Servicio no disponible · ayuda local" : "Consulta lista"}{" "}
+                      {aiState === "pending" ? "Revisando la pregunta y el corte…" : aiState === "fallback" ? "Servicio no disponible · ayuda local" : "Consulta lista"}{" "}
                       · No modifica inventario. No compartas contraseñas.
                     </p>}
                   </section>

@@ -30,7 +30,7 @@ export function createMykeHandler({apiKey,provider='gemini',copilotSecret,copilo
     if(body.history!==undefined && (!Array.isArray(body.history) || body.history.length>6 || body.history.some(m=>!m || Object.keys(m).some(k=>!['role','content'].includes(k)) || !['user','assistant'].includes(m.role) || typeof m.content!=='string' || m.content.length>800)))return reply(400,'history');
     try{runtime=validateMykeRuntime(body.runtime);}catch(e){return reply(422,e.message==='mutation' ? 'read_only' : 'runtime');}
     if(isMykeMutation(body.question))return reply(422,'read_only');
-    if(!isMykeProjectQuestion(body.question,body.history))return reply(422,'project_scope');
+    if(!isMykeProjectQuestion(body.question,body.history,runtime))return reply(422,'project_scope');
     // Server-controlled hosts only, even if server env is misconfigured.
     let base;try{base=new URL(apiBaseUrl);}catch{return reply(503,'unconfigured');}
     if(!['gemini','copilot'].includes(provider) || !/^[a-zA-Z0-9._-]{1,100}$/.test(model) || (provider==='gemini' ? !apiKey || !model.startsWith('gemini-') || /experimental|preview|(?:^|-)exp(?:-|$)/i.test(model) || base.origin!=='https://generativelanguage.googleapis.com' || base.pathname.replace(/\/$/,'')!=='/v1beta' || base.search || base.hash || base.username || base.password : !copilotSecret || !validCopilotEndpoint(copilotEndpoint)) || !knowledge?.topics?.length || !projectContext?.documents?.length)return reply(503,'unconfigured');

@@ -1,6 +1,6 @@
 import { isMykeProjectQuestion, isMykeMutation, MYKE_SCOPE_REPLY } from '../../supabase/functions/myke-chat/public-question.mjs';
 import { cleanMykeText, validateMykeRuntime } from '../../supabase/functions/myke-chat/runtime.mjs';
-import { answerMyke, answerMykeInContext, buildMykeLiveAnswer } from '../domain/mykeKnowledge.js';
+import { answerMyke, answerMykeInContext, buildMykeCasualAnswer, buildMykeLiveAnswer } from '../domain/mykeKnowledge.js';
 import { buildMykeRuntime, routeMykeQuestion, normalizeMykeQuestion } from '../domain/mykeTools.js';
 
 // Both dev and Pages derive exactly the same remote Edge route. No provider URL/key.
@@ -15,7 +15,7 @@ export async function requestMykeAI({question,history=[],runtime=null,complexity
   if(!config)throw Error('El servicio IA todavía no está configurado. La ayuda local sigue disponible.');
   if(typeof question!=='string' || !question.trim() || question.length>1000)throw Error('Escribe una pregunta de hasta 1000 caracteres.');
   if(isMykeMutation(question))throw Error('Myke solo consulta y explica; no modifica inventario, archivos ni Supabase.');
-  if(!isMykeProjectQuestion(question,history))throw Error(MYKE_SCOPE_REPLY);
+  if(!isMykeProjectQuestion(question,history,runtime))throw Error(MYKE_SCOPE_REPLY);
   const safeRuntime=validateMykeRuntime(runtime);
   const recent=(Array.isArray(history) ? history : []).filter(m=>m && ['user','assistant'].includes(m.role) && typeof m.content==='string').slice(-6).map(m=>({role:m.role,content:cleanMykeText(m.content,800)}));
   let response;
@@ -33,7 +33,7 @@ export async function requestMykeAI({question,history=[],runtime=null,complexity
 // Kept as a test/transport injection seam, never used to select a provider in React.
 export function createMykeProviderAdapter({send,name='IA del reconciliador'}={}) {
   return {name,configured:typeof send==='function',async generate(args){
-    if(!isMykeProjectQuestion(args.question,args.history))throw Error(MYKE_SCOPE_REPLY);
+    if(!isMykeProjectQuestion(args.question,args.history,args.runtime))throw Error(MYKE_SCOPE_REPLY);
     if(isMykeMutation(args.question))throw Error('Myke solo consulta y explica.');
     if(typeof send!=='function')throw Error('El servicio IA no está conectado.');
     const text=await send({...args,question:cleanMykeText(args.question,1000),history:(args.history || []).slice(-6),runtime:validateMykeRuntime(args.runtime)});
@@ -69,7 +69,7 @@ const guards=new WeakMap();
 const guardFor=adapter=>{if(!guards.has(adapter))guards.set(adapter,createMykeCostGuard());return guards.get(adapter);};
 const usd=v=>Number.isFinite(v) ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v) : 'sin valorar';
 function engineAnswer(route,runtime,context,answer) {
-  if(route.intent==='clarify')return {kind:'unknown',topicIds:[],paragraphs:[`¿Cuál pieza quieres revisar: ${route.entities.partNumbers.join(', ')}? Puedes indicar el PN o decir «la primera».`]};
+  if(route.intent==='clarify')return {kind:'clarify',topicIds:[],paragraphs:[route.entities.partNumbers.length ? `¿Cuál pieza quieres revisar: ${route.entities.partNumbers.join(', ')}? Puedes indicar el PN o decir «la primera» o «la segunda».` : 'Dime qué quieres revisar: un PN, el corte o un resultado de arriba. Todavía no tengo una pieza identificada para esa referencia.']};
   if(route.entities.partNumber) {
     const p=runtime.part;
     return {...answer,kind:'piece',pn:route.entities.partNumber,paragraphs:[p.found ? `${p.partNumber} tiene ${p.physical} piezas en Physical y ${p.qad} en QAD. La diferencia calculada es ${p.difference} piezas; NET ${usd(p.net)} y SWING ${usd(p.swing)}. ${p.net===null ? 'Falta un costo válido para valorar.' : p.net<0 ? 'El motor clasifica el NET como pérdida provisional; no confirma su causa.' : p.net>0 ? 'El motor muestra un sobrante provisional.' : 'Los totales coinciden; revisa las localidades y sus fuentes.'}` : `No encuentro ${p.partNumber} en el corte actual. No puedo confirmar sus cifras ni clasificación.`]};
@@ -81,26 +81,53 @@ function engineAnswer(route,runtime,context,answer) {
   if(runtime?.selectedParts)return {kind:'live',topicIds:[],paragraphs:['Datos calculados de las piezas seleccionadas.'],sections:runtime.selectedParts.map(p=>({title:p.partNumber,pn:p.partNumber,fact:p.found ? `NET ${usd(p.net)}; SWING ${usd(p.swing)}; Physical ${p.physical}; QAD ${p.qad}.` : 'PN ausente del corte actual.',interpretation:'La causa requiere evidencia.',next:'Revisa las localidades y el trazador.'}))};
   return buildMykeLiveAnswer(route.intent==='sources' ? 'sources' : route.intent==='summary' ? 'summary' : 'attention',context);
 }
-export async function chatMyke({question,history=[],context={},uiContext={},organization,signal,adapter=createMykeRemoteAdapter(),costGuard=guardFor(adapter),onState=()=>{}}) {
+
+function conversationalMemory(route,runtime,answer,last) {
+  const parts=route.entities.partNumbers.length ? route.entities.partNumbers : runtime?.topParts?.map(p=>p.partNumber) || runtime?.findings?.map(p=>p.partNumber) || [];
+  const listParts=runtime?.topParts || parts.length>1 ? parts : last.listParts || (last.parts?.length>1 ? last.parts : []);
+  return {parts:parts.slice(0,10),listParts:listParts.slice(0,10),intent:route.intent,topicIds:(answer.topicIds || []).slice(0,3),...(parts.length===1 ? {selectedPart:parts[0]} : {})};
+}
+function contextualFallback(answer,context) {
+  if(answer.kind!=='unknown')return {...answer,paragraphs:['No pude completar el análisis. Esto sí está disponible en la página:',...answer.paragraphs]};
+  if(context.reconciliation?.length)return {...buildMykeLiveAnswer('summary',context),paragraphs:['No pude completar el análisis. El motor sí tiene estos resultados:',...buildMykeLiveAnswer('summary',context).paragraphs]};
+  return {kind:'fallback',topicIds:[],paragraphs:['No pude completar el análisis y todavía no tengo resultados del motor para esta consulta. Dime qué tema o PN quieres revisar; la ayuda y las fuentes locales siguen disponibles.']};
+}
+export async function chatMyke({question,history=[],context={},uiContext={},organization={topics:[]},signal,adapter=createMykeRemoteAdapter(),costGuard=guardFor(adapter),onState=()=>{}}) {
   const start=Date.now();signal?.throwIfAborted();
-  let recent=history.filter((m,i)=>m.mode==='remote' || m.role==='you' && !(['knowledge'].includes(history[i+1]?.route?.route) || ['bug','greeting'].includes(history[i+1]?.answer?.kind))).slice(-6).map(m=>({role:m.role==='you' ? 'user' : 'assistant',content:cleanMykeText(m.text || m.aiText,800)}));
-  if(isMykeMutation(question) || !isMykeProjectQuestion(question,history.filter(m=>m.role==='you').slice(-6).map(m=>({role:'user',content:m.text})))) {
-    recordRoute('knowledge',start);
-    return {answer:{kind:'unknown',topicIds:[],paragraphs:[isMykeMutation(question) ? 'Myke solo consulta y explica. Para cambios utiliza los controles existentes del sistema.' : MYKE_SCOPE_REPLY]},mode:'local'};
-  }
+  const last=history.filter(m=>m.memory).at(-1)?.memory || {};
   const route=routeMykeQuestion({question,conversation:history,uiContext,inventoryContext:context,organization});
-  let answer=route.route==='knowledge' ? answerMyke(question,organization) : answerMykeInContext(question,organization,history,context);
-  let runtime=null;
+  if(isMykeMutation(question) || route.route==='out_of_scope') {
+    recordRoute('out_of_scope',start);
+    return {answer:{kind:'scope',topicIds:[],paragraphs:[isMykeMutation(question) ? 'Myke solo consulta y explica. Para cambios utiliza los controles existentes del sistema.' : MYKE_SCOPE_REPLY]},mode:'local',route:{...route,route:'out_of_scope'},memory:last};
+  }
+  if(route.route==='casual') {
+    recordRoute('casual',start);
+    return {answer:buildMykeCasualAnswer(route.intent),mode:'local',route,memory:{...last,parts:(last.parts || []).slice(0,10),topicIds:(last.topicIds || []).slice(0,3)}};
+  }
+  let recent=history.filter((m,i)=>m.mode==='remote' || m.role==='you' && !(['knowledge','casual','out_of_scope'].includes(history[i+1]?.route?.route) || ['bug','casual','scope'].includes(history[i+1]?.answer?.kind))).slice(-6).map(m=>({role:m.role==='you' ? 'user' : 'assistant',content:cleanMykeText(m.text || m.aiText,800)}));
+  let answer=route.route==='knowledge' ? answerMyke(question,organization,last.topicIds) : answerMykeInContext(question,organization,history,context);
+  if(route.intent==='simplify') {
+    const topic=organization.topics.find(t=>last.topicIds?.includes(t.id));
+    if(topic)answer={kind:'simple',topicIds:[topic.id],paragraphs:[topic.paragraphs[0]],sources:topic.sources};
+  }
+  let runtime=null,memory=conversationalMemory(route,runtime,answer,last);
   try {
-    if(route.intent!=='knowledge'){onState('consulting');runtime=buildMykeRuntime(question,context,'',{route}).runtime;answer=engineAnswer(route,runtime,context,answer);}
-    const parts=runtime?.topParts?.map(p=>p.partNumber) || runtime?.findings?.map(p=>p.partNumber) || route.entities.partNumbers || [];
-    const memory={parts:parts.slice(0,10),intent:route.intent,topicIds:answer.topicIds || []};
-    if(route.route!=='ai' || ['greeting','bug'].includes(answer.kind)){recordRoute(route.route==='engine' ? 'engine' : 'knowledge',start);return {answer,mode:'local',route,memory};}
-    if(route.intent==='knowledge' && !recent.length){const topic=history.filter(m=>m.memory?.topicIds?.length).at(-1)?.memory?.topicIds?.[0];const title=organization.topics.find(t=>t.id===topic)?.title;if(title)recent=[{role:'user',content:cleanMykeText(title,800)}];}
-    onState('pending');
-    // Full validated context is part of the key; referential questions also include useful history.
-    const key=JSON.stringify([normalizeMykeQuestion(question),runtime,route.complexity,/esa|ese|arriba|facil|anterior|comparalas/.test(normalizeMykeQuestion(question)) ? recent : []]);
-    const result=await costGuard.run({key,context,signal,generate:()=>adapter.generate({question,history:recent,runtime,complexity:route.complexity,detail:/paso a paso|detalle|explica todo|analisis completo/i.test(normalizeMykeQuestion(question)),signal})});
+    if(route.route==='engine' || route.route==='ai' && route.intent!=='knowledge') {
+      runtime=buildMykeRuntime(question,context,'',{route}).runtime;
+      answer=engineAnswer(route,runtime,context,answer);
+    }
+    memory=conversationalMemory(route,runtime,answer,last);
+    if(route.route!=='ai' || answer.kind==='bug'){recordRoute(route.route==='engine' ? 'engine' : 'knowledge',start);return {answer,mode:'local',route,memory};}
+    if(route.intent==='knowledge') {
+      const topic=organization.topics.find(t=>last.topicIds?.includes(t.id));
+      if(topic){recent=[...recent,{role:'user',content:cleanMykeText(topic.title,800)}].slice(-6);memory.topicIds=[topic.id];}
+    }
+    const key=JSON.stringify([normalizeMykeQuestion(question),runtime,route.complexity,/(?:esa|ese|esto|eso|arriba|facil|anterior|comparalas|por que|porque|entonces)/.test(normalizeMykeQuestion(question)) ? recent : []]);
+    const result=await costGuard.run({key,context,signal,generate:()=>{
+      // Thinking begins only when the guard starts an actual remote call, never on local/cache/cooldown replies.
+      if(adapter.configured!==false)onState('pending');
+      return adapter.generate({question,history:recent,runtime,complexity:route.complexity,detail:/paso a paso|detalle|explica todo|analisis completo/.test(normalizeMykeQuestion(question)),signal});
+    }});
     signal?.throwIfAborted();onState('responding');recordRoute('ai',start,result.cacheHit);
     const mentioned=memory.parts.filter(pn=>result.text.toUpperCase().includes(pn));
     if(mentioned.length===1)memory.selectedPart=mentioned[0];
@@ -108,6 +135,6 @@ export async function chatMyke({question,history=[],context={},uiContext={},orga
   } catch(error) {
     if(signal?.aborted)throw error;
     onState('fallback');recordRoute('fallback',start);
-    return {answer,mode:'fallback',aiError:'No pude completar el análisis, pero la información local sigue disponible.',route,memory:{parts:route.entities.partNumbers || [],intent:route.intent,topicIds:answer.topicIds || []}};
+    return {answer:contextualFallback(answer,context),mode:'fallback',aiError:'La causa no la puedo confirmar con este análisis. Puedes revisar las localidades y la evidencia del trazador.',route,memory};
   }
 }

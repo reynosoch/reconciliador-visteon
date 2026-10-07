@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { RubberDrawer } from "../visual/ScrollEffects.jsx";
 import OverlayPortal from "./OverlayPortal.jsx";
@@ -369,6 +369,7 @@ export default function PartLogicTracer({
   findings = [],
   reduceAnimations = false,
   entryRequest = null,
+  onSelectedPartChange,
 }) {
   const [query, setQuery] = useState("");
   const [selectedPn, setSelectedPn] = useState("");
@@ -427,6 +428,10 @@ export default function PartLogicTracer({
       ) || null,
     [reconciliation, selectedPn],
   );
+  const selectedPartNumber = item?.partNumber || null;
+  useEffect(() => {
+    if (open) onSelectedPartChange?.(selectedPartNumber);
+  }, [open, selectedPartNumber, onSelectedPartChange]);
   const trace = useMemo(
     () =>
       open && item
