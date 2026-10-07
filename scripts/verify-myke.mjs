@@ -1,6 +1,9 @@
 import { buildMykeSprites, spritePoses } from "./prepare-myke-sprites.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createServer } from "vite";
 import { buildInventoryEngine } from "../src/domain/inventoryEngine.js";
 import { buildMykeOrganization } from "../src/domain/mykeOrganization.js";
 import {
@@ -251,3 +254,50 @@ assert.ok(!sprite.includes('href="#cap"'));
 assert.ok(spritePoses.includes("sad"));
 assert.ok(!/https?:\/\/(?!www.w3.org)/.test(sprite));
 console.log("Myke pixel sprite OK: 80 original frames, 10 poses, reproducible atlas.");
+
+// Execute the actual panel render. Lint/build alone did not catch the quick
+// chat's self-referencing height initializer in 494dcb5. Only the DOM portal
+// and rubber-band shell are replaced; panel hooks, layout and children run.
+const renderServer = await createServer({
+  server: { middlewareMode: true },
+  appType: "custom",
+  plugins: [{
+    name: "myke-render-test-shell",
+    enforce: "pre",
+    load(id) {
+      if (id.endsWith("/src/components/shell/OverlayPortal.jsx")) {
+        return "export default function OverlayPortal({ children }) { return children; }";
+      }
+      if (id.endsWith("/src/components/visual/ScrollEffects.jsx")) {
+        return 'import { createElement } from "react"; export default function ScrollEffects() { return null; } export function RubberDrawer({ children, ...props }) { return createElement("section", props, children); }';
+      }
+    },
+  }],
+});
+const originalWindow = globalThis.window;
+try {
+  const { default: MykePanel } = await renderServer.ssrLoadModule("/src/components/shell/MykePanel.jsx");
+  for (const [width, height] of [[1366, 900], [820, 1180], [390, 844]]) {
+    globalThis.window = { innerWidth: width, innerHeight: height, addEventListener() {}, removeEventListener() {} };
+    for (const anchor of [{ x: 8, y: 300, width: 96, height: 104 }, { x: width - 104, y: height - 164, width: 96, height: 104 }, null]) {
+      const html = renderToStaticMarkup(createElement(MykePanel, { open: true, anchor, reduceAnimations: true }));
+      assert.match(html, /role="dialog"/);
+      assert.match(html, /aria-label="Enviar pregunta a Myke"/);
+      assert.match(html, /aria-label="Cerrar Myke"/);
+      assert.doesNotMatch(html, /NaN|Infinity/);
+      if (anchor) {
+        assert.match(html, /aria-label="Mover chat rápido"/);
+        assert.match(html, /Myke acompaña la conversación/);
+      } else {
+        assert.match(html, /placeholder="NET, Phantom, archivos…"/);
+      }
+    }
+    assert.equal(renderToStaticMarkup(createElement(MykePanel, { open: false })), "");
+    assert.match(renderToStaticMarkup(createElement(MykePanel, { open: true, initialTab: "explore", reduceAnimations: true })), /data-view="explore"/);
+  }
+} finally {
+  if (originalWindow === undefined) delete globalThis.window;
+  else globalThis.window = originalWindow;
+  await renderServer.close();
+}
+console.log("Myke render OK: closed, full, quick left/right and explore at laptop, tablet and mobile sizes (DOM shells mocked; not browser interaction tests).");

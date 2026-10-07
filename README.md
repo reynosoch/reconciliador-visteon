@@ -82,6 +82,7 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 
 ### Estado técnico actual
 
+- Recuperación Myke (07 OCT 2026): se restauraron `MykePanel.jsx` y `myke.css` de `b91208b` tras el rediseño defectuoso `494dcb5`. El chat rápido causaba `ReferenceError` al inicializar su altura; el cambio también retiraba la búsqueda FAQ del chat completo y la persistencia/teclado del arrastre. `verify-myke.mjs` ahora ejecuta render de chat rápido, completo, cerrado y Explorar en tamaños laptop/tablet/móvil; sustituye solo los shells DOM de portal/rubber band. Estas pruebas no reemplazan pruebas de interacción en navegador.
 - React 19 + Vite 8 + Tailwind 3.
 - Supabase/PostgreSQL + Dexie/IndexedDB.
 - TanStack Virtual en la tabla grande.
