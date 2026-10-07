@@ -285,6 +285,18 @@ try {
       assert.match(html, /aria-label="Enviar pregunta a Myke"/);
       assert.match(html, /aria-label="Cerrar Myke"/);
       assert.doesNotMatch(html, /NaN|Infinity/);
+      assert.match(html, /data-motion="off"/);
+      assert.match(html, /aria-label="Otro consejo de Myke"/);
+      assert.match(html, /class="vi-myke-faq-tags"/);
+      assert.doesNotMatch(html, /<header/);
+      const left = Number(html.match(/--vi-myke-anchor-x:([\d.]+)px/)[1]);
+      const top = Number(html.match(/--vi-myke-anchor-y:([\d.]+)px/)[1]);
+      const panelWidth = Number(html.match(/--vi-myke-width:([\d.]+)px/)[1]);
+      const panelHeight = Number(html.match(/--vi-myke-height:([\d.]+)px/)[1]);
+      assert.ok(left >= 8 && left + panelWidth <= width - 8);
+      assert.ok(top >= 8 && top + panelHeight + 104 <= height - 8);
+      assert.match(html, new RegExp(`top:${top + panelHeight + 8}px`));
+      assert.match(html, /placeholder="NET, Phantom, archivos…"/);
       if (anchor) {
         assert.match(html, /aria-label="Mover chat rápido"/);
         assert.match(html, /Myke acompaña la conversación/);

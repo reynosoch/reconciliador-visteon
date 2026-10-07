@@ -26,7 +26,7 @@
 .vi-myke-dock:is(:hover,:focus-within,[data-awake="true"]) .vi-myke-launcher { transform:none; }
 
 /* Quick chat: iPad-like liquid glass with a readable physical edge. */
-.vi-myke-compact .vi-myke-panel {
+.vi-myke-floating .vi-myke-panel {
   position:absolute;
   border:1px solid #d8edf55e;
   background:
@@ -44,7 +44,7 @@
     inset 1px 0 #ffffff16,
     inset 0 -1px #5d94aa2e;
 }
-.vi-myke-compact .vi-myke-panel::before {
+.vi-myke-floating .vi-myke-panel::before {
   content:"";
   position:absolute;
   inset:1px 1px auto 1px;
@@ -54,7 +54,7 @@
   pointer-events:none;
   z-index:0;
 }
-.vi-myke-compact .vi-myke-panel > * { position:relative; z-index:1; }
+.vi-myke-floating .vi-myke-panel > * { position:relative; z-index:1; }
 .vi-myke-compact .vi-myke-head {
   border-bottom:1px solid #e4f1f626;
   background:linear-gradient(180deg,#ffffff12,#ffffff03);
@@ -145,143 +145,6 @@
   transform:none;
 }
 
-/* Quick-chat companion sits clear of the textbox. Bubble opens ABOVE him instead of over the input. */
-.vi-myke-quick-companion { width:118px; pointer-events:none; }
-.vi-myke-quick-companion .vi-myke-living-space { position:relative; display:block; width:118px; height:120px; }
-.vi-myke-quick-companion .vi-myke-stage { width:118px; height:116px; }
-.vi-myke-quick-companion .vi-myke-ghost { width:112px; height:121px; }
-.vi-myke-quick-companion .vi-myke-speech {
-  position:absolute;
-  left:12px;
-  top:-64px;
-  width:240px;
-  min-height:54px;
-  padding:10px 13px;
-  border:1px solid #d9edf553;
-  background:linear-gradient(145deg,#ffffff18,#274a5edc 28%,#0d2c3ef0);
-  box-shadow:0 14px 40px #00121d68,inset 0 1px #ffffff30;
-  -webkit-backdrop-filter:blur(20px) saturate(150%);
-  backdrop-filter:blur(20px) saturate(150%);
-}
-.vi-myke-quick-companion .vi-myke-speech::before {
-  left:34px;
-  top:auto;
-  bottom:-5px;
-  transform:rotate(-45deg);
-}
-
-/* While typing Myke travels across the composer instead of wiggling on his own axis. */
-.vi-myke-quick-companion:has(.vi-myke-typing) {
-  width:min(330px,calc(100vw - 52px));
-}
-.vi-myke-quick-companion:has(.vi-myke-typing) .vi-myke-living-space {
-  width:100%;
-  overflow:visible;
-}
-.vi-myke-quick-companion:has(.vi-myke-typing) .vi-myke-stage {
-  animation:vi-myke-follow-input 2.15s cubic-bezier(.45,.05,.55,.95) infinite alternate;
-}
-@keyframes vi-myke-follow-input {
-  from { transform:translateX(0) translateY(0) rotate(-1deg); }
-  to { transform:translateX(min(205px,42vw)) translateY(-3px) rotate(2deg); }
-}
-
-/* Full chat becomes character-first: Myke, then a dense question shelf, then conversation. */
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-body[data-view="chat"] {
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  overflow:hidden;
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-chat { display:contents; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-chat > .vi-myke-living-space { order:1; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-questions {
-  order:2;
-  flex:none;
-  max-height:178px;
-  padding:10px 12px;
-  gap:8px;
-  overflow:auto;
-  border:1px solid #c9e3ec26;
-  background:linear-gradient(145deg,#ffffff09,#061b2a38);
-  -webkit-backdrop-filter:blur(14px) saturate(130%);
-  backdrop-filter:blur(14px) saturate(130%);
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-conversation { order:3; flex:1; min-height:0; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-context-chips { order:4; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-composer { order:5; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-note { order:6; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-living-space {
-  min-height:116px;
-  padding:4px 12px;
-  border:1px solid #d4e8ef22;
-  border-radius:20px;
-  background:linear-gradient(145deg,#ffffff08,#0b2b3d3c);
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-stage { width:140px; height:112px; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-stage .vi-myke-ghost { width:124px; height:134px; }
-
-/* Turn the existing FAQ library into a fixed, full shelf instead of hiding useful prompts. */
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-questions > .vi-myke-suggestions {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:6px;
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-questions > .vi-myke-suggestions button {
-  min-height:36px;
-  padding:7px 9px;
-  font-size:12px;
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-more {
-  display:block;
-  overflow:visible;
-  padding:0;
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-local-options { display:none; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-question-library {
-  display:block;
-  margin:0;
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-question-library > summary,
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-question-library .vi-myke-faq-search { display:none; }
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-question-library .vi-myke-topics {
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:6px;
-  margin-top:0;
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-question-library .vi-myke-topics button {
-  display:flex !important;
-  min-height:34px;
-  padding:6px 9px;
-  border-radius:10px;
-  font-size:11px;
-  background:#ffffff06;
-  border-color:#ffffff15;
-}
-.vi-myke-overlay:not(.vi-myke-compact) .vi-myke-question-library .vi-myke-topics button span { display:none; }
-
-/* Add one extra second of perceived review time before completed answer content appears. */
-.vi-myke-answer:not(:has(.vi-myke-working)) > :not(strong) {
-  animation:vi-myke-answer-reveal .18s ease 1s both;
-}
-.vi-myke-answer:not(:has(.vi-myke-working))::after {
-  content:"Listo. Ordenando la respuesta…";
-  display:block;
-  max-height:24px;
-  color:#9fc7d6;
-  font-size:12px;
-  animation:vi-myke-answer-handoff 1s ease both;
-}
-@keyframes vi-myke-answer-reveal {
-  from { opacity:0; transform:translateY(3px); }
-  to { opacity:1; transform:none; }
-}
-@keyframes vi-myke-answer-handoff {
-  0%,78% { opacity:1; max-height:24px; }
-  100% { opacity:0; max-height:0; margin:0; overflow:hidden; }
-}
-
 /* Help: character larger, bubble transient; hover itself clearly invites the contextual chat. */
 .vi-myke-help-speaker .vi-myke-ghost { width:132px; height:142px; filter:drop-shadow(0 7px 7px #00121d78); }
 .vi-myke-help-character { transition:transform .18s ease,filter .18s ease; }
@@ -304,29 +167,8 @@ body.vi-performance-motion-off .vi-myke-quick-companion:has(.vi-myke-typing) .vi
 body.vi-performance-motion-off .vi-myke-answer:not(:has(.vi-myke-working)) > :not(strong),
 body.vi-performance-motion-off .vi-myke-answer:not(:has(.vi-myke-working))::after { animation:none; }
 
-@media(max-width:850px) {
-  .vi-myke-overlay:not(.vi-myke-compact) .vi-myke-questions > .vi-myke-suggestions,
-  .vi-myke-overlay:not(.vi-myke-compact) .vi-myke-question-library .vi-myke-topics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .vi-myke-overlay:not(.vi-myke-compact) .vi-myke-questions { max-height:194px; }
-}
-
 @media(max-width:640px) {
-  .vi-myke-quick-companion { width:calc(100vw - 32px); }
-  .vi-myke-quick-companion .vi-myke-living-space { display:flex; align-items:flex-start; width:100%; height:94px; gap:8px; }
-  .vi-myke-quick-companion .vi-myke-stage { width:82px; height:88px; }
-  .vi-myke-quick-companion .vi-myke-ghost { width:80px; height:87px; }
-  .vi-myke-quick-companion .vi-myke-speech { position:absolute; left:8px; top:-60px; width:min(248px,calc(100vw - 50px)); min-height:60px; }
-  .vi-myke-quick-companion .vi-myke-speech::before { left:30px; top:auto; bottom:-5px; transform:rotate(-45deg); }
-  .vi-myke-quick-companion:has(.vi-myke-typing) .vi-myke-stage { animation-duration:1.8s; }
-  @keyframes vi-myke-follow-input {
-    from { transform:translateX(0) translateY(0); }
-    to { transform:translateX(min(180px,50vw)) translateY(-2px); }
-  }
   .vi-myke-help-mobile .vi-myke-ghost { width:82px; height:89px; }
-  .vi-myke-overlay:not(.vi-myke-compact) .vi-myke-living-space { min-height:92px; }
-  .vi-myke-overlay:not(.vi-myke-compact) .vi-myke-stage { width:96px; height:86px; }
-  .vi-myke-overlay:not(.vi-myke-compact) .vi-myke-stage .vi-myke-ghost { width:88px; height:96px; }
-  .vi-myke-overlay:not(.vi-myke-compact) .vi-myke-questions { max-height:168px; }
 }
 
 @media(prefers-reduced-motion:reduce) {
@@ -337,3 +179,56 @@ body.vi-performance-motion-off .vi-myke-answer:not(:has(.vi-myke-working))::afte
   .vi-myke-answer:not(:has(.vi-myke-working))::after { animation:none; }
   .vi-myke-flight,.vi-myke-help-character { transition:none; }
 }
+
+/* Floating glass conversations: one horizontal FAQ rail, character below. */
+.vi-myke-floating    { padding:0; display:block; }
+.vi-myke-floating .vi-myke-panel    { --vi-drawer-enter:0px; position:absolute; left:var(--vi-myke-anchor-x); top:var(--vi-myke-anchor-y); width:var(--vi-myke-width); height:var(--vi-myke-height); max-width:none; border-radius:24px; }
+.vi-myke-floating .vi-myke-head    { min-height:48px; padding:8px 12px; gap:10px; cursor:grab; touch-action:none; user-select:none; border-bottom:1px solid #c4e5f21c; }
+.vi-myke-floating .vi-myke-head:active    { cursor:grabbing; }
+.vi-myke-floating .vi-myke-move    { padding:6px; min-height:32px; color:#b5d4e2; gap:7px; }
+.vi-myke-floating .vi-myke-move > span    { font-size:12px; color:#cbe0e9; }
+.vi-myke-floating .vi-myke-head-actions    { margin-left:auto; }
+.vi-myke-floating .vi-myke-tabs    { display:flex; padding:0; gap:3px; }
+.vi-myke-floating .vi-myke-tabs button    { padding:5px 12px; min-height:32px; font-size:13px; }
+.vi-myke-floating .vi-icon-close    { width:30px; height:30px; min-width:30px; min-height:30px; display:grid; place-items:center; padding:0; }
+.vi-myke-floating .vi-myke-body[data-view="chat"]    { display:flex; flex-direction:column; padding:12px 16px 20px; gap:12px; }
+.vi-myke-floating .vi-myke-questions    { flex:none; max-height:none; padding:0; gap:7px; border:0; background:transparent; overflow:visible; }
+.vi-myke-faq-tools    { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.vi-myke-faq-tools > span    { color:#93b6c6; font-size:11px; letter-spacing:.04em; white-space:nowrap; }
+.vi-myke-floating .vi-myke-faq-search    { width:min(200px,50%); }
+.vi-myke-floating .vi-myke-faq-search input    { border:1px solid #ffffff16; background:#ffffff05; border-radius:9px; padding:5px 8px; font-size:12px; }
+.vi-myke-search-label    { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.vi-myke-faq-tags    { display:flex; gap:7px; overflow-x:auto; overflow-y:hidden; padding:2px 0 8px; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#f5821f80 #ffffff08; }
+.vi-myke-faq-tags::-webkit-scrollbar    { height:4px; }
+.vi-myke-faq-tags::-webkit-scrollbar-thumb    { background:#f5821f80; border-radius:4px; }
+.vi-myke-faq-tags button    { flex:none; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:7px 11px; border:1px solid #bfdced24; border-radius:12px; background:linear-gradient(135deg,#ffffff0d,#ffffff03); color:#d3e7ef; font-size:12px; min-height:32px; }
+.vi-myke-faq-tags button:hover:not(:disabled)    { border-color:#f5821f66; background:#f5821f12; color:#ffe0c5; }
+.vi-myke-floating .vi-myke-chat    { flex:1; min-height:0; gap:8px; }
+.vi-myke-floating .vi-myke-conversation    { padding:2px 6px 8px 0; }
+.vi-myke-floating .vi-myke-quick-companion    { width:auto; height:96px; pointer-events:none; }
+.vi-myke-floating .vi-myke-quick-companion .vi-myke-living-space    { display:flex; align-items:center; gap:8px; width:100%; height:96px; min-height:0; padding:0 6px; }
+.vi-myke-floating .vi-myke-quick-companion .vi-myke-living-space[data-tip-side="left"]    { flex-direction:row-reverse; }
+.vi-myke-floating .vi-myke-stage    { width:72px; height:88px; min-height:0; padding:0; border:0; background:transparent; pointer-events:auto; cursor:pointer; touch-action:manipulation; }
+.vi-myke-floating .vi-myke-stage .vi-myke-ghost    { width:72px; height:78px; }
+.vi-myke-floating .vi-myke-quick-companion .vi-myke-speech    { position:relative; left:auto; top:auto; width:min(300px,calc(100% - 96px)); min-height:0; padding:10px 12px; font-size:12px; line-height:1.45; border-radius:16px; background:linear-gradient(135deg,#34566cc9,#123042df); backdrop-filter:blur(20px) saturate(150%); -webkit-backdrop-filter:blur(20px) saturate(150%); }
+.vi-myke-floating .vi-myke-speech small    { display:block; color:#ffb676; font-size:9px; letter-spacing:.12em; margin-bottom:3px; }
+.vi-myke-floating .vi-myke-speech::before    { left:-5px; top:calc(50% - 5px); transform:rotate(45deg); }
+.vi-myke-floating [data-tip-side="left"] .vi-myke-speech::before    { left:auto; right:-5px; border-left:0; border-bottom:0; border-right:1px solid #cbe1ed38; border-top:1px solid #cbe1ed38; }
+.vi-myke-floating[data-motion="on"] .vi-myke-panel    { animation:vi-myke-window-enter .2s ease-out both; }
+.vi-myke-floating[data-motion="on"] .vi-myke-conversation > *    { animation:vi-myke-reply-enter .2s ease-out both; }
+.vi-myke-floating[data-motion="on"] button    { transition:background .15s,border-color .15s,box-shadow .15s; }
+.vi-myke-floating button:focus-visible,.vi-myke-faq-tags:focus-visible    { outline:2px solid #f5821f; outline-offset:2px; }
+@keyframes vi-myke-window-enter { from    { opacity:0; } to    { opacity:1; } }
+@keyframes vi-myke-reply-enter { from    { opacity:0; transform:translateY(5px); } to    { opacity:1; transform:translateY(0); } }
+.vi-myke-floating[data-motion="off"] *,body.vi-performance-motion-off .vi-myke-floating *    { animation:none!important; transition:none!important; }
+@media(max-width:639px) {
+ .vi-myke-floating .vi-myke-body[data-view="chat"]    { padding:8px 10px 20px; gap:8px; }
+ .vi-myke-floating .vi-myke-head    { padding:6px 10px; gap:6px; }
+ .vi-myke-faq-tools > span    { font-size:10px; }
+ .vi-myke-floating .vi-myke-stage    { width:60px; height:80px; }
+ .vi-myke-floating .vi-myke-stage .vi-myke-ghost    { width:60px; height:66px; }
+ .vi-myke-floating .vi-myke-quick-companion .vi-myke-speech    { width:calc(100% - 80px); font-size:11px; }
+}
+
+.vi-myke-floating .vi-myke-speech { animation:none; }
+.vi-myke-floating .vi-myke-living-space:has(.vi-myke-typing) .vi-myke-speech { display:block!important; }

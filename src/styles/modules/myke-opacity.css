@@ -1,5 +1,5 @@
-/* Final opacity tuning for Myke quick chat. Keep layout and motion untouched. */
-.vi-myke-compact .vi-myke-panel {
+/* Shared readable opacity for both floating Myke glass windows. */
+.vi-myke-floating .vi-myke-panel {
   background:
     linear-gradient(155deg,#ffffff20 0%,#ffffff0b 15%,transparent 38%),
     radial-gradient(circle at 8% 0%,#ffffff18 0%,transparent 25%),
