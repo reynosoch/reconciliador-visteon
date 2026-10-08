@@ -29,6 +29,8 @@ jobs:
         run: npm ci
       - name: Recuperar configuración pública existente
         run: node scripts/extract-public-pages-env.mjs
+      - name: Dependencia del parser
+        run: python3 -m pip install openpyxl==3.1.5
       - name: Probar controlador del bot sin ejecutar 4Wall
         run: python3 scripts/test_bot_control.py
       - name: Compilar dashboard

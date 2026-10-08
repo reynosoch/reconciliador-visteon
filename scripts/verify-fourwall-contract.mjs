@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile,readFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import * as XLSX from 'xlsx';
+import {parseDelimitedFile} from '../src/parsers/parseDelimitedFile.js';
+import {execFileSync} from 'node:child_process';
+import {prepareFourwallSnapshot,canonicalDate,canonicalNumber} from '../src/domain/fourwallSync.js';
+const row={'Ticket/FIFO':'000123-long-A','Número Parte QAD':' pn-ñ ','AreaName':' area  one ','Quantity':'00012.3400','Costo Estándar':'1.23456789123','Fecha agregado':'24/09/2026 08:30:00','Escaneador':' esc '};
+const rows=Array.from({length:6},(_,i)=>({...row,Escaneador:'scanner-'+i,'Número Parte QAD':'PN-'+i}));
+rows.push({...row,'Ticket/FIFO':'9999999999999999999999999','Fecha agregado':'2026-10-08T08:00:00-06:00',Quantity:'1e-8'});
+const js=await prepareFourwallSnapshot(rows);
+const python=JSON.parse(execFileSync(process.platform==='win32' ? 'python' : 'python3',['-c','import sys,json;from runner.sync import prepare_snapshot;print(json.dumps(prepare_snapshot(json.load(sys.stdin)),ensure_ascii=False))'],{input:JSON.stringify(rows),encoding:'utf8'}));
+assert.equal(js.snapshot_hash,python.snapshot_hash);
+assert.deepEqual(js.records.map(r=>[r.canonical,r.source_identity,r.row_hash]),python.records.map(r=>[r.canonical,r.source_identity,r.row_hash]));
+assert.equal(canonicalNumber('-0000.1000'),'-0.1');assert.equal(canonicalNumber('1.23456789123'),'1.23456789123');
+assert.throws(()=>canonicalDate('2026-02-30'),/INVALID_DATE/);assert.throws(()=>canonicalDate('08/10/2026'),/AMBIGUOUS_DATE/);
+assert.throws(()=>canonicalDate('99/99/2026'),/INVALID_DATE/);
+await assert.rejects(prepareFourwallSnapshot([rows[0],rows[0]]),/AMBIGUOUS_IDENTITY/);
+await assert.rejects(prepareFourwallSnapshot([{...row,'Ticket/FIFO':9999999999999999}]),/NUMERIC_ID_UNSAFE/);
+await assert.rejects(prepareFourwallSnapshot([{...row,Password:'FORBIDDEN_COLUMN'}]),/UNSAFE_COLUMN/);
+await assert.rejects(prepareFourwallSnapshot([{...row,extra:{nested:true}}]),/INVALID_ROW/);
+const directory=await mkdtemp(join(tmpdir(),'fourwall-contract-'));
+try{
+ const sheet=XLSX.utils.aoa_to_sheet([['Synthetic title'],['Ticket/FIFO','Número Parte QAD','AreaName','Quantity','Fecha agregado','Escaneador','serial'],[123,456,'Area',1.23456789,new Date('2026-10-08T08:00:00Z'),'Scanner',7]]);
+ sheet.A3.z='000000';sheet.B3.z='000000';sheet.G3.z='00000';
+ const workbook=XLSX.utils.book_new();XLSX.utils.book_append_sheet(workbook,sheet,'Synthetic');
+ const bytes=XLSX.write(workbook,{type:'buffer',bookType:'xlsx'}),path=join(directory,'synthetic.xlsx');await writeFile(path,bytes);
+ const manual=await parseDelimitedFile({name:'synthetic.xlsx',arrayBuffer:async()=>bytes},{requiredFields:[['Ticket/FIFO'],['Número Parte QAD'],['AreaName'],['Quantity']]});
+ const manualSnapshot=await prepareFourwallSnapshot(manual.rows);
+ const autoSnapshot=JSON.parse(execFileSync(process.platform==='win32' ? 'python' : 'python3',['-c','import sys,json;from runner.sync import prepare_snapshot,read_excel;print(json.dumps(prepare_snapshot(read_excel(sys.argv[1]))))',path],{encoding:'utf8'}));
+ assert.equal(manualSnapshot.snapshot_hash,autoSnapshot.snapshot_hash,'both actual Excel parsers must produce the same fingerprint');
+ assert.equal(manualSnapshot.records[0].canonical[0],'000123');assert.equal(manualSnapshot.records[0].canonical[6],'000456');assert.equal(manualSnapshot.records[0].canonical[13],'00007');
+ sheet.D3.f='1+2';await writeFile(path,XLSX.write(workbook,{type:'buffer',bookType:'xlsx'}));
+ const formula=await parseDelimitedFile({name:'synthetic.xlsx',arrayBuffer:async()=>await readFile(path)},{requiredFields:[['Ticket/FIFO'],['Quantity']]});
+ await assert.rejects(prepareFourwallSnapshot(formula.rows),/FORMULA_EXPORT/);
+}finally{await rm(directory,{recursive:true,force:true});}
+console.log('4Wall canonical contract OK: real Python vs JS, synthetic historical collisions, modern text IDs, exact numbers, timestamps and rejection gates.');

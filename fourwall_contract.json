@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "source_system": "4wall",
+  "fields": [
+    {"key":"ticket","aliases":["Ticket/FIFO","ticket_fifo"],"kind":"text"},
+    {"key":"area","aliases":["AreaName","area_escaneo"],"kind":"upper","required":true},
+    {"key":"subarea","aliases":["subArea","SubArea"],"kind":"upper"},
+    {"key":"scanner","aliases":["Escaneador"],"kind":"upper"},
+    {"key":"auditor","aliases":["auditor","Auditor"],"kind":"upper"},
+    {"key":"part_original","aliases":["Numero de parte","Número de parte"],"kind":"upper"},
+    {"key":"part","aliases":["Número Parte QAD","Numero Parte QAD","numero_parte"],"kind":"upper","required":true},
+    {"key":"quantity","aliases":["Quantity","cantidad"],"kind":"number","required":true},
+    {"key":"standard_cost","aliases":["Costo Estándar","Costo Estandar"],"kind":"number"},
+    {"key":"total_cost","aliases":["Costo Total"],"kind":"number"},
+    {"key":"responsible","aliases":["Responsable"],"kind":"upper"},
+    {"key":"general_area","aliases":["Área General","Area General"],"kind":"upper"},
+    {"key":"date","aliases":["Fecha agregado"],"kind":"date"},
+    {"key":"serial","aliases":["serial","Serial"],"kind":"text"}
+  ]
+}

@@ -1,74 +1,51 @@
-import time,os,warnings,json,uuid
-from datetime import datetime,timezone
+"""Development CLI for the same outbound Windows runner used by the tray executable."""
+import argparse
+import getpass
+import json
+import os
+import signal
 from pathlib import Path
-import pandas as pd
-import requests
-from playwright.sync_api import sync_playwright
+from runner.client import SupabaseRunnerClient, TokenStore
+from runner.engine import RunnerEngine
+from runner.source import PlaywrightExcelAdapter
+from runner.sync import SENSITIVE
 
-def required_env(name):
-    value=os.getenv(name)
-    if not value: raise RuntimeError(f"Missing required environment variable: {name}")
-    return value
-def utcnow(): return datetime.now(timezone.utc).isoformat()\ndef json_value(value):\n    if pd.isna(value): return None\n    if isinstance(value,(pd.Timestamp,datetime)): return value.isoformat()\n    if hasattr(value,"item"):\n        try: return value.item()\n        except Exception: pass\n    return value
-USER=required_env("WALL_USER");PASS=required_env("WALL_PASS")
-LOGIN_URL="http://cuupd003.chihuahua.visteon.com/4WallAdmin/Pages/Login.aspx"
-OVERALL_URL="http://cuupd003.chihuahua.visteon.com/4WallAdmin/Inventory/Overall.aspx"
-SUPABASE_URL=required_env("SUPABASE_URL").rstrip("/");SUPABASE_SERVICE_KEY=required_env("SUPABASE_SERVICE_KEY")
-URL_RPC=f"{SUPABASE_URL}/rest/v1/rpc/reemplazar_escaneos"
-HEADERS_SUPABASE={"apikey":SUPABASE_SERVICE_KEY,"Authorization":f"Bearer {SUPABASE_SERVICE_KEY}","Content-Type":"application/json"}
-STATUS_PATH=Path(os.getenv("BOT_SNAPSHOT_STATUS_PATH",str(Path(__file__).with_name("bot_snapshot_status.json"))))
 
-def write_status(payload):
-    tmp=STATUS_PATH.with_suffix(".tmp");tmp.write_text(json.dumps(payload,ensure_ascii=False),encoding="utf-8");tmp.replace(STATUS_PATH)
+def load_config(path=None):
+    path = Path(path) if path else Path(__file__).with_name('runner.config.json')
+    generated = Path(__file__).with_name('runner_config.public.generated.json')
+    config = json.loads(path.read_text(encoding='utf-8')) if path.exists() else json.loads(generated.read_text(encoding='utf-8')) if generated.exists() else {}
+    config.setdefault('supabase_url', 'https://uukhwkywmnarcfruerpp.supabase.co')
+    config.setdefault('public_key', os.getenv('SUPABASE_PUBLISHABLE_KEY', ''))
+    config.setdefault('runner_id', 'runner-cuu-4wall-01')
+    if set(config) - {'supabase_url', 'public_key', 'runner_id'} or any(SENSITIVE.search(name) for name in config):
+        raise ValueError('CONFIG_MUST_CONTAIN_PUBLIC_VALUES_ONLY')
+    if not __import__('re').fullmatch(r'[a-z0-9][a-z0-9-]{2,79}', config['runner_id']):
+        raise ValueError('INVALID_RUNNER_ID')
+    return config
 
-def procesar_y_subir(ruta_excel,snapshot_id,extracted_at):
-    print("[*] Leyendo archivo descargado de 4Wall...")
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore");df=pd.read_excel(ruta_excel)
-        col_parte=next((c for c in df.columns if any(k in str(c).lower() for k in ["part","qad","numero"])),df.columns[0])
-        col_cant=next((c for c in df.columns if any(k in str(c).lower() for k in ["quant","qty","cant"])),df.columns[1])
-        col_area=next((c for c in df.columns if any(k in str(c).lower() for k in ["area","ubic","loc"])),df.columns[2])
-        payload=[];invalid_qty=0
-        for _,row in df.iterrows():
-            parte=str(row[col_parte]).strip().upper();cantidad=pd.to_numeric(row[col_cant],errors="coerce");area=str(row[col_area]).strip().upper()
-            if pd.isna(cantidad): invalid_qty+=1;continue
-            if not parte or parte in ["NAN","NONE",""]: continue
-            raw_record={str(column):json_value(row[column]) for column in df.columns}\n            payload.append({"numero_parte":parte,"cantidad":int(cantidad),"area_escaneo":area,"raw_record":raw_record,"source_columns":{"part_number":str(col_parte),"quantity":str(col_cant),"area":str(col_area)}})
-        print(f"[+] Preparando corte con {len(payload)} registros vigentes...")
-        res=requests.post(URL_RPC,json={"payload":payload},headers=HEADERS_SUPABASE,timeout=60)
-        if res.status_code not in [200,204]: raise RuntimeError(f"Supabase RPC HTTP {res.status_code}")
-        published_at=utcnow();write_status({"snapshotId":snapshot_id,"extractedAt":extracted_at,"publishedAt":published_at,"result":"PUBLISHED","rowCount":len(payload),"invalidQuantityRows":invalid_qty})
-        print(f"[OK] Snapshot {snapshot_id} publicado con {len(payload)} registros.")
-        return True
-    except Exception as exc:
-        write_status({"snapshotId":snapshot_id,"extractedAt":extracted_at,"publishedAt":None,"result":"FAILED","rowCount":None,"errorType":type(exc).__name__})
-        print(f"[ERROR] El snapshot no se publicó: {type(exc).__name__}")
-        return False
-    finally:
-        if os.path.exists(ruta_excel): os.remove(ruta_excel)
 
-def run_bot():
-    print("[*] Iniciando Bot Extractor Visteon (Playwright)...")
-    with sync_playwright() as p:
-        browser=p.chromium.launch(channel="msedge",headless=False);context=browser.new_context(accept_downloads=True);page=context.new_page()
-        print("[*] Iniciando sesión en 4Wall...");page.goto(LOGIN_URL);page.locator("#txtUser").fill(USER);page.locator("#txtPassword").fill(PASS);page.locator("#btnLogin").click();page.wait_for_load_state("networkidle");page.wait_for_timeout(3000)
-        print("[+] Sesión iniciada. Monitoreando cortes cada 3 minutos...")
-        while True:
-            snapshot_id=str(uuid.uuid4());extracted_at=None
-            try:
-                page.goto(OVERALL_URL);page.wait_for_load_state("networkidle");page.wait_for_timeout(2000);print("[*] Solicitando exportación de inventario...")
-                boton=page.get_by_text("Exportar a Excel",exact=False)
-                if boton.count()>0: boton.first.click()
-                else: page.evaluate("__doPostBack('ctl00$cphMaster$ExportExcel', '')")
-                enlace=page.locator("#ctl00_cphMaster_mdlExcelFile_C_lnkFile");enlace.wait_for(state="visible",timeout=35000)
-                with page.expect_download(timeout=20000) as info: enlace.click()
-                download=info.value;ruta=os.path.join(os.getcwd(),"descarga_4wall.xlsx");download.save_as(ruta);extracted_at=utcnow()
-                procesar_y_subir(ruta,snapshot_id,extracted_at);print("[zZz] Ciclo finalizado. Esperando 3 minutos...");time.sleep(180)
-            except KeyboardInterrupt:
-                print("\n[!] Bot detenido manualmente.");break
-            except Exception as exc:
-                write_status({"snapshotId":snapshot_id,"extractedAt":extracted_at,"publishedAt":None,"result":"FAILED","rowCount":None,"errorType":type(exc).__name__})
-                print(f"[WARN] Ciclo falló: {type(exc).__name__}. Reintentando en 60s...");time.sleep(60)
-        browser.close()
-if __name__=="__main__": run_bot()
+def make_client(config, persistent=True):
+    store = TokenStore(Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'Visteon4WallRunner' / (config['runner_id'] + '.dpapi')) if os.name == 'nt' and persistent else None
+    return SupabaseRunnerClient(config['supabase_url'], config['public_key'], config['runner_id'], store)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='4Wall corporate outbound runner. No listener or shared bot password.')
+    parser.add_argument('--config', help='Public configuration JSON, never 4Wall credentials')
+    parser.add_argument('--diagnostic', action='store_true', help='Launch installed Edge visibly for this session')
+    args = parser.parse_args()
+    client = make_client(load_config(args.config))
+    if not client.restore():
+        client.sign_in(input('Dedicated runner account email: ').strip(), getpass.getpass('Runner account password (enrollment only): '))
+    username = input('4Wall username (memory only): ').strip()
+    password = getpass.getpass('4Wall password (memory only): ')
+    source = PlaywrightExcelAdapter(username, password, visible=args.diagnostic)
+    username = password = None
+    engine = RunnerEngine(client, source, lambda value: print(json.dumps({key: value.get(key) for key in ('state', 'attempt', 'next_run_at', 'error', 'last_run')})))
+    signal.signal(signal.SIGINT, lambda *_: engine.request_close())
+    engine.run()
+
+
+if __name__ == '__main__':
+    main()

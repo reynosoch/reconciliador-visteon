@@ -10,6 +10,8 @@ import {
 import { detectInventorySource } from "../../services/sourceDetection.js";
 import SourceRow from "./sources/SourceRow.jsx";
 import { CONFIG_BY_TYPE, SESSION_SOURCE_CONFIG } from "./sources/sourceConfig.js";
+import InventoryLogin from "./InventoryLogin.jsx";
+import { publishManualFourwall } from "../../services/botControl.js";
 
 const IMPORT_PREVIEW_LIMIT = 3;
 
@@ -21,6 +23,8 @@ export default function SourcesDrawer({
   deleteBomFile,
   clearFile,
   botRunning = false,
+  auth,
+  runners = [],
   onHelp,
   onClose,
 }) {
@@ -35,6 +39,12 @@ export default function SourcesDrawer({
   const [bomDeleteError, setBomDeleteError] = useState("");
   const [preview, setPreview] = useState(null);
   const [bomPart, setBomPart] = useState("");
+  const [manualMode,setManualMode]=useState('full');
+  const [manualRunner,setManualRunner]=useState('');
+  const [manualBusy,setManualBusy]=useState(false);
+  const [manualMessage,setManualMessage]=useState('');
+  const [manualLogin,setManualLogin]=useState(false);
+  const pendingManual=useRef(null);
 
   const bomRows = useMemo(
     () => (Array.isArray(sources?.bom?.rows) ? sources.bom.rows : []),
@@ -149,6 +159,21 @@ export default function SourcesDrawer({
       partNumber: normalizedBomPart,
     });
   };
+  const publishManual=async()=>{
+    if(manualBusy || !sources?.scans?.loaded)return;
+    const request={rows:sources.scans.rows,fingerprint:sources.scans.fingerprint,complete:manualMode==='full',runnerId:manualRunner || runners[0]?.id};
+    if(!auth?.user){pendingManual.current=request;setManualLogin(true);return;}
+    if(!auth.canOperate){setManualMessage('La publicación requiere operator o admin. El archivo local sigue disponible.');return;}
+    await publishAuthorized(request);
+  };
+  const publishAuthorized=async request=>{
+    setManualBusy(true);setManualMessage('Validando y publicando el archivo seleccionado…');
+    try{
+      const receipt=await publishManualFourwall(request.rows,{complete:request.complete,runnerId:request.runnerId});
+      setManualMessage(`Publicado: ${receipt.rows_inserted} nuevos, ${receipt.rows_updated} modificados, ${receipt.rows_unchanged} sin cambio, ${receipt.rows_removed} eliminados. CURRENT vuelve a ser la fuente activa.`);
+      clearFile('scans',request.fingerprint);
+    }catch(error){setManualMessage(error.message);}finally{setManualBusy(false);}
+  };
 
   return (
     <OverlayPortal onClose={onClose}>
@@ -170,6 +195,7 @@ export default function SourcesDrawer({
               event.target.value = "";
             }}
           />
+
 
           <header className="vi-sources-head sticky top-0 z-10">
             <div className="vi-sources-head-row">
@@ -200,6 +226,7 @@ export default function SourcesDrawer({
           </header>
 
           <div className="vi-sources-body">
+
             <section className="vi-universal-upload-section">
               <div className="vi-sources-section-heading">
                 <div>
@@ -398,6 +425,18 @@ export default function SourcesDrawer({
               <div className="vi-source-warning vi-bom-delete-error" role="alert">
                 {bomDeleteError}
               </div>
+            )}
+            {sources?.scans?.loaded && (
+          <section className="vi-bot-state">
+            <h3>Publicar 4Wall manual en CURRENT</h3>
+            <p>Primero carga y revisa el archivo en Escaneos 4Wall. QAD, Áreas, ISPBB y Cost siguen siendo archivos locales de sesión.</p>
+            <label>Tipo de publicación<select className="vi-input" value={manualMode} onChange={event=>setManualMode(event.target.value)} disabled={manualBusy}><option value="full">Corte completo</option><option value="partial">Carga parcial / corrección</option></select></label>
+            <p>{manualMode==='partial' ? 'Esta carga parcial no eliminará registros ausentes.' : 'Un corte completo válido cuenta ausencias. Dos cortes completos válidos consecutivos sin un registro permiten eliminarlo.'}</p>
+            {runners.length>1 && <label>Runner<select className="vi-input" value={manualRunner || runners[0]?.id} onChange={event=>setManualRunner(event.target.value)}>{runners.map(r=><option key={r.id}>{r.id}</option>)}</select></label>}
+            <button className="vi-button" disabled={manualBusy || !sources?.scans?.loaded || !runners.length || Boolean(auth?.user && !auth.canOperate)} onClick={()=>{void publishManual();}}>{manualBusy ? 'Publicando…' : `Publicar ${sources?.scans?.fileName || 'archivo seleccionado'}`}</button>
+            {manualLogin && <InventoryLogin onAuthenticated={context=>{setManualLogin(false);const requested=pendingManual.current;pendingManual.current=null;if(requested && ['operator','admin'].includes(context.role))void publishAuthorized(requested);else setManualMessage('La publicación requiere operator o admin.');}}/>}
+            {manualMessage && <p role="status">{manualMessage}</p>}
+          </section>
             )}
           </div>
         </RubberDrawer>

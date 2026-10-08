@@ -29,3 +29,11 @@ bot_snapshot_status.json
 
 # Supabase CLI cache
 supabase/.temp/
+
+# Runner enrollment and packaging (never commit credentials)
+__pycache__/
+*.pyc
+*.dpapi
+runner.config.json
+runner_config.public.generated.json
+build/

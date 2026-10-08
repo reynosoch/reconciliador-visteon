@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetch4WallScans } from "../services/supabase.js";
+import { fetch4WallScans, clear4WallCache } from "../services/supabase.js";
 import { buildInventoryEngine } from "../domain/inventoryEngine.js";
 const DEFAULT_REFRESH_MS = 3 * 60 * 1000;
 export function useInventoryEngine({
@@ -59,8 +59,13 @@ export function useInventoryEngine({
     }
     refresh();
     const id = window.setInterval(refresh, refreshMs);
+    const onAuth=()=>{clear4WallCache();void refresh();};
+    window.addEventListener("fourwall-current-changed",refresh);
+    window.addEventListener("inventory-auth-changed",onAuth);
     return () => {
       window.clearInterval(id);
+      window.removeEventListener("fourwall-current-changed",refresh);
+      window.removeEventListener("inventory-auth-changed",onAuth);
       abortControllerRef.current?.abort();
     };
   }, [enabled, manualScans, refresh, refreshMs]);
@@ -132,19 +137,19 @@ export function useInventoryEngine({
           }
         : loading && !lastUpdated
           ? {
-              state: "DEV_LOADING",
+              state: "LOADING",
               label: "Leyendo snapshot 4Wall",
-              detail: "Supabase · bot automático todavía no operativo",
+              detail: "Supabase · leyendo CURRENT",
             }
           : lastUpdated
             ? {
-                state: "DEV_SNAPSHOT",
-                label: "Snapshot 4Wall de desarrollo",
-                detail: `${scanCount.toLocaleString()} registros · bot automático no operativo`,
+                state: "CURRENT",
+                label: "Último CURRENT válido de 4Wall",
+                detail: `${scanCount.toLocaleString()} registros · datos conservados ante fallos`,
               }
             : {
                 state: "WAITING",
-                label: "4Wall automático no operativo",
+                label: "Sin un corte válido de 4Wall",
                 detail: "Carga un archivo manual para trabajar con datos físicos",
               },
     [error, loading, lastUpdated, scanCount],

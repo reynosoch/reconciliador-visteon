@@ -51,3 +51,7 @@ The canonical constraints are in the README [handoff](../README.md#handoff-ui-ac
 - Historical SQL migrations, bot verification, SheetJS vendor and support scripts. A runtime reachability check does not make these orphan files.
 
 If integration genuinely needs a protected-path change, propose the minimal diff, rationale, affected invariants and verification. ORCH can authorize a technical scope extension within the human's existing request; new operational or business authority follows [decision rights](DECISION_RIGHTS.md).
+
+## Runner 4Wall Release 1 — 08 OCT 2026
+
+BOT owns `runner/`, `runner_windows.py`, `runner.spec`, `requirements-runner.txt`, `bot_extractor.py` and its CLI compatibility alias `bot_control_server.py`. ING owns the shared canonical `fourwall_contract.json`/`src/domain/fourwallSync.js` contract with BOT; DATA owns `src/services/botControl.js` and versioned CURRENT delivery; SEC owns live-role Auth/DPAPI review; DBA owns the new migration, outbox and preflight; UI owns the existing Bot/Sources/login surfaces. QA owns the Python, SQL/cross-language/notification/bundle suites and Windows packaging smoke. Financial rules and Myke behavior are unchanged.

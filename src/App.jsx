@@ -28,6 +28,8 @@ import {
 } from "./hooks/useReferenceFiles";
 import { useInventoryEngine } from "./hooks/useInventoryEngine";
 import { useBotRunningStatus } from "./hooks/useBotRunningStatus.js";
+import { useInventoryAuth } from "./hooks/useInventoryAuth.js";
+import InventoryLogin from "./components/shell/InventoryLogin.jsx";
 import { useMobileMenuSwipe } from "./hooks/useMobileMenuSwipe.js";
 import {
   buildDiscrepancyFindings,
@@ -144,7 +146,8 @@ export default function App() {
     [feedbackOpen, setFeedbackOpen] = useState(false),
     [animationLabOpen, setAnimationLabOpen] = useState(false),
     [detailFromNotifications, setDetailFromNotifications] = useState(false);
-  const [botRunning, setBotRunning] = useBotRunningStatus();
+  const [botRunning, , botState] = useBotRunningStatus();
+  const inventoryAuth = useInventoryAuth();
   const references = useReferenceFiles(),
     inventory = useInventoryEngine({
       manualScans: references.manualScans,
@@ -155,7 +158,7 @@ export default function App() {
       costRows: references.costRows,
       criticalUsdThreshold: 10000,
       refreshMs: 180000,
-      enabled: true,
+      enabled: !inventoryAuth.requireDashboardLogin || Boolean(inventoryAuth.user),
     }),
     referencesReady = references.status.allLoaded,
     displayReady =
@@ -369,6 +372,9 @@ export default function App() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [animationLabOpen]);
 
+  if (inventoryAuth.requireDashboardLogin && !inventoryAuth.user) {
+    return <main className="vi-shell"><section className="vi-bot-overview"><h1>Reconciliador Visteon</h1><p>Este proyecto requiere iniciar sesión.</p><InventoryLogin /></section></main>;
+  }
   if (animationLabOpen) {
     return (
       <div
@@ -431,6 +437,7 @@ export default function App() {
         notificationCount={notificationCount}
         scrollViewportRef={shellRef}
       />
+      {botState.data?.last_attempts?.some(run=>['FAILED','REJECTED','INTERRUPTED'].includes(run.status)) && <div className="vi-persistence-warning" role="status">Falló la actualización automática de 4Wall. El último corte válido sigue activo. <button className="vi-button" onClick={()=>setBotOpen(true)}>Reintentar / ver detalle</button><button className="vi-button" onClick={()=>setSourcesOpen(true)}>Cargar archivo manual</button></div>}
       {warning && <div className="vi-persistence-warning">{warning}</div>}
       {
         <div className="vi-rubber-clip">
@@ -576,6 +583,8 @@ export default function App() {
           deleteBomFile={references.deleteBomFile}
           clearFile={references.clearFile}
           botRunning={botRunning}
+          auth={inventoryAuth}
+          runners={botState.data?.runners || []}
           onHelp={openMykeHelp}
           onClose={() => setSourcesOpen(false)}
         />
@@ -626,9 +635,9 @@ export default function App() {
         <BotControlModal
           open={botOpen}
           onClose={() => setBotOpen(false)}
-          onStatusChange={(status) =>
-            setBotRunning(status?.processState === "running")
-          }
+          botState={botState}
+          auth={inventoryAuth}
+          onOpenSources={() => {setBotOpen(false);setSourcesOpen(true);}}
         />
       </DeferredPanel>
       {

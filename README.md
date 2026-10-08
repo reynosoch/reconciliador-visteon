@@ -45,7 +45,7 @@ Fuentes → parsers → normalización → src/domain → hooks → React/UI
 | Myke / organización virtual | Organización interna en `.agents`; ayuda pública solo de este README (`buildMykeKnowledge`); la misma conversación en chat rápido ampliable y chat completo/redimensionable en `MykePanel.jsx`; fantasma naranja arcade original y ayuda contextual con personaje desde todos los `?`. Knowledge retrieval y contexto vivo del motor, PN y evidencia locales; transporte HTTP a Gemini detrás del servicio existente; backend único `myke-chat` con tools READ-ONLY/contexto mínimo y fallback; activación real pendiente de acceso al proyecto/secreto. Reportes manuales solo tras vista previa y confirmación explícita por la ruta existente, fuera de las tools |
 | Visor de datos / evidencia | `src/components/dashboard/DataInspectionPanel.jsx`; construcción de vistas/export helpers en `dataInspectionSupport.js` |
 | Fuentes/importación | lógica: `src/domain/sourceCatalog.js`, `src/services/sourceDetection.js`, `src/hooks/useReferenceFiles.js`; UI: `src/components/shell/SourcesDrawer.jsx` + `src/components/shell/sources/` |
-| 4Wall automático / Bot | lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
+| 4Wall automático / Bot | `runner/`, `runner_windows.py`, `fourwall_contract.json`, `src/domain/fourwallSync.js`, `src/services/botControl.js`, `src/hooks/useInventoryAuth.js`; lógica: `src/hooks/useInventoryEngine.js`, `src/services/supabase.js`, `bot_extractor.py`, `bot_control_server.py`; UI: `src/components/shell/BotControlModal.jsx`, acceso desde navbar y `MainMenu.jsx` |
 | Supabase/BOM cloud | `src/services/bomCloud.js`, `supabase/migrations/` |
 | Scroll/rubber band | `src/components/visual/ScrollEffects.jsx` + `src/styles/modules/interaction-motion.css` |
 | Pac-Man / LAB / rendimiento | `src/components/visual/PacmanGlyphs.jsx`, `src/components/shell/MainMenu.jsx` + `src/styles/modules/interaction-motion.css` |
@@ -82,6 +82,8 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 
 ### Estado técnico actual
 
+- Bot 4Wall vigente (08 OCT 2026): Supabase control plane + Auth/roles, runner Windows saliente, sync incremental/atómico, manual full/partial y packaging Actions. Migración preparada al proyecto uukhwkywmnarcfruerpp; acceso remoto y prueba corporativa pendientes. Leer [Bot 4Wall](#bot-4wall) y [instalación](docs/runner-install.md). No reintroducir localhost, password compartido o RPC destructivo.
+
 - Myke conversación vigente (07 OCT 2026): intención CASUAL local (saludos/presencia/agradecimientos), aliases breves, referencias/ordinales y selección del trazador; no requiere IA para platicar ni consultar resultados. Memoria conserva lista y PN; fallback presenta cifras del motor y reconoce causa pendiente. Sin rediseño ni cambios financieros.
 - Myke Hybrid Intelligence vigente (07 OCT 2026): frontend local y Pages llaman a la misma `myke-chat`; sin login ni código de acceso. Consultas READ-ONLY reducen resultados del motor a un contexto permitido; el LLM explica y nunca calcula/escribe. Knowledge y motor contestan primero sin IA; solo razonamiento complejo escala a Gemini, con fallback local. Ver [Myke Hybrid Intelligence](#myke-hybrid-intelligence), que reemplaza la configuración histórica Gemini/Copilot de más abajo.
 
@@ -101,7 +103,7 @@ Antes de hacer push, `npm.cmd run build` debe quedar verde. Ese build exige: ESL
 - Navbar: `CommandHeader.jsx` muestra logo Visteon + 179A, estado rápido de 4Wall, hora de actualización y acciones esenciales. Debajo vive **Flujo de datos**, que se repliega al bajar y reaparece al subir con spring/histéresis.
 - Rubber band: scroll medio 100% nativo; Motion spring en bordes. Configuración vigente: `stiffness 520 / damping 34 / mass .55`; arriba ~54 px y abajo ~42 px. **Ambos bordes usan exactamente la misma acumulación, guard de momentum, handoff, release de 46 ms y spring; solo cambia la amplitud visual máxima inferior.** No volver a crear una ruta/timer/impulso exclusivo para abajo ni transformar el elemento que posee el scroll.
 - Pac-Man ambiental continúa durante scroll/rubber band cuando está habilitado. El menú guarda preferencias persistentes en **RENDIMIENTO**: Pac-Man puede apagarse por separado y **Quitar animaciones** pausa movimiento decorativo/transiciones sin quitar scroll ni rubber band. **LAB → Ver animación** sigue siendo una vista explícita a pantalla completa.
-- **Bot 4Wall**: el mismo control seguro se abre desde navbar o hamburguesa. El menú muestra estado rápido CORRIENDO/ABRIR y el drawer del bot incluye una animación de scanner puramente visual; proceso, PID y snapshot siempre provienen del controlador real, no de la animación.
+- **Bot 4Wall**: el mismo control seguro se abre desde navbar o hamburguesa. El menú muestra estado rápido CORRIENDO/ABRIR y el drawer del bot incluye una animación de scanner puramente visual; estado de máquina, intento y corte válido provienen de Supabase, no de la animación.
 - **Ayuda**: `HelpButton` centraliza los `?` en el drawer lateral `HelpDrawer`, también desde portales. Myke animado acompaña la explicación; Preguntarle a Myke abre el chat rápido. Reutiliza `helpContent` y el visor común.
 - Footer: está **pegado al final del dashboard**, con logo Visteon, `/reynosoch`, Fuentes/Calidad/Entorno/Versión centrados, snapshot y créditos lowkey. El botón **Reportar** permanece disponible también al llegar al footer; el acceso flotante conserva su espacio.
 - Fuentes: `SourcesDrawer.jsx` usa entrada universal multiarquivo, filas compactas de estado y resultados de carga colapsados: muestra 3 y luego **Ver más / Ver menos**. BOM conserva lista/preview/borrado controlado y BOM Focus.
@@ -248,7 +250,7 @@ El drawer **Fuentes** funciona como un workspace de entrada y revisión:
 - XLSX se inspecciona una sola vez para identificar el tipo antes de pasar al parser normal.
 - Cada archivo reconocido se carga usando el mismo validador de columnas que la carga individual.
 - Si el bot 4Wall está corriendo, solo se bloquea un archivo detectado como **escaneo 4Wall manual**; QAD, Áreas, ISPBB, Cost y BOM pueden seguir cargándose.
-- QAD, Áreas, ISPBB, Cost y 4Wall manual son fuentes de **sesión**: pueden reemplazarse o quitarse sin escribir esos archivos a Supabase.
+- QAD, Áreas, ISPBB, Cost y 4Wall manual son fuentes de **sesión**: pueden reemplazarse o quitarse sin escribir esos archivos a Supabase. En 4Wall, **Publicar CURRENT** es una acción adicional autorizada: elegir completo o parcial y usar el pipeline compartido; cargar/revisar localmente no publica.
 - BOM mantiene el comportamiento especial existente: biblioteca incremental local + respaldo compartido en Supabase cuando la conexión/permisos están disponibles.
 - El borrado BOM sigue siendo controlado: se confirma el archivo exacto y se usa su fingerprint/revisión para evitar borrar una versión equivocada.
 - **BOM Focus** filtra por coincidencia exacta de `Parent Item`, muestra cuántas filas y archivos contienen ese PN y abre el visor/descarga solo con esa selección.
@@ -257,16 +259,9 @@ El drawer **Fuentes** funciona como un workspace de entrada y revisión:
 
 El catálogo de tipos y columnas vive en `src/domain/sourceCatalog.js`; la detección universal vive en `src/services/sourceDetection.js`. No duplicar esquemas de columnas dentro de la UI.
 
-### Limitación actual del 4Wall en vivo
+### Evidencia 4Wall en vivo
 
-La consulta web actual recibe de Supabase:
-
-- `id`
-- `numero_parte`
-- `cantidad`
-- `area_escaneo`
-
-Por lo tanto, la interfaz **no debe inventar** Ticket/FIFO, auditor, responsable o fecha si esos campos no llegaron por el pipeline publicado.
+El runner nuevo conserva RAW y su mapa de columnas en CURRENT; filas históricas pueden tener solo PN, cantidad y área. El visor no inventa Ticket/FIFO, auditor, responsable o fecha cuando faltan. La migración nueva preserva esos registros y exige correspondencia segura antes de adoptarlos.
 
 ## Reglas financieras actuales
 
@@ -384,36 +379,41 @@ Las preguntas vigentes no se muestran en la interfaz. Se documentan en este READ
 
 ## Bot 4Wall
 
-El frontend usa `VITE_BOT_CONTROL_URL` para hablar con el controlador. GitHub Pages no puede ejecutar Python: `bot_control_server.py` y `bot_extractor.py` deben correr en el equipo/servidor autorizado que tenga acceso a 4Wall. El controlador usa `BOT_CONTROL_PASSWORD` y `BOT_CONTROL_ORIGIN`; ninguna contraseña debe vivir en una variable `VITE_*`.
+**Arquitectura vigente · Release 1 · 08 OCT 2026.** Pages/localhost y otros dispositivos hablan con **Supabase Auth + Commands + Status + CURRENT + Runs + Audit**. El runner Windows Python/Playwright/Edge hace HTTPS saliente a Supabase y exporta Excel desde 4Wall interno. Pages no ejecuta Python ni se conecta a la laptop. No hay puertos abiertos, password compartido ni service-role permanente en el exe. `bot_control_server.py` queda solo como alias del CLI; el controlador HTTP anterior está retirado.
 
-`bot_extractor.py` usa Playwright para entrar al 4Wall interno, exportar el reporte, limpiar cantidades inválidas y publicar un corte mediante el RPC de Supabase.
+La implementación y el packaging están en este repo. **Activación remota pendiente**: la conexión disponible no tiene permisos sobre **uukhwkywmnarcfruerpp**, el proyecto correcto. No se despliega a otro proyecto. Tampoco se afirma haber probado el login/export real corporativo, Win+L, políticas Auth o email. Ver [instalación, primer admin, enrolamiento, respaldo y recuperación](docs/runner-install.md).
 
-`bot_control_server.py` controla el arranque del extractor localmente:
+### Identidad y publicación incremental
 
-- evita arranques concurrentes;
-- valida que exista el extractor;
-- diferencia solicitud aceptada de snapshot publicado;
-- expone estado y último resultado sin devolver credenciales;\n- permite detener de forma controlada el proceso antes de usar escaneos manuales;
-- usa contraseña desde `BOT_CONTROL_PASSWORD`;
-- por defecto solo escucha en loopback.
+`fourwall_contract.json` define los mismos campos y canonicalización para `src/domain/fourwallSync.js` y `runner/sync.py`; una prueba ejecuta ambos lenguajes y compara hashes/identidades. Se conserva RAW para la evidencia CURRENT y la arquitectura RAW → PARSERS → NORMALIZED → DOMAIN ENGINE → RECONCILIATION → UI; NET, SWING, Phantom, Obsolete y Unexpected no cambian.
 
-No guardar usuarios, contraseñas ni `service_role` dentro del frontend o del repositorio. `WALL_USER`, `WALL_PASS`, `SUPABASE_SERVICE_KEY` y `BOT_CONTROL_PASSWORD` pertenecen únicamente al entorno del bot/servidor. Si una credencial apareció alguna vez en Git, quitarla del archivo actual no la revoca: debe rotarse.
+Ticket/FIFO se guarda como **TEXT**, sin UNIQUE universal. La PK interna nueva es `record_id` UUID, manteniendo `id` histórico para los consumidores existentes. Ticket único en el corte usa identidad Ticket; grupos colisionados usan Ticket + PN QAD + Fecha agregado + Escaneador. El backend conserva UUID por coincidencias seguras entre modos; si no distingue dos registros legítimos, rechaza toda la publicación. No fusiona filas idénticas a ciegas. Ceros iniciales y IDs largos se conservan; IDs numéricos que ya perdieron precisión se rechazan.
 
-Antes de producción, un administrador de Supabase debe verificar que `anon` y `authenticated` no puedan ejecutar `reemplazar_escaneos`, que RLS esté habilitado y que la escritura del snapshot quede reservada al rol del bot/servidor.
+El `row_hash` SHA-256 representa 14 campos normalizados, números sin redondear, fechas explícitas, espacios/casing/nulls. Misma identidad + hash = NO-OP; hash cambiado = UPDATE; nueva identidad = INSERT. Manifest en lotes de 250, RAW solo para filas cambiadas, validación y publicación transaccional con generation/CAS y run_id idempotente. Un ACK perdido puede consultarse/repetirse sin duplicar. No hay DELETE+INSERT global ni snapshots RAW históricos. Staging privado es temporal y se elimina al terminar.
+
+Las quality gates rechazan vacío, columnas/formatos inválidos, cantidades imposibles, export incompleto, corrupción y ambigüedad. Los límites se administran en Bot; ratio mínimo inicial conservador 0.1, con orden DMY/MDY explícito cuando las fechas locales son ambiguas. Toda validación precede los cambios a CURRENT; fallos preservan el último corte bueno.
+
+Un registro ausente necesita **dos cortes completos y válidos** para borrarse físicamente. La primera ausencia pone missing_count=1, reaparecer lo vuelve a 0; FAILED, REJECTED e incompletos no cuentan. Una carga manual parcial no cuenta ausencias ni elimina. Un NO-OP no actualiza cada fila solo por last_seen; la pertenencia vigente se verifica con el manifest/corte completo confirmado.
+
+### Operación y seguridad
+
+Un usuario Supabase Auth dedicado por runner, revocable y sin rol humano, permite solo operaciones de su máquina/run. DPAPI guarda exclusivamente su refresh token técnico, no passwords. Credenciales 4Wall se piden cada mañana, solo en memoria, sin variables de entorno, disco, Supabase, logs, capturas o HTML; se descartan al cerrar. El runner reclama lease antes de abrir Edge, valida login antes de extraer y reautentica una sesión vencida con sus credenciales en memoria.
+
+Windows: doble clic, login mínimo, tray con Estado/Diagnóstico/Buscar actualización/Cerrar. Headless por defecto; Edge visible en un inicio de diagnóstico. No arranque automático. Cerrar recomienda terminar el corte; forzar cierre conserva CURRENT y deja un run stale que se marca INTERRUPTED. Updates son explícitos y nunca sustituyen el exe durante un run. `runner/version.py` fija versión; `.github/workflows/windows-runner.yml` construye artifact Windows y comprueba exe/dependencias/DPAPI. Descargar carpeta completa desde Actions; una Release permite el aviso de nueva versión en tray.
+
+Intervalo administrable inicialmente 30 minutos, corte inmediato al inicio salvo Pause persistido/disabled. Heartbeat 15s, OFFLINE tras 45s sin heartbeat; lease máquina 60s/run 120s. Realtime despierta commands/estado; polling HTTPS ~5s siempre funciona sin WebSocket. RUN NOW TTL 10 minutos, máximo uno pendiente durante un run; Pause termina el actual y persiste hasta Resume. Resume sigue el horario normal. Retries 1m/5m/10m; después FAILED, aviso y siguiente ciclo, nunca retry infinito.
+
+Viewer consulta; operator Run now/Pause/Resume/publicación manual; admin roles, runners, configuración, límites y errores técnicos. Sesión por navegador persistida con refresh normal; la política Auth remota debe permitir la jornada prevista 8–12h. Autorización real consulta roles activos en DB, no `user_metadata`. Dashboard público por defecto; `bot_settings.require_dashboard_login` permite login global, aplicado en UI/RLS y también al acceso BOM/reports compartido. Ningún cliente escribe directamente CURRENT o control; el RPC viejo `reemplazar_escaneos` queda revocado.
+
+Runs/auditoría/errores resumidos se retienen 90 días mediante cleanup/pg_cron, sin copias históricas completas del Excel. Métricas seen/inserted/updated/unchanged/removed/rejected/duration distinguen proceso, intento y éxito. Fallo final muestra aviso, Reintentar, Manual y Detalle; email usa outbox único por run automático y adaptador backend Resend preparado, pendiente de proveedor/configuración. Teams puede implementar el mismo contrato. No se captura HTML/screenshot de fallos para evitar exponer formularios/cookies.
+
+La abstracción `SourceAdapter` permite API oficial u otra fuente futura; Release 1 solo 4Wall. No implementa QAD automático ni SQL Server.
 
 ## Metadatos de snapshot
 
-Un snapshot es una copia de los escaneos de un momento concreto. Permite comparar ese conteo con el QAD congelado; la última consulta de la app no demuestra cuándo se extrajo el reporte original.
+CURRENT expone generation y content_version, último run publicado, row_count, complete, extracted_at y published_at. El frontend conserva CURRENT en memoria; al cambiar content_version consulta UUID/hash paginados y descarga solo filas cambiadas en lotes de 100 (carga completa inicial o si cambia más de la mitad); verifica versión antes/después y descarta páginas mezcladas. El polling de estado no descarga las 10k filas. Un NO-OP refresca metadatos sin reconstruir el motor. Antes de activar la migración se conserva lectura compatible del esquema anterior, sin habilitar escritura antigua.
 
-El extractor prepara:
-
-- `snapshotId`
-- `extractedAt`
-- `publishedAt`
-- `result`
-- `rowCount`
-
-La lectura frontend actual también verifica que el conjunto no cambie durante la paginación. Mientras el esquema remoto no exponga un `snapshotId` real a la consulta, el frontend indica que la antigüedad real del reporte no está confirmada.
+`fetchedAt` es hora de consulta, **no hora de extracción**. Una publicación manual no inventa extracted_at; una corrección parcial conserva la fecha del último corte completo. El visor conserva raw_record y source_columns cuando existen; en filas históricas faltantes no inventa Ticket, auditor o fechas.
 
 ## Desarrollo local
 
@@ -500,8 +500,7 @@ La referencia Pac-Man es ambiental, no arcade: normalmente Pac-Man huye mientras
 - Validar la regla acordada (.2 / NO) con los nuevos escaneos y BOM de prueba.
 - Definir una fuente válida de cierre de conteo.
 - Definir identidad oficial de registros/reconteos.
-- Exponer metadatos de snapshot de extremo a extremo en el backend.
-- Si se requieren Ticket/auditor/responsable/fecha en vivo, ampliar de forma coordinada bot + tabla/RPC + consulta frontend.
+- Activar y verificar la migración/control plane 4Wall en el proyecto correcto; probar export corporativo, Win+L y email.
 - Migrar historial compartido a una base central si las juntas necesitan ver los mismos cortes desde varios equipos.
 
 ---
@@ -589,7 +588,7 @@ Ejemplo de la junta: 48 escaneos de `VPTBFF-10849-ABT`. Para sus filas válidas,
 
 ### Uso de escaneos manuales
 
-En Fuentes, cargar `Escaneos 4Wall (archivo manual)`. El encabezado identifica este modo. La consulta automática se pausa para que una respuesta del bot no reemplace el archivo seleccionado. El botón de actualizar no sustituye el archivo manual; usar REEMPLAZAR en Fuentes. Quitar el archivo vuelve a la consulta del bot. No se envía el archivo manual a la base remota.
+En Fuentes, cargar `Escaneos 4Wall (archivo manual)`. El encabezado identifica este modo. La consulta automática se pausa para que una respuesta del bot no reemplace el archivo seleccionado. El botón de actualizar no sustituye el archivo manual; usar REEMPLAZAR en Fuentes. Quitar el archivo vuelve a la consulta del bot. Esto describe la revisión local. Para compartir el físico, usar **Publicar 4Wall manual en CURRENT** con sesión operator/admin: completo cuenta ausencias; parcial no elimina ausentes. Al confirmar publicación vuelve a CURRENT central. El siguiente automático completo válido puede reemplazar la corrección manual, con auditoría.
 
 ### Juntas y costos
 
@@ -688,7 +687,7 @@ Sí conservar aunque no aparezcan directamente en la UI: migraciones históricas
 - **Ver en fuente** reutiliza `SourcePreviewModal` + `sourceEvidence.js`: archivo/hoja/fila, columnas usadas, valor original → normalizado y motivo de cada celda. Incluye padres que aportan BOM y filas BOM excluidas. Búsqueda, filtro de evidencia/hoja, páginas de 60 filas y exportación CSV/XLSX/TXT conservada; evidencia pesada solo al abrirla.
 - El lector conserva coordenadas XLSX con títulos/vacíos y líneas CSV/TXT multilínea. Parsers guardan índices aceptados. BOM guarda coordenadas en `files.rowOrigins`, fuera de las filas del contrato compartido; sin cambios de esquema/RPC. Fuentes antiguas o nombres BOM ambiguos muestran **Registro de colección**, sin inventar fila/hoja. Reimportar BOM ya registrado no rellena coordenadas antiguas.
 - **Datos incompletos**: el PN puede estudiarse con fuentes faltantes, señalando resultados provisionales. Sin costo: **Sin valorar**; BOM faltante y sin filas elegibles se distinguen. QAD Phantom conserva saldo. SWING no se divide entre dos; BOM usa Usage, Level .2 / 0.2 y Comp Phantom NO, sin recursión.
-- **Bot**: estado confirmado y última consulta/publicación primero; acciones y scanner conservados, errores visibles y timeout. Requiere `VITE_BOT_CONTROL_URL` y controlador accesible; el frontend no ejecuta Python. Tipografía y controles adaptados a iPad. Esc cierra solo el visor superior. `ScrollEffects`, física Motion, Pac-Man, navbar y footer intactos; solo el CSS del trazador se trasladó de `interaction-motion.css` a `data-review.css`.
+- **Bot**: estado confirmado y última consulta/publicación primero; acciones y scanner conservados, errores visibles y timeout. Histórico: requería controlador local; reemplazado el 08/10/2026 por Supabase control plane; el frontend no ejecuta Python. Tipografía y controles adaptados a iPad. Esc cierra solo el visor superior. `ScrollEffects`, física Motion, Pac-Man, navbar y footer intactos; solo el CSS del trazador se trasladó de `interaction-motion.css` a `data-review.css`.
 - `verify-tracer.mjs` entra al build/CI: finanzas, BOM directo/derivado, filtros, faltantes, coordenadas y compatibilidad. Revisión local con datos sintéticos a 1366, 1024, 768 y 390 px. Pages sigue manual.
 
 ### Origen del PN, hojas visuales y borde inferior — 05/10/2026
@@ -856,11 +855,11 @@ En Fuentes puedes cargar varios archivos TXT, CSV, XLSX y respaldos BOM JSON. La
 
 QAD, Áreas, ISPBB, Cost y escaneos manuales son fuentes de sesión. BOM tiene una biblioteca incremental local y un respaldo compartido cuando la conexión y permisos están disponibles. Para borrar BOM se confirma el archivo exacto y su versión.
 
-Mientras el bot esté corriendo, detén el extractor antes de cargar escaneos manuales. Las otras referencias se pueden cargar sin mezclar físico manual y automático.
+Mientras haya un corte activo, Pause solicita terminarlo antes de publicar un 4Wall manual. Las otras referencias se pueden cargar sin mezclar físico manual y automático.
 
 ### ¿Qué hace el bot y por qué puede no arrancar?
 <!-- myke: bot | bot extractor arrancar iniciar detener corriendo error conexion controlador automatico 4wall | scans -->
-El bot entra a 4Wall, exporta el reporte y publica una copia de los escaneos. La página controla el proceso mediante un servidor autorizado; GitHub Pages no ejecuta el extractor por sí solo.
+El bot entra a 4Wall, exporta el reporte y publica una copia de los escaneos. La página envía órdenes a Supabase y el runner corporativo las recoge por HTTPS/Realtime; GitHub Pages no ejecuta el extractor por sí solo.
 
 Una solicitud de arranque aceptada no prueba que ya se publicó un corte. Revisa el estado, el último resultado y la disponibilidad del controlador. No escribas contraseñas ni claves en este chat.
 

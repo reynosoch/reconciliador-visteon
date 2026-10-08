@@ -242,9 +242,9 @@ export function useReferenceFiles() {
     return operation;
   }, []);
 
-  const clearFile = useCallback((type) => {
+  const clearFile = useCallback((type, expectedFingerprint) => {
     if (type === "bom") return;
-    setSources((s) => ({ ...s, [type]: empty() }));
+    setSources((s) => expectedFingerprint !== undefined && s[type]?.fingerprint !== expectedFingerprint ? s : ({ ...s, [type]: empty() }));
   }, []);
   const backupBom = useCallback(
     () => downloadBomWorkbook(library.current),

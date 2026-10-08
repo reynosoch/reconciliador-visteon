@@ -431,7 +431,7 @@
       "paragraphs": [
         "En Fuentes puedes cargar varios archivos TXT, CSV, XLSX y respaldos BOM JSON. La app reconoce el tipo y valida las columnas necesarias.",
         "QAD, Áreas, ISPBB, Cost y escaneos manuales son fuentes de sesión. BOM tiene una biblioteca incremental local y un respaldo compartido cuando la conexión y permisos están disponibles. Para borrar BOM se confirma el archivo exacto y su versión.",
-        "Mientras el bot esté corriendo, detén el extractor antes de cargar escaneos manuales. Las otras referencias se pueden cargar sin mezclar físico manual y automático."
+        "Mientras haya un corte activo, Pause solicita terminarlo antes de publicar un 4Wall manual. Las otras referencias se pueden cargar sin mezclar físico manual y automático."
       ],
       "keywords": [
         "cargar",
@@ -461,7 +461,7 @@
       "id": "bot",
       "title": "¿Qué hace el bot y por qué puede no arrancar?",
       "paragraphs": [
-        "El bot entra a 4Wall, exporta el reporte y publica una copia de los escaneos. La página controla el proceso mediante un servidor autorizado; GitHub Pages no ejecuta el extractor por sí solo.",
+        "El bot entra a 4Wall, exporta el reporte y publica una copia de los escaneos. La página envía órdenes a Supabase y el runner corporativo las recoge por HTTPS/Realtime; GitHub Pages no ejecuta el extractor por sí solo.",
         "Una solicitud de arranque aceptada no prueba que ya se publicó un corte. Revisa el estado, el último resultado y la disponibilidad del controlador. No escribas contraseñas ni claves en este chat."
       ],
       "keywords": [

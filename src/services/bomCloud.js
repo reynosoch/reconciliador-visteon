@@ -1,11 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import {getInventoryClient} from "./botControl.js";
 import { mergeBomLibrary } from "../domain/bomLibrary.js";
-const url = import.meta.env?.VITE_SUPABASE_URL;
-const key = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env?.VITE_SUPABASE_ANON_KEY;
-export const bomClient = url && key ? createClient(url, key, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  global: { fetch: (input, init = {}) => fetch(input, { ...init, signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000) }) },
-}) : null;
+// Shared browser Auth session: public BOM behavior remains until the dashboard flag is enabled.
+let sharedClient=null;
+try{sharedClient=getInventoryClient();}catch{ /* Configuration errors are reported by the shell, without crashing it. */ }
+export const bomClient=sharedClient;
 const metadata = ({ rows, ...file }) => ({ ...file, rowCount: file.rowCount ?? rows?.length ?? 0 });
 export function combineLibraries(remote, local) {
   const merged = mergeBomLibrary(remote, local.rows, "Respaldo local", "local-merge");

@@ -19,7 +19,7 @@ function fromMatrix(matrix, fileName, delimiter, errors = [], start = 0, origins
   const data = matrix.slice(start + 1).map((row, i) => ({ row, origin: origins[start + 1 + i] })).filter(({row}) => row.some(v => String(v ?? "").trim()));
   if (data.some(({row}) => row.length > fields.length && row.slice(fields.length).some(v => String(v ?? "").trim())))
     errors = [...errors, { message: "Hay filas con más columnas que el encabezado." }];
-  return { fileName, fields, originalFields, rows: data.map(({row, origin}) => ({...Object.fromEntries(fields.map((key, i) => [key, row[i] ?? ""])), __provenance: {fileName, sheetName, rowNumber: origin ?? null, firstColumn}})),
+  return { fileName, fields, originalFields, rows: data.map(({row, origin}) => ({...Object.fromEntries(fields.map((key, i) => [key, row[i] ?? ""])), ...(originalFields.includes("Ticket/FIFO") ? {__fourwallImport:{ambiguousHeader:originalFields.some(v=>!v) || [...seen.values()].some(n=>n>1)}} : {}), __provenance: {fileName, sheetName, rowNumber: origin ?? null, firstColumn}})),
     duplicateHeaders: [...seen].filter(([, n]) => n > 1).map(([name]) => name), warnings, delimiter, errors };
 }
 export async function parseDelimitedFile(file, { requiredFields = [] } = {}) {
@@ -27,7 +27,7 @@ export async function parseDelimitedFile(file, { requiredFields = [] } = {}) {
   const bytes = await file.arrayBuffer();
   if (/\.xlsx$/i.test(file.name)) {
     const XLSX = await import("xlsx");
-    const book = XLSX.read(bytes, { type: "array", cellText: true });
+    const book = XLSX.read(bytes, { type: "array", cellText: true, cellNF: true });
     const candidates = [];
     for (const name of book.SheetNames) {
       const sheet = book.Sheets[name];
@@ -39,22 +39,36 @@ export async function parseDelimitedFile(file, { requiredFields = [] } = {}) {
       if (start < 0) continue;
       // Preserve formatted identifiers (e.g. 000123), never rounded display costs/quantities.
       const range = XLSX.utils.decode_range(sheet["!ref"] || "A1");
-      const ids = new Set(["Item Number", "Parent Item", "Component", "Número Parte QAD", "Numero Parte QAD", "Numero de parte", "numero_parte", "Site", "Ticket/FIFO"]);
+      const ids = new Set(["Item Number", "Parent Item", "Component", "Número Parte QAD", "Numero Parte QAD", "Numero de parte", "numero_parte", "Site", "Ticket/FIFO", "serial", "Serial"]);
       const idCols = matrix[start].map((v, i) => ids.has(String(v).trim()) ? i : -1).filter(i => i >= 0);
       // Matrix uses nonblank rows; walk actual sheet rows so title/blank rows do not shift identifiers.
+      const fourwall=matrix[start].some(value=>String(value).trim()==='Ticket/FIFO');
+      const fourwallIds=new Set(['Ticket/FIFO','serial','Serial','Número Parte QAD','Numero Parte QAD','Numero de parte','Número de parte','numero_parte']);
+      const publicationIssues={formula:false,unsafeIdentifier:false,ambiguousHeader:new Set(matrix[start].map(v=>String(v).trim())).size!==matrix[start].length || matrix[start].some(v=>!String(v).trim())};
       let outputRow = 0;
       const origins = [];
       for (let r = range.s.r; r <= range.e.r; r++) {
         const populated = Array.from({ length: range.e.c - range.s.c + 1 }, (_, i) => sheet[XLSX.utils.encode_cell({ r, c: range.s.c + i })]).some(c => String(c?.v ?? "").trim());
         if (!populated) continue;
         origins.push(r + 1);
+        if(fourwall && outputRow>start){
+          for(let i=0;i<matrix[start].length;i++){
+            const cell=sheet[XLSX.utils.encode_cell({r,c:range.s.c+i})],header=String(matrix[start][i]).trim();
+            if(cell?.f)publicationIssues.formula=true;
+            if(fourwallIds.has(header) && cell?.t==='n' && (!Number.isInteger(cell.v) || Math.abs(cell.v)>=1e15))publicationIssues.unsafeIdentifier=true;
+            if(header==='Fecha agregado' && cell?.t==='n' && XLSX.SSF.is_date(cell.z || ''))matrix[outputRow][i]=new Date(Date.UTC(1899,11,30)+Math.round(cell.v*86400000)).toISOString();
+          }
+        }
         if (outputRow > start) for (const i of idCols) {
           const cell = sheet[XLSX.utils.encode_cell({ r, c: range.s.c + i })];
-          if (cell?.t === "n" && cell.w) matrix[outputRow][i] = cell.w;
+          if (cell?.t === "n" && cell.w){
+            if(fourwall && fourwallIds.has(String(matrix[start][i]).trim()))matrix[outputRow][i]=/^0+$/.test(cell.z || '') ? String(cell.v).padStart(cell.z.length,'0') : String(cell.v);
+            else matrix[outputRow][i] = cell.w;
+          }
         }
         outputRow++;
       }
-      candidates.push({ ...fromMatrix(matrix, file.name, "xlsx", [], start, origins, name, range.s.c), sheetName: name });
+      candidates.push({ ...fromMatrix(matrix, file.name, "xlsx", [], start, origins, name, range.s.c), sheetName: name, publicationIssues:fourwall ? publicationIssues : null });
     }
     if (candidates.length !== 1) throw new Error(candidates.length ? "Hay varias hojas con estas columnas. Guarda la hoja que necesitas en otro XLSX o CSV." : "No encontramos una hoja con las columnas necesarias en este Excel.");
     const source = candidates[0];
@@ -63,7 +77,7 @@ export async function parseDelimitedFile(file, { requiredFields = [] } = {}) {
     const csv = Papa.unparse({ fields: source.fields, data: source.rows.map(row => Object.fromEntries(source.fields.map(key => [key,row[key]]))) }, { newline: "\n" });
     const normalized = Papa.parse(csv, { header: true, skipEmptyLines: true });
     if (normalized.errors.length) throw new Error("No pudimos convertir este Excel a CSV. Conservamos la fuente anterior.");
-    return { ...source, rows: normalized.data.map((row,i) => ({...row,__provenance:source.rows[i].__provenance})), delimiter: ",", originalFormat: "xlsx", convertedTo: "csv" };
+    return { ...source, rows: normalized.data.map((row,i) => ({...row,__provenance:source.rows[i].__provenance,...(source.publicationIssues ? {__fourwallImport:source.publicationIssues} : {})})), delimiter: ",", originalFormat: "xlsx", convertedTo: "csv" };
   }
   const text = decode(bytes), matrix = [], origins = [], errors = [];
   let cursor = 0, line = 1, delimiter = "";

@@ -1,0 +1,51 @@
+name: Windows 4Wall runner
+on:
+  push:
+    branches: [main]
+    paths: ['runner/**', 'runner_windows.py', 'runner.spec', 'bot_extractor.py', 'fourwall_contract.json', 'requirements-runner.txt', 'scripts/prepare-runner-config.py', 'scripts/test_bot_control.py', 'docs/runner-install.md', 'runner.config.example.json', '.github/workflows/windows-runner.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-runner.txt
+      - name: Recuperar configuración pública de Pages
+        run: node scripts/extract-public-pages-env.mjs
+      - name: Dependencias fijadas
+        run: python -m pip install -r requirements-runner.txt
+      - name: Pruebas runner y parser sin 4Wall
+        run: python scripts/test_bot_control.py
+      - name: Preparar configuración pública
+        run: python scripts/prepare-runner-config.py
+      - name: Compilar ejecutable sin consola
+        run: python -m PyInstaller --clean --noconfirm runner.spec
+      - name: Probar ejecutable y DPAPI
+        shell: pwsh
+        run: |
+          $resultPath = Join-Path $env:RUNNER_TEMP 'runner-smoke.json'
+          $process = Start-Process -FilePath '.\dist\4WallRunner\4WallRunner.exe' -ArgumentList '--self-test', '--result', $resultPath -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw "Runner self-test failed: $($process.ExitCode)" }
+          if ((Get-Content $resultPath | ConvertFrom-Json).status -ne 'OK') { throw 'Missing smoke result' }
+      - name: Instrucciones e identidad del build
+        shell: pwsh
+        run: |
+          Copy-Item 'runner.config.example.json' 'dist/4WallRunner/'
+          Copy-Item 'docs/runner-install.md' 'dist/4WallRunner/INSTALACION.md'
+          Set-Content 'dist/4WallRunner/BUILD.txt' '${{ github.sha }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 4WallRunner-windows-${{ github.sha }}
+          path: dist/4WallRunner/
+          retention-days: 30

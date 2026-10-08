@@ -1,0 +1,25 @@
+# 4WALL-RUNNER-2026-10-08
+
+- Authority: uploaded Pasted text(3).txt; real implementation, direct main commit/publication, complete lint/build, CI and Windows packaging. Release 1 only 4Wall. No financial changes, public laptop ports, SQL Server or unrelated Myke work.
+- Base: 55632636e83bf5823dea2a549dacca6c9c1233f8; clean worktree; origin/main refreshed unchanged.
+- Execution: single Codex executor; BOT/DATA/ING/DBA/SEC/UI/QA passes are self-review, no independent staffing claimed.
+- Scope: existing bot entrypoints, Supabase migrations/services, bot state/auth UI, existing manual source flow, runner packaging, verification, README and affected ownership contracts.
+- Accepted interface: evolve the existing escaneos_4wall CURRENT table in place; retain original read columns and raw evidence. New control metadata and narrow RPCs separate identity/commands/runs/audit from inventory. Source generations protect concurrent publications and paginated reads. No complete historical snapshots.
+- Identity: text Ticket/FIFO; ticket identity for unique groups, composite for collisions; retain UUID through transitions only when matched safely; ambiguous transitions reject. JS and Python implement the same canonical contract and cross-language tests; SQL revalidates and computes hashes before publication.
+- Publication: manifest in bounded batches, changed raw rows only, transactional commit, generation compare, idempotent run IDs, two valid complete absences for removal. Partial manual updates never count absences; next official complete run wins. Existing local source mode remains separate from automatic rows.
+- Control: dedicated revocable Auth runner identity, no service role on devices; operator/admin Auth for writes, default public dashboard, optional server login policy. Realtime wakeup plus five-second polling, fifteen-second heartbeat, persisted pause, ten-minute Run now TTL, one queued Run now, leases and finite retries.
+- Windows: memory-only daily 4Wall credentials, Edge headless, DPAPI technical refresh token, explicit tray lifecycle/update check, no auto-start; Windows workflow packages the same Python runner.
+- Infrastructure blocker: correct-project get_project again denied on uukhwkywmnarcfruerpp. Live schema inspection/migration/Auth provisioning/corporate extraction cannot be claimed. Prepare preflight and migration/recovery scripts, validate synthetic local Postgres/RLS, never target another project.
+- Acceptance: attached identity/sync/control/auth cases, all existing build gates, Python tests, no secrets/raw corporate fixtures, main CI and packaging workflow evidence. Remote activation and Win+L/corporate Edge behavior require the actual authorized host and correct project access.
+
+## Integrated verification and self-review
+
+- `npm ci`, `npm run context`, explicit `npm run lint` and final `npm run build` passed on the integrated candidate. All existing finance, BOM, import, persistence, tracer, Myke and Supabase checks retained.
+- Actual migration executed in local PGlite/Postgres: 10000 -> 10100 with 100 INSERT / 20 UPDATE / 9980 unchanged, repeat idempotent receipt; rejected/staged/failed rollback; first/second miss, reappearance, partial corrections including collision groups, AUTO precedence; retry delays/final failure; one pending command, TTL, persistent Pause/Resume, stale run/session, live roles/revocation, dashboard login and private delivery leasing/grants.
+- JS/Python hashes compared on shared canonical fixtures and the same generated synthetic Excel through both real parsers (IDs/serial with zeros, dates, fractional quantities, formula rejection). No corporate export fixtures.
+- 10 Python tests passed: retry/concurrency, invalid login, lost ACK, HTTPS-only errors, Realtime-unavailable polling, pause, machine claim before Edge and close-during-login.
+- Actual Bot/Sources renders with only DOM portal/scroll shells mocked; permissions/status/metrics and preserved upload flow checked. Actual read service version cache/delta checked with mock HTTP. This is not live browser/Safari/corporate Windows extraction evidence.
+- Notification adapter exercised with mock provider; final jobs, payload privacy, idempotency key and delivery failures checked. No real email sent. Provider/configuration and correct-project deployment remain pending.
+- Bundle and all 53 changed text files scanned: no privileged keys/JWT, enrollment files or real corporate exports. `git diff --check` passed. Financial formulas, Myke behavior, scroll/rubber band unchanged.
+- Operational recovery documented: preflight/schema/constraints/policies/writers, restorable DB backup, stop old extractor, migrate in maintenance; disable runners/conserve CURRENT for rollback, no blind drop/truncate or old destructive RPC reactivation.
+- Publication gate: same refreshed main base; publish without PR or force. Remote SHA, Verify main and Windows artifact results will be reported after observation. Pages remains the separate manual workflow; no remote migration, Auth provisioning or live 4Wall run claimed.
